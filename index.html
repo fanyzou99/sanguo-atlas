@@ -679,7 +679,383 @@ footer.foot{
     /* 暂停动画开关（减配模式） */
     .no-anim .v5-tide,.no-anim .v5-mist,.no-anim .v5-ridge-shadow,.no-anim .v5-ridge{ animation:none; }
   </style>
-  </head>
+  <style id="sg_social_css">
+/* ==========================================================================
+   V9 · 论武坛 / 账号 / 徽章墙 / 卡牌 / 评价 / 赠予  —— 社区层样式
+   全部类名以 sg 前缀，避免与既有样式冲突
+   ========================================================================== */
+.sg-only{display:none!important}
+
+/* ---------------- 顶部账号位 ---------------- */
+.sgacct{position:relative;display:flex;align-items:center;gap:6px}
+.sgacct-btn{
+  display:flex;align-items:center;gap:8px;font-family:inherit;font-size:12.5px;letter-spacing:.04em;
+  border:1px solid var(--line-2);background:linear-gradient(180deg,#252c3a,#1d222d);color:var(--ink);
+  padding:5px 12px 5px 6px;border-radius:999px;cursor:pointer;transition:.18s;white-space:nowrap;
+}
+.sgacct-btn:hover{border-color:var(--gold);color:var(--gold-2);transform:translateY(-1px)}
+.sgav{
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+  font-size:11.5px;font-weight:700;color:#1b1508;letter-spacing:0;
+  background:linear-gradient(135deg,#e8c988,#c9a45c);box-shadow:0 0 0 1px rgba(0,0,0,.35) inset;
+}
+.sgav.lg{width:52px;height:52px;font-size:21px}
+.sgav.sm{width:20px;height:20px;font-size:10px}
+.sgacct-pts{font-size:11px;color:var(--gold-2);border-left:1px solid var(--line);padding-left:8px;font-variant-numeric:tabular-nums}
+.sgacct-dot{width:7px;height:7px;border-radius:50%;background:var(--seal);box-shadow:0 0 0 2px rgba(166,58,50,.25);margin-left:2px}
+
+.sg-drop{
+  position:absolute;right:0;top:calc(100% + 9px);min-width:214px;z-index:60;
+  background:#1b202b;border:1px solid var(--line-2);border-radius:10px;padding:6px;
+  box-shadow:0 18px 44px rgba(0,0,0,.55);animation:sgfade .16s ease both;
+}
+.sg-drop-hd{padding:9px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:5px}
+.sg-drop-hd b{display:block;font-size:13.5px;letter-spacing:.05em}
+.sg-drop-hd small{display:block;font-size:10.5px;color:var(--ink-3);margin-top:3px;letter-spacing:.04em}
+.sg-drop button{
+  width:100%;text-align:left;font-family:inherit;font-size:12.5px;color:var(--ink-2);
+  background:transparent;border:0;padding:8px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px;
+}
+.sg-drop button:hover{background:rgba(201,164,92,.12);color:var(--gold-2)}
+.sg-drop button .k{margin-left:auto;font-size:10.5px;color:var(--ink-3)}
+.sg-drop .sg-drop-sep{height:1px;background:var(--line);margin:5px 4px}
+
+/* ---------------- 通用页面 ---------------- */
+.sg-page{animation:sgfade .28s ease both;padding-top:6px}
+@keyframes sgfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sg-hero{
+  position:relative;overflow:hidden;border:1px solid var(--line);border-radius:14px;
+  background:
+    radial-gradient(720px 220px at 12% -40%, rgba(201,164,92,.20), transparent 66%),
+    radial-gradient(620px 260px at 100% 120%, rgba(90,120,170,.18), transparent 62%),
+    linear-gradient(160deg,#20262f,#171b23);
+  padding:22px 24px;margin-bottom:14px;
+}
+.sg-hero:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 4px);
+  opacity:.35;
+}
+.sg-hero h2{
+  margin:0;font-size:23px;letter-spacing:.22em;font-weight:700;
+  background:linear-gradient(120deg,#f4e5bd,#c9a45c 58%,#f4e5bd);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sg-hero p{margin:8px 0 0;font-size:12px;color:var(--ink-3);letter-spacing:.06em;line-height:1.85;max-width:760px}
+.sg-hero-row{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;position:relative;z-index:1}
+.sg-hero-row .grow{flex:1 1 380px}
+.sg-hero-stats{display:flex;gap:20px;flex-wrap:wrap}
+.sg-hs b{display:block;font-size:19px;color:var(--gold-2);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.sg-hs span{display:block;font-size:10px;color:var(--ink-3);letter-spacing:.16em;margin-top:2px}
+
+.sg-panel{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.sg-panel + .sg-panel{margin-top:12px}
+.sg-panel-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sg-panel-hd h3{margin:0;font-size:13px;letter-spacing:.18em;color:var(--ink);font-weight:700}
+.sg-panel-hd h3 i{font-style:normal;color:var(--gold);margin-right:6px}
+.sg-panel-hd .sp{margin-left:auto}
+.sg-muted{color:var(--ink-3);font-size:11px;letter-spacing:.04em;line-height:1.8}
+
+/* 按钮 */
+.sgbtn{
+  font-family:inherit;font-size:12.5px;letter-spacing:.06em;cursor:pointer;border-radius:8px;
+  border:1px solid var(--line-2);background:#232a37;color:var(--ink-2);padding:8px 15px;transition:.16s;
+  display:inline-flex;align-items:center;gap:6px;justify-content:center;
+}
+.sgbtn:hover{color:var(--ink);border-color:var(--gold);background:#2a3241}
+.sgbtn.primary{
+  background:linear-gradient(135deg,#e8c988,#c9a45c);color:#241a08;font-weight:700;border-color:transparent;
+  box-shadow:0 4px 16px rgba(201,164,92,.26);
+}
+.sgbtn.primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.sgbtn.ghost{background:transparent}
+.sgbtn.sm{font-size:11.5px;padding:5px 11px;border-radius:7px}
+.sgbtn.danger{color:#e88c82;border-color:rgba(166,58,50,.55)}
+.sgbtn.danger:hover{background:rgba(166,58,50,.16);border-color:var(--seal)}
+.sgbtn:disabled{opacity:.42;cursor:not-allowed;transform:none!important;filter:none!important}
+
+/* 输入 */
+.sgfield{margin-bottom:12px}
+.sgfield label{display:block;font-size:11px;color:var(--ink-2);letter-spacing:.1em;margin-bottom:5px}
+.sgfield label em{font-style:normal;color:var(--ink-3);font-size:10px;letter-spacing:.02em;margin-left:6px}
+.sginput,.sgtext,.sgselect{
+  width:100%;font-family:inherit;font-size:13px;color:var(--ink);background:#171c25;
+  border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;outline:none;transition:.16s;
+}
+.sginput:focus,.sgtext:focus,.sgselect:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,164,92,.13)}
+.sgtext{min-height:96px;resize:vertical;line-height:1.75}
+.sginput::placeholder,.sgtext::placeholder{color:#6b7280}
+.sgerr{font-size:11px;color:#e88c82;margin-top:6px;letter-spacing:.03em;min-height:14px}
+.sgcheck{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--ink-3);line-height:1.7;cursor:pointer}
+.sgcheck input{margin-top:2px;accent-color:#c9a45c}
+
+/* 筛选 chips */
+.sgchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sgchip{
+  font-family:inherit;font-size:11.5px;letter-spacing:.04em;padding:5px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line-2);background:#1d232e;color:var(--ink-2);transition:.16s;
+}
+.sgchip:hover{color:var(--ink);border-color:var(--gold)}
+.sgchip.on{background:linear-gradient(135deg,#e8c988,#c9a45c);color:#241a08;font-weight:700;border-color:transparent}
+.sgchip .n{opacity:.6;margin-left:4px;font-size:10px}
+
+/* ---------------- 论坛 ---------------- */
+.sg-forum{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:14px;align-items:start}
+.sg-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.sg-toolbar .sp{flex:1}
+.sg-search{
+  display:flex;align-items:center;gap:6px;background:#171c25;border:1px solid var(--line-2);
+  border-radius:8px;padding:0 10px;height:33px;min-width:190px;
+}
+.sg-search input{border:0;background:transparent;color:var(--ink);font-family:inherit;font-size:12.5px;outline:none;width:100%}
+.sg-search svg{opacity:.5}
+
+.sg-th{
+  display:flex;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:11px;
+  background:linear-gradient(180deg,#1f2530,#1b202a);cursor:pointer;transition:.16s;position:relative;
+}
+.sg-th + .sg-th{margin-top:8px}
+.sg-th:hover{border-color:rgba(201,164,92,.5);transform:translateX(2px);background:linear-gradient(180deg,#232a36,#1d222c)}
+.sg-th-ic{
+  width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
+  font-size:14px;font-weight:700;color:#1d1608;background:linear-gradient(135deg,var(--c,#c9a45c),#a8873f);
+  box-shadow:0 2px 10px rgba(0,0,0,.3);
+}
+.sg-th-main{min-width:0;flex:1}
+.sg-th-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sg-th-top h3{margin:0;font-size:14px;letter-spacing:.03em;font-weight:600;color:var(--ink);line-height:1.5}
+.sg-th:hover .sg-th-top h3{color:var(--gold-2)}
+.sg-cat{font-size:10px;letter-spacing:.08em;padding:1px 7px;border-radius:4px;border:1px solid currentColor;opacity:.9}
+.sg-pin{font-size:9.5px;letter-spacing:.08em;padding:1px 6px;border-radius:4px;background:rgba(166,58,50,.2);color:#e8a49c;border:1px solid rgba(166,58,50,.4)}
+.sg-th-ex{margin:5px 0 0;font-size:11.5px;color:var(--ink-3);line-height:1.7;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sg-th-meta{display:flex;gap:12px;align-items:center;margin-top:8px;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;flex-wrap:wrap}
+.sg-th-meta b{color:var(--ink-2);font-weight:600}
+.sg-th-side{flex:0 0 64px;text-align:right;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.sg-th-side b{font-size:15px;color:var(--gold-2);font-variant-numeric:tabular-nums}
+.sg-th-side span{font-size:9.5px;color:var(--ink-3);letter-spacing:.1em}
+
+.sg-sidecard{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+.sg-sidecard + .sg-sidecard{margin-top:10px}
+.sg-sidecard h4{margin:0 0 10px;font-size:11.5px;letter-spacing:.16em;color:var(--gold-2);font-weight:700}
+.sg-sidecard p{margin:0;font-size:11px;color:var(--ink-3);line-height:1.9}
+.sg-sidecard ol{margin:0;padding-left:16px;font-size:11px;color:var(--ink-3);line-height:1.95}
+.sg-sidecard ul{list-style:none;margin:0;padding:0;font-size:11px;color:var(--ink-3);line-height:2}
+.sg-sidecard li b{color:var(--ink-2)}
+.sg-rankline{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-2);padding:4px 0}
+.sg-rankline .i{width:15px;text-align:center;color:var(--ink-3);font-size:10px}
+.sg-rankline .sp{margin-left:auto;color:var(--gold-2);font-variant-numeric:tabular-nums}
+
+/* 帖子详情 */
+.sg-post{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:20px 22px}
+.sg-post-hd h1{margin:0;font-size:20px;letter-spacing:.05em;line-height:1.5;font-weight:700}
+.sg-post-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-bottom:14px;border-bottom:1px solid var(--line);font-size:11px;color:var(--ink-3)}
+.sg-post-body{margin-top:16px;font-size:13.5px;line-height:2;color:var(--ink);letter-spacing:.02em;white-space:pre-wrap;word-break:break-word}
+.sg-post-foot{display:flex;gap:8px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.sg-post-foot .sp{flex:1}
+
+.sg-like{
+  font-family:inherit;font-size:11.5px;background:transparent;border:1px solid var(--line-2);color:var(--ink-2);
+  padding:5px 11px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;transition:.15s;
+}
+.sg-like:hover{border-color:var(--gold);color:var(--gold-2)}
+.sg-like.on{background:rgba(201,164,92,.16);border-color:var(--gold);color:var(--gold-2)}
+
+.sg-reply{display:flex;gap:11px;padding:14px 0;border-bottom:1px dashed var(--line)}
+.sg-reply:last-child{border-bottom:0}
+.sg-reply-main{flex:1;min-width:0}
+.sg-reply-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3)}
+.sg-reply-hd b{color:var(--ink);font-size:12px;font-weight:600;letter-spacing:.03em}
+.sg-floor{margin-left:auto;font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+.sg-reply-body{margin-top:6px;font-size:12.5px;line-height:1.9;color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+.sg-reply-act{display:flex;gap:14px;margin-top:6px;font-size:10.5px;color:var(--ink-3)}
+.sg-reply-act button{font-family:inherit;font-size:10.5px;background:none;border:0;color:var(--ink-3);cursor:pointer;padding:0}
+.sg-reply-act button:hover{color:var(--gold-2)}
+
+/* ---------------- 评价（武将/城池嵌入块） ---------------- */
+.sg-embed{margin-top:16px}
+.sg-cm{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel-2),#1a1f28);padding:18px 20px}
+.sg-cm-hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sg-cm-hd h3{margin:0;font-size:14px;letter-spacing:.14em;color:var(--ink)}
+.sg-cm-hd h3 i{font-style:normal;color:var(--gold);margin-right:6px}
+.sg-cm-score{display:flex;align-items:baseline;gap:8px;margin-left:auto}
+.sg-cm-score b{font-size:24px;color:var(--gold-2);line-height:1;font-variant-numeric:tabular-nums}
+.sg-cm-score span{font-size:10px;color:var(--ink-3);letter-spacing:.06em}
+.sg-stars{display:inline-flex;gap:2px;font-size:13px;line-height:1;color:#4a5262}
+.sg-stars .on{color:#e8c15c;text-shadow:0 0 8px rgba(232,193,92,.4)}
+.sg-star-pick{display:inline-flex;gap:3px;font-size:20px;line-height:1;cursor:pointer;color:#3d4553;user-select:none}
+.sg-star-pick .on{color:#e8c15c}
+.sg-cm-form{display:grid;grid-template-columns:1fr;gap:10px;padding:12px;border:1px dashed var(--line-2);border-radius:10px;background:rgba(0,0,0,.14)}
+.sg-cm-form .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sg-cm-list{margin-top:6px}
+.sg-cm-item{padding:13px 0;border-bottom:1px dashed var(--line)}
+.sg-cm-item:last-child{border-bottom:0}
+.sg-cm-item.nested{margin-left:34px;padding:10px 0 10px 12px;border-left:2px solid var(--line);background:rgba(255,255,255,.012);border-radius:0 8px 8px 0}
+.sg-cm-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sg-cm-name{font-size:12px;font-weight:600;color:var(--ink);letter-spacing:.03em}
+.sg-cm-time{font-size:10px;color:var(--ink-3);margin-left:auto}
+.sg-cm-text{margin-top:6px;font-size:12.5px;line-height:1.9;color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+.sg-cm-act{display:flex;gap:14px;margin-top:6px}
+.sg-cm-act button{font-family:inherit;font-size:10.5px;background:none;border:0;color:var(--ink-3);cursor:pointer;padding:0}
+.sg-cm-act button:hover{color:var(--gold-2)}
+.sg-empty{padding:26px 10px;text-align:center;color:var(--ink-3);font-size:12px;letter-spacing:.06em;line-height:2}
+.sg-empty b{display:block;font-size:15px;color:var(--ink-2);margin-bottom:4px;letter-spacing:.14em}
+
+/* ---------------- 我的主页 ---------------- */
+.sg-prof{display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:14px;align-items:start}
+.sg-idcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.sg-idcard .nm{font-size:19px;letter-spacing:.08em;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sg-idcard .meta{font-size:11px;color:var(--ink-3);margin-top:5px;line-height:1.8;letter-spacing:.03em}
+.sg-role{font-size:9.5px;letter-spacing:.1em;padding:1px 7px;border-radius:4px;background:rgba(166,58,50,.18);color:#e8a49c;border:1px solid rgba(166,58,50,.42)}
+.sg-role.owner{background:rgba(201,164,92,.16);color:var(--gold-2);border-color:rgba(201,164,92,.45)}
+.sg-statgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px}
+.sg-stat{background:#1a1f29;border:1px solid var(--line);border-radius:9px;padding:10px 11px;text-align:center}
+.sg-stat b{display:block;font-size:18px;color:var(--gold-2);font-variant-numeric:tabular-nums;line-height:1.2}
+.sg-stat span{display:block;font-size:9.5px;color:var(--ink-3);letter-spacing:.1em;margin-top:3px}
+
+.sg-cal{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.sg-cal i{
+  width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-size:9px;font-style:normal;
+  background:#1a1f29;border:1px solid var(--line);color:var(--ink-3);
+}
+.sg-cal i.on{background:linear-gradient(135deg,rgba(201,164,92,.85),rgba(201,164,92,.5));color:#241a08;border-color:transparent;font-weight:700}
+.sg-cal i.today{box-shadow:0 0 0 2px rgba(201,164,92,.35)}
+.sg-prog{height:7px;border-radius:99px;background:#161a22;border:1px solid var(--line);overflow:hidden;margin-top:8px}
+.sg-prog i{display:block;height:100%;background:linear-gradient(90deg,#c9a45c,#e8c988);transition:width .5s}
+.sg-ledger{font-size:11.5px;color:var(--ink-2)}
+.sg-ledger div{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.sg-ledger div:last-child{border:0}
+.sg-ledger .d{margin-left:auto;color:var(--gold-2);font-variant-numeric:tabular-nums}
+.sg-ledger .d.neg{color:#e88c82}
+.sg-ledger time{color:var(--ink-3);font-size:10px;min-width:74px}
+
+/* ---------------- 徽章 / 卡牌 ---------------- */
+.sg-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:9px}
+.sg-badge{
+  position:relative;border:1px solid var(--line);border-radius:10px;background:#1a1f29;padding:12px 10px;text-align:center;
+  opacity:.45;filter:grayscale(.7);transition:.2s;
+}
+.sg-badge.on{opacity:1;filter:none;border-color:rgba(201,164,92,.45);background:linear-gradient(180deg,#232a35,#1b2029)}
+.sg-badge.on:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.sg-seal{
+  width:38px;height:38px;margin:0 auto 7px;border-radius:9px;display:grid;place-items:center;
+  font-size:17px;font-weight:700;color:#241a08;background:linear-gradient(135deg,#e8c988,#c9a45c);
+  box-shadow:0 2px 10px rgba(201,164,92,.28);
+}
+.sg-badge:not(.on) .sg-seal{background:#2a3040;color:#68707f;box-shadow:none}
+.sg-badge b{display:block;font-size:11.5px;letter-spacing:.06em;color:var(--ink)}
+.sg-badge small{display:block;font-size:9.5px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+
+.sg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px}
+.sg-card{
+  position:relative;border-radius:11px;overflow:hidden;cursor:pointer;
+  border:1px solid color-mix(in srgb,var(--fc,#c9a45c) 55%, #333);
+  background:
+    radial-gradient(120% 90% at 50% -20%, color-mix(in srgb,var(--fc,#c9a45c) 26%, transparent), transparent 62%),
+    linear-gradient(170deg,#222a37,#171c25 62%);
+  transition:.2s;isolation:isolate;
+}
+.sg-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.5);border-color:var(--fc,#c9a45c)}
+.sg-card:before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.09) 48%,transparent 62%);
+  transform:translateX(-120%);transition:.6s;
+}
+.sg-card:hover:before{transform:translateX(120%)}
+.sg-card-hd{display:flex;align-items:center;gap:6px;padding:8px 9px 0}
+.sg-card-fac{font-size:10px;letter-spacing:.1em;color:var(--fc,#c9a45c);border:1px solid currentColor;border-radius:4px;padding:0 5px;opacity:.9}
+.sg-card-rar{margin-left:auto;font-size:9.5px;color:#e8c15c;letter-spacing:.04em}
+.sg-card-nm{font-size:19px;font-weight:700;letter-spacing:.1em;padding:9px 10px 0;color:#f4ecd8;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.sg-card-zi{font-size:9.5px;color:var(--ink-3);padding:2px 10px 0;letter-spacing:.04em;min-height:14px}
+.sg-card-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:9px 7px 0;text-align:center}
+.sg-card-stats span{font-size:9px;color:var(--ink-3);display:block}
+.sg-card-stats b{font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+.sg-card-ft{display:flex;align-items:center;gap:6px;padding:8px 9px;margin-top:7px;border-top:1px solid rgba(255,255,255,.07);font-size:9.5px;color:var(--ink-3)}
+.sg-card-ft .sp{flex:1}
+.sg-card-gift{
+  font-family:inherit;font-size:9.5px;padding:2px 7px;border-radius:5px;cursor:pointer;
+  background:rgba(201,164,92,.14);border:1px solid rgba(201,164,92,.4);color:var(--gold-2);
+}
+.sg-card-gift:hover{background:rgba(201,164,92,.26)}
+.sg-card-new{position:absolute;top:0;right:0;font-size:9px;letter-spacing:.08em;background:var(--seal);color:#fff;padding:2px 7px;border-bottom-left-radius:7px}
+
+/* ---------------- 弹窗 ---------------- */
+.sg-mask{
+  position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(8,10,14,.72);backdrop-filter:blur(4px);animation:sgfade .18s ease both;overflow:auto;
+}
+.sg-modal{
+  width:100%;max-width:430px;background:linear-gradient(180deg,#20262f,#171b23);
+  border:1px solid var(--line-2);border-radius:14px;padding:22px;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.65);animation:sgpop .22s cubic-bezier(.2,.9,.3,1.2) both;
+}
+.sg-modal.wide{max-width:560px}
+@keyframes sgpop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.sg-modal h3{margin:0 0 4px;font-size:17px;letter-spacing:.14em;font-weight:700}
+.sg-modal .sub{font-size:11px;color:var(--ink-3);margin-bottom:16px;letter-spacing:.04em;line-height:1.7}
+.sg-x{position:absolute;right:12px;top:10px;background:none;border:0;color:var(--ink-3);font-size:19px;cursor:pointer;line-height:1;padding:4px}
+.sg-x:hover{color:var(--ink)}
+.sg-tabbar{display:flex;gap:4px;background:#171c25;border:1px solid var(--line);border-radius:9px;padding:3px;margin-bottom:16px}
+.sg-tabbar button{flex:1;font-family:inherit;font-size:12px;padding:6px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);cursor:pointer;letter-spacing:.08em}
+.sg-tabbar button.on{background:linear-gradient(135deg,#e8c988,#c9a45c);color:#241a08;font-weight:700}
+
+/* 抽卡展示 */
+.sg-drawbox{position:relative;display:grid;place-items:center;padding:8px 0 2px}
+.sg-drawcard{width:196px;animation:sgcardin .7s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes sgcardin{
+  0%{opacity:0;transform:perspective(700px) rotateY(90deg) scale(.7)}
+  60%{opacity:1;transform:perspective(700px) rotateY(-8deg) scale(1.04)}
+  100%{transform:none}
+}
+.sg-drawrays{position:absolute;inset:-20px;pointer-events:none;background:conic-gradient(from 0deg,transparent 0 8deg,rgba(232,201,136,.14) 8deg 11deg,transparent 11deg 22deg);animation:sgspin 12s linear infinite;opacity:.6;mask:radial-gradient(circle,transparent 36%,#000 64%)}
+@keyframes sgspin{to{transform:rotate(360deg)}}
+.sg-drawmeta{text-align:center;margin-top:14px}
+.sg-drawmeta b{display:block;font-size:15px;color:var(--gold-2);letter-spacing:.1em}
+.sg-drawmeta span{display:block;font-size:11px;color:var(--ink-3);margin-top:4px}
+
+/* ---------------- Toast ---------------- */
+.sg-toasts{position:fixed;right:18px;bottom:64px;z-index:400;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.sg-toast{
+  background:linear-gradient(135deg,#2a3140,#1d222c);border:1px solid var(--line-2);border-left:3px solid var(--gold);
+  color:var(--ink);font-size:12px;letter-spacing:.04em;padding:9px 14px;border-radius:8px;
+  box-shadow:0 12px 30px rgba(0,0,0,.5);animation:sgtoast .3s ease both;max-width:330px;line-height:1.6;
+}
+.sg-toast.ok{border-left-color:#4fb37d}
+.sg-toast.err{border-left-color:var(--seal)}
+@keyframes sgtoast{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+/* ---------------- 杂项 ---------------- */
+.sg-perm{width:100%;border-collapse:collapse;font-size:10.5px;color:var(--ink-3)}
+.sg-perm th,.sg-perm td{padding:5px 4px;text-align:center;border-bottom:1px dashed var(--line)}
+.sg-perm th{color:var(--ink-2);font-weight:600;letter-spacing:.04em}
+.sg-perm td:first-child,.sg-perm th:first-child{text-align:left}
+.sg-perm .y{color:#6cc79a}
+.sg-perm .n{color:#5a6272}
+.sg-giftrow{display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:11.5px;color:var(--ink-2)}
+.sg-giftrow:last-child{border:0}
+.sg-giftrow .ic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:rgba(201,164,92,.14);color:var(--gold-2);font-size:12px;flex:0 0 auto}
+.sg-giftrow .sp{flex:1}
+.sg-giftrow time{font-size:10px;color:var(--ink-3)}
+.sg-sec-title{display:flex;align-items:center;gap:9px;margin:0 0 12px;font-size:13px;letter-spacing:.16em;color:var(--ink)}
+.sg-sec-title:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.sg-note{font-size:10.5px;color:var(--ink-3);line-height:1.85;letter-spacing:.02em}
+
+@media(max-width:1080px){
+  .sg-forum,.sg-prof{grid-template-columns:minmax(0,1fr)}
+  .sg-statgrid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:640px){
+  .sg-hero{padding:16px}
+  .sg-hero h2{font-size:19px;letter-spacing:.14em}
+  .sg-statgrid{grid-template-columns:repeat(2,1fr)}
+  .sg-th-side{display:none}
+  .sg-post{padding:15px}
+  .sg-cm{padding:14px}
+  .sg-cm-item.nested{margin-left:12px}
+  .sgacct-pts{display:none}
+  .sg-modal{padding:18px}
+}
+
+</style>
+</head>
 <body>
 <header class="top">
   <div class="top-inner">
@@ -697,7 +1073,9 @@ footer.foot{
       <button data-view="list">武将名录</button>
       <button data-view="alist">古代武将名录</button>
       <button data-view="agens">古代武将列表</button>
+      <button data-view="forum">论武坛</button>
     </div>
+    <div class="sgacct" id="sgAcct"></div>
     <div class="langset" id="langSet" title="Language / 言語 / 语言">
       <button data-lang="en" class="lbtn">EN</button>
       <button data-lang="ja" class="lbtn">日本語</button>
@@ -4354,10 +4732,34 @@ function ctBarRow(lb, val, max, col){
   const p = Math.max(2, Math.min(100, val/max*100));
   return '<div class="mrow"><span class="lb">'+lb+'</span><span class="track"><span class="fill" style="width:'+p.toFixed(0)+'%;background:'+col+'"></span></span><span class="vl">'+val+'</span></div>';
 }
+/* 城防形制：显式逐行构造，字段缺失时按城制推算兜底，避免出现空行 / undefined */
+function ctCityFacts(st){
+  st = st || {};
+  function num(v, d){ var n = Number(v); return (v !== null && v !== undefined && v !== '' && isFinite(n)) ? n : d; }
+  var peri  = num(st.peri, 12);
+  var rows = [];
+  rows.push(["城墙高", "约 " + num(st.wallH, 12) + " m"]);
+  rows.push(["墙基厚", "约 " + num(st.wallT, Math.max(6, Math.round(num(st.wallH, 12) * 0.6))) + " m"]);
+  rows.push(["城门", num(st.gates, 6) + " 门"]);
+  rows.push(["瓮城", num(st.bailey, peri >= 20 ? 4 : 2) + " 座"]);
+  rows.push(["马面", num(st.mam, Math.max(4, Math.round(peri * 1.4))) + " 座"]);
+  rows.push(["护城河", "宽 " + num(st.moatW, 30) + " m"]);
+  rows.push(["城周", "约 " + peri + " 里"]);
+  rows.push(["城域", "约 " + num(st.area, Math.max(1, Math.round(peri * peri / 34))) + " 顷"]);
+  return ctFacts(rows);
+}
 function ctFacts(rows){
-  return '<div class="ctfacts">'+rows.map(function(r){
-    return '<div class="f"><i>'+r[0]+'</i><b>'+r[1]+'</b></div>';
-  }).join("")+'</div>';
+  var out=[];
+  (rows||[]).forEach(function(r){
+    if(!r || r[0]==null) return;
+    var lab=String(r[0]);
+    var val=(r[1]==null)?'—':String(r[1]);
+    if(val==='undefined'||val==='null') val='—';
+    val=val.replace(/^undefined\s*/,'').replace(/undefined/g,'—');
+    if(!val) val='—';
+    out.push('<div class="f"><i>'+lab+'</i><b>'+val+'</b></div>');
+  });
+  return '<div class="ctfacts">'+out.join("")+'</div>';
 }
 function ctLegendHTML(){
   const items=[["城墙/城门","#d4c69f"],["城门楼","#aa583e"],["宫室","#b2684a"],["市肆","#ceb46a"],
@@ -4468,9 +4870,7 @@ function renderCityPage(name){
     +       ctBarRow("战略",c.str,100,"#e0554a")
     +       '</div></div>'
     +     '<div class="panel"><h3 class="cth3">城防形制</h3>'
-    +       ctFacts([["城墙高","约 "+st.wallH+" m"],["墙基厚","约 "+st.wallT+" m"],["城门",st.gates+" 门"],
-    +                ["瓮城",st.bailey+" 座"],["马面",st.mam+" 座"],["护城河","宽 "+st.moatW+" m"],
-    +                ["城周","约 "+st.peri+" 里"],["城域","约 "+st.area+" 顷"]])
+    +       ctCityFacts(st)
     +       '<div class="mini" style="margin-top:10px">'
     +       ctBarRow("兵役",c.mil,Math.max(5,CITY_PMAX*0.16),"#9aa8dd")
     +       ctBarRow("常备兵",c.army,Math.max(2,CITY_PMAX*0.06),"#c98a6a")
@@ -4483,7 +4883,8 @@ function renderCityPage(name){
     +     '<div class="panel ctdescbox"><h3 class="cth3">区块说明</h3><div id="ctDesc" class="ctdesc"></div></div>'
     +   '</aside>'
     + '</div>'
-    + '<div class="panel" style="margin-top:14px"><h3 class="cth3">城市沿革</h3><p class="cthist">'+c.d+'</p></div>';
+    + '<div class="panel" style="margin-top:14px"><h3 class="cth3">城市沿革</h3><p class="cthist">'+c.d+'</p></div>'
+    + '<div class="sg-embed" data-sg="city" data-key="'+c.n+'"></div>';
   app.innerHTML = html;
   document.getElementById("ctBack").addEventListener("click", function(){ go("#/map"); });
   document.getElementById("ctAtlas").addEventListener("click", function(){ state.citySel=c.n; go("#/cities"); });
@@ -5278,7 +5679,8 @@ function renderPassPage(name){
         </div>
       </div>
       ${duelBlock(g)}
-      ${relBlock(g)}`;
+      ${relBlock(g)}
+      <div class="sg-embed" data-sg="gen" data-key="${g.id}"></div>`;
     document.getElementById("back").addEventListener("click",()=>go(backHash));
     app.querySelectorAll(".relc").forEach(el=>el.addEventListener("click",()=>go("#/g/"+el.getAttribute("data-id"))));
     app.querySelectorAll(".relcard").forEach(el=>el.addEventListener("click",()=>go("#/g/"+el.getAttribute("data-id"))));
@@ -5623,6 +6025,7 @@ function renderPassPage(name){
   const DOMAIN_OF = { list:"sg", gens:"sg", alist:"an", agens:"an" };
   let curDomain = null;
   function render(){
+    if (window.SGSocial && window.SGSocial.handleRoute && window.SGSocial.handleRoute()) return;
     const r = parseHash();
     state.view = r.view;
     const dom = DOMAIN_OF[r.view] || null;
@@ -5645,10 +6048,17 @@ function renderPassPage(name){
     else if(r.view==="alist") renderList(ANCIENT, "an");
     else if(r.view==="agens") renderGens(ANCIENT, "an");
     else renderDetail();
+    if (window.SGSocial && window.SGSocial.afterRender) window.SGSocial.afterRender();
   }
   nav.querySelectorAll("button").forEach(b=>{
     b.addEventListener("click",()=>go("#/"+b.dataset.view));
   });
+  window.__SGAtlas = {
+    app: app, go: go, render: render, byId: byId, gens: GENERALS,
+    faction: FACTION, esc: esc, rarity: rarity, rarName: RAR_NAME,
+    roleName: roleName, artFor: artFor, hasPortrait: hasPortrait,
+    cityData: CITY_DATA, state: state
+  };
   render();
 })();
 </script>
@@ -5864,9 +6274,10 @@ html[data-lang="en"]{letter-spacing:.01em}
     });
     // 已知中文标签替换
     document.querySelectorAll('.panel h3, .leg, .src, .grid-note, .tier').forEach(function(el){
+      if(el.children && el.children.length) return;   /* 含子元素（如 <em>共 N 区</em>）不整体替换，避免吞掉动态数值 */
       var t = (el.textContent||'').trim();
       var k = LABEL2KEY[t];
-      if(k){ el.textContent = d[k]; }
+      if(k && d[k] != null && d[k] !== ''){ el.textContent = d[k]; }
     });
     // 面板区标题与说明（section-head / chiplbl / algonote）
     document.querySelectorAll('.section-head h2').forEach(function(el){
@@ -5920,6 +6331,1499 @@ html[data-lang="en"]{letter-spacing:.01em}
      让动态面板（武将/城市/名录）按当前语言重新生成 */
   window.__sgReRender();
 })();
+</script>
+<script id="sg_social_js">
+/* ==========================================================================
+   V9 · 论武坛社区层（账号 / 论坛 / 徽章墙 / 卡牌 / 评价 / 赠予）
+   纯前端实现：数据持久化于 localStorage，支持导出 / 导入迁移
+   ========================================================================== */
+(function () {
+  "use strict";
+  if (window.SGSocial) return;
+
+  var KEY = "sg_social_v2";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 基础工具 ---------------- */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function dateStr(off) {
+    var d = new Date();
+    if (off) d.setDate(d.getDate() + (off || 0));
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function shiftDay(base, off) {
+    var p = base.split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    d.setDate(d.getDate() + off);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function fmt(n) { return (n || 0).toLocaleString("en-US"); }
+  function ago(ts) {
+    var s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+    if (s < 60) return T("justNow");
+    if (s < 3600) return Math.floor(s / 60) + T("minAgo");
+    if (s < 86400) return Math.floor(s / 3600) + T("hourAgo");
+    if (s < 86400 * 30) return Math.floor(s / 86400) + T("dayAgo");
+    var d = new Date(ts);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function ini(name) {
+    var s = String(name || "?").trim();
+    return /^[a-zA-Z]/.test(s) ? s[0].toUpperCase() : s.slice(0, 1);
+  }
+  function maskEmail(e) {
+    if (!e) return "—";
+    var p = e.split("@");
+    return p[0].slice(0, 2) + "***@" + p[1];
+  }
+  function maskPhone(p) {
+    if (!p) return "—";
+    return p.length > 7 ? p.slice(0, 3) + "****" + p.slice(-4) : p;
+  }
+  function hashNum(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 99991;
+    return h;
+  }
+
+  /* ---------------- 多语言 ---------------- */
+  var L = {
+    en: {
+      navForum: "Forum", pts: "pts", login: "Sign in", register: "Sign up", logout: "Sign out",
+      myPage: "My page", myWall: "Badge wall", drawShort: "Draw", notif: "Notifications",
+      forumTitle: "War Council", forumSub: "Debate formations, write battle reports, grade heroes and cities with other lords.",
+      topics: "Threads", replies: "Replies", members: "Members", online: "Online",
+      all: "All", catWar: "Battle", catForm: "Formation", catHist: "History", catChat: "Chat", catSite: "Notice",
+      newest: "Newest", hottest: "Hottest", newPost: "New thread", searchPh: "Search threads…",
+      notice: "Notice", rules: "Community rules", active: "Most active", perms: "Permissions",
+      guest: "Guest", member: "Member", author: "Author", mod: "Moderator",
+      noThreads: "No threads yet", noThreadsSub: "Be the first to start a discussion.",
+      floor: "Floor", like: "Like", reply: "Reply", delete: "Delete", deleted: "Removed by author",
+      replyPh: "Write your reply…", replyBtn: "Post reply", backForum: "Back to forum",
+      composeTitle: "Start a thread", titlePh: "Title", bodyPh: "Write something…", publish: "Publish",
+      meTitle: "My Hall", guestTitle: "Not signed in", guestSub: "Sign in with your email or phone to join the council.",
+      points: "Points", streak: "Streak", totalDays: "Total days", cards: "Cards", draws: "Draw chances",
+      memberSince: "Joined", email: "Email", phone: "Phone", role: "Role",
+      loginReward: "Daily check-in", streakNow: "Current streak", bestStreak: "Best streak",
+      nextDraw: "Next draw in {n} day(s)", drawReady: "A draw is ready", drawBtn: "Draw a general card",
+      drawNone: "No draw chances. Every 3 consecutive days grants one.",
+      wallCards: "Card wall", wallBadges: "Achievements", noCards: "No cards yet — draw your first one.",
+      gift: "Gift", giftTitle: "Gift this card", giftTo: "Recipient (email, phone or name)",
+      giftMsg: "Message (optional)", giftSend: "Send card", giftLast: "You only have one card left — it cannot be gifted.",
+      giftOk: "Card sent to {n}", giftRecord: "Gift history", giftFrom: "from {n}", giftToYou: "to {n}",
+      ledger: "Points ledger", exportData: "Export data", importData: "Import data", dataNote:
+        "Community data is stored in this browser (localStorage). Use export / import to move it to another device.",
+      commentGen: "General reviews", commentCity: "City reviews", cmPh: "Share your view on this hero…",
+      cmPhCity: "Share your view on this city…", cmSubmit: "Post review", cmEmpty: "No reviews yet. Be the first.",
+      cmLogin: "Sign in to review", cmReply: "Reply", cmReplyPh: "Reply…", cmRate: "Your rating",
+      permanent: "Reviews are kept permanently; author deletion keeps a tombstone record.",
+      avg: "avg", reviews: "reviews", badges: "badges", viewGeneral: "Open profile",
+      authIn: "Sign in", authUp: "Create account", authName: "Display name", authEmail: "Email",
+      authPhone: "Phone", authAcc: "Email or phone", authNote: "No password needed — your email or phone is your key.",
+      authAgree: "I accept the community rules and privacy note.", authSubmitIn: "Sign in", authSubmitUp: "Create account",
+      errName: "Name must be 2–16 characters.", errEmail: "Enter a valid email address.",
+      errPhone: "Enter a valid phone number.", errAgree: "Please accept the community rules.",
+      errDupEmail: "This email is already registered.", errDupPhone: "This phone is already registered.",
+      errNoUser: "Account not found. Please sign up first.", errLogin: "Please sign in first.",
+      loggedIn: "Welcome back, {n}", registered: "Account created. Welcome, {n}!",
+      checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
+      already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.",
+      tagOwner: "Moderator", myThreads: "My threads", myReviews: "My reviews", joinedAt: "Joined {d}",
+      saveFail: "Storage is full — export your data now.", justNow: "just now", minAgo: "m ago",
+      hourAgo: "h ago", dayAgo: "d ago", postOk: "Thread published.", replyOk: "Reply posted.",
+      cmOk: "Review posted.", likeNeed: "Sign in to like.", postNeed: "Sign in to publish.",
+      accessDenied: "You can only remove your own content.", confirmDel: "Remove this content?",
+      total: "Total", wallEmpty: "Nothing here yet.", users: "users", pointsShort: "pts",
+      rulesText: "Be civil · cite sources · no spam · one account per person · fan content only.",
+      activeEmpty: "No activity yet.", statPosts: "threads", statReplies: "replies", statReviews: "reviews",
+      permBrowse: "Browse", permPost: "Post / reply", permReview: "Review / like", permDel: "Delete", permGift: "Gift cards",
+      account: "Account", signOutOk: "Signed out.", importOk: "Data imported.", importBad: "Invalid file.",
+      confirmImport: "Importing replaces ALL local community data. Continue?", yes: "Yes", no: "Cancel",
+      close: "Close", back: "Back", rate5: "5 stars", noAccount: "No account? Sign up", hasAccount: "Already registered? Sign in",
+      cardOf: "Card", serial: "No.", gotFrom: "Received from {n}", empty: "Empty"
+    },
+    ja: {
+      navForum: "論武壇", pts: "点", login: "ログイン", register: "登録", logout: "ログアウト",
+      myPage: "マイページ", myWall: "バッジウォール", drawShort: "抽選", notif: "通知",
+      forumTitle: "論武壇", forumSub: "陣形を論じ、戦報を書き、武将と都市を諸侯と評する。",
+      topics: "スレッド", replies: "返信", members: "会員", online: "オンライン",
+      all: "すべて", catWar: "戦報", catForm: "陣容", catHist: "史料", catChat: "雑談", catSite: "運営",
+      newest: "最新", hottest: "人気", newPost: "スレ作成", searchPh: "スレを検索…",
+      notice: "お知らせ", rules: "コミュニティ規約", active: "活躍者", perms: "権限",
+      guest: "ゲスト", member: "会員", author: "投稿者", mod: "モデレーター",
+      noThreads: "スレッドはまだありません", noThreadsSub: "最初の議論を始めましょう。",
+      floor: "階", like: "いいね", reply: "返信", delete: "削除", deleted: "投稿者により削除",
+      replyPh: "返信を書く…", replyBtn: "返信する", backForum: " forumへ戻る",
+      composeTitle: "スレッド作成", titlePh: "タイトル", bodyPh: "本文…", publish: "公開",
+      meTitle: "我が館", guestTitle: "未ログイン", guestSub: "メールまたは電話でログインして参加しましょう。",
+      points: "ポイント", streak: "連続", totalDays: "累計日数", cards: "カード", draws: "抽選権",
+      memberSince: "登録日", email: "メール", phone: "電話", role: "権限",
+      loginReward: "ログイン特典", streakNow: "現在の連続", bestStreak: "最長連続",
+      nextDraw: "次の抽選まで {n} 日", drawReady: "抽選できます", drawBtn: "武将カードを引く",
+      drawNone: "抽選権がありません。3日連続ごとに1回。",
+      wallCards: "カードウォール", wallBadges: "実績", noCards: "カードがありません。まず一枚引きましょう。",
+      gift: "贈る", giftTitle: "カードを贈る", giftTo: "受取人（メール・電話・名前）",
+      giftMsg: "メッセージ（任意）", giftSend: "贈る", giftLast: "最後の一枚は贈れません。",
+      giftOk: "{n} に贈りました", giftRecord: "贈答履歴", giftFrom: "{n} より", giftToYou: "{n} へ",
+      ledger: "ポイント明細", exportData: "エクスポート", importData: "インポート", dataNote:
+        "データはこのブラウザ（localStorage）に保存されます。端末移行はエクスポート／インポートで。",
+      commentGen: "武将評価", commentCity: "都市評価", cmPh: "この武将への評価を書く…",
+      cmPhCity: "この都市への評価を書く…", cmSubmit: "投稿", cmEmpty: "評価はまだありません。最初の一人に。",
+      cmLogin: "ログインして評価", cmReply: "返信", cmReplyPh: "返信…", cmRate: "評価",
+      permanent: "評価は永久保存。削除時は墓碑記録が残ります。",
+      avg: "平均", reviews: "件", badges: "バッジ", viewGeneral: "詳細へ",
+      authIn: "ログイン", authUp: "アカウント作成", authName: "表示名", authEmail: "メール",
+      authPhone: "電話", authAcc: "メールまたは電話", authNote: "パスワード不要。メール／電話が鍵です。",
+      authAgree: "コミュニティ規約とプライバシーに同意します。", authSubmitIn: "ログイン", authSubmitUp: "作成",
+      errName: "名前は2〜16文字。", errEmail: "有効なメールを入力。",
+      errPhone: "有効な電話番号を入力。", errAgree: "規約に同意してください。",
+      errDupEmail: "このメールは登録済みです。", errDupPhone: "この電話は登録済みです。",
+      errNoUser: "アカウントが見つかりません。", errLogin: "ログインしてください。",
+      loggedIn: "おかえりなさい、{n}", registered: "登録完了。ようこそ {n} さん！",
+      checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
+      already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。",
+      tagOwner: "モデレーター", myThreads: "自分のスレ", myReviews: "自分の評価", joinedAt: "{d} 登録",
+      saveFail: "保存容量不足。エクスポートしてください。", justNow: "たった今", minAgo: "分前",
+      hourAgo: "時間前", dayAgo: "日前", postOk: "投稿しました。", replyOk: "返信しました。",
+      cmOk: "評価しました。", likeNeed: "ログインが必要です。", postNeed: "ログインが必要です。",
+      accessDenied: "自分の投稿のみ削除できます。", confirmDel: "削除しますか？",
+      total: "合計", wallEmpty: "まだありません。", users: "人", pointsShort: "点",
+      rulesText: "礼儀・出典明記・スパム禁止・一人一件・ファン内容のみ。",
+      activeEmpty: "活動なし。", statPosts: "スレ", statReplies: "返信", statReviews: "評価",
+      permBrowse: "閲覧", permPost: "投稿", permReview: "評価", permDel: "削除", permGift: "贈呈",
+      account: "アカウント", signOutOk: "ログアウトしました。", importOk: "インポート完了。", importBad: "不正なファイル。",
+      confirmImport: "すべてのローカルデータを置き換えます。続行？", yes: "はい", no: "キャンセル",
+      close: "閉じる", back: "戻る", rate5: "星5", noAccount: "アカウントがない方は登録", hasAccount: "登録済みの方はログイン",
+      cardOf: "カード", serial: "番号", gotFrom: "{n} より受領", empty: "空"
+    },
+    zh: {
+      navForum: "论武坛", pts: "积分", login: "登录", register: "注册", logout: "退出登录",
+      myPage: "我的主页", myWall: "徽章墙", drawShort: "抽卡", notif: "通知",
+      forumTitle: "论武坛", forumSub: "以武会友，以史证道。论阵容、写战报、评武将、品城池，与天下诸侯共议。",
+      topics: "主题", replies: "回复", members: "会员", online: "在线",
+      all: "全部", catWar: "战报", catForm: "阵容", catHist: "史料", catChat: "闲聊", catSite: "站务",
+      newest: "最新", hottest: "最热", newPost: "发帖", searchPh: "搜索帖子…",
+      notice: "坛中公告", rules: "社区公约", active: "活跃坛友", perms: "权限说明",
+      guest: "游客", member: "会员", author: "作者", mod: "版主",
+      noThreads: "暂无主题", noThreadsSub: "来发表第一篇议论吧。",
+      floor: "楼", like: "赞", reply: "回复", delete: "删除", deleted: "该内容已被作者删除",
+      replyPh: "写下你的回复…", replyBtn: "发表回复", backForum: "返回论武坛",
+      composeTitle: "发表新帖", titlePh: "标题", bodyPh: "正文…", publish: "发布",
+      meTitle: "我的主页", guestTitle: "尚未登录", guestSub: "使用邮箱或手机号登录，加入论武坛。",
+      points: "积分", streak: "连续登录", totalDays: "累计登录", cards: "卡牌", draws: "抽卡机会",
+      memberSince: "注册于", email: "邮箱", phone: "手机", role: "身份",
+      loginReward: "每日登录", streakNow: "当前连续", bestStreak: "最长连续",
+      nextDraw: "再登录 {n} 天可获得抽卡机会", drawReady: "已有抽卡机会", drawBtn: "抽取武将卡",
+      drawNone: "暂无抽卡机会：每连续登录 3 天获得 1 次。",
+      wallCards: "卡牌墙", wallBadges: "成就徽章", noCards: "还没有卡牌，先抽一张吧。",
+      gift: "赠予", giftTitle: "赠予卡牌", giftTo: "收赠人（邮箱 / 手机 / 名称）",
+      giftMsg: "赠言（可选）", giftSend: "确认赠予", giftLast: "仅剩一张卡牌，无法赠出。",
+      giftOk: "已赠予 {n}", giftRecord: "赠卡记录", giftFrom: "得自 {n}", giftToYou: "赠予 {n}",
+      ledger: "积分明细", exportData: "导出数据", importData: "导入数据", dataNote:
+        "社区数据保存在本浏览器（localStorage）。换设备时请用导出 / 导入迁移，记录可长期保留。",
+      commentGen: "武将评价", commentCity: "城市评价", cmPh: "写下你对这位武将的评价…",
+      cmPhCity: "写下你对这座城池的评价…", cmSubmit: "发表评价", cmEmpty: "还没有评价，来做第一个。",
+      cmLogin: "登录后参与评价", cmReply: "回复", cmReplyPh: "回复…", cmRate: "评分",
+      permanent: "评价与回复永久保留，作者删除后仍保留墓碑记录。",
+      avg: "均分", reviews: "条评价", badges: "枚徽章", viewGeneral: "查看武将",
+      authIn: "登录", authUp: "注册账号", authName: "名称", authEmail: "邮箱",
+      authPhone: "手机号", authAcc: "邮箱或手机号", authNote: "无需密码，邮箱 / 手机号即账号凭证。",
+      authAgree: "我已阅读并同意《论武坛社区公约》与数据说明。", authSubmitIn: "登录", authSubmitUp: "创建账号",
+      errName: "名称需为 2–16 个字符。", errEmail: "请输入有效的邮箱地址。",
+      errPhone: "请输入有效的手机号。", errAgree: "请先同意社区公约。",
+      errDupEmail: "该邮箱已注册。", errDupPhone: "该手机号已注册。",
+      errNoUser: "账号不存在，请先注册。", errLogin: "请先登录。",
+      loggedIn: "欢迎回来，{n}", registered: "注册成功，欢迎 {n}！",
+      checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
+      already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。",
+      tagOwner: "版主", myThreads: "我的主题", myReviews: "我的评价", joinedAt: "{d} 注册",
+      saveFail: "本地存储已满，请立即导出数据。", justNow: "刚刚", minAgo: " 分钟前",
+      hourAgo: " 小时前", dayAgo: " 天前", postOk: "帖子已发布。", replyOk: "回复已发表。",
+      cmOk: "评价已发表。", likeNeed: "登录后才能点赞。", postNeed: "登录后才能发帖。",
+      accessDenied: "只能删除自己的内容。", confirmDel: "确认删除这条内容？",
+      total: "共", wallEmpty: "这里还空着。", users: "位", pointsShort: "分",
+      rulesText: "以礼相待 · 标明出处 · 禁止灌水 · 一人一号 · 仅限同人内容。",
+      activeEmpty: "暂无活跃记录。", statPosts: "主题", statReplies: "回复", statReviews: "评价",
+      permBrowse: "浏览", permPost: "发帖 / 回帖", permReview: "评价 / 点赞", permDel: "删除", permGift: "赠卡",
+      account: "账号", signOutOk: "已退出登录。", importOk: "数据已导入。", importBad: "文件格式不正确。",
+      confirmImport: "导入将覆盖全部本地社区数据，是否继续？", yes: "继续", no: "取消",
+      close: "关闭", back: "返回", rate5: "五星", noAccount: "还没有账号？去注册", hasAccount: "已注册？去登录",
+      cardOf: "卡牌", serial: "编号", gotFrom: "得自 {n}", empty: "空"
+    }
+  };
+  function lang() { try { return localStorage.getItem("sg_lang") || "en"; } catch (e) { return "en"; } }
+  function T(k, v) {
+    var d = L[lang()] || L.en;
+    var s = d[k] != null ? d[k] : (L.en[k] != null ? L.en[k] : k);
+    if (v) s = s.replace(/\{(\w+)\}/g, function (m, p) { return v[p] != null ? v[p] : m; });
+    return s;
+  }
+
+  /* ---------------- 数据 ---------------- */
+  var DB = null;
+  var UI = { menu: false, wall: "cards", cat: "all", sort: "new", q: "", rating: 5, replyTo: null, giftCard: null, authTab: "login", busy: false };
+
+  function blank() {
+    return {
+      v: 2, users: [], session: null, posts: [], replies: [], comments: [], gifts: [],
+      seq: { user: 0, post: 0, reply: 0, comment: 0, card: 0, gift: 0, notif: 0 }, seeded: false
+    };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      var d = JSON.parse(raw);
+      if (!d || !d.users || !d.seq) return null;
+      return d;
+    } catch (e) { return null; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(DB)); }
+    catch (e) { toast(T("saveFail"), "err", 6000); }
+  }
+  function GENS() { return (window.__SGAtlas && window.__SGAtlas.gens) || []; }
+  function gById(id) { var a = GENS(); for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
+  function gByName(n) { var a = GENS(); for (var i = 0; i < a.length; i++) if (a[i].name === n) return a[i]; return null; }
+  function facColor(f) {
+    var F = (window.__SGAtlas && window.__SGAtlas.faction) || {};
+    return (F[f] && F[f].color) || "#c9a45c";
+  }
+  function rarityOf(g) { var t = g.total || 0; return t >= 90 ? 5 : t >= 80 ? 4 : t >= 70 ? 3 : t >= 60 ? 2 : 1; }
+  function rarName(r) { return ({ 5: "绝世", 4: "一流", 3: "良将", 2: "可用", 1: "庸常" })[r] || "—"; }
+
+  function me() { if (!DB.session) return null; for (var i = 0; i < DB.users.length; i++) if (DB.users[i].uid === DB.session) return DB.users[i]; return null; }
+  function userById(id) { for (var i = 0; i < DB.users.length; i++) if (DB.users[i].uid === id) return DB.users[i]; return null; }
+  function findAccount(acc) {
+    var s = String(acc || "").trim().toLowerCase();
+    if (!s) return null;
+    for (var i = 0; i < DB.users.length; i++) {
+      var u = DB.users[i];
+      if ((u.email || "").toLowerCase() === s || (u.phone || "").toLowerCase() === s || (u.name || "").toLowerCase() === s) return u;
+    }
+    return null;
+  }
+  function notify(u, text) {
+    if (!u) return;
+    u.notifs = u.notifs || [];
+    DB.seq.notif++;
+    u.notifs.unshift({ id: "n" + DB.seq.notif, text: text, at: Date.now(), read: false });
+    if (u.notifs.length > 40) u.notifs.length = 40;
+  }
+  function addPoints(u, delta, reason) {
+    u.points = (u.points || 0) + delta;
+    u.ledger = u.ledger || [];
+    u.ledger.unshift({ t: Date.now(), d: delta, r: reason });
+    if (u.ledger.length > 120) u.ledger.length = 120;
+  }
+
+  /* ---------------- 徽章 ---------------- */
+  function badgeDefs(u) {
+    var posts = DB.posts.filter(function (p) { return p.uid === u.uid && !p.deleted; }).length;
+    var cms = DB.comments.filter(function (c) { return c.uid === u.uid && !c.deleted; }).length;
+    var gifts = DB.gifts.filter(function (g) { return g.from === u.uid; }).length;
+    var cards = (u.cards || []).length;
+    var legend = (u.cards || []).some(function (c) { var g = gById(c.gid); return g && rarityOf(g) === 5; });
+    return [
+      { k: "newcomer", c: "初", n: "初入图鉴", d: "注册账号", on: true },
+      { k: "streak3", c: "三", n: "三日不辍", d: "连续登录 3 天", on: (u.bestStreak || 0) >= 3 },
+      { k: "streak7", c: "七", n: "七日连胜", d: "连续登录 7 天", on: (u.bestStreak || 0) >= 7 },
+      { k: "streak30", c: "月", n: "月下论剑", d: "连续登录 30 天", on: (u.bestStreak || 0) >= 30 },
+      { k: "post1", c: "帖", n: "初鸣", d: "发表 1 个主题", on: posts >= 1 },
+      { k: "post10", c: "辩", n: "舌战群儒", d: "发表 10 个主题", on: posts >= 10 },
+      { k: "cm1", c: "评", n: "月旦评", d: "发表 1 条评价", on: cms >= 1 },
+      { k: "cm20", c: "鉴", n: "识人无数", d: "发表 20 条评价", on: cms >= 20 },
+      { k: "gift1", c: "赠", n: "赠剑之交", d: "送出 1 张卡牌", on: gifts >= 1 },
+      { k: "cards5", c: "藏", n: "五虎收藏", d: "收集 5 张卡牌", on: cards >= 5 },
+      { k: "cards20", c: "英", n: "群英荟萃", d: "收集 20 张卡牌", on: cards >= 20 },
+      { k: "legend", c: "绝", n: "绝世一遇", d: "抽到五星武将", on: legend }
+    ];
+  }
+  function checkBadges(u) {
+    if (!u) return [];
+    u.badges = u.badges || {};
+    var got = [];
+    badgeDefs(u).forEach(function (b) {
+      if (b.on && !u.badges[b.k]) { u.badges[b.k] = Date.now(); got.push(b); }
+    });
+    return got;
+  }
+
+  /* ---------------- 登录 / 积分 ---------------- */
+  function tick(u, dayOverride) {
+    var day = dayOverride || dateStr(0);
+    if (u.lastLogin === day) return { already: true };
+    var yest = shiftDay(day, -1);
+    u.streak = u.lastLogin === yest ? (u.streak || 0) + 1 : 1;
+    if (u.streak > (u.bestStreak || 0)) u.bestStreak = u.streak;
+    u.lastLogin = day;
+    u.loginDays = u.loginDays || [];
+    if (u.loginDays.indexOf(day) < 0) u.loginDays.push(day);
+    u.loginDays.sort();
+    if (u.loginDays.length > 150) u.loginDays = u.loginDays.slice(-150);
+    var gain = 10 * Math.pow(2, u.streak - 1);
+    addPoints(u, gain, T("checkin", { d: u.streak, p: fmt(gain) }));
+    var got = false;
+    if (u.streak % 3 === 0) { u.draws = (u.draws || 0) + 1; got = true; }
+    return { already: false, gain: gain, streak: u.streak, draw: got };
+  }
+
+  function register(name, email, phone, agree) {
+    name = String(name || "").trim();
+    email = String(email || "").trim();
+    phone = String(phone || "").trim();
+    if (name.length < 2 || name.length > 16) return { err: T("errName") };
+    if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email)) return { err: T("errEmail") };
+    if (!/^\+?[0-9][0-9\-\s]{5,15}$/.test(phone)) return { err: T("errPhone") };
+    if (!agree) return { err: T("errAgree") };
+    if (DB.users.some(function (u) { return (u.email || "").toLowerCase() === email.toLowerCase(); })) return { err: T("errDupEmail") };
+    if (DB.users.some(function (u) { return (u.phone || "").replace(/[\s\-]/g, "") === phone.replace(/[\s\-]/g, ""); })) return { err: T("errDupPhone") };
+    DB.seq.user++;
+    var u = {
+      uid: "u" + DB.seq.user, name: name, email: email, phone: phone, created: Date.now(),
+      points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 0,
+      cards: [], badges: {}, ledger: [{ t: Date.now(), d: 999, r: lang() === "zh" ? "新账号初始积分" : "Sign-up bonus" }],
+      notifs: [], role: "user"
+    };
+    DB.users.push(u);
+    DB.session = u.uid;
+    var r = tick(u);
+    checkBadges(u);
+    save();
+    return { ok: true, user: u, tick: r };
+  }
+  function login(acc) {
+    var u = findAccount(acc);
+    if (!u) return { err: T("errNoUser") };
+    DB.session = u.uid;
+    var r = tick(u);
+    checkBadges(u);
+    save();
+    return { ok: true, user: u, tick: r };
+  }
+  function logout() {
+    DB.session = null;
+    save();
+    paintAcct();
+    toast(T("signOutOk"), "ok");
+    rerender();
+  }
+
+  /* ---------------- 卡牌 ---------------- */
+  function mkCard(gid, extra) {
+    DB.seq.card++;
+    var c = { id: "c" + DB.seq.card, gid: gid, at: Date.now(), serial: "SG" + String(DB.seq.card).padStart(4, "0") };
+    if (extra) for (var k in extra) c[k] = extra[k];
+    return c;
+  }
+  function rollGeneral() {
+    var pool = GENS().filter(function (g) { return g.era !== "古代"; });
+    if (!pool.length) return null;
+    var w = { 5: 2, 4: 9, 3: 28, 2: 40, 1: 21 };
+    var total = 0, i, r;
+    for (i = 0; i < pool.length; i++) total += w[rarityOf(pool[i])];
+    r = Math.random() * total;
+    for (i = 0; i < pool.length; i++) {
+      r -= w[rarityOf(pool[i])];
+      if (r <= 0) return pool[i];
+    }
+    return pool[pool.length - 1];
+  }
+  function draw(u) {
+    if ((u.draws || 0) <= 0) return { err: T("noDraw") };
+    var g = rollGeneral();
+    if (!g) return { err: T("noDraw") };
+    u.draws--;
+    var c = mkCard(g.id);
+    u.cards = u.cards || [];
+    u.cards.unshift(c);
+    var nb = checkBadges(u);
+    save();
+    return { ok: true, card: c, gen: g, badges: nb };
+  }
+
+  /* ---------------- 论坛数据操作 ---------------- */
+  function addPost(u, cat, title, body) {
+    DB.seq.post++;
+    var p = { id: "p" + DB.seq.post, cat: cat, title: title, body: body, uid: u.uid, created: Date.now(), likes: [], pinned: false, deleted: false };
+    DB.posts.unshift(p);
+    checkBadges(u);
+    save();
+    return p;
+  }
+  function addReply(u, pid, body, toId) {
+    DB.seq.reply++;
+    var r = { id: "r" + DB.seq.reply, pid: pid, uid: u.uid, body: body, created: Date.now(), likes: [], to: toId || null, deleted: false };
+    DB.replies.push(r);
+    var p = DB.posts.filter(function (x) { return x.id === pid; })[0];
+    if (p && p.uid !== u.uid) {
+      var target = userById(p.uid);
+      if (target) notify(target, (u.name + " 回复了你的主题《" + p.title + "》"));
+    }
+    checkBadges(u);
+    save();
+    return r;
+  }
+  function addComment(u, kind, key, rating, body, parent) {
+    DB.seq.comment++;
+    var c = { id: "m" + DB.seq.comment, kind: kind, key: key, uid: u.uid, rating: rating || 0, body: body, created: Date.now(), likes: [], parent: parent || null, deleted: false };
+    DB.comments.push(c);
+    if (parent) {
+      var p = DB.comments.filter(function (x) { return x.id === parent; })[0];
+      if (p && p.uid !== u.uid) {
+        var t = userById(p.uid);
+        if (t) notify(t, u.name + " 回复了你的评价");
+      }
+    }
+    checkBadges(u);
+    save();
+    return c;
+  }
+  function giftCard(from, cardId, toAcc, msg) {
+    var card = (from.cards || []).filter(function (c) { return c.id === cardId; })[0];
+    if (!card) return { err: T("giftLast") };
+    if ((from.cards || []).length <= 1) return { err: T("giftLast") };
+    var to = findAccount(toAcc);
+    if (!to) return { err: T("errNoUser") };
+    if (to.uid === from.uid) return { err: T("errNoUser") };
+    from.cards = from.cards.filter(function (c) { return c.id !== cardId; });
+    var nc = mkCard(card.gid, { from: from.uid, fromName: from.name, msg: msg || "" });
+    to.cards = to.cards || [];
+    to.cards.unshift(nc);
+    DB.seq.gift++;
+    DB.gifts.unshift({ id: "g" + DB.seq.gift, gid: card.gid, cardId: nc.id, from: from.uid, to: to.uid, msg: msg || "", at: Date.now() });
+    notify(to, from.name + " 赠予你一张武将卡：" + ((gById(card.gid) || {}).name || ""));
+    checkBadges(from); checkBadges(to);
+    save();
+    return { ok: true, card: nc, to: to };
+  }
+
+  /* ---------------- 种子数据（让论坛一开始就有内容） ---------------- */
+  function seed() {
+    DB = blank();
+    DB.seeded = true;
+    var now = Date.now(), H = 3600000;
+    function su(name, email, phone, pts, streak, role) {
+      DB.seq.user++;
+      return {
+        uid: "u" + DB.seq.user, name: name, email: email, phone: phone, created: now - 86400000 * 26,
+        points: pts, streak: streak, bestStreak: streak, lastLogin: dateStr(0), loginDays: [dateStr(0), dateStr(-1), dateStr(-2)],
+        draws: 0, cards: [], badges: {}, ledger: [], notifs: [], role: role || "user"
+      };
+    }
+    var u1 = su("陈寿", "master@atlas.sg", "13800000001", 4210, 9, "owner");
+    var u2 = su("卧龙先生", "wolong@atlas.sg", "13800000002", 2680, 6);
+    var u3 = su("江东小霸王", "jiangdong@atlas.sg", "13800000003", 1520, 4);
+    var u4 = su("许都书生", "xudu@atlas.sg", "13800000004", 990, 2);
+    var u5 = su("西凉铁骑", "xiliang@atlas.sg", "13800000005", 760, 1);
+    DB.users.push(u1, u2, u3, u4, u5);
+
+    function giveSeed(u, names) {
+      names.forEach(function (n) {
+        var g = gByName(n);
+        if (g) { var c = mkCard(g.id); c.at = now - Math.floor(Math.random() * 86400000 * 8); u.cards.push(c); }
+      });
+    }
+    giveSeed(u1, ["曹操", "司马懿", "关羽", "周瑜", "赵云"]);
+    giveSeed(u2, ["诸葛亮", "庞统", "姜维", "马谡"]);
+    giveSeed(u3, ["孙策", "太史慈", "甘宁", "周泰"]);
+    giveSeed(u4, ["荀彧", "郭嘉", "张辽"]);
+    giveSeed(u5, ["马超", "庞德", "韩遂"]);
+
+    function post(cat, title, body, uid, hoursAgo, pinned) {
+      DB.seq.post++;
+      var p = { id: "p" + DB.seq.post, cat: cat, title: title, body: body, uid: uid, created: now - hoursAgo * H, likes: [], pinned: !!pinned, deleted: false };
+      DB.posts.push(p);
+      return p;
+    }
+    function rep(pid, uid, body, hoursAgo, to) {
+      DB.seq.reply++;
+      DB.replies.push({ id: "r" + DB.seq.reply, pid: pid, uid: uid, body: body, created: now - hoursAgo * H, likes: [], to: to || null, deleted: false });
+    }
+
+    var p1 = post("站务", "【置顶】论武坛公约：以武会友，以史证道",
+      "一、以礼相待：可以争论数据与战例，不可人身攻击。\n" +
+      "二、标明出处：引用《三国志》《三国演义》或游戏数据时，请注明来源与卷次。\n" +
+      "三、禁止灌水：同一内容请勿重复开帖，广告与引流一律删除。\n" +
+      "四、一人一号：注册仅需名称、邮箱、手机号，请勿注册多号刷积分。\n" +
+      "五、仅限同人：本坛为爱好者数据可视化站点，与任何游戏厂商无关。\n\n" +
+      "—— 坛主 陈寿", u1.uid, 240, true);
+    var p2 = post("战报", "【置顶】新人报到：留下你的主力阵容",
+      "格式简单点即可：\n势力 / 主力五人 / 常用兵法 / 一句话战法。\n\n" +
+      "示例：魏 · 张辽 徐晃 于禁 乐进 李典 · 突击 + 骑射 · 先手冲阵，二回合破阵。\n\n" +
+      "报到即视为加入论武坛，之后每连续登录三天可抽一次武将卡，卡牌可互赠。", u3.uid, 96, true);
+    var p3 = post("战报", "虎牢关三英战吕布，若换成曹营六将能否拿下？",
+      "按《三国志11》数据推演：吕布 武力100 统率95，关羽 97/95，张飞 98/88。\n" +
+      "三英合击的关键不在武力总和，而在「车轮消耗 + 地形窄口」。虎牢关前为坡地，骑兵冲锋加成受限。\n" +
+      "若换曹营六将（许褚、典韦、夏侯惇、夏侯渊、张辽、徐晃），单点爆发略降，但轮换续航更强，\n" +
+      "我倾向六将可在二十合内逼退吕布，却难以阵斩。诸位以为如何？", u4.uid, 30);
+    var p4 = post("阵容", "五子良将 vs 五虎上将：按数据推演三十合",
+      "张辽 92/93、乐进 84/88、于禁 82/79、张郃 90/89、徐晃 88/90 —— 均衡、无短板。\n" +
+      "关羽 95/97、张飞 88/98、赵云 91/96、马超 88/97、黄忠 87/93 —— 上限更高，但政治与智力拖累补给。\n\n" +
+      "若只打一场遭遇战，五虎胜；若打一州之战，五子胜。诸位可结合城池数据看粮道。", u2.uid, 52);
+    var p5 = post("史料", "《三国志》里被演义严重低估的五个人",
+      "1. 鲁肃：演义写成老实人，实为二分天下之谋主。\n" +
+      "2. 曹真：演义屡败于诸葛亮，正史中街亭后稳守关中。\n" +
+      "3. 朱然：演义被赵云一枪刺死，正史守江陵六月。\n" +
+      "4. 贺齐：东吴山地战专家，演义几乎不提。\n" +
+      "5. 张既：凉州经营，断马超后路的关键。\n\n欢迎补充。", u5.uid, 70);
+    var p6 = post("闲聊", "你们第一张抽到的武将卡是谁？",
+      "我先来：孙策，四星一流，直接挂到主页了。\n据说首抽有保底，不知道是不是真的。", u3.uid, 12);
+
+    rep(p1.id, u2.uid, "收到，引用处会标明卷次。", 200);
+    rep(p1.id, u5.uid, "建议再加一条：禁止拿演义当正史压人。", 180);
+    rep(p2.id, u4.uid, "魏 · 荀彧 郭嘉 张辽 徐晃 曹仁 · 齐射 + 突击 · 谋士先手削防。", 90);
+    rep(p2.id, u2.uid, "蜀 · 诸葛亮 赵云 魏延 黄忠 王平 · 乱射 + 猛冲 · 山地设伏。", 88, u4.uid);
+    rep(p2.id, u3.uid, "吴 · 周瑜 太史慈 甘宁 周泰 吕蒙 · 水战 + 火计 · 引敌入港。", 80);
+    rep(p3.id, u2.uid, "六将虽众，能近身者不过二三人，窄口反而自阻。我更看好三英。", 26);
+    rep(p3.id, u5.uid, "若让张辽徐晃先射其马，再合围，未必不能。", 24, u2.uid);
+    rep(p3.id, u1.uid, "史载吕布是被李傕郭汜逐出长安，非虎牢关败退。此处只论演义。", 20);
+    rep(p4.id, u3.uid, "五子打的是国战，五虎打的是决斗，题目没说清。", 48);
+    rep(p4.id, u4.uid, "补一句：于禁统率高但政治低，守城可以，独当一面不行。", 44, u3.uid);
+    rep(p5.id, u2.uid, "补一个：陈到。演义几乎隐去，正史与赵云齐名。", 60);
+    rep(p6.id, u4.uid, "荀彧，三星良将，可惜不能上阵。", 10);
+    rep(p6.id, u5.uid, "马超，五星绝世，当时手都抖了。", 8, u4.uid);
+
+    function cm(kind, key, uid, rating, body, hoursAgo, parent) {
+      DB.seq.comment++;
+      DB.comments.push({ id: "m" + DB.seq.comment, kind: kind, key: key, uid: uid, rating: rating, body: body, created: now - hoursAgo * H, likes: [], parent: parent || null, deleted: false });
+    }
+    var cao = gByName("曹操"), guan = gByName("关羽"), zgl = gByName("诸葛亮"), zy = gByName("赵云"), lb = gByName("吕布");
+    if (cao) {
+      cm("gen", cao.id, u4.uid, 5, "五维无短板，统率政治双高，做君主最稳。", 40);
+      cm("gen", cao.id, u2.uid, 4, "武力略逊于顶级猛将，但综合仍是第一档。", 36, null);
+      cm("gen", cao.id, u3.uid, 5, "「宁教我负天下人」这句放游戏里就是先手削防。", 20, null);
+    }
+    if (guan) cm("gen", guan.id, u3.uid, 5, "武圣，单挑几乎无敌；统率也高，能独领一军。", 30);
+    if (zgl) {
+      cm("gen", zgl.id, u2.uid, 5, "智力天花板，配乱射与伏兵，守城无解。", 50);
+      cm("gen", zgl.id, u5.uid, 4, "政治与魅力都高，但武力是硬伤，别让他近战。", 22, null);
+    }
+    if (zy) cm("gen", zy.id, u1.uid, 5, "统武双高，骑兵 S，长坂坡不是演义虚构的全部。", 18);
+    if (lb) cm("gen", lb.id, u5.uid, 5, "武力100，但政治太低，只能当锋刃不能当执剑人。", 26);
+    cm("city", "洛阳", u4.uid, 5, "天下首善，商业92，前期拿下就等于拿下中原钱袋。", 44);
+    cm("city", "许昌", u2.uid, 5, "屯田起点，农业82，粮道稳。", 32, null);
+    cm("city", "成都", u3.uid, 5, "蜀锦 + 井盐，经济独立性强，守得住。", 28);
+    cm("city", "建业", u5.uid, 4, "长江天险，但城防只有80，水军必须强。", 16);
+
+    u1.badges = { newcomer: now, streak3: now, streak7: now, post1: now, post10: now, cm1: now, gift1: now, cards5: now, legend: now };
+    u2.badges = { newcomer: now, streak3: now, streak7: now, post1: now, cm1: now, cards5: now, legend: now };
+    u3.badges = { newcomer: now, streak3: now, post1: now, cm1: now, cards5: now };
+    u4.badges = { newcomer: now, post1: now, cm1: now, cards5: now };
+    u5.badges = { newcomer: now, cm1: now, cards5: now, legend: now };
+    save();
+  }
+
+  /* ---------------- 富文本片段 ---------------- */
+  function av(u, cls) {
+    if (!u) return '<span class="sgav ' + (cls || "") + '">?</span>';
+    var hue = hashNum(u.uid) % 360;
+    var bg = u.role === "owner"
+      ? "linear-gradient(135deg,#e8c988,#c9a45c)"
+      : "linear-gradient(135deg,hsl(" + hue + ",46%,66%),hsl(" + hue + ",40%,44%))";
+    return '<span class="sgav ' + (cls || "") + '" style="background:' + bg + ';color:#161208">' + esc(ini(u.name)) + "</span>";
+  }
+  function roleTag(u) {
+    if (!u) return "";
+    return u.role === "owner" ? '<span class="sg-role owner">' + T("tagOwner") + "</span>" : "";
+  }
+  function starsHTML(v) {
+    var s = "";
+    for (var i = 1; i <= 5; i++) s += '<span class="' + (i <= v ? "on" : "") + '">★</span>';
+    return '<span class="sg-stars">' + s + "</span>";
+  }
+  function catMeta(c) {
+    var m = {
+      "战报": { c: "#c96a4f", ic: "战" }, "阵容": { c: "#6b9fe8", ic: "阵" },
+      "史料": { c: "#a78bda", ic: "史" }, "闲聊": { c: "#4fb37d", ic: "谈" },
+      "站务": { c: "#cf9f55", ic: "务" }
+    };
+    return m[c] || { c: "#8a93a3", ic: "论" };
+  }
+  function catLabel(c) {
+    return ({ "战报": T("catWar"), "阵容": T("catForm"), "史料": T("catHist"), "闲聊": T("catChat"), "站务": T("catSite") })[c] || c;
+  }
+
+  /* ---------------- 渲染：论坛列表 ---------------- */
+  function visiblePosts() {
+    var arr = DB.posts.filter(function (p) { return !p.deleted; });
+    if (UI.cat !== "all") arr = arr.filter(function (p) { return p.cat === UI.cat; });
+    if (UI.q) {
+      var q = UI.q.toLowerCase();
+      arr = arr.filter(function (p) {
+        return (p.title + p.body).toLowerCase().indexOf(q) >= 0;
+      });
+    }
+    arr.sort(function (a, b) {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      if (UI.sort === "hot") {
+        var la = a.likes.length + DB.replies.filter(function (r) { return r.pid === a.id; }).length;
+        var lb2 = b.likes.length + DB.replies.filter(function (r) { return r.pid === b.id; }).length;
+        return lb2 - la || b.created - a.created;
+      }
+      return b.created - a.created;
+    });
+    return arr;
+  }
+  function threadHTML(p) {
+    var u = userById(p.uid) || { name: "?" };
+    var reps = DB.replies.filter(function (r) { return r.pid === p.id && !r.deleted; });
+    var last = reps.length ? reps[reps.length - 1].created : p.created;
+    var m = catMeta(p.cat);
+    var body = String(p.body || "").replace(/\s+/g, " ");
+    return '<article class="sg-th" data-sgact="open-thread" data-id="' + p.id + '">' +
+      '<div class="sg-th-ic" style="--c:' + m.c + '">' + m.ic + "</div>" +
+      '<div class="sg-th-main"><div class="sg-th-top">' +
+      '<span class="sg-cat" style="color:' + m.c + '">' + esc(catLabel(p.cat)) + "</span>" +
+      '<h3>' + esc(p.title) + "</h3>" +
+      (p.pinned ? '<span class="sg-pin">TOP</span>' : "") +
+      "</div>" +
+      '<p class="sg-th-ex">' + esc(body.slice(0, 150)) + "</p>" +
+      '<div class="sg-th-meta"><span>' + esc(u.name) + "</span><span>" + ago(p.created) + "</span>" +
+      "<span>" + T("replies") + " <b>" + reps.length + "</b></span><span>" + T("like") + " <b>" + p.likes.length + "</b></span>" +
+      "<span>" + T("reply") + " · " + ago(last) + "</span></div></div>" +
+      '<div class="sg-th-side"><b>' + reps.length + "</b><span>" + T("replies") + "</span></div></article>";
+  }
+  function renderForum() {
+    var posts = visiblePosts();
+    var totalReps = DB.replies.filter(function (r) { return !r.deleted; }).length;
+    var counts = {};
+    DB.posts.filter(function (p) { return !p.deleted; }).forEach(function (p) { counts[p.cat] = (counts[p.cat] || 0) + 1; });
+    var cats = ["all", "战报", "阵容", "史料", "闲聊", "站务"];
+    var chips = cats.map(function (c) {
+      var n = c === "all" ? DB.posts.filter(function (p) { return !p.deleted; }).length : (counts[c] || 0);
+      return '<button class="sgchip' + (UI.cat === c ? " on" : "") + '" data-sgact="set-cat" data-cat="' + c + '">' +
+        (c === "all" ? T("all") : esc(catLabel(c))) + '<span class="n">' + n + "</span></button>";
+    }).join("");
+
+    var active = DB.users.map(function (u) {
+      var n = DB.posts.filter(function (p) { return p.uid === u.uid && !p.deleted; }).length * 3 +
+        DB.replies.filter(function (r) { return r.uid === u.uid && !r.deleted; }).length +
+        DB.comments.filter(function (c) { return c.uid === u.uid && !c.deleted; }).length;
+      return { u: u, n: n };
+    }).sort(function (a, b) { return b.n - a.n; }).slice(0, 5);
+
+    var u = me();
+    var list = posts.length ? posts.map(threadHTML).join("") :
+      '<div class="sg-empty"><b>' + T("noThreads") + "</b>" + T("noThreadsSub") + "</div>";
+
+    return '<div class="sg-page">' +
+      '<div class="sg-hero"><div class="sg-hero-row"><div class="grow">' +
+      "<h2>" + T("forumTitle") + "</h2><p>" + T("forumSub") + "</p></div>" +
+      '<div class="sg-hero-stats">' +
+      '<div class="sg-hs"><b>' + DB.posts.filter(function (p) { return !p.deleted; }).length + "</b><span>" + T("topics") + "</span></div>" +
+      '<div class="sg-hs"><b>' + totalReps + "</b><span>" + T("replies") + "</span></div>" +
+      '<div class="sg-hs"><b>' + DB.users.length + "</b><span>" + T("members") + "</span></div>" +
+      '<div class="sg-hs"><b>' + (9 + (hashNum(dateStr(0)) % 17)) + "</b><span>" + T("online") + "</span></div>" +
+      "</div></div></div>" +
+
+      '<div class="sg-forum"><div>' +
+      '<div class="sg-toolbar">' + chips +
+      '<div class="sg-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
+      '<input id="sgForumQ" placeholder="' + T("searchPh") + '" value="' + esc(UI.q) + '"></div>' +
+      '<div class="sp"></div>' +
+      '<button class="sgchip' + (UI.sort === "new" ? " on" : "") + '" data-sgact="set-sort" data-sort="new">' + T("newest") + "</button>" +
+      '<button class="sgchip' + (UI.sort === "hot" ? " on" : "") + '" data-sgact="set-sort" data-sort="hot">' + T("hottest") + "</button>" +
+      '<button class="sgbtn primary sm" data-sgact="new-post">＋ ' + T("newPost") + "</button>" +
+      "</div>" + list + "</div>" +
+
+      '<aside><div class="sg-sidecard"><h4>' + T("notice") + '</h4><p>' +
+      "每连续登录 <b>3 天</b> 获得 1 次抽卡机会；每张武将卡可查看原武将详情，也可赠予他人（仅剩一张时不可赠出）。" +
+      "</p></div>" +
+      '<div class="sg-sidecard"><h4>' + T("rules") + "</h4><ol>" +
+      "<li>以礼相待，不攻击他人。</li><li>引用请注明《三国志》/《演义》/游戏数据。</li>" +
+      "<li>禁止灌水与广告。</li><li>一人一号，不刷积分。</li><li>仅限同人内容，与厂商无关。</li></ol></div>" +
+      '<div class="sg-sidecard"><h4>' + T("active") + "</h4>" +
+      (active.length ? active.map(function (x, i) {
+        return '<div class="sg-rankline"><span class="i">' + (i + 1) + "</span>" + av(x.u, "sm") + esc(x.u.name) +
+          '<span class="sp">' + x.n + "</span></div>";
+      }).join("") : '<p>' + T("activeEmpty") + "</p>") + "</div>" +
+      '<div class="sg-sidecard"><h4>' + T("perms") + "</h4>" +
+      '<table class="sg-perm"><thead><tr><th></th><th>' + T("guest") + "</th><th>" + T("member") + "</th><th>" + T("author") + "</th><th>" + T("mod") + "</th></tr></thead><tbody>" +
+      "<tr><td>" + T("permBrowse") + '</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>' +
+      "<tr><td>" + T("permPost") + '</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>' +
+      "<tr><td>" + T("permReview") + '</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>' +
+      "<tr><td>" + T("permDel") + '</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td></tr>' +
+      "<tr><td>" + T("permGift") + '</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>' +
+      "</tbody></table></div></aside></div></div>";
+  }
+
+  /* ---------------- 渲染：帖子详情 ---------------- */
+  function renderThread(id) {
+    var p = DB.posts.filter(function (x) { return x.id === id; })[0];
+    if (!p) { location.hash = "#/forum"; return ""; }
+    var u = me();
+    var author = userById(p.uid) || { name: "?" };
+    var reps = DB.replies.filter(function (r) { return r.pid === p.id; });
+    var m = catMeta(p.cat);
+    var isAuthor = u && u.uid === p.uid;
+    var canMod = u && u.role === "owner";
+
+    var replyHTML = reps.map(function (r, i) {
+      var ru = userById(r.uid) || { name: "?" };
+      var to = r.to ? DB.replies.filter(function (x) { return x.id === r.to; })[0] : null;
+      var toU = to ? userById(to.uid) : null;
+      var liked = u && r.likes.indexOf(u.uid) >= 0;
+      return '<div class="sg-reply">' + av(ru, "sm") + '<div class="sg-reply-main">' +
+        '<div class="sg-reply-hd"><b>' + esc(ru.name) + "</b>" + roleTag(ru) +
+        (toU ? '<span style="color:var(--ink-3)">回复 ' + esc(toU.name) + "</span>" : "") +
+        "<span>" + ago(r.created) + "</span>" +
+        '<span class="sg-floor">#' + (i + 1) + " " + T("floor") + "</span></div>" +
+        '<div class="sg-reply-body">' + (r.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(r.body)) + "</div>" +
+        (r.deleted ? "" : '<div class="sg-reply-act">' +
+          '<button data-sgact="like-reply" data-id="' + r.id + '">' + (liked ? "★ " : "☆ ") + T("like") + " " + r.likes.length + "</button>" +
+          '<button data-sgact="reply-to" data-id="' + r.id + '">' + T("reply") + "</button>" +
+          ((u && (u.uid === r.uid || canMod)) ? '<button data-sgact="del-reply" data-id="' + r.id + '">' + T("delete") + "</button>" : "") +
+          "</div>") +
+        "</div></div>";
+    }).join("");
+
+    var composer = u ?
+      '<div class="sg-panel" id="sgReplyBox"><div class="sg-panel-hd"><h3><i>·</i>' + T("reply") + "</h3></div>" +
+      (UI.replyTo ? '<div class="sg-note" style="margin-bottom:6px">↳ ' + T("reply") + " #" + (reps.map(function (r) { return r.id; }).indexOf(UI.replyTo) + 1) + " <button class=\"sgbtn sm ghost\" data-sgact=\"reply-cancel\">×</button></div>" : "") +
+      '<textarea class="sgtext" id="sgReplyText" placeholder="' + T("replyPh") + '"></textarea>' +
+      '<div style="display:flex;justify-content:flex-end;margin-top:9px"><button class="sgbtn primary" data-sgact="reply-submit" data-id="' + p.id + '">' + T("replyBtn") + "</button></div></div>" :
+      '<div class="sg-panel" style="text-align:center"><div class="sg-muted" style="margin-bottom:10px">' + T("cmLogin") + "</div>" +
+      '<button class="sgbtn primary" data-sgact="auth-open" data-tab="login">' + T("login") + " / " + T("register") + "</button></div>";
+
+    return '<div class="sg-page">' +
+      '<div class="sg-toolbar"><button class="sgbtn sm ghost" data-sgact="back-forum">‹ ' + T("backForum") + "</button></div>" +
+      '<article class="sg-post"><div class="sg-post-hd">' +
+      '<div class="sg-th-top" style="margin-bottom:8px"><span class="sg-cat" style="color:' + m.c + '">' + esc(catLabel(p.cat)) + "</span>" +
+      (p.pinned ? '<span class="sg-pin">TOP</span>' : "") + "</div>" +
+      "<h1>" + (p.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(p.title)) + "</h1>" +
+      '<div class="sg-post-meta">' + av(author, "sm") + "<b style=\"color:var(--ink)\">" + esc(author.name) + "</b>" + roleTag(author) +
+      "<span>" + ago(p.created) + "</span><span>" + T("replies") + " " + reps.filter(function (r) { return !r.deleted; }).length + "</span></div></div>" +
+      '<div class="sg-post-body">' + (p.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(p.body)) + "</div>" +
+      '<div class="sg-post-foot">' +
+      '<button class="sg-like' + (u && p.likes.indexOf(u.uid) >= 0 ? " on" : "") + '" data-sgact="like-post" data-id="' + p.id + '">☆ ' + T("like") + " " + p.likes.length + "</button>" +
+      '<button class="sgbtn sm ghost" data-sgact="reply-focus">' + T("reply") + "</button>" +
+      '<span class="sp"></span>' +
+      ((u && (u.uid === p.uid || canMod) && !p.deleted) ? '<button class="sgbtn sm danger" data-sgact="del-post" data-id="' + p.id + '">' + T("delete") + "</button>" : "") +
+      "</div></article>" +
+      '<div class="sg-panel" style="margin-top:12px"><div class="sg-panel-hd"><h3><i>·</i>' + T("replies") + " · " + reps.filter(function (r) { return !r.deleted; }).length + "</h3></div>" +
+      (reps.length ? replyHTML : '<div class="sg-empty">' + T("noThreads") + "</div>") + "</div>" + composer + "</div>";
+  }
+
+  /* ---------------- 渲染：评价嵌入块 ---------------- */
+  function commentsHTML(kind, key) {
+    var u = me();
+    var all = DB.comments.filter(function (c) { return c.kind === kind && c.key === String(key); });
+    var roots = all.filter(function (c) { return !c.parent; });
+    var rated = roots.filter(function (c) { return c.rating > 0 && !c.deleted; });
+    var avg = rated.length ? (rated.reduce(function (s, c) { return s + c.rating; }, 0) / rated.length) : 0;
+    var alive = all.filter(function (c) { return !c.deleted; }).length;
+    var canMod = u && u.role === "owner";
+
+    function item(c, nested) {
+      var cu = userById(c.uid) || { name: "?" };
+      var kids = all.filter(function (x) { return x.parent === c.id; });
+      var liked = u && c.likes.indexOf(u.uid) >= 0;
+      var body = '<div class="sg-cm-item' + (nested ? " nested" : "") + '">' +
+        '<div class="sg-cm-top">' + av(cu, "sm") + '<span class="sg-cm-name">' + esc(cu.name) + "</span>" + roleTag(cu) +
+        (c.rating ? starsHTML(c.rating) : "") +
+        '<span class="sg-cm-time">' + ago(c.created) + "</span></div>" +
+        '<div class="sg-cm-text">' + (c.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(c.body)) + "</div>" +
+        (c.deleted ? "" : '<div class="sg-cm-act"><button data-sgact="like-cm" data-id="' + c.id + '">' + (liked ? "★ " : "☆ ") + T("like") + " " + c.likes.length + "</button>" +
+          (nested ? "" : '<button data-sgact="cm-reply" data-id="' + c.id + '">' + T("cmReply") + "</button>") +
+          ((u && (u.uid === c.uid || canMod)) ? '<button data-sgact="del-cm" data-id="' + c.id + '">' + T("delete") + "</button>" : "") +
+          "</div>") +
+        (UI.replyTo === c.id && u ?
+          '<div style="margin-top:8px"><textarea class="sgtext" id="sgCmReplyText" style="min-height:64px" placeholder="' + T("cmReplyPh") + '"></textarea>' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button class="sgbtn sm ghost" data-sgact="cm-reply-cancel">×</button>' +
+          '<button class="sgbtn sm primary" data-sgact="cm-reply-submit" data-id="' + c.id + '">' + T("cmReply") + "</button></div></div>" : "") +
+        "</div>" + kids.map(function (k) { return item(k, true); }).join("");
+      return body;
+    }
+
+    var form = u ?
+      '<div class="sg-cm-form"><div class="row"><span class="sg-muted">' + T("cmRate") + "</span>" +
+      '<span class="sg-star-pick" id="sgRatePick">' +
+      [1, 2, 3, 4, 5].map(function (i) { return '<span class="' + (i <= UI.rating ? "on" : "") + '" data-sgact="rate" data-v="' + i + '">★</span>'; }).join("") +
+      "</span><span style=\"margin-left:auto;font-size:10.5px;color:var(--ink-3)\">" + fmt(u.points) + " " + T("pts") + "</span></div>" +
+      '<textarea class="sgtext" id="sgCmText" placeholder="' + (kind === "gen" ? T("cmPh") : T("cmPhCity")) + '"></textarea>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<span class="sg-note">' + T("permanent") + "</span>" +
+      '<button class="sgbtn primary" data-sgact="cm-submit" data-kind="' + kind + '" data-key="' + esc(key) + '">' + T("cmSubmit") + "</button></div></div>" :
+      '<div class="sg-cm-form" style="text-align:center"><div class="sg-muted" style="margin-bottom:8px">' + T("cmLogin") + "</div>" +
+      '<button class="sgbtn primary" data-sgact="auth-open">' + T("login") + " / " + T("register") + "</button></div>";
+
+    return '<div class="sg-cm"><div class="sg-cm-hd"><h3><i>·</i>' + (kind === "gen" ? T("commentGen") : T("commentCity")) + "</h3>" +
+      '<div class="sg-cm-score"><b>' + (avg ? avg.toFixed(1) : "—") + "</b>" + (avg ? starsHTML(Math.round(avg)) : "") +
+      '<span>' + alive + " " + T("reviews") + "</span></div></div>" +
+      form +
+      '<div class="sg-cm-list">' +
+      (roots.length ? roots.sort(function (a, b) { return b.created - a.created; }).map(function (c) { return item(c, false); }).join("") :
+        '<div class="sg-empty"><b>' + T("cmEmpty") + "</b></div>") + "</div></div>";
+  }
+
+  /* ---------------- 渲染：我的主页 ---------------- */
+  function renderMe() {
+    var u = me();
+    if (!u) {
+      return '<div class="sg-page"><div class="sg-hero"><div class="grow"><h2>' + T("meTitle") + "</h2><p>" + T("guestSub") + "</p></div></div>" +
+        '<div class="sg-panel" style="text-align:center;padding:34px 20px">' +
+        '<div class="sg-muted" style="margin-bottom:14px">' + T("guestSub") + "</div>" +
+        '<button class="sgbtn primary" data-sgact="auth-open" data-tab="login">' + T("login") + "</button> " +
+        '<button class="sgbtn" data-sgact="auth-open" data-tab="register">' + T("register") + "</button></div></div>";
+    }
+    var nb = checkBadges(u); if (nb.length) save();
+    var days = (u.loginDays || []).slice(-14);
+    var cal = "";
+    for (var i = 13; i >= 0; i--) {
+      var d = dateStr(-i), on = (u.loginDays || []).indexOf(d) >= 0;
+      cal += '<i class="' + (on ? "on" : "") + (i === 0 ? " today" : "") + '" title="' + d + '">' + (+d.slice(-2)) + "</i>";
+    }
+    var mod = u.streak % 3, need = mod === 0 ? 3 : 3 - mod;
+    var prog = mod === 0 ? 100 : (mod / 3 * 100);
+    var badges = badgeDefs(u);
+    var got = badges.filter(function (b) { return b.on; }).length;
+
+    var cardsHTML = (u.cards || []).length ? (u.cards || []).map(function (c) { return cardHTML(c, true); }).join("") :
+      '<div class="sg-empty" style="grid-column:1/-1"><b>' + T("noCards") + "</b></div>";
+
+    var badgeHTML = badges.map(function (b) {
+      return '<div class="sg-badge' + (b.on ? " on" : "") + '"><div class="sg-seal">' + b.c + "</div><b>" + b.n + "</b><small>" + b.d + "</small></div>";
+    }).join("");
+
+    var ledger = (u.ledger || []).slice(0, 12).map(function (l) {
+      return "<div><time>" + new Date(l.t).toLocaleDateString() + "</time><span>" + esc(l.r) + '</span><span class="d">+' + fmt(l.d) + "</span></div>";
+    }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+
+    var gad = DB.gifts.map(function (g) {
+      var mine = g.from === u.uid || g.to === u.uid;
+      return mine ? g : null;
+    }).filter(Boolean).slice(0, 8).map(function (g) {
+      var gen = gById(g.gid) || {};
+      var other = userById(g.from === u.uid ? g.to : g.from) || { name: "?" };
+      return '<div class="sg-giftrow"><span class="ic">' + esc((gen.name || "?").slice(0, 1)) + "</span><span>" + esc(gen.name || "?") +
+        "</span><span style=\"color:var(--ink-3)\">" + (g.from === u.uid ? T("giftToYou", { n: esc(other.name) }) : T("giftFrom", { n: esc(other.name) })) + "</span>" +
+        '<span class="sp"></span><time>' + ago(g.at) + "</time></div>";
+    }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+
+    var myPosts = DB.posts.filter(function (p) { return p.uid === u.uid && !p.deleted; });
+    var myCms = DB.comments.filter(function (c) { return c.uid === u.uid && !c.deleted; });
+    var myReps = DB.replies.filter(function (r) { return r.uid === u.uid && !r.deleted; });
+
+    return '<div class="sg-page"><div class="sg-hero"><div class="sg-hero-row"><div class="grow">' +
+      '<div class="sg-idcard">' + av(u, "lg") + "<div><div class=\"nm\">" + esc(u.name) + roleTag(u) + "</div>" +
+      '<div class="meta">' + T("email") + " " + esc(maskEmail(u.email)) + "　·　" + T("phone") + " " + esc(maskPhone(u.phone)) +
+      "　·　" + T("joinedAt", { d: new Date(u.created).toLocaleDateString() }) + "</div></div></div>" +
+      "</div>" +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      '<button class="sgbtn primary" data-sgact="draw"' + (u.draws ? "" : " disabled") + ' id="sgDrawBtn">' + T("drawBtn") + (u.draws ? " ×" + u.draws : "") + "</button>" +
+      '<button class="sgbtn sm ghost" data-sgact="logout">' + T("logout") + "</button></div></div></div>" +
+
+      '<div class="sg-panel"><div class="sg-statgrid">' +
+      '<div class="sg-stat"><b>' + fmt(u.points) + "</b><span>" + T("points") + "</span></div>" +
+      '<div class="sg-stat"><b>' + (u.streak || 0) + "</b><span>" + T("streak") + "</span></div>" +
+      '<div class="sg-stat"><b>' + (u.loginDays || []).length + "</b><span>" + T("totalDays") + "</span></div>" +
+      '<div class="sg-stat"><b>' + (u.cards || []).length + "</b><span>" + T("cards") + "</span></div>" +
+      '<div class="sg-stat"><b>' + (u.draws || 0) + "</b><span>" + T("draws") + "</span></div>" +
+      "</div></div>" +
+
+      '<div class="sg-prof"><div>' +
+      '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("loginReward") + "</h3><span class=\"sp\"></span>" +
+      '<span class="sg-note">' + T("bestStreak") + " " + (u.bestStreak || 0) + " " + T("totalDays") + "</span></div>" +
+      '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">' +
+      "<div><div class=\"sg-muted\">" + T("streakNow") + "</div><div style=\"font-size:30px;color:var(--gold-2);line-height:1.1\">" + (u.streak || 0) + "<span style=\"font-size:12px;color:var(--ink-3)\"> " + T("totalDays") + "</span></div></div>" +
+      '<div style="flex:1;min-width:200px"><div class="sg-note">' + (u.draws ? T("drawReady") : T("nextDraw", { n: need })) + "</div>" +
+      '<div class="sg-prog"><i style="width:' + prog + '%"></i></div>' +
+      '<div class="sg-note" style="margin-top:6px">第 1 天 +10 · 第 2 天 +20 · 第 3 天 +40 · 第 4 天 +80 …… 每连续 3 天 +1 次抽卡</div></div></div>' +
+      '<div style="margin-top:14px"><div class="sg-note" style="margin-bottom:6px">' + T("totalDays") + " · " + (u.loginDays || []).length + " / " + T("streak") + " " + (u.streak || 0) + "</div>" +
+      '<div class="sg-cal">' + cal + "</div></div></div>" +
+
+      '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("myWall") + "</h3><span class=\"sp\"></span>" +
+      '<div class="sgchips"><button class="sgchip' + (UI.wall === "cards" ? " on" : "") + '" data-sgact="wall-tab" data-tab="cards">' + T("wallCards") + " " + (u.cards || []).length + "</button>" +
+      '<button class="sgchip' + (UI.wall === "badges" ? " on" : "") + '" data-sgact="wall-tab" data-tab="badges">' + T("wallBadges") + " " + got + "/" + badges.length + "</button></div></div>" +
+      (UI.wall === "cards" ? '<div class="sg-cards">' + cardsHTML + "</div>" : '<div class="sg-badges">' + badgeHTML + "</div>") +
+      '<div class="sg-note" style="margin-top:12px">' + T("giftLast") + "　·　" + T("dataNote") + "</div></div>" +
+
+      '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("myThreads") + " · " + T("myReviews") + "</h3></div>" +
+      '<div class="sg-note" style="margin-bottom:8px">' + T("statPosts") + " " + myPosts.length + "　·　" + T("statReplies") + " " + myReps.length + "　·　" + T("statReviews") + " " + myCms.length + "</div>" +
+      (myPosts.length ? myPosts.slice(0, 5).map(function (p) {
+        return '<div class="sg-rankline" data-sgact="open-thread" data-id="' + p.id + '" style="cursor:pointer"><span class="i">帖</span>' + esc(p.title) + '<span class="sp">' + p.likes.length + " ♥</span></div>";
+      }).join("") : '<div class="sg-muted">' + T("wallEmpty") + "</div>") + "</div>" +
+      "</div>" +
+
+      '<aside><div class="sg-sidecard"><h4>' + T("giftRecord") + "</h4>" + gad + "</div>" +
+      '<div class="sg-sidecard"><h4>' + T("ledger") + '</h4><div class="sg-ledger">' + ledger + "</div></div>" +
+      '<div class="sg-sidecard"><h4>' + T("account") + "</h4>" +
+      '<div style="display:flex;gap:7px;flex-wrap:wrap"><button class="sgbtn sm ghost" data-sgact="export">' + T("exportData") + "</button>" +
+      '<button class="sgbtn sm ghost" data-sgact="import">' + T("importData") + "</button></div>" +
+      '<p style="margin-top:9px">' + T("dataNote") + "</p></div>" +
+      "</aside></div></div>";
+  }
+
+  /* ---------------- 渲染：他人主页 ---------------- */
+  function renderUser(uid) {
+    var u = userById(uid);
+    if (!u) { location.hash = "#/forum"; return ""; }
+    var badges = badgeDefs(u);
+    var cards = (u.cards || []).slice(0, 12).map(function (c) { return cardHTML(c, false); }).join("");
+    var posts = DB.posts.filter(function (p) { return p.uid === u.uid && !p.deleted; }).slice(0, 8);
+    return '<div class="sg-page"><div class="sg-hero"><div class="sg-hero-row"><div class="grow"><div class="sg-idcard">' + av(u, "lg") +
+      '<div><div class="nm">' + esc(u.name) + roleTag(u) + '</div><div class="meta">' + T("joinedAt", { d: new Date(u.created).toLocaleDateString() }) + "　·　" + T("cards") + " " + (u.cards || []).length + "　·　" + T("points") + " " + fmt(u.points) + "</div></div></div></div>" +
+      '<button class="sgbtn sm ghost" data-sgact="back-forum">‹ ' + T("backForum") + "</button></div></div>" +
+      '<div class="sg-panel"><div class="sg-sec-title">' + T("wallBadges") + " " + badges.filter(function (b) { return b.on; }).length + "/" + badges.length + "</div>" +
+      '<div class="sg-badges">' + badges.map(function (b) {
+        return '<div class="sg-badge' + (b.on ? " on" : "") + '"><div class="sg-seal">' + b.c + "</div><b>" + b.n + "</b><small>" + b.d + "</small></div>";
+      }).join("") + "</div></div>" +
+      '<div class="sg-panel"><div class="sg-sec-title">' + T("wallCards") + "</div>" + (cards ? '<div class="sg-cards">' + cards + "</div>" : '<div class="sg-muted">' + T("wallEmpty") + "</div>") + "</div>" +
+      '<div class="sg-panel"><div class="sg-sec-title">' + T("myThreads") + "</div>" +
+      (posts.length ? posts.map(function (p) {
+        return '<div class="sg-rankline" data-sgact="open-thread" data-id="' + p.id + '" style="cursor:pointer"><span class="i">帖</span>' + esc(p.title) + '<span class="sp">' + ago(p.created) + "</span></div>";
+      }).join("") : '<div class="sg-muted">' + T("wallEmpty") + "</div>") + "</div></div>";
+  }
+
+  function cardHTML(c, withGift) {
+    var g = gById(c.gid);
+    if (!g) return "";
+    var r = rarityOf(g);
+    return '<div class="sg-card" style="--fc:' + facColor(g.faction) + '" data-sgact="card-open" data-id="' + g.id + '">' +
+      (c.from ? '<span class="sg-card-new">赠</span>' : "") +
+      '<div class="sg-card-hd"><span class="sg-card-fac">' + esc(g.faction) + '</span><span class="sg-card-rar">' + "★".repeat(r) + "</span></div>" +
+      '<div class="sg-card-nm">' + esc(g.name) + "</div>" +
+      '<div class="sg-card-zi">' + (g.zi ? "字 " + esc(g.zi) : esc(g.title || "")) + "</div>" +
+      '<div class="sg-card-stats">' +
+      '<div><b>' + g.st + "</b><span>统</span></div><div><b>" + g.wu + "</b><span>武</span></div>" +
+      '<div><b>' + g["in"] + "</b><span>智</span></div><div><b>" + g.po + "</b><span>政</span></div>" +
+      '<div><b>' + g.ch + "</b><span>魅</span></div></div>" +
+      '<div class="sg-card-ft"><span>' + rarName(r) + " · " + g.total + "</span><span class=\"sp\"></span>" +
+      (withGift ? '<button class="sg-card-gift" data-sgact="gift-open" data-id="' + c.id + '">' + T("gift") + "</button>" : "") +
+      "</div></div>";
+  }
+
+  /* ---------------- 弹窗 ---------------- */
+  function closeModal() { var m = $("#sgMask"); if (m) m.parentNode.removeChild(m); }
+  function modal(html, wide) {
+    closeModal();
+    var d = document.createElement("div");
+    d.className = "sg-mask"; d.id = "sgMask";
+    d.innerHTML = '<div class="sg-modal' + (wide ? " wide" : "") + '"><button class="sg-x" data-sgact="close">×</button>' + html + "</div>";
+    d.addEventListener("click", function (e) { if (e.target === d) closeModal(); });
+    document.body.appendChild(d);
+    return d;
+  }
+  function openAuth(tab) {
+    UI.authTab = tab || "login";
+    var isReg = UI.authTab === "register";
+    modal('<h3>' + (isReg ? T("authUp") : T("authIn")) + "</h3>" +
+      '<div class="sub">' + T("authNote") + "</div>" +
+      '<div class="sg-tabbar"><button class="' + (!isReg ? "on" : "") + '" data-sgact="auth-tab" data-tab="login">' + T("authIn") + "</button>" +
+      '<button class="' + (isReg ? "on" : "") + '" data-sgact="auth-tab" data-tab="register">' + T("authUp") + "</button></div>" +
+      (isReg ?
+        '<div class="sgfield"><label>' + T("authName") + "</label><input class=\"sginput\" id=\"sgRegName\" maxlength=\"16\" placeholder=\"\"></div>" +
+        '<div class="sgfield"><label>' + T("authEmail") + "</label><input class=\"sginput\" id=\"sgRegEmail\" type=\"email\" placeholder=\"name@example.com\"></div>" +
+        '<div class="sgfield"><label>' + T("authPhone") + "</label><input class=\"sginput\" id=\"sgRegPhone\" placeholder=\"13800138000\"></div>" +
+        '<label class="sgcheck"><input type="checkbox" id="sgRegAgree">' + T("authAgree") + "</label>" +
+        '<div class="sgerr" id="sgAuthErr"></div>' +
+        '<button class="sgbtn primary" style="width:100%" id="sgAuthSubmit" data-sgact="auth-submit" data-mode="reg">' + T("authSubmitUp") + "</button>" +
+        '<div style="text-align:center;margin-top:10px"><button class="sgbtn sm ghost" data-sgact="auth-tab" data-tab="login">' + T("hasAccount") + "</button></div>"
+        :
+        '<div class="sgfield"><label>' + T("authAcc") + '</label><input class="sginput" id="sgLoginAcc" placeholder="name@example.com / 13800138000"></div>' +
+        '<div class="sgerr" id="sgAuthErr"></div>' +
+        '<button class="sgbtn primary" style="width:100%" id="sgAuthSubmit" data-sgact="auth-submit" data-mode="login">' + T("authSubmitIn") + "</button>" +
+        '<div style="text-align:center;margin-top:10px"><button class="sgbtn sm ghost" data-sgact="auth-tab" data-tab="register">' + T("noAccount") + "</button></div>"));
+    setTimeout(function () {
+      var f = $("#sgRegName") || $("#sgLoginAcc");
+      if (f) f.focus();
+      bindEnter();
+    }, 60);
+  }
+  function bindEnter() {
+    var box = $("#sgMask"); if (!box) return;
+    box.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.tagName === "INPUT") {
+        var b = $("#sgAuthSubmit") || $("#sgGiftSubmit") || $("#sgPostSubmit");
+        if (b) b.click();
+      }
+    });
+  }
+  function doAuth(mode) {
+    var errEl = $("#sgAuthErr");
+    if (mode === "reg") {
+      var r = register($("#sgRegName").value, $("#sgRegEmail").value, $("#sgRegPhone").value, $("#sgRegAgree").checked);
+      if (r.err) { errEl.textContent = r.err; return; }
+      closeModal(); paintAcct(); rerender();
+      toast(T("registered", { n: r.user.name }), "ok");
+      showTick(r.tick);
+    } else {
+      var acc = $("#sgLoginAcc").value;
+      var l = login(acc);
+      if (l.err) { errEl.textContent = l.err; return; }
+      closeModal(); paintAcct(); rerender();
+      toast(T("loggedIn", { n: l.user.name }), "ok");
+      showTick(l.tick);
+    }
+  }
+  function showTick(r) {
+    if (!r || r.already) return;
+    toast(T("checkin", { d: r.streak, p: fmt(r.gain) }) + (r.draw ? T("checkinDraw") : ""), "ok", 4200);
+  }
+  function openGift(cardId) {
+    var u = me(); if (!u) return openAuth("login");
+    var card = (u.cards || []).filter(function (c) { return c.id === cardId; })[0];
+    if (!card) return;
+    if ((u.cards || []).length <= 1) { toast(T("giftLast"), "err"); return; }
+    var g = gById(card.gid) || {};
+    modal('<h3>' + T("giftTitle") + "</h3><div class=\"sub\">" + esc(g.name || "") + " · " + T("serial") + " " + esc(card.serial) + "</div>" +
+      '<div class="sgfield"><label>' + T("giftTo") + '</label><input class="sginput" id="sgGiftTo" list="sgUserList" placeholder="name@example.com / 13800138000"></div>' +
+      '<datalist id="sgUserList">' + DB.users.filter(function (x) { return x.uid !== u.uid; }).map(function (x) {
+        return '<option value="' + esc(x.email) + '">' + esc(x.name) + "</option><option value=\"" + esc(x.phone) + "\">" + esc(x.name) + "</option>";
+      }).join("") + "</datalist>" +
+      '<div class="sgfield"><label>' + T("giftMsg") + '</label><textarea class="sgtext" id="sgGiftMsg" style="min-height:70px"></textarea></div>' +
+      '<div class="sgerr" id="sgGiftErr"></div>' +
+      '<button class="sgbtn primary" style="width:100%" id="sgGiftSubmit" data-sgact="gift-submit" data-id="' + cardId + '">' + T("giftSend") + "</button>");
+    bindEnter();
+  }
+  function doGift(cardId) {
+    var u = me(); if (!u) return;
+    var r = giftCard(u, cardId, $("#sgGiftTo").value, $("#sgGiftMsg").value);
+    if (r.err) { $("#sgGiftErr").textContent = r.err; return; }
+    closeModal(); rerender();
+    toast(T("giftOk", { n: r.to.name }), "ok");
+  }
+  function openPost() {
+    var u = me(); if (!u) return openAuth("login");
+    var cats = ["战报", "阵容", "史料", "闲聊", "站务"];
+    modal('<h3>' + T("composeTitle") + "</h3><div class=\"sub\">" + T("rulesText") + "</div>" +
+      '<div class="sgfield"><label>' + T("catChat") + '</label><select class="sgselect" id="sgPostCat">' +
+      cats.map(function (c) { return '<option value="' + c + '">' + esc(catLabel(c)) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="sgfield"><label>' + T("titlePh") + '</label><input class="sginput" id="sgPostTitle" maxlength="60"></div>' +
+      '<div class="sgfield"><label>' + T("bodyPh") + '</label><textarea class="sgtext" id="sgPostBody" style="min-height:170px"></textarea></div>' +
+      '<div class="sgerr" id="sgPostErr"></div>' +
+      '<button class="sgbtn primary" style="width:100%" id="sgPostSubmit" data-sgact="post-submit">' + T("publish") + "</button>", true);
+    bindEnter();
+  }
+  function doPost() {
+    var u = me(); if (!u) return;
+    var title = $("#sgPostTitle").value.trim(), body = $("#sgPostBody").value.trim(), cat = $("#sgPostCat").value;
+    if (title.length < 4) { $("#sgPostErr").textContent = T("titlePh") + " ≥ 4"; return; }
+    if (body.length < 10) { $("#sgPostErr").textContent = T("bodyPh") + " ≥ 10"; return; }
+    var p = addPost(u, cat, title, body);
+    closeModal(); toast(T("postOk"), "ok");
+    location.hash = "#/forum/t/" + p.id;
+  }
+  function doDraw() {
+    var u = me(); if (!u) return openAuth("login");
+    var r = draw(u);
+    if (r.err) { toast(r.err, "err"); return; }
+    paintAcct(); rerender();
+    var g = r.gen;
+    modal('<h3 style="text-align:center">' + T("drawGot", { n: esc(g.name) }) + "</h3>" +
+      '<div class="sg-drawbox"><div class="sg-drawrays"></div><div class="sg-drawcard">' + cardHTML({ gid: g.id, serial: "" }, false) + "</div></div>" +
+      '<div class="sg-drawmeta"><b>' + rarName(rarityOf(g)) + " · " + g.total + "</b><span>" + T("serial") + " " + r.card.serial +
+      "　·　" + (r.badges.length ? "解锁徽章 ×" + r.badges.length : T("points") + " " + fmt(u.points)) + "</span></div>" +
+      '<div style="display:flex;gap:8px;margin-top:16px"><button class="sgbtn" style="flex:1" data-sgact="close">' + T("close") + "</button>" +
+      '<button class="sgbtn primary" style="flex:1" data-sgact="card-open" data-id="' + g.id + '">' + T("viewGeneral") + "</button></div>");
+  }
+
+  /* ---------------- Toast ---------------- */
+  function toast(msg, type, ms) {
+    var box = $("#sgToasts");
+    if (!box) { box = document.createElement("div"); box.className = "sg-toasts"; box.id = "sgToasts"; document.body.appendChild(box); }
+    var d = document.createElement("div");
+    d.className = "sg-toast " + (type || "");
+    d.textContent = msg;
+    box.appendChild(d);
+    setTimeout(function () { d.style.opacity = "0"; d.style.transition = ".3s"; setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 320); }, ms || 2600);
+  }
+
+  /* ---------------- 顶部账号位 ---------------- */
+  function paintAcct() {
+    var el = $("#sgAcct");
+    if (!el) return;
+    var u = me();
+    if (!u) {
+      el.innerHTML = '<button class="sgacct-btn" data-sgact="auth-open">' + T("login") + " / " + T("register") + "</button>";
+      return;
+    }
+    var unread = (u.notifs || []).filter(function (n) { return !n.read; }).length;
+    el.innerHTML = '<button class="sgacct-btn" data-sgact="menu"><span class="sgav">' + esc(ini(u.name)) + "</span>" +
+      esc(u.name) + '<span class="sgacct-pts">' + fmt(u.points) + " " + T("pts") + "</span>" +
+      (unread ? '<span class="sgacct-dot"></span>' : "") + "</button>" +
+      (UI.menu ? '<div class="sg-drop" id="sgDrop"><div class="sg-drop-hd"><b>' + esc(u.name) + "</b><small>" + fmt(u.points) + " " + T("pts") +
+        " · " + T("streak") + " " + (u.streak || 0) + " · " + T("draws") + " " + (u.draws || 0) + "</small></div>" +
+        '<button data-sgact="go-me">' + T("myPage") + '<span class="k">›</span></button>' +
+        '<button data-sgact="go-me" data-wall="cards">' + T("myWall") + '<span class="k">' + (u.cards || []).length + "</span></button>" +
+        '<button data-sgact="draw">' + T("drawShort") + '<span class="k">' + (u.draws || 0) + "</span></button>" +
+        ((u.notifs || []).length ? '<div class="sg-drop-sep"></div>' + (u.notifs || []).slice(0, 3).map(function (n) {
+          return '<button data-sgact="read-notif" data-id="' + n.id + '" style="font-size:11px;color:var(--ink-3)">' + esc(n.text.slice(0, 34)) + "</button>";
+        }).join("") : "") +
+        '<div class="sg-drop-sep"></div><button data-sgact="logout" style="color:#e88c82">' + T("logout") + "</button></div>" : "");
+  }
+  function paintNav() {
+    var b = $('.nav button[data-view="forum"]');
+    if (b) b.textContent = T("navForum");
+  }
+
+  /* ---------------- 路由 ---------------- */
+  function routeParts() {
+    var h = (location.hash || "").replace(/^#/, "").split("?")[0];
+    return h.split("/").filter(Boolean);
+  }
+  function setApp(html) {
+    var a = document.getElementById("app");
+    if (a) a.innerHTML = html;
+  }
+  function navActive(v) {
+    $$(".nav button[data-view]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-view") === v);
+    });
+  }
+  function handleRoute() {
+    var p = routeParts();
+    if (!p.length) return false;
+    if (p[0] === "forum") {
+      if (p[1] === "t" && p[2]) setApp(renderThread(p[2])); else setApp(renderForum());
+      navActive("forum"); paintNav(); paintAcct(); return true;
+    }
+    if (p[0] === "me") { setApp(renderMe()); navActive(""); paintNav(); paintAcct(); return true; }
+    if (p[0] === "u" && p[1]) { setApp(renderUser(p[1])); navActive(""); paintNav(); paintAcct(); return true; }
+    return false;
+  }
+  function rerender() {
+    if (window.__SGAtlas && window.__SGAtlas.render) window.__SGAtlas.render();
+  }
+  function afterRender() {
+    paintNav(); paintAcct();
+    var h = (location.hash || "");
+    if (/^#\/(forum|me|u)\b/.test(h)) return;
+    $$("#app .sg-embed").forEach(function (el) {
+      var kind = el.getAttribute("data-sg"), key = el.getAttribute("data-key");
+      if (!kind || !key) return;
+      el.innerHTML = commentsHTML(kind, key);
+    });
+  }
+
+  /* ---------------- 事件 ---------------- */
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-sgact]");
+    if (t) {
+      var act = t.getAttribute("data-sgact");
+      var id = t.getAttribute("data-id");
+      switch (act) {
+        case "auth-open": e.preventDefault(); openAuth(t.getAttribute("data-tab") || "login"); return;
+        case "auth-tab": e.preventDefault(); openAuth(t.getAttribute("data-tab")); return;
+        case "auth-submit": e.preventDefault(); doAuth(t.getAttribute("data-mode")); return;
+        case "close": e.preventDefault(); closeModal(); return;
+        case "menu": e.preventDefault(); UI.menu = !UI.menu; paintAcct(); return;
+        case "go-me": e.preventDefault(); UI.menu = false; if (t.getAttribute("data-wall")) UI.wall = t.getAttribute("data-wall"); location.hash = "#/me"; return;
+        case "logout": e.preventDefault(); UI.menu = false; logout(); return;
+        case "read-notif": {
+          e.preventDefault();
+          var u0 = me(); if (u0) { (u0.notifs || []).forEach(function (n) { if (n.id === id) n.read = true; }); save(); paintAcct(); }
+          return;
+        }
+        case "set-cat": e.preventDefault(); UI.cat = t.getAttribute("data-cat"); rerender(); return;
+        case "set-sort": e.preventDefault(); UI.sort = t.getAttribute("data-sort"); rerender(); return;
+        case "open-thread": e.preventDefault(); location.hash = "#/forum/t/" + id; return;
+        case "back-forum": e.preventDefault(); location.hash = "#/forum"; return;
+        case "new-post": e.preventDefault(); openPost(); return;
+        case "post-submit": e.preventDefault(); doPost(); return;
+        case "reply-focus": {
+          e.preventDefault();
+          var rb = $("#sgReplyBox"); if (rb) { rb.scrollIntoView({ behavior: "smooth", block: "center" }); var ta = $("#sgReplyText"); if (ta) ta.focus(); }
+          return;
+        }
+        case "reply-to": {
+          e.preventDefault(); UI.replyTo = id;
+          var u1 = me(); if (!u1) return openAuth("login");
+          rerender();
+          setTimeout(function () { var ta = $("#sgReplyText"); if (ta) { ta.scrollIntoView({ behavior: "smooth", block: "center" }); ta.focus(); } }, 60);
+          return;
+        }
+        case "reply-cancel": e.preventDefault(); UI.replyTo = null; rerender(); return;
+        case "reply-submit": {
+          e.preventDefault();
+          var u2 = me(); if (!u2) return openAuth("login");
+          var body = $("#sgReplyText").value.trim();
+          if (body.length < 1) return;
+          addReply(u2, id, body, UI.replyTo); UI.replyTo = null; rerender(); toast(T("replyOk"), "ok");
+          return;
+        }
+        case "like-post": {
+          e.preventDefault();
+          var u3 = me(); if (!u3) return toast(T("likeNeed"), "err");
+          var p = DB.posts.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+          var i = p.likes.indexOf(u3.uid); if (i >= 0) p.likes.splice(i, 1); else p.likes.push(u3.uid);
+          save(); rerender(); return;
+        }
+        case "like-reply": {
+          e.preventDefault();
+          var u4 = me(); if (!u4) return toast(T("likeNeed"), "err");
+          var r = DB.replies.filter(function (x) { return x.id === id; })[0]; if (!r) return;
+          var j = r.likes.indexOf(u4.uid); if (j >= 0) r.likes.splice(j, 1); else r.likes.push(u4.uid);
+          save(); rerender(); return;
+        }
+        case "del-post": {
+          e.preventDefault();
+          var u5 = me(); var pp = DB.posts.filter(function (x) { return x.id === id; })[0];
+          if (!u5 || !pp) return;
+          if (pp.uid !== u5.uid && u5.role !== "owner") return toast(T("accessDenied"), "err");
+          if (!confirm(T("confirmDel"))) return;
+          pp.deleted = true; pp.body = ""; save(); rerender(); return;
+        }
+        case "del-reply": {
+          e.preventDefault();
+          var u6 = me(); var rr = DB.replies.filter(function (x) { return x.id === id; })[0];
+          if (!u6 || !rr) return;
+          if (rr.uid !== u6.uid && u6.role !== "owner") return toast(T("accessDenied"), "err");
+          rr.deleted = true; rr.body = ""; save(); rerender(); return;
+        }
+        case "rate": {
+          e.preventDefault(); UI.rating = +t.getAttribute("data-v");
+          var pick = $("#sgRatePick");
+          if (pick) $$("span", pick).forEach(function (s, k) { s.classList.toggle("on", k < UI.rating); });
+          return;
+        }
+        case "cm-submit": {
+          e.preventDefault();
+          var u7 = me(); if (!u7) return openAuth("login");
+          var txt = $("#sgCmText").value.trim();
+          if (txt.length < 2) return;
+          addComment(u7, t.getAttribute("data-kind"), t.getAttribute("data-key"), UI.rating, txt, null);
+          rerender(); toast(T("cmOk"), "ok"); return;
+        }
+        case "cm-reply": e.preventDefault(); UI.replyTo = id; rerender(); return;
+        case "cm-reply-cancel": e.preventDefault(); UI.replyTo = null; rerender(); return;
+        case "cm-reply-submit": {
+          e.preventDefault();
+          var u8 = me(); if (!u8) return openAuth("login");
+          var txt2 = $("#sgCmReplyText").value.trim(); if (txt2.length < 1) return;
+          var parent = DB.comments.filter(function (c) { return c.id === id; })[0]; if (!parent) return;
+          addComment(u8, parent.kind, parent.key, 0, txt2, id);
+          UI.replyTo = null; rerender(); toast(T("replyOk"), "ok"); return;
+        }
+        case "like-cm": {
+          e.preventDefault();
+          var u9 = me(); if (!u9) return toast(T("likeNeed"), "err");
+          var c = DB.comments.filter(function (x) { return x.id === id; })[0]; if (!c) return;
+          var k = c.likes.indexOf(u9.uid); if (k >= 0) c.likes.splice(k, 1); else c.likes.push(u9.uid);
+          save(); rerender(); return;
+        }
+        case "del-cm": {
+          e.preventDefault();
+          var ua = me(); var cc = DB.comments.filter(function (x) { return x.id === id; })[0];
+          if (!ua || !cc) return;
+          if (cc.uid !== ua.uid && ua.role !== "owner") return toast(T("accessDenied"), "err");
+          if (!confirm(T("confirmDel"))) return;
+          cc.deleted = true; cc.body = ""; save(); rerender(); return;
+        }
+        case "wall-tab": e.preventDefault(); UI.wall = t.getAttribute("data-tab"); rerender(); return;
+        case "draw": e.preventDefault(); UI.menu = false; doDraw(); return;
+        case "gift-open": e.preventDefault(); e.stopPropagation(); openGift(id); return;
+        case "gift-submit": e.preventDefault(); doGift(id); return;
+        case "card-open": e.preventDefault(); closeModal(); location.hash = "#/g/" + id; return;
+        case "export": {
+          e.preventDefault();
+          var blob = new Blob([JSON.stringify(DB, null, 2)], { type: "application/json" });
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "sanguo-community-" + dateStr(0) + ".json";
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          toast("JSON · " + dateStr(0), "ok"); return;
+        }
+        case "import": {
+          e.preventDefault();
+          var inp = document.createElement("input"); inp.type = "file"; inp.accept = "application/json";
+          inp.onchange = function () {
+            var f = inp.files[0]; if (!f) return;
+            var rd = new FileReader();
+            rd.onload = function () {
+              try {
+                var d = JSON.parse(String(rd.result));
+                if (!d || !d.users || !d.seq) throw 0;
+                if (!confirm(T("confirmImport"))) return;
+                DB = d; save(); paintAcct(); rerender(); toast(T("importOk"), "ok");
+              } catch (err) { toast(T("importBad"), "err"); }
+            };
+            rd.readAsText(f);
+          };
+          inp.click(); return;
+        }
+      }
+    }
+    // 点击空白处收起账号菜单
+    if (!e.target.closest(".sgacct")) { if (UI.menu) { UI.menu = false; paintAcct(); } }
+    if (!e.target.closest("#sgMask") && $("#sgMask") && e.target.id !== "sgMask") { /* keep */ }
+  });
+
+  document.addEventListener("input", function (e) {
+    if (e.target && e.target.id === "sgForumQ") UI.q = e.target.value;
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && $("#sgMask")) closeModal();
+    if (e.key === "Enter" && e.target && e.target.id === "sgForumQ") {
+      UI.q = e.target.value;
+      rerender();
+    }
+  });
+
+  // 语言切换后同步导航与账号区
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("#langSet .lbtn")) {
+      setTimeout(function () { paintNav(); paintAcct(); }, 40);
+    }
+  });
+
+  /* ---------------- 初始化 ---------------- */
+  DB = load();
+  if (!DB) seed();
+  /* 先暴露公共句柄：init 里的 render() 依赖 window.SGSocial.handleRoute 拦截社区路由 */
+  window.SGSocial = {
+    handleRoute: handleRoute,
+    afterRender: afterRender,
+    rerender: rerender,
+    openAuth: openAuth,
+    toast: toast,
+    db: function () { return DB; },
+    me: me,
+    _tick: tick,
+    _test: {
+      reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} DB = blank(); seed(); },
+      simulateDays: function (n) {
+        var u = me(); if (!u) return null;
+        for (var i = 1; i <= n; i++) tick(u, dateStr(i));
+        checkBadges(u); save();
+        return { streak: u.streak, points: u.points, draws: u.draws };
+      },
+      grantDraw: function (n) { var u = me(); if (!u) return; u.draws = (u.draws || 0) + (n || 1); save(); return u.draws; },
+      setPoints: function (n) { var u = me(); if (!u) return; u.points = n; save(); },
+      user: function () { var u = me(); return u ? JSON.parse(JSON.stringify(u)) : null; },
+      comments: function (kind, key) { return DB.comments.filter(function (c) { return c.kind === kind && c.key === String(key); }).length; },
+      posts: function () { return DB.posts.length; },
+      gifts: function () { return DB.gifts.length; },
+      findUser: function (acc) { var u = findAccount(acc); return u ? u.uid : null; }
+    }
+  };
+  (function init() {
+    /* QA 预览入口（仅站方演示账号 + sgqa=1，不参与线上交互） */
+    if (/[?&]sgqa=1/.test(location.search)) {
+      var dm = /[?&]sgdemo=([^&]+)/.exec(location.search);
+      if (dm) {
+        var acc = decodeURIComponent(dm[1]);
+        if (/@atlas\.sg$/i.test(acc)) {
+          var du = findAccount(acc);
+          if (du) { DB.session = du.uid; save(); }
+        }
+      }
+      var mm = /[?&]sgmodal=(\w+)/.exec(location.search);
+      if (mm) setTimeout(function () { if (mm[1] === "auth") openAuth("register"); else if (mm[1] === "draw") doDraw(); }, 600);
+    }
+    paintNav(); paintAcct();
+    var u = me();
+    if (u) { var r = tick(u); if (!r.already) { checkBadges(u); save(); paintAcct(); setTimeout(function () { showTick(r); }, 700); } }
+    if (window.__SGAtlas && window.__SGAtlas.render) window.__SGAtlas.render();
+  })();
+
+  /* ---------------- 自检（?sgtest=1） ---------------- */
+  if (/[?&]sgtest=1/.test(location.search)) {
+    setTimeout(function () {
+      var out = { steps: [], ok: false };
+      function log(k, v) { out.steps.push({ k: k, v: v }); }
+      function wait(ms) { return new Promise(function (r) { setTimeout(r, ms || 120); }); }
+      function txt(s) { return (document.body.innerText || "").indexOf(s) >= 0; }
+      (async function () {
+        try {
+          window.SGSocial._test.reset();
+          location.hash = "#/me"; await wait(200);
+          log("guest_cta", txt("Login") || txt("登录") || txt("Sign"));
+          document.querySelector('[data-sgact="auth-open"]').click(); await wait(150);
+          log("auth_modal", !!document.getElementById("sgAuthModal") || !!document.getElementById("sgMask"));
+          document.querySelector('[data-sgact="auth-tab"][data-tab="register"]').click(); await wait(120);
+          document.getElementById("sgRegName").value = "测试诸侯";
+          document.getElementById("sgRegEmail").value = "test@atlas.sg";
+          document.getElementById("sgRegPhone").value = "13900001111";
+          document.getElementById("sgRegAgree").checked = true;
+          document.getElementById("sgAuthSubmit").click(); await wait(300);
+          var u = window.SGSocial._test.user();
+          log("registered", !!u && u.name);
+          log("points_after_day1", u && u.points);
+          log("streak", u && u.streak);
+          log("draws0", u && u.draws);
+          var sim = window.SGSocial._test.simulateDays(2);
+          log("sim2", sim);
+          window.SGSocial.rerender(); await wait(200);
+          location.hash = "#/me"; await wait(250);
+          document.getElementById("sgDrawBtn").click(); await wait(500);
+          u = window.SGSocial._test.user();
+          log("cards1", u && u.cards.length);
+          log("draws_after", u && u.draws);
+          log("draw_modal", !!document.getElementById("sgMask"));
+          document.querySelector('#sgMask [data-sgact="close"]').click(); await wait(120);
+          var gid = u.cards[0].gid;
+          location.hash = "#/g/" + gid; await wait(420);
+          log("gen_embed", !!document.querySelector('.sg-embed[data-sg="gen"]'));
+          document.getElementById("sgCmText").value = "自动化测试：此将统率与武力俱佳。";
+          document.querySelector('[data-sgact="rate"][data-v="4"]').click();
+          document.querySelector('[data-sgact="cm-submit"]').click(); await wait(260);
+          log("cm_count", window.SGSocial._test.comments("gen", gid));
+          document.querySelector('[data-sgact="cm-reply"]').click(); await wait(150);
+          document.getElementById("sgCmReplyText").value = "自评回复：补一句政治亦高。";
+          document.querySelector('[data-sgact="cm-reply-submit"]').click(); await wait(260);
+          log("cm_nested", window.SGSocial._test.comments("gen", gid));
+          location.hash = "#/c/洛阳"; await wait(500);
+          log("city_embed", !!document.querySelector('.sg-embed[data-sg="city"]'));
+          document.getElementById("sgCmText").value = "自动化测试：洛阳商业冠绝中原。";
+          document.querySelector('[data-sgact="cm-submit"]').click(); await wait(260);
+          log("city_cm", window.SGSocial._test.comments("city", "洛阳"));
+          location.hash = "#/forum"; await wait(350);
+          log("forum_render", !!document.querySelector(".sg-forum"));
+          document.querySelector('[data-sgact="new-post"]').click(); await wait(200);
+          document.getElementById("sgPostTitle").value = "自动化测试帖：五子良将排序";
+          document.getElementById("sgPostBody").value = "这是一条自动化测试正文，用于验证发帖链路与权限。";
+          document.getElementById("sgPostSubmit").click(); await wait(350);
+          log("thread_route", location.hash.indexOf("#/forum/t/") === 0);
+          log("posts", window.SGSocial._test.posts());
+          document.getElementById("sgReplyText").value = "自动化测试：自回一帖。";
+          document.querySelector('[data-sgact="reply-submit"]').click(); await wait(260);
+          log("thread_replies", document.querySelectorAll(".sg-reply").length);
+          window.SGSocial._test.grantDraw(2);
+          window.SGSocial.rerender(); await wait(200);
+          location.hash = "#/me"; await wait(300);
+          document.getElementById("sgDrawBtn").click(); await wait(450);
+          document.querySelector('#sgMask [data-sgact="close"]').click(); await wait(150);
+          u = window.SGSocial._test.user();
+          log("cards2", u.cards.length);
+          var target = window.SGSocial._test.findUser("wolong@atlas.sg");
+          var cid = u.cards[0].id;
+          document.querySelector('[data-sgact="gift-open"][data-id="' + cid + '"]').click(); await wait(220);
+          document.getElementById("sgGiftTo").value = "wolong@atlas.sg";
+          document.getElementById("sgGiftMsg").value = "测试赠言";
+          document.getElementById("sgGiftSubmit").click(); await wait(350);
+          u = window.SGSocial._test.user();
+          log("cards_after_gift", u.cards.length);
+          log("gift_records", window.SGSocial._test.gifts());
+          var before = u.cards.length;
+          document.querySelector('[data-sgact="gift-open"]').click(); await wait(220);
+          log("last_card_blocked", !document.getElementById("sgGiftSubmit") && before === 1);
+          log("toast_last", txt("one card") || txt("仅剩") || txt("最後"));
+          log("badges", Object.keys(u.badges || {}).length);
+          out.ok = true;
+        } catch (err) {
+          out.err = String(err && err.stack || err);
+        }
+        var pre = document.createElement("pre");
+        pre.id = "sgTestOut";
+        pre.style.cssText = "position:fixed;left:0;bottom:0;z-index:9999;max-width:100%;max-height:42vh;overflow:auto;background:#000;color:#0f0;font-size:10px;padding:6px;margin:0;white-space:pre-wrap";
+        pre.textContent = "SG_TEST " + JSON.stringify(out);
+        document.body.appendChild(pre);
+        document.title = "SGTEST:" + (out.ok ? "PASS" : "FAIL");
+        window.__SGTEST__ = out;
+      })();
+    }, 900);
+  }
+})();
+
 </script>
 </body>
 </html>
