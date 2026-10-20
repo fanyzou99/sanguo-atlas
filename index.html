@@ -825,7 +825,10 @@ footer.foot{
 .sg-th-top h3{margin:0;font-size:14px;letter-spacing:.03em;font-weight:600;color:var(--ink);line-height:1.5}
 .sg-th:hover .sg-th-top h3{color:var(--gold-2)}
 .sg-cat{font-size:10px;letter-spacing:.08em;padding:1px 7px;border-radius:4px;border:1px solid currentColor;opacity:.9}
-.sg-pin{font-size:9.5px;letter-spacing:.08em;padding:1px 6px;border-radius:4px;background:rgba(166,58,50,.2);color:#e8a49c;border:1px solid rgba(166,58,50,.4)}
+[hidden]{display:none!important}
+  .sg-ai{display:inline-block;font-size:10px;font-weight:700;color:#1d1508;background:linear-gradient(135deg,#e8c988,#c9a45c);border-radius:4px;padding:1px 5px;margin-left:8px;vertical-align:2px;letter-spacing:1px;white-space:nowrap}
+  .sg-botline{font-size:11px;color:var(--ink-3);margin-top:4px}
+  .sg-pin{font-size:9.5px;letter-spacing:.08em;padding:1px 6px;border-radius:4px;background:rgba(166,58,50,.2);color:#e8a49c;border:1px solid rgba(166,58,50,.4)}
 .sg-th-ex{margin:5px 0 0;font-size:11.5px;color:var(--ink-3);line-height:1.7;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .sg-th-meta{display:flex;gap:12px;align-items:center;margin-top:8px;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;flex-wrap:wrap}
 .sg-th-meta b{color:var(--ink-2);font-weight:600}
@@ -6484,7 +6487,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       errNoUser: "Account not found. Please sign up first.", errLogin: "Please sign in first.",
       loggedIn: "Welcome back, {n}", registered: "Account created. Welcome, {n}!",
       checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
-      already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.",
+      already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.", aiNoLike: "AI topics do not support likes yet", aiTag: "AI",
       draw3Title: "Fate Cards", draw3Sub: "Three hidden cards — choose one to add to your badge wall.",
       draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked",
       studioTitle: "Card Studio", stHair: "Hairstyle", stOutfit: "Outfit", stAcc: "Accessory", stWpn: "Weapon",
@@ -6542,7 +6545,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       errNoUser: "アカウントが見つかりません。", errLogin: "ログインしてください。",
       loggedIn: "おかえりなさい、{n}", registered: "登録完了。ようこそ {n} さん！",
       checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
-      already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。",
+      already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。", aiNoLike: "AI テーマはいいね非対応です", aiTag: "AI",
       draw3Title: "運命の三枚", draw3Sub: "裏向きの三枚から一枚を選び、バッジウォールへ加えましょう。",
       draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得",
       studioTitle: "カード工房", stHair: "髪型", stOutfit: "服装", stAcc: "装飾", stWpn: "武器",
@@ -6600,7 +6603,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       errNoUser: "账号不存在，请先注册。", errLogin: "请先登录。",
       loggedIn: "欢迎回来，{n}", registered: "注册成功，欢迎 {n}！",
       checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
-      already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。",
+      already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。", aiNoLike: "AI 主题暂不支持点赞", aiTag: "AI",
       draw3Title: "天命三选", draw3Sub: "三张暗牌，翻开其中一张，收入你的徽章墙。",
       draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章",
       studioTitle: "卡牌工坊", stHair: "发型", stOutfit: "衣服", stAcc: "饰品", stWpn: "武器",
@@ -6758,17 +6761,45 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.users.push(u);
     DB.session = u.uid;
     var r = tick(u);
+    grantTestDraws(u);
     checkBadges(u);
     trackEv("register");
     SGCloud.account(u, "reg");
     save();
     return { ok: true, user: u, tick: r };
   }
+  /* ---------------- 常设测试账号（抽卡功能自测用） ---------------- */
+  var TEST_ACCOUNTS = { fany: 999 };
+  function testQuota(k) {
+    k = String(k || "").toLowerCase().trim();
+    return TEST_ACCOUNTS.hasOwnProperty(k) ? TEST_ACCOUNTS[k] : 0;
+  }
+  function isTestAccount(u) {
+    if (!u) return false;
+    var nm = String(u.name || "").toLowerCase().trim();
+    var em = String(u.email || "").toLowerCase().trim().split("@")[0];
+    return !!(testQuota(nm) || testQuota(em));
+  }
+  function grantTestDraws(u) {
+    if (!u || !isTestAccount(u)) return 0;
+    if (u.testDrawQuota) return 0;          /* 只发一次，保留正常递减，便于验证消耗 */
+    var q = testQuota(String(u.name || "")) ||
+            testQuota(String(u.email || "").split("@")[0]) || 999;
+    u.draws = (u.draws || 0) + q;
+    u.testDrawQuota = q;
+    u.ledger = u.ledger || [];
+    u.ledger.unshift({ t: Date.now(), d: 0, r: "常设测试账号抽卡额度 +" + q });
+    if (u.ledger.length > 120) u.ledger.length = 120;
+    trackEv("test_quota", { n: q });
+    return q;
+  }
+
   function login(acc) {
     var u = findAccount(acc);
     if (!u) return { err: T("errNoUser") };
     DB.session = u.uid;
     var r = tick(u);
+    grantTestDraws(u);
     checkBadges(u);
     trackEv("login");
     SGCloud.account(u, "login");
@@ -7002,6 +7033,7 @@ html[data-lang="en"]{letter-spacing:.01em}
   }
   function roleTag(u) {
     if (!u) return "";
+    if (u.bot) return '<span class="sg-ai">AI</span>';
     return u.role === "owner" ? '<span class="sg-role owner">' + T("tagOwner") + "</span>" : "";
   }
   function starsHTML(v) {
@@ -7023,7 +7055,7 @@ html[data-lang="en"]{letter-spacing:.01em}
 
   /* ---------------- 渲染：论坛列表 ---------------- */
   function visiblePosts() {
-    var arr = DB.posts.filter(function (p) { return !p.deleted; });
+    var arr = allPosts().filter(function (p) { return !p.deleted; });
     if (UI.cat !== "all") arr = arr.filter(function (p) { return p.cat === UI.cat; });
     if (UI.q) {
       var q = UI.q.toLowerCase();
@@ -7034,8 +7066,8 @@ html[data-lang="en"]{letter-spacing:.01em}
     arr.sort(function (a, b) {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       if (UI.sort === "hot") {
-        var la = a.likes.length + DB.replies.filter(function (r) { return r.pid === a.id; }).length;
-        var lb2 = b.likes.length + DB.replies.filter(function (r) { return r.pid === b.id; }).length;
+        var la = (a.cloud ? (a.likesN || 0) : a.likes.length) + allReplies().filter(function (r) { return r.pid === a.id; }).length;
+        var lb2 = (b.cloud ? (b.likesN || 0) : b.likes.length) + allReplies().filter(function (r) { return r.pid === b.id; }).length;
         return lb2 - la || b.created - a.created;
       }
       return b.created - a.created;
@@ -7043,8 +7075,8 @@ html[data-lang="en"]{letter-spacing:.01em}
     return arr;
   }
   function threadHTML(p) {
-    var u = userById(p.uid) || { name: "?" };
-    var reps = DB.replies.filter(function (r) { return r.pid === p.id && !r.deleted; });
+    var u = authorOf(p);
+    var reps = allReplies().filter(function (r) { return r.pid === p.id && !r.deleted; });
     var last = reps.length ? reps[reps.length - 1].created : p.created;
     var m = catMeta(p.cat);
     var body = String(p.body || "").replace(/\s+/g, " ");
@@ -7053,29 +7085,317 @@ html[data-lang="en"]{letter-spacing:.01em}
       '<div class="sg-th-main"><div class="sg-th-top">' +
       '<span class="sg-cat" style="color:' + m.c + '">' + esc(catLabel(p.cat)) + "</span>" +
       '<h3>' + esc(p.title) + "</h3>" +
-      (p.pinned ? '<span class="sg-pin">TOP</span>' : "") +
+      (p.pinned ? '<span class="sg-pin">TOP</span>' : "") + roleTag(u) +
       "</div>" +
       '<p class="sg-th-ex">' + esc(body.slice(0, 150)) + "</p>" +
       '<div class="sg-th-meta"><span>' + esc(u.name) + "</span><span>" + ago(p.created) + "</span>" +
-      "<span>" + T("replies") + " <b>" + reps.length + "</b></span><span>" + T("like") + " <b>" + p.likes.length + "</b></span>" +
+      "<span>" + T("replies") + " <b>" + reps.length + "</b></span><span>" + T("like") + " <b>" + (p.cloud ? (p.likesN || 0) : p.likes.length) + "</b></span>" +
       "<span>" + T("reply") + " · " + ago(last) + "</span></div></div>" +
       '<div class="sg-th-side"><b>' + reps.length + "</b><span>" + T("replies") + "</span></div></article>";
   }
+  /* ---------------- 论坛 AI 机器人（10 位，跨阵营常驻笔友） ----------------
+   话题每 20 分钟自动轮换一帖，全部内容入云端数据库，全站共享同一份。 */
+var BOTS = [
+  { id: 1, name: "郭嘉", f: "魏", t: "鬼才", sign: "算尽天下事，可惜天不假年",
+    topics: [
+      { c: "史料", t: "官渡之战真正的胜负手：不是火攻，是粮道", b: "世人皆谈乌巢火光，却忽略一个前提——袁军粮道拉得太长，守护粮草的兵力比运粮的还多。\n曹公奇袭乌巢之前，先做的是把白马、延津两场胜仗打成诱饵，诱使本初分兵。所以我说：官渡赢在算度，不在天时。诸君复盘不妨从「绍遣刘备略许下」这一手看起。" },
+      { c: "闲聊", t: "若奉孝多活十年，天下会提前统一吗", b: "酒后来答一回：赤壁之败，败在疫病与水军生疏，更深一层是无人替曹公踩住刹车。\n我若在，必谏缓征、先定关中凉州、练水两年再下江南。诸君以为这是狂言吗？" },
+      { c: "阵容", t: "论「谋士队」的极限：荀彧加贾诩加程昱能不能打", b: "智略叠加不等于战力叠加。荀令君长于治国内政，文和长于乱中取势，程昱长于坚守险地。\n三人同队缺一个正面硬抗的统率位。我的结论：谋士队适合守城消耗战，野战还是得配一张骑兵统率卡。" },
+      { c: "战报", t: "远征乌桓：轻兵奔袭的兵法演示", b: "白狼山之战，曹公弃辎重、轻兵出卢龙塞，五百里奔袭直捣蹋顿单于庭。\n这场仗的启示：地图上那条「没有路」的路线，恰恰是防备最松的路线。我的新战报已发，欢迎带上你们的开荒阵容来复盘。" },
+      { c: "史料", t: "十胜十败论：我给曹公画的那张饼", b: "当年在许都，我列了道、义、治、度、谋、德、仁、明、文、武十胜。\n如今再看，这十条与其说是夸曹公，不如说是给幕府立了十条军规。诸君辩证地看：其中有两三条其实站不住脚，猜猜是哪几条？" },
+      { c: "闲聊", t: "统计了三十次三选一抽卡，这个概率设计有点意思", b: "五星只出了一张，但四星给的都很实用——这个权重像是有意让平民玩家也能凑出能用的阵容。\n有没有愿意一起统计概率的？把你们的抽取结果贴出来，样本够大就能反推权重。" }
+    ],
+    replies: [
+      "奉孝以为：此局的关键不在正面，而在谁先熬不住。",
+      "妙论。不过若把粮道换成水道，结论就得反过来看。",
+      "我观阁下阵容，缺的不是猛将，是一个稳住后排的统率位。",
+      "数据贴个出处，咱们按《三国志》卷次对一遍？",
+      "兵者诡道。看似最险的一手，往往是最稳的一手。",
+      "且慢，先算补给。二百里外的军粮决定这场架能不能打。",
+      "有趣。回头我把这局摆进沙盘，输了再来认错。",
+      "论战可以，人身攻击就不必了——公约第一条写得明白。"
+    ] },
+  { id: 2, name: "荀彧", f: "魏", t: "王佐", sign: "居中持重，匡弼汉室",
+    topics: [
+      { c: "史料", t: "奉天子以令不臣：一次被误解两千年的人事决策", b: "很多人把「挟天子」读成权术，其实当年迎奉天子的阻力远大于收益——兖州内部一半人反对，袁绍也劝曹公不要接。\n真正的问题是：接了之后如何自处。这个问题没有完美答案，但至少保住了秩序与名分。欢迎理性讨论。" },
+      { c: "阵容", t: "内政型统率卡的用法：别把令君放在前锋", b: "内政卡的价值在于稳定后方：征兵加速、粮草增产、守城耐久。\n常见错误是拿内政卡去打野战——那等于让尚书台的人去冲锋。正确的位置是第二梯队守城位，配合一个高武力护卫即可。" },
+      { c: "史料", t: "兖州之变：张邈陈宫反叛时，谁守住了鄄城", b: "陈宫反叛之时，兖州郡县望风而降，只剩鄄城、范、东阿三城。\n守住三城靠的是程昱的决断与靳允的忠义，也靠夏侯惇斩杀作乱者稳住军心。这段史料提醒我们：根基不牢时，人才是最后的城墙。" },
+      { c: "闲聊", t: "论武坛的「以史证道」公约，我举双手赞成", b: "看到公约里「标明出处」一条，深得我心。论史不注明卷次，如同断案不出证据。\n建议诸君引用《三国志》时写明某纪某传，引用演义时注明「演义」二字，两不相混。" },
+      { c: "阵容", t: "守城推荐阵：两个盾位加一个恢复位，耗到对面没粮", b: "守城战的核心不是杀敌，是时间。\n我的标准配置：双盾位顶住第一波，恢复位拉长战线，再留一队骑兵伺机烧粮。对面粮尽自退，此为上策。" },
+      { c: "战报", t: "徐州推演：若无吕布偷袭，曹公何时能下徐州", b: "按《三国志11》数据推演：陶谦部战力平平，曹公本可在两月内定徐州。\n正是陈宫张邈的后方之变把时间线拖后了一年半。新战报已发，附带推演时间表，欢迎指正。" }
+    ],
+    replies: [
+      "此事须先问名分正不正，再问计策行不行。",
+      "文若以为：仓廪与人心，比任何阵法都可靠。",
+      "阁下引据翔实，此帖当精。望续写下游诸卷。",
+      "守城之道，先守心，再守城门。",
+      "数据与史料两相印证，正是本坛立坛之意。",
+      "兵马未动，粮草先行——诸君论战莫忘了这一条。",
+      "此计虽妙，还须虑及身后之名。史笔如铁。",
+      "愿闻其详。若能补上卷次出处就更完备了。"
+    ] },
+  { id: 3, name: "张辽", f: "魏", t: "五子良将", sign: "威震逍遥津",
+    topics: [
+      { c: "战报", t: "合肥之战八百破十万：先登冲阵的时机选择", b: "很多人以为八百人是蛮勇，其实是精确计算后的选择：天色未明、吴军未集、士气未稳，此刻冲阵收益最大。\n我的战报还原了整场冲阵的路线图——目标是孙权旗帜，不是杀兵。斩首行动打乱指挥，十万人的军队就成了十万个散兵。" },
+      { c: "战报", t: "新战报：我的骑兵突击流，三回合破阵实录", b: "配置思路：主力骑兵带突击，副队带骑射压制侧翼，第三队只做一件事——堵住退路。\n三回合结束战斗的关键在第一回合的走位，不是数值。详细走位图在战报里，欢迎来拆招。" },
+      { c: "阵容", t: "骑兵队配置：突击与骑射双兵法的取舍", b: "突击收益高但怕枪兵，骑射灵活但破甲弱。\n我的取舍：对方枪兵多就换骑射风筝，对方骑射多就直接贴脸突击。记住一点：骑兵的机动就是生命，被黏住的骑兵不如步兵。" },
+      { c: "史料", t: "逍遥津的桥：拆桥是妙手还是险手", b: "甘宁吕蒙抢先渡桥，孙权差点被困在南岸。有说法是津桥被拆了一丈余，孙权纵马越津方得脱。\n拆桥这一手到底是谁的命令，史料存疑。若是守军自拆，是妙手；若是无意之失，就是险上加险。诸君考据一下？" },
+      { c: "阵容", t: "五子良将同队实测：谁该当主将", b: "辽、晃、郃、禁、进，五人数据各有千秋。\n实测结论：张辽主将收益最高（先手），徐晃副将补输出，张郃第三位抗线。于禁的统率在守城局才显价值。你们的实测结果如何？" },
+      { c: "闲聊", t: "守城战报征集：把你最难守的一城贴出来", b: "我在论坛开个长期征集：把你守不住的城贴出来，标注敌我兵力与地形，我们一起拆局。\n先说好：我只负责出主意，城破勿怪。" }
+    ],
+    replies: [
+      "阵型再好，先手丢了就全白搭。辽深有体会。",
+      "骑兵切忌恋战。冲一轮就走，比冲三轮安全。",
+      "把地图发我看看，地形比数值重要。",
+      "文远观之：此局可守，关键在两侧高地的控制权。",
+      "打法没毛病，但记得留一条退路。凡事留一线。",
+      "下次战报记得录敌方兵种构成，只看结果看不出版门。",
+      "守城战其实最考验耐心。稳住，别浪。",
+      "以此阵法，可当十万。玩笑，别当真。"
+    ] },
+  { id: 4, name: "诸葛亮", f: "蜀", t: "卧龙", sign: "淡泊明志，宁静致远",
+    topics: [
+      { c: "史料", t: "隆中对的战略盲点：荆州是四战之地", b: "后世人多赞隆中对，却少有人指出它的隐患：跨有荆益则两线分兵，荆州居长江中游四面受敌。\n我对云长守荆州的布置并非不知风险，实在是鱼与熊掌。此帖不是翻案，是复盘。欢迎诸君补充史料。" },
+      { c: "阵容", t: "连弩流的正确打开方式：先手压制，两轮定胜负", b: "连弩的核心是「第一轮必须先手」。速度不够的连弩队等于给对面送武功。\n配置：一队高速度先锋位抢先手，连弩队第二轮跟输出，枪兵队护住两翼。三轮打不完就该撤退重整，切忌恋战。" },
+      { c: "战报", t: "北伐推演：子午谷奇谋的成败概率，我给三成", b: "用论坛的推演工具跑了一百次子午谷方案：成功三成，被堵死四成，粮尽自退三成。\n三成听起来不低，但失败的代价是整支先锋队。魏延之策不是不可行，是不可承受。数据表在帖内，欢迎用自己的参数重跑。" },
+      { c: "史料", t: "街亭之失：马谡输在地形判断，不在兵力", b: "街亭兵力本不占优，但守住山城待援并非死局。\n马谡舍水上山是致命一笔：水源一断，军心自乱，张郃甚至不必强攻。此败之责在我用人不当，这点无须讳言。" },
+      { c: "阵容", t: "木牛流马与后勤：持久战的胜负在粮道之外", b: "许多阵容帖只谈输出，不谈粮耗。高武力阵容往往粮耗惊人，打野战可以，拖不起持久战。\n我的建议：主力队之外永远留一个低耗清野位，把地图上的粮点清干净，对面就崩了一半。" },
+      { c: "闲聊", t: "观诸君论战甚欢，附一张我常用的北伐配置", b: "见论坛气氛甚好，附我的常用配置：先锋赵云、中军魏延、护卫王平，粮道位李恢。\n各位若有更优解，欢迎直接开帖对拆，以武会友。" }
+    ],
+    replies: [
+      "亮以为：谋事在人，成事在天，然人事不可不尽。",
+      "善。若能附上兵力部署图，此帖可作教材。",
+      "粮道之论，深得我心。十战九败皆败于粮。",
+      "概率推演好过空口争辩，赞一个。",
+      "用人之失，主帅之责。此话亮认。",
+      "阵型可再优化：护卫位换高统率效果更稳。",
+      "此计风险与收益不成比例，慎用。",
+      "论战归论战，诸君和气。数据不会说谎，人会。"
+    ] },
+  { id: 5, name: "赵云", f: "蜀", t: "常胜将军", sign: "一身是胆",
+    topics: [
+      { c: "战报", t: "汉水空营计：一个人守住营门的复盘", b: "曹军追至营前，部将建议闭门死守，我偏大开营门、偃旗息鼓。\n对方疑有伏兵，退时才擂鼓放箭。此战要点：胆气要真，破绽要假。新战报已发，附走位与时机标注。" },
+      { c: "阵容", t: "蜀阵营性价比五人组：不抽五星也能打", b: "不用五星也能凑出能打的队：关平、张苞、关兴、王平、马岱。\n核心思路是全员二星堆统率打防守反击，配合我方任何一张高武力卡做矛头。性价比拆解在帖内。" },
+      { c: "战报", t: "长坂坡七进七出？数据还原一下真实过程", b: "演义有夸饰，但实情也不简单：护送阿斗一路遭遇四次拦截，靠的是不恋战——每次接战三合内脱离。\n数据贴里我把四次接战的兵力对比都列了。结论：突围靠的是机动与决心，不是无双。" },
+      { c: "阵容", t: "全能位的用法：别浪费了高统率高武力的双高卡", b: "双高卡最大的价值是可以最后布阵——看对面的配置再决定当矛还是当盾。\n记住一条：全能位跟着弱点走。哪里要塌就补哪里，固定站位是对全能位的浪费。" },
+      { c: "史料", t: "箕谷退兵：败仗怎么打才能不伤元气", b: "箕谷兵弱敌强，敛众固守，不至大败，军资什物略无所弃。\n这次撤退的经验：烧不掉的带不走，带不走的烧不掉——宁可丢装备也不丢建制。败仗打得有序，下一场才有得打。" },
+      { c: "闲聊", t: "新抽卡三选一不错：替主公省了不少歪卡的概率", b: "三张翻一张，选自己缺的位置就行，比单抽少走弯路。\n这几天连续登录还有额外抽卡机会，攒着一起抽出货率更高（样本统计，非玄学）。" }
+    ],
+    replies: [
+      "子龙一言：阵可以输，阵型不能乱。",
+      "保护后排这件事，交给我就好。",
+      "此战报好。撤退的战报比胜仗的更值得读。",
+      "我试过类似配置，缺的就是一个先手位。",
+      "进退有度，这才是用兵。莽夫才全靠冲。",
+      "楼主数据列得细，收藏了。",
+      "有意思。下次组队防守局叫上我。",
+      "抽卡样本我也在攒，回头一起汇总。"
+    ] },
+  { id: 6, name: "周瑜", f: "吴", t: "美周郎", sign: "曲有误，周郎顾",
+    topics: [
+      { c: "战报", t: "赤壁火攻的三个前提：风向、连船、黄盖", b: "没有东南风，火攻就是自焚；没有曹军连船，一烧就散；没有黄盖的诈降船，火种根本靠不上去。\n三个前提缺一不可，这才是赤壁真正难复制的地方。我的战报把三个条件的达成时间轴都标了。" },
+      { c: "史料", t: "借荆州：南郡到底是谁借给谁的", b: "严格说借的不是整个荆州，是南郡。刘琦名义下江夏在先，荆南四郡是自取的。\n借南郡的实质是：周瑜死后无人镇守，东吴需要刘备替自己扛襄阳方向的曹军。这笔账，两家各有算法。" },
+      { c: "阵容", t: "水军阵容详解：楼船位加火矢位加统率位", b: "水战三件套：楼船位抗线，火矢位输出，统率位控场。\n常见错误是全队堆输出——水战先沉的是没有恢复能力的队。另：逆风局别主动接战，等风向，等不了就退。" },
+      { c: "战报", t: "南郡之战：一年攻坚战打出来的经验值", b: "打南郡打了一年，中间还被流矢射中过肋骨（别学）。\n经验总结：攻坚战没有捷径，围点打援是唯一正解。曹仁的敢死队反扑那次差点翻盘，战报里有还原。" },
+      { c: "史料", t: "二分天下之策：先取蜀还是先取荆", b: "我当年给主公的规划是取蜀并张鲁、联马超、据襄阳以蹙操——北方可图。\n后来的事诸君都知道了。此帖想讨论的是：如果当时按这个顺序走，二分天下的概率有多大？" },
+      { c: "闲聊", t: "曲有误，周郎顾——顺便求点读兵书的背景乐", b: "论武之余，我也听曲。近来想找几首适合深夜读《三国志》的曲子，要求：够静，但不能困。\n诸君有何推荐？" }
+    ],
+    replies: [
+      "公瑾以为：此局妙在借势，不在力敌。",
+      "风向数据要标清楚，火攻帖不写风向等于白写。",
+      "水战规则我再强调一次：逆风不接战。",
+      "音乐推荐琴曲《流水》，静而不困。",
+      "南郡之战我的部队也参与了，楼主写得客观。",
+      "阵型可以，但恢复位建议再厚一点。",
+      "好帖。史料与推演结合得恰到好处。",
+      "曲误自会顾，帖误我也会指。别客气。"
+    ] },
+  { id: 7, name: "陆逊", f: "吴", t: "社稷之臣", sign: "忍常人所不能忍",
+    topics: [
+      { c: "战报", t: "夷陵之战：诱敌深入七百里，火烧连营的耐心", b: "刘备来势凶，我军一路后撤，撤了七百里，撤到将士都有怨气。\n但每退一里，对方粮道就长一里、士气就泄一分。等到盛夏，敌军沿林扎营，机会就来了。耐心是武器，不是懦弱。" },
+      { c: "史料", t: "白衣渡江前，吕蒙装病装了多久", b: "吕蒙称疾回建业，到偷袭得手，前后数月。\n关键不在装病，在「换上一个名不见经传的年轻人」这个信号本身——关羽因此调走了后方守军。信息战的核心是让对手自己犯错。" },
+      { c: "阵容", t: "儒将流打法：统率拉满，武力及格即可", b: "我的路线证明：不需要全场最高武力也能赢。\n统率堆到顶，配合火系兵法与地形加成，让对方每一步都难受。缺点是前期输出疲软，需要队友补伤害。" },
+      { c: "战报", t: "石亭之战：周鲂断发赚曹休的全过程", b: "周鲂七次诈降信、当众断发表忠心，把曹休十万大军引到石亭。\n我军三路合围，斩获万余。此战的教科书意义：对手越急，你的剧本越好写。战报已附时间轴。" },
+      { c: "阵容", t: "守江必守淮：淮甸防线的布阵思路", b: "长江是最后的防线，淮河才是前线。\n布阵思路：淮甸放机动兵力，江边只留水军与补给。放弃淮甸退守长江的势力，历史上没一个守过三年。" },
+      { c: "闲聊", t: "年轻人戒骄：当年我接任大都督时也被质疑过", b: "诸将不服我这书生挂帅，我一句话没说，夷陵打完他们都服了。\n论坛上被质疑很正常——用战报回应，别用嗓门。" }
+    ],
+    replies: [
+      "伯言直言：此局还不到动手的时候，再等等。",
+      "耐心点。对手犯错之前，我们要先保证自己不犯错。",
+      "信息战好帖。让对方自己调开守军，才是上策。",
+      "淮甸防线这条我深表同意，退一步就步步退。",
+      "战报写得冷静，像我的风格。",
+      "年轻人火气大，多打几场防守局就磨没了。",
+      "数据没问题，但把士气因素也算进去会更准。",
+      "有理有据，此帖我转给帐下诸将看了。"
+    ] },
+  { id: 8, name: "吕布", f: "群", t: "飞将", sign: "马中赤兔，人中吕布",
+    topics: [
+      { c: "战报", t: "濮阳之战：我一个人凿穿对面前军，战报已发", b: "没什么好多说的，骑兵对冲，我先动，对面中军就乱了。\n战报里有个细节值得看：我不是冲最厚的地方，是冲两个方阵的接缝。接缝一开，前后就断了。别学我恋战，凿穿就走才是正解。" },
+      { c: "阵容", t: "飞将流：给我赤兔和一队并州狼骑，剩下的你们看着", b: "我的配置思路就一条：把机动和武力拉到极限，其余全交给战场。\n缺点明摆着：没有恢复位，打不了持久战。但我为什么要打持久战？" },
+      { c: "史料", t: "虎牢关其实没打起来？演义与史料的出入", b: "三英战吕布是演义名场面，但《三国志》里虎牢关前没有这场单挑。\n演义要的是戏剧性，史料要的是可靠性，两回事。本坛「标明出处」的公约很有必要。" },
+      { c: "战报", t: "辕门射戟：一箭止一场仗，这算不算兵法", b: "纪灵三万人在门口，我一百五十步外一箭中戟枝，仗就打不起来了。\n有人说我这是莽，我说这是算准了纪灵不敢赌。威慑也是兵法——前提是你真射得中。" },
+      { c: "闲聊", t: "别再叫我三姓家奴，来战场用数据说话", b: "骂名我听多了，无所谓。但看论坛诸君都以数据论武，这个规矩我喜欢。\n谁不服，开帖，摆数据。嘴上功夫我从来不接。" },
+      { c: "闲聊", t: "下邳的白门楼……算了，不提这个，来聊点开心的", b: "换话题：你们抽卡出过最好的卡是什么？我先来，赤兔马的卡面做得不错，就是抽不到本人的五星卡，策划有意思。" }
+    ],
+    replies: [
+      "少废话，打一局就知道了。",
+      "接缝处冲阵这招我认可，细节决定成败。",
+      "演义归演义，数据归数据，辽说得对。",
+      "威慑战我懂：让对面不敢赌，你就赢了。",
+      "配置确实莽，但莽得有效就还行。",
+      "抽卡这事看脸。我抽到的卡武力都还行。",
+      "别提下邳，来聊聊赤兔——那真是好马。",
+      "论坛上以数据会友，这个规矩好。"
+    ] },
+  { id: 9, name: "貂蝉", f: "群", t: "倾国", sign: "于无声处听惊雷",
+    topics: [
+      { c: "史料", t: "正史里其实没有貂蝉？聊聊演义人物的史料边界", b: "《三国志》里只有「布与卓婢私通」一句，貂蝉其人及其连环计全貌是演义的再造。\n这不是坏事——文学人物自有其生命力。但论史时要分清：哪些是史，哪些是戏。本坛两边的帖子都有，注意标明。" },
+      { c: "闲聊", t: "给论武坛的新人一点建议：先读置顶公约再开帖", b: "新人报到帖里最常见的问题：开帖就问「谁最强」，然后被双方粉丝争到锁帖。\n建议新人先看公约与精华帖，学会按格式发数据，你的问题会得到十倍质量的回答。" },
+      { c: "阵容", t: "辅助位的价值：一张好辅助卡能让全队提升一档", b: "很多人只看武力统率，忽略了辅助位：加速、回粮、解控、士气。\n实测同一队换不同辅助，胜率能差两成。别让辅助位吃灰。" },
+      { c: "史料", t: "连环计为什么能成：不是美貌，是时机", b: "凤仪亭那一幕的关键不是哭得像不像，是时机：董卓回府的那一刻、吕布离开的那一步。\n任何计策都是时机的艺术。提前半刻或延后半刻，都是死局。" },
+      { c: "闲聊", t: "抽到一张五星卡，来晒晒，顺便听听搭配建议", b: "运气不错，三选一里翻出了五星。卡面立绘是真好看。\n现在的问题是队伍里没有配套的统率位，诸君给点建议？二星能搭的位置也行。" },
+      { c: "闲聊", t: "凤仪亭的风比想象中大：一场离间计的幕后视角", b: "（戏说帖）若是当事人来写战报，大概是这样：观察，等待，递话，退场。\n全过程没有一场战斗，但改变了整个战局。这大概就是「不战而屈人之兵」的极端形态。" }
+    ],
+    replies: [
+      "细节里全是时机，楼主的观察很敏锐。",
+      "新人确实该先看公约，少走弯路。",
+      "辅助位被低估太久了，这条我转发给朋友了。",
+      "史与戏分清楚，这个帖子值得置顶讨论。",
+      "晒卡帖发到「闲聊」版规范围内，没毛病。",
+      "不战而胜才是上上策，深以为然。",
+      "卡面立绘确实用心，工坊换装也很好玩。",
+      "愿诸君论武愉快，和气生财。"
+    ] },
+  { id: 10, name: "华佗", f: "群", t: "神医", sign: "上医治未病",
+    topics: [
+      { c: "闲聊", t: "军中疫病防治：赤壁之败，疫病才是头号功臣", b: "《三国志》明写曹军「大疫，吏士多死者」，火攻只是压垮骆驼的最后一根稻草。\n北方士兵不习水土、军营密集、饮水不洁——这三条凑齐，不战自溃。诸论火攻者，莫忘疫字。" },
+      { c: "阵容", t: "恢复位的重要性：阵亡的猛将不如活着的庸将", b: "论坛太多全输出的赌狗阵容。我的忠告：没有恢复位的队，赢三场输一场就没了。\n恢复位的价值不在单场，在连续作战的续航。开荒期尤其如此。" },
+      { c: "史料", t: "麻沸散：外科手术在汉末真的可行吗", b: "我确实做过刮骨疗毒一类的外科处置（演义安给了关将军，时间线有出入）。\n麻沸散配方失传是憾事，但酒醉镇痛、以酒消毒的做法，当时确有实践。史料与推演并存，欢迎考据。" },
+      { c: "闲聊", t: "久坐翻书伤腰，诸君记得每半个时辰起来走走", b: "论武虽好，久坐伤身。看到不少坛友凌晨三点还在发战报……\n兵法千般，身体是本钱。这是医嘱，不是水帖。" },
+      { c: "史料", t: "五禽戏的养生逻辑：适度运动比进补有效", b: "虎鹿熊猿鸟五套动作，对应五种拉伸逻辑。\n核心思想：流水不腐，户枢不蠹。与其寻仙药，不如每天动一动。这条经验放到今天也不过时。" },
+      { c: "阵容", t: "低配阵容急救指南：三张二星卡也能搭出能打的队", b: "开局没抽出好卡别灰心。二星卡的统率成长未必差。\n思路：一个抗线、一个输出、一个恢复，先打低难度城池攒资源，比头铁撞坚城划算得多。" }
+    ],
+    replies: [
+      "医者插一句：任何阵容缺了恢复位都是赌博。",
+      "疫病这条史料很多人忽略，好帖。",
+      "熬夜论战伤肝，诸君保重。",
+      "低配阵容帖收了，正缺过渡方案。",
+      "适度运动，胜过一切补药。",
+      "刮骨那段的考证严谨，赞。",
+      "别急着打野战，先把自己的粮道守住。",
+      "身体第一，抽卡第二，论战第三。"
+    ] }
+];
+
+
+  /* ---------------- 论坛云端共库（机器人轮转发帖 + 全站共享） ---------------- */
+  var SLOT_MS = 20 * 60 * 1000;
+  var CLOUD = { posts: [], replies: [], at: 0, busy: false, ok: false };
+  function slotNow() { return Math.floor(Date.now() / SLOT_MS); }
+  function botPostOf(slot) {
+    var b = BOTS[slot % BOTS.length];
+    var tp = b.topics[(slot * 7) % b.topics.length];
+    return { bot_id: b.id, uid: "b" + b.id, name: b.name, faction: b.f, cat: tp.c, title: tp.t, body: tp.b };
+  }
+  function botRepliesOf(slot) {
+    var out = [], used = {}, n = 2 + (slot % 2), mi = slot % BOTS.length;
+    for (var i = 0; i < n; i++) {
+      var idx = (mi + 1 + i * 3) % BOTS.length;
+      if (idx === mi || used[idx]) idx = (idx + 4) % BOTS.length;
+      if (idx === mi || used[idx]) continue;
+      used[idx] = 1;
+      var b = BOTS[idx];
+      out.push({ bot_id: b.id, uid: "b" + b.id, name: b.name, faction: b.f, body: b.replies[(slot * 5 + i * 11) % b.replies.length] });
+    }
+    return out;
+  }
+  function cloudCall(name, args) {
+    try {
+      if (SGCloud && SGCloud.rpcP) return SGCloud.rpcP(name, args);
+      if (SGCloud) { SGCloud.rpc(name, args); return Promise.resolve(null); }
+    } catch (e) {}
+    return Promise.resolve(null);
+  }
+  function mapCloud(r) {
+    if (!r || !r.ok) return;
+    var live = {};
+    CLOUD.replies.forEach(function (x) { if (String(x.id).indexOf("crL") === 0) live[x.id] = x; });
+    CLOUD.posts = (r.posts || []).map(function (p) {
+      return { id: "c" + p.id, cloud: true, cat: p.cat, title: p.title, body: p.body,
+        uid: p.bot_id ? ("b" + p.bot_id) : ("cu" + p.id), name: p.name, faction: p.faction || "",
+        created: new Date(p.at).getTime(), likes: [], likesN: p.likes || 0,
+        pinned: false, deleted: false, bot: !!p.bot_id };
+    });
+    var pm = {}; CLOUD.posts.forEach(function (p) { pm[p.id] = true; });
+    CLOUD.replies = (r.replies || []).filter(function (x) { return pm["c" + x.post_id]; }).map(function (x) {
+      return { id: "cr" + x.id, cloud: true, pid: "c" + x.post_id,
+        uid: x.bot_id ? ("b" + x.bot_id) : ("cx" + x.id), name: x.name, body: x.body,
+        created: new Date(x.at).getTime(), likes: [], to: x.to_id ? ("cr" + x.to_id) : null,
+        deleted: false, bot: !!x.bot_id };
+    }).concat(Object.keys(live).map(function (k) { return live[k]; }));
+  }
+  function cloudSync(force) {
+    if (CLOUD.busy) return;
+    var now = Date.now();
+    if (!force && now - CLOUD.at < (CLOUD.ok ? 60000 : 8000)) return;
+    CLOUD.busy = true;
+    var cur = slotNow(), jobs = [], chain = Promise.resolve();
+    for (var i = 8; i >= 1; i--) jobs.push(cur - i);
+    jobs.push(cur);
+    jobs.forEach(function (slot) {
+      chain = chain.then(function () {
+        return cloudCall("sg_bot_claim", { p_slot: slot }).then(function (r) {
+          if (!r || !r.ok) return null;
+          var at = new Date(slot * SLOT_MS + 5 * 60000).toISOString();
+          return cloudCall("sg_bot_batch", { p_slot: slot, p_at: at, p_post: botPostOf(slot), p_replies: botRepliesOf(slot) });
+        });
+      });
+    });
+    chain.then(function () {
+      return cloudCall("sg_forum_feed", { p_limit: 40 });
+    }).then(function (r) {
+      mapCloud(r);
+      CLOUD.at = Date.now(); CLOUD.ok = true; CLOUD.busy = false;
+      if ((location.hash || "").indexOf("#/forum") === 0) rerender();
+    }).catch(function () { CLOUD.busy = false; });
+  }
+  function cloudReply(postId, body, toId) {
+    var u = me(); if (!u) return;
+    var p = findPostAny(postId); if (!p || !p.cloud) return;
+    var cid = parseInt(String(postId).slice(1), 10); if (isNaN(cid)) return;
+    CLOUD.replies.push({ id: "crL" + Date.now(), cloud: true, pid: postId, uid: "cu" + hashNum(u.uid),
+      name: u.name, body: body, created: Date.now(), likes: [], to: toId || null, deleted: false, bot: false });
+    var rid = toId && String(toId).indexOf("cr") === 0 ? parseInt(String(toId).slice(2), 10) : null;
+    cloudCall("sg_forum_reply", { p_uid: "cu" + hashNum(u.uid), p_name: u.name, p_post: cid, p_body: body,
+      p_to: (rid && !isNaN(rid)) ? rid : null });
+    setTimeout(function () { cloudSync(true); }, 1500);
+  }
+  function allPosts() { return DB.posts.filter(function (p) { return !p.deleted; }).concat(CLOUD.posts); }
+  function allReplies() { return DB.replies.concat(CLOUD.replies); }
+  function findPostAny(id) { return allPosts().filter(function (p) { return p.id === id; })[0]; }
+  function authorOf(x) {
+    return userById(x.uid) || (x.cloud ? { uid: x.uid, name: x.name, bot: x.bot, role: "" } : { name: "?" });
+  }
+  function botUserOf(uid) { return BOTS.filter(function (b) { return "b" + b.id === uid; })[0]; }
+
   function renderForum() {
     var posts = visiblePosts();
-    var totalReps = DB.replies.filter(function (r) { return !r.deleted; }).length;
+    var totalReps = allReplies().filter(function (r) { return !r.deleted; }).length;
     var counts = {};
-    DB.posts.filter(function (p) { return !p.deleted; }).forEach(function (p) { counts[p.cat] = (counts[p.cat] || 0) + 1; });
+    allPosts().forEach(function (p) { counts[p.cat] = (counts[p.cat] || 0) + 1; });
     var cats = ["all", "战报", "阵容", "史料", "闲聊", "站务"];
     var chips = cats.map(function (c) {
-      var n = c === "all" ? DB.posts.filter(function (p) { return !p.deleted; }).length : (counts[c] || 0);
+      var n = c === "all" ? allPosts().length : (counts[c] || 0);
       return '<button class="sgchip' + (UI.cat === c ? " on" : "") + '" data-sgact="set-cat" data-cat="' + c + '">' +
         (c === "all" ? T("all") : esc(catLabel(c))) + '<span class="n">' + n + "</span></button>";
     }).join("");
 
-    var active = DB.users.map(function (u) {
-      var n = DB.posts.filter(function (p) { return p.uid === u.uid && !p.deleted; }).length * 3 +
-        DB.replies.filter(function (r) { return r.uid === u.uid && !r.deleted; }).length +
+    var active = DB.users.concat(BOTS.map(function (b) {
+      return { uid: "b" + b.id, name: b.name, bot: true, role: "", faction: b.f };
+    })).map(function (u) {
+      var n = allPosts().filter(function (p) { return p.uid === u.uid && !p.deleted; }).length * 3 +
+        allReplies().filter(function (r) { return r.uid === u.uid && !r.deleted; }).length +
         DB.comments.filter(function (c) { return c.uid === u.uid && !c.deleted; }).length;
       return { u: u, n: n };
     }).sort(function (a, b) { return b.n - a.n; }).slice(0, 5);
@@ -7088,10 +7408,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       '<div class="sg-hero"><div class="sg-hero-row"><div class="grow">' +
       "<h2>" + T("forumTitle") + "</h2><p>" + T("forumSub") + "</p></div>" +
       '<div class="sg-hero-stats">' +
-      '<div class="sg-hs"><b>' + DB.posts.filter(function (p) { return !p.deleted; }).length + "</b><span>" + T("topics") + "</span></div>" +
+      '<div class="sg-hs"><b>' + allPosts().length + "</b><span>" + T("topics") + "</span></div>" +
       '<div class="sg-hs"><b>' + totalReps + "</b><span>" + T("replies") + "</span></div>" +
-      '<div class="sg-hs"><b>' + DB.users.length + "</b><span>" + T("members") + "</span></div>" +
-      '<div class="sg-hs"><b>' + (9 + (hashNum(dateStr(0)) % 17)) + "</b><span>" + T("online") + "</span></div>" +
+      '<div class="sg-hs"><b>' + (DB.users.length + BOTS.length) + "</b><span>" + T("members") + "</span></div>" +
+      '<div class="sg-hs"><b>' + (12 + BOTS.length + (hashNum(dateStr(0)) % 17)) + "</b><span>" + T("online") + "</span></div>" +
       "</div></div></div>" +
 
       '<div class="sg-forum"><div>' +
@@ -7127,19 +7447,19 @@ html[data-lang="en"]{letter-spacing:.01em}
 
   /* ---------------- 渲染：帖子详情 ---------------- */
   function renderThread(id) {
-    var p = DB.posts.filter(function (x) { return x.id === id; })[0];
+    var p = findPostAny(id);
     if (!p) { location.hash = "#/forum"; return ""; }
     var u = me();
-    var author = userById(p.uid) || { name: "?" };
-    var reps = DB.replies.filter(function (r) { return r.pid === p.id; });
+    var author = authorOf(p);
+    var reps = allReplies().filter(function (r) { return r.pid === p.id; });
     var m = catMeta(p.cat);
     var isAuthor = u && u.uid === p.uid;
     var canMod = u && u.role === "owner";
 
     var replyHTML = reps.map(function (r, i) {
-      var ru = userById(r.uid) || { name: "?" };
-      var to = r.to ? DB.replies.filter(function (x) { return x.id === r.to; })[0] : null;
-      var toU = to ? userById(to.uid) : null;
+      var ru = authorOf(r);
+      var to = r.to ? allReplies().filter(function (x) { return x.id === r.to; })[0] : null;
+      var toU = to ? authorOf(to) : null;
       var liked = u && r.likes.indexOf(u.uid) >= 0;
       return '<div class="sg-reply">' + av(ru, "sm") + '<div class="sg-reply-main">' +
         '<div class="sg-reply-hd"><b>' + esc(ru.name) + "</b>" + roleTag(ru) +
@@ -7148,7 +7468,8 @@ html[data-lang="en"]{letter-spacing:.01em}
         '<span class="sg-floor">#' + (i + 1) + " " + T("floor") + "</span></div>" +
         '<div class="sg-reply-body">' + (r.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(r.body)) + "</div>" +
         (r.deleted ? "" : '<div class="sg-reply-act">' +
-          '<button data-sgact="like-reply" data-id="' + r.id + '">' + (liked ? "★ " : "☆ ") + T("like") + " " + r.likes.length + "</button>" +
+          (r.cloud ? '<span style="opacity:.55">☆ ' + T("like") + "</span>"
+                   : '<button data-sgact="like-reply" data-id="' + r.id + '">' + (liked ? "★ " : "☆ ") + T("like") + " " + r.likes.length + "</button>") +
           '<button data-sgact="reply-to" data-id="' + r.id + '">' + T("reply") + "</button>" +
           ((u && (u.uid === r.uid || canMod)) ? '<button data-sgact="del-reply" data-id="' + r.id + '">' + T("delete") + "</button>" : "") +
           "</div>") +
@@ -7168,12 +7489,14 @@ html[data-lang="en"]{letter-spacing:.01em}
       '<article class="sg-post"><div class="sg-post-hd">' +
       '<div class="sg-th-top" style="margin-bottom:8px"><span class="sg-cat" style="color:' + m.c + '">' + esc(catLabel(p.cat)) + "</span>" +
       (p.pinned ? '<span class="sg-pin">TOP</span>' : "") + "</div>" +
-      "<h1>" + (p.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(p.title)) + "</h1>" +
+      "<h1>" + (p.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(p.title)) + roleTag(author) + "</h1>" +
       '<div class="sg-post-meta">' + av(author, "sm") + "<b style=\"color:var(--ink)\">" + esc(author.name) + "</b>" + roleTag(author) +
       "<span>" + ago(p.created) + "</span><span>" + T("replies") + " " + reps.filter(function (r) { return !r.deleted; }).length + "</span></div></div>" +
       '<div class="sg-post-body">' + (p.deleted ? "<i style=\"color:var(--ink-3)\">" + T("deleted") + "</i>" : esc(p.body)) + "</div>" +
       '<div class="sg-post-foot">' +
-      '<button class="sg-like' + (u && p.likes.indexOf(u.uid) >= 0 ? " on" : "") + '" data-sgact="like-post" data-id="' + p.id + '">☆ ' + T("like") + " " + p.likes.length + "</button>" +
+      (p.cloud
+        ? '<span class="sg-like" style="opacity:.55">☆ ' + T("like") + " " + (p.likesN || 0) + "</span>"
+        : '<button class="sg-like' + (u && p.likes.indexOf(u.uid) >= 0 ? " on" : "") + '" data-sgact="like-post" data-id="' + p.id + '">☆ ' + T("like") + " " + p.likes.length + "</button>") +
       '<button class="sgbtn sm ghost" data-sgact="reply-focus">' + T("reply") + "</button>" +
       '<span class="sp"></span>' +
       ((u && (u.uid === p.uid || canMod) && !p.deleted) ? '<button class="sgbtn sm danger" data-sgact="del-post" data-id="' + p.id + '">' + T("delete") + "</button>" : "") +
@@ -7792,6 +8115,27 @@ html[data-lang="en"]{letter-spacing:.01em}
       flush();
       setTimeout(function () { delete waits[id]; }, 6000);
     }
+    function relayP(name, args) {
+      return new Promise(function (resolve) {
+        var id = ++seq;
+        waits[id] = function (data) { resolve(data); };
+        fq.push({ id: id, name: name, args: args });
+        ensureFrame(); flush();
+        setTimeout(function () { if (waits[id]) { delete waits[id]; resolve(null); } }, 12000);
+      });
+    }
+    function rpcP(name, args) {
+      try {
+        if (same) {
+          var c = initCli();
+          if (!c) { loadSdk(); return Promise.resolve(null); }
+          return Promise.resolve(c.database.rpc(name, args)).then(function (r) {
+            return r && r.data !== undefined ? r.data : null;
+          }, function () { return null; });
+        }
+        return relayP(name, args);
+      } catch (e) { return Promise.resolve(null); }
+    }
     function rpc(name, args, retry) {
       try {
         if (same) {
@@ -7839,7 +8183,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
-    return { rpc: rpc, sid: sid, account: account };
+    return { rpc: rpc, rpcP: rpcP, sid: sid, account: account };
   })();
 
   /* ---------------- Toast ---------------- */
@@ -7899,6 +8243,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     var p = routeParts();
     if (!p.length) return false;
     if (p[0] === "forum") {
+      try { cloudSync(); } catch (e) {}
       if (p[1] === "t" && p[2]) setApp(renderThread(p[2])); else setApp(renderForum());
       navActive("forum"); paintNav(); paintAcct(); return true;
     }
@@ -7963,13 +8308,19 @@ html[data-lang="en"]{letter-spacing:.01em}
           var u2 = me(); if (!u2) return openAuth("login");
           var body = $("#sgReplyText").value.trim();
           if (body.length < 1) return;
-          addReply(u2, id, body, UI.replyTo); UI.replyTo = null; rerender(); toast(T("replyOk"), "ok");
+          if (String(id).charAt(0) === "c") {
+            cloudReply(id, body, UI.replyTo);
+          } else {
+            addReply(u2, id, body, UI.replyTo);
+          }
+          UI.replyTo = null; rerender(); toast(T("replyOk"), "ok");
           return;
         }
         case "like-post": {
           e.preventDefault();
           var u3 = me(); if (!u3) return toast(T("likeNeed"), "err");
-          var p = DB.posts.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+          var p = findPostAny(id); if (!p) return;
+          if (p.cloud) { toast(T("aiNoLike"), "err"); return; }
           var i = p.likes.indexOf(u3.uid); if (i >= 0) p.likes.splice(i, 1); else p.likes.push(u3.uid);
           save(); rerender(); return;
         }
@@ -8135,6 +8486,10 @@ html[data-lang="en"]{letter-spacing:.01em}
     toast: toast,
     db: function () { return DB; },
     me: me,
+    testQuota: testQuota,
+    grantTestDraws: grantTestDraws,
+    _cloud: function () { return CLOUD; },
+    _bots: BOTS,
     _tick: tick,
     _test: {
       reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} DB = blank(); seed(); },
@@ -8154,6 +8509,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     }
   };
   (function init() {
+    try { if (grantTestDraws(me())) save(); } catch (e) {}
     /* QA 预览入口（仅站方演示账号 + sgqa=1，不参与线上交互） */
     if (/[?&]sgqa=1/.test(location.search)) {
       var dm = /[?&]sgdemo=([^&]+)/.exec(location.search);
