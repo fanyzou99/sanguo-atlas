@@ -988,6 +988,7 @@ footer.foot{
   box-shadow:0 30px 80px rgba(0,0,0,.65);animation:sgpop .22s cubic-bezier(.2,.9,.3,1.2) both;
 }
 .sg-modal.wide{max-width:560px}
+.sg-modal.xwide{max-width:860px}
 @keyframes sgpop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 .sg-modal h3{margin:0 0 4px;font-size:17px;letter-spacing:.14em;font-weight:700}
 .sg-modal .sub{font-size:11px;color:var(--ink-3);margin-bottom:16px;letter-spacing:.04em;line-height:1.7}
@@ -1010,6 +1011,51 @@ footer.foot{
 .sg-drawmeta{text-align:center;margin-top:14px}
 .sg-drawmeta b{display:block;font-size:15px;color:var(--gold-2);letter-spacing:.1em}
 .sg-drawmeta span{display:block;font-size:11px;color:var(--ink-3);margin-top:4px}
+
+/* 三选一翻牌抽卡 */
+.sg-draw3{display:flex;gap:18px;justify-content:center;padding:18px 4px 8px;perspective:1100px;flex-wrap:wrap}
+.sg-pick{width:172px;height:248px;cursor:pointer;position:relative}
+.sg-pick-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.3,.7,.3,1);transform:rotateY(0)}
+.sg-pick:hover .sg-pick-inner{transform:translateY(-8px)}
+.sg-pick.done .sg-pick-inner{transform:rotateY(180deg)}
+.sg-pick.dim{opacity:.25;filter:grayscale(.8);pointer-events:none;transition:.5s}
+.sg-pick-face,.sg-pick-back{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;overflow:hidden;
+  box-shadow:0 14px 36px rgba(0,0,0,.55)}
+.sg-pick-back{
+  background:
+    radial-gradient(130% 100% at 50% 0%,#3b2f14 0%,#191510 58%,#0f0d0a 100%);
+  border:1px solid #6b5a2c;display:grid;place-items:center;
+  transform:rotateY(0);
+}
+.sg-pick-back:after{content:"";position:absolute;inset:7px;border:1px solid rgba(217,189,118,.4);border-radius:8px;
+  background:repeating-linear-gradient(45deg,rgba(217,189,118,.05) 0 6px,transparent 6px 12px)}
+.sg-pick-back svg{width:74%;height:auto;position:relative;z-index:1;filter:drop-shadow(0 4px 14px rgba(232,201,136,.35));
+  animation:sgdragon 3.2s ease-in-out infinite}
+@keyframes sgdragon{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.03)}}
+.sg-pick-face{background:linear-gradient(170deg,#222a37,#171c25 62%);transform:rotateY(180deg);border:1px solid var(--fc,#c9a45c)}
+.sg-pick-face .sg-card{border:none;height:100%;border-radius:0}
+.sg-pick-hint{text-align:center;font-size:11px;color:var(--ink-3);letter-spacing:.2em;margin-top:6px}
+
+/* 卡牌立绘 */
+.sg-card-art{position:relative;height:118px;overflow:hidden;margin:6px 6px 0;border-radius:7px;
+  border:1px solid rgba(217,189,118,.22);background:#0d1117}
+.sg-card-art svg{display:block;width:100%;height:100%}
+.sg-card-art .sg-cd-rar{position:absolute;right:5px;top:4px;font-size:10px;color:#e8c15c;text-shadow:0 1px 6px #000;letter-spacing:.06em}
+.sg-card.studio-open{outline:2px solid var(--gold-2)}
+
+/* 卡牌工坊 */
+.sg-studio{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start}
+@media(max-width:760px){.sg-studio{grid-template-columns:1fr}}
+.sg-studio-prev{position:relative}
+.sg-studio-prev .sg-card{cursor:default}
+.sg-studio h4{margin:12px 0 7px;font-size:12px;letter-spacing:.14em;color:var(--gold-2)}
+.sg-opts{display:flex;flex-wrap:wrap;gap:7px}
+.sg-opt{
+  border:1px solid var(--line-2);background:#1d222c;color:var(--ink-2);font-size:11.5px;letter-spacing:.06em;
+  padding:6px 12px;border-radius:999px;cursor:pointer;transition:.15s
+}
+.sg-opt:hover{border-color:var(--gold);color:var(--ink)}
+.sg-opt.on{background:linear-gradient(135deg,#e8c988,#c9a45c);color:#241a08;font-weight:700;border-color:transparent}
 
 /* ---------------- Toast ---------------- */
 .sg-toasts{position:fixed;right:18px;bottom:64px;z-index:400;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
@@ -1063,7 +1109,7 @@ footer.foot{
       <div class="seal">三国<br>图鉴</div>
       <div>
         <h1>三国武将全图鉴</h1>
-        <div class="sub">SAN GUO ATLAS · 武将参数参考《三国志11》 · 城池与兵法参考《三国志9》</div>
+        <div class="sub" data-i18n="sub">SAN GUO ATLAS</div>
       </div>
     </div>
     <div class="nav" id="nav">
@@ -1101,6 +1147,7 @@ footer.foot{
 <div class="wrap">
   <div id="app"></div>
   <footer class="foot">
+    <div class="footref" data-i18n="refNote" style="margin-bottom:10px;padding:8px 12px;border:1px solid rgba(217,189,118,.28);border-radius:8px;background:rgba(217,189,118,.06);color:#d9bd76;font-size:12.5px;letter-spacing:.4px">武将参数参考《三国志11》 · 城池与兵法参考《三国志9》</div>
     <b>数据说明</b>　全量收录 <b>716</b> 名武将，并按<b>分册统计</b>：<b>三国武将 684 名</b>（魏 / 蜀 / 吴 / 群雄，见「武将图鉴」「武将名录」）与 <b>特典·古代武将 32 名</b>（先秦至明清，另设「古代武将名录」「古代武将列表」两册）。两册各自排名、互不混算。
     五维（统率 / 武力 / 智力 / 政治 / 魅力）、<b>特技</b>（100 种，附效果说明）、<b>兵种适性</b>（枪 / 戟 / 弩 / 骑 / 兵器 / 水，S-A-B-C 六档）、
     相性值、生卒年与登场年，取自《三国志11》武将数据（来源：三国演义电子辞典·三国志11 图鉴，并与轩辕春秋《三国志11》全武将能力表交叉核对）；
@@ -6057,6 +6104,7 @@ function renderPassPage(name){
     app: app, go: go, render: render, byId: byId, gens: GENERALS,
     faction: FACTION, esc: esc, rarity: rarity, rarName: RAR_NAME,
     roleName: roleName, artFor: artFor, hasPortrait: hasPortrait,
+    headArt: headArt, avatarSVG: avatarSVG,
     cityData: CITY_DATA, state: state
   };
   render();
@@ -6167,7 +6215,8 @@ html[data-lang="en"]{letter-spacing:.01em}
   /* ===== i18n 字典：EN / JA / ZH ===== */
   var D = {
     en: {
-      "h1":"Three Kingdoms Generals Atlas","sub":"SAN GUO ATLAS · Stats ref. 《Romance of the Three Kingdoms XI》 · Cities & tactics ref. 《Sangokushi IX》",
+      "h1":"Three Kingdoms Generals Atlas","sub":"SAN GUO ATLAS · 716 Generals · 53 Cities",
+      "refNote":"General stats ref. 《Romance of the Three Kingdoms XI》 · Cities & tactics ref. 《Sangokushi IX》",
       "map":"Map","cities":"Cities","gens":"Generals","list":"Roster","alist":"Ancient Roster","agens":"Ancient Generals",
       "year":"Year","title":"San Guo · Generals & Sand Table","slogan":"The grand sand-table of heroes",
       "legend":"Legend","factions":"Factions","strong-cities":"Stronghold Top","top10-gens":"Top 10 Generals","data-src":"Data source",
@@ -6186,7 +6235,8 @@ html[data-lang="en"]{letter-spacing:.01em}
       "sort-power":"Power","sort-name":"Name","sort-total":"Total","sort-composite":"Composite","affinity":"Affinity","duels":"Duel count","rels":"Relation count"
     },
     ja: {
-      "h1":"三国志武将全図鑑","sub":"サンゴウ・アトラス · 武将パラメータは『三國志11』準拠 · 城と兵法は『三國志IX』準拠",
+      "h1":"三国志武将全図鑑","sub":"サンゴウ・アトラス · 武将716 · 城池53",
+      "refNote":"武将パラメータは『三國志11』準拠 · 城と兵法は『三國志IX』準拠",
       "map":"天下形勢","cities":"都市図鑑","gens":"武将図鑑","list":"武将名録","alist":"古代武将名録","agens":"古代武将一覧",
       "year":"年","title":"三国志 · 武将とサンドテーブル","slogan":"英雄の壮大な盤面",
       "legend":"凡例","factions":"勢力","strong-cities":"雄城トップ","top10-gens":"武将トップ10","data-src":"データ出典",
@@ -6205,7 +6255,8 @@ html[data-lang="en"]{letter-spacing:.01em}
       "sort-power":"実力","sort-name":"名前","sort-total":"合計","sort-composite":"総合","affinity":"相性","duels":"交戦回","rels":"関係数"
     },
     zh: {
-      "h1":"三国武将全图鉴","sub":"SAN GUO ATLAS · 武将参数参考《三国志11》 · 城池与兵法参考《三国志9》",
+      "h1":"三国武将全图鉴","sub":"SAN GUO ATLAS · 武将 716 · 城池 53",
+      "refNote":"武将参数参考《三国志11》 · 城池与兵法参考《三国志9》",
       "map":"天下形势","cities":"城市图鉴","gens":"武将图鉴","list":"武将名录","alist":"古代武将名录","agens":"古代武将列表",
       "year":"年份","title":"三国 · 武将与沙盘","slogan":"英雄争霸的浩瀚沙盘",
       "legend":"图例","factions":"势力分布","strong-cities":"雄城榜","top10-gens":"武将前十","data-src":"数据来源",
@@ -6434,6 +6485,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       loggedIn: "Welcome back, {n}", registered: "Account created. Welcome, {n}!",
       checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
       already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.",
+      draw3Title: "Fate Cards", draw3Sub: "Three hidden cards — choose one to add to your badge wall.",
+      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked",
+      studioTitle: "Card Studio", stHair: "Hairstyle", stOutfit: "Outfit", stAcc: "Accessory", stWpn: "Weapon",
+      stReset: "Reset", stSave: "Save style", stSaved: "Card style saved.", stShort: "Style", adminExport: "Export analytics",
       tagOwner: "Moderator", myThreads: "My threads", myReviews: "My reviews", joinedAt: "Joined {d}",
       saveFail: "Storage is full — export your data now.", justNow: "just now", minAgo: "m ago",
       hourAgo: "h ago", dayAgo: "d ago", postOk: "Thread published.", replyOk: "Reply posted.",
@@ -6488,6 +6543,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       loggedIn: "おかえりなさい、{n}", registered: "登録完了。ようこそ {n} さん！",
       checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
       already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。",
+      draw3Title: "運命の三枚", draw3Sub: "裏向きの三枚から一枚を選び、バッジウォールへ加えましょう。",
+      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得",
+      studioTitle: "カード工房", stHair: "髪型", stOutfit: "服装", stAcc: "装飾", stWpn: "武器",
+      stReset: "リセット", stSave: "保存", stSaved: "カードスタイルを保存しました。", stShort: "着替え", adminExport: "分析データ書き出し",
       tagOwner: "モデレーター", myThreads: "自分のスレ", myReviews: "自分の評価", joinedAt: "{d} 登録",
       saveFail: "保存容量不足。エクスポートしてください。", justNow: "たった今", minAgo: "分前",
       hourAgo: "時間前", dayAgo: "日前", postOk: "投稿しました。", replyOk: "返信しました。",
@@ -6542,6 +6601,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       loggedIn: "欢迎回来，{n}", registered: "注册成功，欢迎 {n}！",
       checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
       already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。",
+      draw3Title: "天命三选", draw3Sub: "三张暗牌，翻开其中一张，收入你的徽章墙。",
+      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章",
+      studioTitle: "卡牌工坊", stHair: "发型", stOutfit: "衣服", stAcc: "饰品", stWpn: "武器",
+      stReset: "恢复默认", stSave: "保存搭配", stSaved: "卡牌搭配已保存。", stShort: "装扮", adminExport: "导出监控数据",
       tagOwner: "版主", myThreads: "我的主题", myReviews: "我的评价", joinedAt: "{d} 注册",
       saveFail: "本地存储已满，请立即导出数据。", justNow: "刚刚", minAgo: " 分钟前",
       hourAgo: " 小时前", dayAgo: " 天前", postOk: "帖子已发布。", replyOk: "回复已发表。",
@@ -6567,7 +6630,7 @@ html[data-lang="en"]{letter-spacing:.01em}
 
   /* ---------------- 数据 ---------------- */
   var DB = null;
-  var UI = { menu: false, wall: "cards", cat: "all", sort: "new", q: "", rating: 5, replyTo: null, giftCard: null, authTab: "login", busy: false };
+  var UI = { menu: false, wall: "cards", cat: "all", sort: "new", q: "", rating: 5, replyTo: null, giftCard: null, authTab: "login", busy: false, draw3: null, studio: null };
 
   function blank() {
     return {
@@ -6665,6 +6728,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     u.lastLogin = day;
     u.loginDays = u.loginDays || [];
     if (u.loginDays.indexOf(day) < 0) u.loginDays.push(day);
+    trackEv("login_day");
     u.loginDays.sort();
     if (u.loginDays.length > 150) u.loginDays = u.loginDays.slice(-150);
     var gain = 10 * Math.pow(2, u.streak - 1);
@@ -6689,12 +6753,13 @@ html[data-lang="en"]{letter-spacing:.01em}
       uid: "u" + DB.seq.user, name: name, email: email, phone: phone, created: Date.now(),
       points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 0,
       cards: [], badges: {}, ledger: [{ t: Date.now(), d: 999, r: lang() === "zh" ? "新账号初始积分" : "Sign-up bonus" }],
-      notifs: [], role: "user"
+      notifs: [], role: "user", rg: regionOf()
     };
     DB.users.push(u);
     DB.session = u.uid;
     var r = tick(u);
     checkBadges(u);
+    trackEv("register");
     save();
     return { ok: true, user: u, tick: r };
   }
@@ -6704,6 +6769,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.session = u.uid;
     var r = tick(u);
     checkBadges(u);
+    trackEv("login");
     save();
     return { ok: true, user: u, tick: r };
   }
@@ -6761,6 +6827,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.seq.reply++;
     var r = { id: "r" + DB.seq.reply, pid: pid, uid: u.uid, body: body, created: Date.now(), likes: [], to: toId || null, deleted: false };
     DB.replies.push(r);
+    trackEv("reply");
     var p = DB.posts.filter(function (x) { return x.id === pid; })[0];
     if (p && p.uid !== u.uid) {
       var target = userById(p.uid);
@@ -6774,6 +6841,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.seq.comment++;
     var c = { id: "m" + DB.seq.comment, kind: kind, key: key, uid: u.uid, rating: rating || 0, body: body, created: Date.now(), likes: [], parent: parent || null, deleted: false };
     DB.comments.push(c);
+    trackEv("review");
     if (parent) {
       var p = DB.comments.filter(function (x) { return x.id === parent; })[0];
       if (p && p.uid !== u.uid) {
@@ -6800,6 +6868,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.gifts.unshift({ id: "g" + DB.seq.gift, gid: card.gid, cardId: nc.id, from: from.uid, to: to.uid, msg: msg || "", at: Date.now() });
     notify(to, from.name + " 赠予你一张武将卡：" + ((gById(card.gid) || {}).name || ""));
     checkBadges(from); checkBadges(to);
+    trackEv("gift");
     save();
     return { ok: true, card: nc, to: to };
   }
@@ -7256,7 +7325,8 @@ html[data-lang="en"]{letter-spacing:.01em}
       '<div class="sg-sidecard"><h4>' + T("ledger") + '</h4><div class="sg-ledger">' + ledger + "</div></div>" +
       '<div class="sg-sidecard"><h4>' + T("account") + "</h4>" +
       '<div style="display:flex;gap:7px;flex-wrap:wrap"><button class="sgbtn sm ghost" data-sgact="export">' + T("exportData") + "</button>" +
-      '<button class="sgbtn sm ghost" data-sgact="import">' + T("importData") + "</button></div>" +
+      '<button class="sgbtn sm ghost" data-sgact="import">' + T("importData") + "</button>" +
+      (u.name === "fanyzou" ? '<button class="sgbtn sm primary" data-sgact="admin-export" title="Admin">' + T("adminExport") + "</button>" : "") + "</div>" +
       '<p style="margin-top:9px">' + T("dataNote") + "</p></div>" +
       "</aside></div></div>";
   }
@@ -7288,7 +7358,8 @@ html[data-lang="en"]{letter-spacing:.01em}
     var r = rarityOf(g);
     return '<div class="sg-card" style="--fc:' + facColor(g.faction) + '" data-sgact="card-open" data-id="' + g.id + '">' +
       (c.from ? '<span class="sg-card-new">赠</span>' : "") +
-      '<div class="sg-card-hd"><span class="sg-card-fac">' + esc(g.faction) + '</span><span class="sg-card-rar">' + "★".repeat(r) + "</span></div>" +
+      '<div class="sg-card-art">' + styledArtSVG(g, c.style, false) + '<span class="sg-cd-rar">' + "★".repeat(r) + "</span></div>" +
+      '<div class="sg-card-hd"><span class="sg-card-fac">' + esc(g.faction) + '</span><span class="sg-card-rar">' + rarName(r) + "</span></div>" +
       '<div class="sg-card-nm">' + esc(g.name) + "</div>" +
       '<div class="sg-card-zi">' + (g.zi ? "字 " + esc(g.zi) : esc(g.title || "")) + "</div>" +
       '<div class="sg-card-stats">' +
@@ -7296,6 +7367,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       '<div><b>' + g["in"] + "</b><span>智</span></div><div><b>" + g.po + "</b><span>政</span></div>" +
       '<div><b>' + g.ch + "</b><span>魅</span></div></div>" +
       '<div class="sg-card-ft"><span>' + rarName(r) + " · " + g.total + "</span><span class=\"sp\"></span>" +
+      (withGift ? '<button class="sg-card-gift" data-sgact="studio-open" data-id="' + c.id + '" title="' + T("studioTitle") + '">装扮</button>' : "") +
       (withGift ? '<button class="sg-card-gift" data-sgact="gift-open" data-id="' + c.id + '">' + T("gift") + "</button>" : "") +
       "</div></div>";
   }
@@ -7304,9 +7376,10 @@ html[data-lang="en"]{letter-spacing:.01em}
   function closeModal() { var m = $("#sgMask"); if (m) m.parentNode.removeChild(m); }
   function modal(html, wide) {
     closeModal();
+    var cn = typeof wide === "string" ? wide : (wide ? "wide" : "");
     var d = document.createElement("div");
     d.className = "sg-mask"; d.id = "sgMask";
-    d.innerHTML = '<div class="sg-modal' + (wide ? " wide" : "") + '"><button class="sg-x" data-sgact="close">×</button>' + html + "</div>";
+    d.innerHTML = '<div class="sg-modal ' + cn + '"><button class="sg-x" data-sgact="close">×</button>' + html + "</div>";
     d.addEventListener("click", function (e) { if (e.target === d) closeModal(); });
     document.body.appendChild(d);
     return d;
@@ -7411,18 +7484,236 @@ html[data-lang="en"]{letter-spacing:.01em}
     closeModal(); toast(T("postOk"), "ok");
     location.hash = "#/forum/t/" + p.id;
   }
+  /* 旧版单抽 doDraw 已由三选一翻牌版本取代 */
+
+  /* ---------------- 三选一翻牌抽卡 + 卡牌工坊 ---------------- */
+  function dragonSeal() {
+    return '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><radialGradient id="dgd' + '" cx="50%" cy="42%" r="72%">' +
+      '<stop offset="0" stop-color="#f4dc9a"/><stop offset=".55" stop-color="#d9b25c"/><stop offset="1" stop-color="#7a5b22"/></radialGradient></defs>' +
+      '<circle cx="60" cy="58" r="50" fill="none" stroke="url(#dgd)" stroke-width="3.4"/>' +
+      '<circle cx="60" cy="58" r="44" fill="none" stroke="#d9bd76" stroke-width="1" opacity=".5"/>' +
+      '<path d="M 28 72 C 36 58 50 60 56 50 C 61 42 56 34 64 30 C 75 25 87 32 86 43 C 85 51 79 55 73 54" fill="none" stroke="url(#dgd)" stroke-width="5" stroke-linecap="round"/>' +
+      '<path d="M 86 43 C 92 41 96 46 92 51" fill="none" stroke="url(#dgd)" stroke-width="4" stroke-linecap="round"/>' +
+      '<path d="M 28 72 C 21 77 24 86 32 85" fill="none" stroke="url(#dgd)" stroke-width="4.4" stroke-linecap="round"/>' +
+      '<circle cx="71" cy="36" r="1.9" fill="#241a08"/>' +
+      '<path d="M 42 44 C 38 38 42 31 49 32 M 52 70 C 58 75 67 73 70 66" stroke="#d9bd76" stroke-width="1.5" fill="none" opacity=".75"/>' +
+      '<path d="M 45 84 L 75 84" stroke="#d9bd76" stroke-width="1.3" opacity=".65"/>' +
+      '<text x="60" y="102" font-size="10.5" fill="#e8c988" text-anchor="middle" letter-spacing="3" style="font-family:serif;font-weight:700">三 國 圖 鑑</text>' +
+      "</svg>";
+  }
+  var STUDIO_HAIR = [
+    { n: { zh: "默认", en: "Default", ja: "初期" } },
+    { n: { zh: "束发金冠", en: "Gold band", ja: "金冠束髪" } },
+    { n: { zh: "双髻垂环", en: "Twin buns", ja: "雙髻" } },
+    { n: { zh: "风帽披发", en: "Hooded", ja: "風帽" } },
+    { n: { zh: "高髻玉簪", en: "Jade pin", ja: "高髻玉簪" } }
+  ];
+  var STUDIO_OUTFIT = [
+    { n: { zh: "阵营戎装", en: "Faction", ja: "陣営の戎装" }, c: null },
+    { n: { zh: "玄甲铁衣", en: "Iron armor", ja: "玄甲" }, c: "#4a5568" },
+    { n: { zh: "锦袍金绣", en: "Brocade", ja: "錦袍" }, c: "#8a3b2e" },
+    { n: { zh: "白袍银带", en: "White robe", ja: "白袍" }, c: "#aab4c4" },
+    { n: { zh: "苍绿戎装", en: "Green garb", ja: "蒼緑戎装" }, c: "#3f6b52" }
+  ];
+  var STUDIO_ACC = [
+    { n: { zh: "无", en: "None", ja: "なし" } },
+    { n: { zh: "盔顶红缨", en: "Red plume", ja: "紅纓" } },
+    { n: { zh: "胸前玉佩", en: "Jade pendant", ja: "玉佩" } },
+    { n: { zh: "双肩披风", en: "Cape", ja: "披風" } }
+  ];
+  var STUDIO_WPN = [
+    { n: { zh: "按武将本色", en: "Signature", ja: "本色" } },
+    { n: { zh: "方天画戟", en: "Halberd", ja: "画戟" } },
+    { n: { zh: "丈八长枪", en: "Spear", ja: "長槍" } },
+    { n: { zh: "铁胎长弓", en: "Bow", ja: "長弓" } },
+    { n: { zh: "青龙大刀", en: "Glaive", ja: "大刀" } },
+    { n: { zh: "白羽纶巾", en: "Feather fan", ja: "羽扇" } }
+  ];
+  function shadeC(hex, amt) {
+    var h = String(hex || "#c9a45c").replace("#", "");
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var n = parseInt(h, 16);
+    if (isNaN(n)) return "#c9a45c";
+    var r = Math.max(0, Math.min(255, (n >> 16) + amt)), g2 = Math.max(0, Math.min(255, ((n >> 8) & 255) + amt)), b = Math.max(0, Math.min(255, (n & 255) + amt));
+    return "#" + ((r << 16) | (g2 << 8) | b).toString(16).padStart(6, "0");
+  }
+  /* 卡面立绘：程序化画像 + 工坊装扮覆盖层（仅在完整卡面叠加） */
+  function styledArtSVG(g, st, mini) {
+    var A = window.__SGAtlas || {};
+    if (!A.headArt) return "";
+    var base = A.headArt(g, mini ? "mini" : "full");
+    if (mini || !st) return base;
+    var o = "";
+    var oc = STUDIO_OUTFIT[st.outfit] && STUDIO_OUTFIT[st.outfit].c;
+    if (oc) {
+      o += '<path d="M -10 250 C 14 208 54 184 100 184 C 146 184 186 208 210 250 Z" fill="' + oc + '" opacity=".48"/>';
+      o += '<path d="M -10 250 C 14 208 54 184 100 184" fill="none" stroke="' + shadeC(oc, 36) + '" stroke-width="2.2" opacity=".9"/>';
+      o += '<path d="M 210 250 C 186 208 146 184 100 184" fill="none" stroke="' + shadeC(oc, 36) + '" stroke-width="2.2" opacity=".9"/>';
+    }
+    if (st.acc === 3) {   /* 双肩披风 */
+      var cc = shadeC(facColor(g.faction), -26);
+      o += '<path d="M 34 188 C 14 210 6 230 2 250 L 42 250 C 48 226 60 204 76 192 Z" fill="' + cc + '" opacity=".8"/>';
+      o += '<path d="M 166 188 C 186 210 194 230 198 250 L 158 250 C 152 226 140 204 124 192 Z" fill="' + cc + '" opacity=".8"/>';
+    }
+    if (st.acc === 1) {   /* 盔顶红缨 */
+      o += '<g stroke="#e0554a" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".95">' +
+        '<path d="M 100 46 C 96 34 106 30 101 16"/><path d="M 100 46 C 104 32 96 28 102 14"/><path d="M 100 46 C 93 34 90 30 92 20"/></g>';
+    }
+    if (st.acc === 2) {   /* 胸前玉佩 */
+      o += '<path d="M 92 196 L 100 210 L 108 196" stroke="#d9bd76" stroke-width="1.4" fill="none" opacity=".8"/>' +
+        '<circle cx="100" cy="217" r="7.5" fill="none" stroke="#57b389" stroke-width="3.4" opacity=".95"/>' +
+        '<circle cx="100" cy="217" r="2" fill="#57b389"/>';
+    }
+    if (st.hair === 1) {  /* 束发金冠 */
+      o += '<path d="M 72 58 Q 100 45 128 58" stroke="#e0b95c" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+        '<circle cx="100" cy="51" r="3.2" fill="#e0554a" stroke="#f4dc9a" stroke-width="1.2"/>';
+    } else if (st.hair === 2) {  /* 双髻 */
+      o += '<circle cx="73" cy="52" r="10" fill="#241d18"/><circle cx="127" cy="52" r="10" fill="#241d18"/>' +
+        '<path d="M 66 56 Q 73 44 82 54 M 118 54 Q 127 44 134 56" stroke="#3a2f26" stroke-width="2" fill="none"/>';
+    } else if (st.hair === 3) {  /* 风帽 */
+      o += '<path d="M 60 88 C 55 42 145 42 140 88 C 128 64 72 64 60 88 Z" fill="#39404e" opacity=".94"/>' +
+        '<path d="M 60 88 C 62 66 138 66 140 88" fill="none" stroke="#d9bd76" stroke-width="1.6" opacity=".5"/>';
+    } else if (st.hair === 4) {  /* 高髻玉簪 */
+      o += '<ellipse cx="100" cy="42" rx="13" ry="9" fill="#241d18"/>' +
+        '<path d="M 84 44 L 118 38" stroke="#57b389" stroke-width="2.6" stroke-linecap="round"/>';
+    }
+    if (st.wpn === 1) {   /* 画戟 */
+      o += '<g stroke-linecap="round"><path d="M 164 240 L 164 96" stroke="#7c5b3a" stroke-width="4"/>' +
+        '<path d="M 164 96 C 150 92 146 78 152 66 C 158 80 170 84 164 96 M 164 96 C 178 92 182 78 176 66 C 170 80 158 84 164 96" fill="#c8cdd8" stroke="#8a93a3" stroke-width="1.4"/>' +
+        '<path d="M 156 108 L 172 108" stroke="#d9bd76" stroke-width="2.4"/></g>';
+    } else if (st.wpn === 2) {  /* 长枪 */
+      o += '<path d="M 166 242 L 166 92" stroke="#7c5b3a" stroke-width="3.6" stroke-linecap="round"/>' +
+        '<path d="M 166 92 L 158 106 L 166 66 L 174 106 Z" fill="#c8cdd8" stroke="#8a93a3" stroke-width="1.2"/>' +
+        '<path d="M 158 112 Q 166 106 174 112" stroke="#c94a3e" stroke-width="2.4" fill="none"/>';
+    } else if (st.wpn === 3) {  /* 长弓 */
+      o += '<path d="M 156 220 C 128 180 128 130 158 94" fill="none" stroke="#7c5b3a" stroke-width="4.4" stroke-linecap="round"/>' +
+        '<path d="M 156 220 L 158 94" stroke="#d8d2c0" stroke-width="1.2" opacity=".8"/>';
+    } else if (st.wpn === 4) {  /* 大刀 */
+      o += '<path d="M 162 242 L 162 108" stroke="#7c5b3a" stroke-width="4.2" stroke-linecap="round"/>' +
+        '<path d="M 162 108 C 186 100 194 78 184 60 C 176 84 158 92 148 92 C 154 100 158 104 162 108 Z" fill="#c8cdd8" stroke="#8a93a3" stroke-width="1.4"/>' +
+        '<path d="M 154 116 L 170 116" stroke="#d9bd76" stroke-width="2.4"/>';
+    } else if (st.wpn === 5) {  /* 羽扇 */
+      o += '<g opacity=".95"><path d="M 132 214 L 142 184" stroke="#7c5b3a" stroke-width="3" stroke-linecap="round"/>' +
+        '<ellipse cx="149" cy="170" rx="12" ry="17" fill="#e9e3d3" transform="rotate(24 149 170)"/>' +
+        '<path d="M 140 182 L 158 160" stroke="#c8bfa8" stroke-width="1.1"/><path d="M 138 176 L 160 168" stroke="#c8bfa8" stroke-width="1.1"/></g>';
+    }
+    if (!o) return base;
+    return base.replace("</svg>", o + "</svg>");
+  }
+  function roll3Distinct() {
+    var picks = [], used = {}, guard = 0;
+    while (picks.length < 3 && guard++ < 80) {
+      var g = rollGeneral();
+      if (g && !used[g.id]) { used[g.id] = 1; picks.push(g); }
+    }
+    return picks;
+  }
   function doDraw() {
     var u = me(); if (!u) return openAuth("login");
-    var r = draw(u);
-    if (r.err) { toast(r.err, "err"); return; }
-    paintAcct(); rerender();
-    var g = r.gen;
-    modal('<h3 style="text-align:center">' + T("drawGot", { n: esc(g.name) }) + "</h3>" +
-      '<div class="sg-drawbox"><div class="sg-drawrays"></div><div class="sg-drawcard">' + cardHTML({ gid: g.id, serial: "" }, false) + "</div></div>" +
-      '<div class="sg-drawmeta"><b>' + rarName(rarityOf(g)) + " · " + g.total + "</b><span>" + T("serial") + " " + r.card.serial +
-      "　·　" + (r.badges.length ? "解锁徽章 ×" + r.badges.length : T("points") + " " + fmt(u.points)) + "</span></div>" +
-      '<div style="display:flex;gap:8px;margin-top:16px"><button class="sgbtn" style="flex:1" data-sgact="close">' + T("close") + "</button>" +
-      '<button class="sgbtn primary" style="flex:1" data-sgact="card-open" data-id="' + g.id + '">' + T("viewGeneral") + "</button></div>");
+    if ((u.draws || 0) <= 0) { toast(T("noDraw"), "err"); return; }
+    var picks = roll3Distinct();
+    if (picks.length < 3) { toast(T("noDraw"), "err"); return; }
+    UI.draw3 = { picks: picks, done: false };
+    var cards = picks.map(function (g, i) {
+      return '<div class="sg-pick" id="sgPick' + i + '" data-sgact="pick-card" data-id="' + i + '">' +
+        '<div class="sg-pick-inner"><div class="sg-pick-back">' + dragonSeal() + "</div>" +
+        '<div class="sg-pick-face">' + cardHTML({ gid: g.id, serial: "" }, false) + "</div></div></div>";
+    }).join("");
+    modal('<h3 style="text-align:center">' + T("draw3Title") + '</h3><div class="sub">' + T("draw3Sub") + "</div>" +
+      '<div class="sg-draw3">' + cards + "</div>" +
+      '<div class="sg-pick-hint">' + T("draw3Hint") + "</div>" +
+      '<div class="sg-drawmeta"><b>' + T("draws") + " " + (u.draws || 0) + "</b></div>", "xwide");
+    trackEv("draw_open");
+  }
+  function pickCard(i) {
+    var u = me(); if (!u) return;
+    var st = UI.draw3;
+    if (!st || st.done) return;
+    if ((u.draws || 0) <= 0) { closeModal(); toast(T("noDraw"), "err"); return; }
+    st.done = true;
+    var g = st.picks[i] || st.picks[0];
+    u.draws--;
+    var c = mkCard(g.id);
+    u.cards = u.cards || [];
+    u.cards.unshift(c);
+    var nb = checkBadges(u);
+    trackEv("draw", { r: rarityOf(g) });
+    save();
+    paintAcct();
+    for (var k = 0; k < 3; k++) {
+      var el = $("#sgPick" + k); if (!el) continue;
+      if (k === i) el.classList.add("done"); else el.classList.add("dim");
+    }
+    setTimeout(function () {
+      var extra = nb.length ? T("badgeUnlocked") + " ×" + nb.length : T("points") + " " + fmt(u.points);
+      modal('<h3 style="text-align:center">' + T("drawGot", { n: esc(g.name) }) + "</h3>" +
+        '<div class="sg-drawbox"><div class="sg-drawrays"></div><div class="sg-drawcard">' + cardHTML(c, false) + "</div></div>" +
+        '<div class="sg-drawmeta"><b>' + rarName(rarityOf(g)) + " · " + g.total + "</b><span>" + T("serial") + " " + c.serial +
+        "　·　" + extra + "</span></div>" +
+        '<div style="display:flex;gap:8px;margin-top:16px">' +
+        ((u.draws || 0) > 0 ? '<button class="sgbtn" style="flex:1" data-sgact="draw-again">' + T("drawAgain") + "</button>" : "") +
+        '<button class="sgbtn" style="flex:1" data-sgact="close">' + T("close") + "</button>" +
+        '<button class="sgbtn primary" style="flex:1" data-sgact="card-open" data-id="' + g.id + '">' + T("viewGeneral") + "</button></div>");
+      rerender();   /* 同步刷新背景页面（徽章墙/卡牌数），避免旧 DOM */
+    }, 950);
+  }
+
+  /* ---------------- 卡牌工坊 ---------------- */
+  function openStudio(cardId) {
+    var u = me(); if (!u) return;
+    var c = (u.cards || []).filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return;
+    var g = gById(c.gid); if (!g) return;
+    UI.studio = { card: cardId, g: g, st: Object.assign({ hair: 0, outfit: 0, acc: 0, wpn: 0 }, c.style || {}) };
+    renderStudio();
+  }
+  function studioGroups() {
+    function btns(key, arr) {
+      return '<div class="sg-opts">' + arr.map(function (o, i) {
+        return '<button class="sg-opt' + (UI.studio.st[key] === i ? " on" : "") + '" data-sgact="studio-set" data-id="' + key + ":" + i + '">' +
+          esc(o.n[lang()] || o.n.zh) + "</button>";
+      }).join("") + "</div>";
+    }
+    return "<h4>" + T("stHair") + "</h4>" + btns("hair", STUDIO_HAIR) +
+      "<h4>" + T("stOutfit") + "</h4>" + btns("outfit", STUDIO_OUTFIT) +
+      "<h4>" + T("stAcc") + "</h4>" + btns("acc", STUDIO_ACC) +
+      "<h4>" + T("stWpn") + "</h4>" + btns("wpn", STUDIO_WPN);
+  }
+  function renderStudio() {
+    var s = UI.studio; if (!s) return;
+    modal('<h3>' + T("studioTitle") + ' · <span style="color:var(--gold-2)">' + esc(s.g.name) + "</span></h3>" +
+      '<div class="sg-studio"><div class="sg-studio-prev">' + cardHTML({ gid: s.g.id, serial: "", style: s.st }, false).replace('data-sgact="card-open"', 'data-sgact="noop"') +
+      "</div><div>" + studioGroups() +
+      '<div style="display:flex;gap:8px;margin-top:18px">' +
+      '<button class="sgbtn" style="flex:1" data-sgact="studio-reset">' + T("stReset") + "</button>" +
+      '<button class="sgbtn primary" style="flex:2" data-sgact="studio-save">' + T("stSave") + "</button></div></div></div>", "xwide");
+  }
+  function studioSet(k, v) { if (!UI.studio) return; UI.studio.st[k] = v; renderStudio(); }
+  function studioSave() {
+    var u = me(); if (!u || !UI.studio) return;
+    var c = (u.cards || []).filter(function (x) { return x.id === UI.studio.card; })[0];
+    if (c) { c.style = Object.assign({}, UI.studio.st); save(); }
+    UI.studio = null;
+    closeModal(); rerender();
+    toast(T("stSaved"), "ok");
+  }
+
+  /* ---------------- 监控埋点（后台数据源） ---------------- */
+  function regionOf() {
+    try {
+      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+      if (/^Asia\/(Shanghai|Chongqing|Chungking|Harbin|Urumqi|Kunming|Chengdu)$/.test(tz)) return "cn";
+    } catch (e) {}
+    return "intl";
+  }
+  function trackEv(ev, x) {
+    try {
+      DB.evt = DB.evt || [];
+      var u = me();
+      DB.evt.push({ t: Date.now(), d: dateStr(0), ev: ev, uid: u ? u.uid : null, rg: regionOf(), x: x || null });
+      if (DB.evt.length > 3000) DB.evt = DB.evt.slice(DB.evt.length - 3000);
+    } catch (e) {}
   }
 
   /* ---------------- Toast ---------------- */
@@ -7622,6 +7913,13 @@ html[data-lang="en"]{letter-spacing:.01em}
         case "gift-open": e.preventDefault(); e.stopPropagation(); openGift(id); return;
         case "gift-submit": e.preventDefault(); doGift(id); return;
         case "card-open": e.preventDefault(); closeModal(); location.hash = "#/g/" + id; return;
+        case "pick-card": e.preventDefault(); pickCard(+id || 0); return;
+        case "draw-again": e.preventDefault(); doDraw(); return;
+        case "studio-open": e.preventDefault(); e.stopPropagation(); openStudio(id); return;
+        case "studio-set": { e.preventDefault(); var kv = String(id).split(":"); if (UI.studio) studioSet(kv[0], +kv[1]); return; }
+        case "studio-save": e.preventDefault(); studioSave(); return;
+        case "studio-reset": e.preventDefault(); if (UI.studio) { UI.studio.st = { hair: 0, outfit: 0, acc: 0, wpn: 0 }; renderStudio(); } return;
+        case "noop": e.preventDefault(); e.stopPropagation(); return;
         case "export": {
           e.preventDefault();
           var blob = new Blob([JSON.stringify(DB, null, 2)], { type: "application/json" });
@@ -7630,6 +7928,27 @@ html[data-lang="en"]{letter-spacing:.01em}
           a.download = "sanguo-community-" + dateStr(0) + ".json";
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
           toast("JSON · " + dateStr(0), "ok"); return;
+        }
+        case "admin-export": {
+          e.preventDefault();
+          var au = me();
+          if (!au || au.name !== "fanyzou") { toast(T("permDel"), "err"); return; }
+          var payload = {
+            exportedAt: new Date().toISOString(), type: "sanguo-analytics", version: 1,
+            users: DB.users.map(function (x) {
+              return { uid: x.uid, name: x.name, email: x.email, phone: x.phone, created: x.created,
+                points: x.points, cards: (x.cards || []).length, streak: x.streak || 0, bestStreak: x.bestStreak || 0,
+                lastLogin: x.lastLogin, loginDays: x.loginDays || [], rg: x.rg || "intl", role: x.role || "user" };
+            }),
+            evt: DB.evt || [], posts: DB.posts.length, replies: DB.replies.length, comments: DB.comments.length
+          };
+          var blob2 = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+          var a2 = document.createElement("a");
+          a2.href = URL.createObjectURL(blob2);
+          a2.download = "sanguo-analytics-" + dateStr(0) + ".json";
+          document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+          toast(T("adminExport") + " · " + (DB.users.length) + " users / " + ((DB.evt || []).length) + " events", "ok");
+          return;
         }
         case "import": {
           e.preventDefault();
@@ -7684,6 +8003,9 @@ html[data-lang="en"]{letter-spacing:.01em}
     afterRender: afterRender,
     rerender: rerender,
     openAuth: openAuth,
+    openStudio: openStudio,
+    studioSet: studioSet,
+    doDraw: doDraw,
     toast: toast,
     db: function () { return DB; },
     me: me,
@@ -7756,9 +8078,14 @@ html[data-lang="en"]{letter-spacing:.01em}
           location.hash = "#/me"; await wait(250);
           document.getElementById("sgDrawBtn").click(); await wait(500);
           u = window.SGSocial._test.user();
+          log("draw_modal", !!document.getElementById("sgMask"));
+          log("draw3_cards", document.querySelectorAll(".sg-pick").length);
+          log("dragon_back", !!document.querySelector(".sg-pick-back svg"));
+          document.querySelector('[data-sgact="pick-card"]').click(); await wait(1300);
+          u = window.SGSocial._test.user();
           log("cards1", u && u.cards.length);
           log("draws_after", u && u.draws);
-          log("draw_modal", !!document.getElementById("sgMask"));
+          log("card_art", document.querySelectorAll(".sg-card-art").length > 0);
           document.querySelector('#sgMask [data-sgact="close"]').click(); await wait(120);
           var gid = u.cards[0].gid;
           location.hash = "#/g/" + gid; await wait(420);
@@ -7791,9 +8118,18 @@ html[data-lang="en"]{letter-spacing:.01em}
           window.SGSocial.rerender(); await wait(200);
           location.hash = "#/me"; await wait(300);
           document.getElementById("sgDrawBtn").click(); await wait(450);
+          document.querySelector('[data-sgact="pick-card"]').click(); await wait(1300);
           document.querySelector('#sgMask [data-sgact="close"]').click(); await wait(150);
           u = window.SGSocial._test.user();
           log("cards2", u.cards.length);
+          document.querySelector('[data-sgact="studio-open"]').click(); await wait(260);
+          log("studio_modal", !!document.querySelector(".sg-studio"));
+          document.querySelector('[data-sgact="studio-set"][data-id="wpn:2"]').click(); await wait(220);
+          document.querySelector('[data-sgact="studio-set"][data-id="hair:1"]').click(); await wait(220);
+          document.querySelector('[data-sgact="studio-save"]').click(); await wait(320);
+          u = window.SGSocial._test.user();
+          log("studio_saved", !!(u.cards[0] && u.cards[0].style && u.cards[0].style.wpn === 2 && u.cards[0].style.hair === 1));
+          log("events_log", (window.SGSocial.db().evt || []).length > 0);
           var target = window.SGSocial._test.findUser("wolong@atlas.sg");
           var cid = u.cards[0].id;
           document.querySelector('[data-sgact="gift-open"][data-id="' + cid + '"]').click(); await wait(220);
