@@ -6760,6 +6760,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     var r = tick(u);
     checkBadges(u);
     trackEv("register");
+    SGCloud.account(u, "reg");
     save();
     return { ok: true, user: u, tick: r };
   }
@@ -6770,6 +6771,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     var r = tick(u);
     checkBadges(u);
     trackEv("login");
+    SGCloud.account(u, "login");
     save();
     return { ok: true, user: u, tick: r };
   }
@@ -7713,8 +7715,132 @@ html[data-lang="en"]{letter-spacing:.01em}
       var u = me();
       DB.evt.push({ t: Date.now(), d: dateStr(0), ev: ev, uid: u ? u.uid : null, rg: regionOf(), x: x || null });
       if (DB.evt.length > 3000) DB.evt = DB.evt.slice(DB.evt.length - 3000);
+      SGCloud.rpc("sg_track", {
+        p_event: String(ev || "").slice(0, 40),
+        p_target: x && x.t ? String(x.t).slice(0, 100) : null,
+        p_region: regionOf(),
+        p_page: (location.hash || "#/map").slice(0, 120),
+        p_sid: SGCloud.sid(),
+        p_uid: u ? ("u" + hashNum(u.email || u.uid || "")) : null,
+        p_country: null
+      });
     } catch (e) {}
   }
+
+  /* ---------------- 云端采集（后台数据源） ----------------
+     数据库只接受本应用域名（sanguo-atlas.app.workbuddy.host）的请求，
+     海外站（github.io）通过隐藏 iframe 中继到该域名写入，两端行为一致。 */
+  var SGCloud = (function () {
+    var HOST = "https://sanguo-atlas.app.workbuddy.host";
+    var KEY = "wbpk_CuEbv9EAEwwQYI92Z1RcYH_mwa0b6O1sk6njj7GmgTpz45jl7qncG2M";
+    var same = false;
+    try { same = (location.origin === HOST); } catch (e) {}
+    var cli = null, loading = false, seq = 0, waits = {}, frame = null, fready = false, fq = [];
+
+    function initCli() {
+      if (cli) return cli;
+      if (!same) return null;
+      if (window.WorkBuddyCloud && window.WorkBuddyCloud.createWorkBuddyCloud) {
+        try { cli = window.WorkBuddyCloud.createWorkBuddyCloud({ endpoint: HOST, publishableKey: KEY }); } catch (e) { cli = null; }
+      }
+      return cli;
+    }
+    function loadSdk() {
+      if (loading || cli || !same) return;
+      loading = true;
+      var s = document.createElement("script");
+      s.src = "./sdk.js";
+      s.onload = function () { loading = false; initCli(); };
+      s.onerror = function () { loading = false; };
+      (document.head || document.documentElement).appendChild(s);
+    }
+    function sid() {
+      try {
+        var v = localStorage.getItem("sg_sid");
+        if (!v) { v = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem("sg_sid", v); }
+        return v;
+      } catch (e) { return "anon"; }
+    }
+    function ensureFrame() {
+      if (frame) return frame;
+      frame = document.createElement("iframe");
+      frame.setAttribute("aria-hidden", "true");
+      frame.setAttribute("tabindex", "-1");
+      frame.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+      frame.src = HOST + "/_relay.html";
+      frame.onload = function () { fready = true; flush(); };
+      (document.body || document.documentElement).appendChild(frame);
+      window.addEventListener("message", function (e) {
+        if (e.origin !== HOST) return;
+        var d = e.data || {};
+        if (d && d.__sgrelay && d.id && waits[d.id]) { var fn = waits[d.id]; delete waits[d.id]; fn(d.data); }
+      });
+      return frame;
+    }
+    function flush() {
+      if (!fready || !frame) return;
+      while (fq.length) {
+        var it = fq.shift();
+        try { frame.contentWindow.postMessage({ __sg: 1, id: it.id, name: it.name, args: it.args }, HOST); } catch (e) {}
+      }
+    }
+    function relay(name, args) {
+      var id = ++seq;
+      waits[id] = function () {};
+      fq.push({ id: id, name: name, args: args });
+      ensureFrame();
+      flush();
+      setTimeout(function () { delete waits[id]; }, 6000);
+    }
+    function rpc(name, args, retry) {
+      try {
+        if (same) {
+          var c = initCli();
+          if (!c) {
+            loadSdk();
+            if (retry !== false) setTimeout(function () { rpc(name, args, false); }, 1500);
+            return;
+          }
+          var p = c.database.rpc(name, args);
+          if (p && p.then) p.then(function () {}, function () {});
+          return;
+        }
+        relay(name, args);
+      } catch (e) {}
+    }
+    function account(u, kind) {
+      try {
+        if (!u) return;
+        if (kind === "reg") {
+          rpc("sg_register", {
+            p_email: u.email || "", p_phone: u.phone || "", p_nick: u.name || "",
+            p_region: regionOf(), p_source: (location.host || "").slice(0, 60)
+          });
+        } else {
+          rpc("sg_login", { p_email: u.email || "", p_region: regionOf() });
+        }
+      } catch (e) {}
+    }
+    function boot() {
+      loadSdk();
+      trackEv("visit");
+      var lastT = "", lastAt = 0;
+      document.addEventListener("click", function (e) {
+        var t = e.target && e.target.closest ? e.target.closest("button,a,[data-view]") : null;
+        if (!t) return;
+        var label = (t.getAttribute("data-view") || t.getAttribute("data-lang") || t.textContent || "").replace(/\s+/g, " ").trim();
+        if (!label) return;
+        label = label.slice(0, 40);
+        var now = Date.now();
+        if (label === lastT && now - lastAt < 1500) return;
+        lastT = label; lastAt = now;
+        trackEv("click", { t: label });
+      }, true);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+    return { rpc: rpc, sid: sid, account: account };
+  })();
 
   /* ---------------- Toast ---------------- */
   function toast(msg, type, ms) {
