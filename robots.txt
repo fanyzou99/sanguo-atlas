@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fanyzou99.github.io/sanguo-atlas/sitemap.xml
