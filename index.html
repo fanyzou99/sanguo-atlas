@@ -8290,6 +8290,8 @@ var BOTS = [
      海外站（github.io）通过隐藏 iframe 中继到该域名写入，两端行为一致。 */
   var SGCloud = (function () {
     var HOST = "https://sanguo-atlas.app.workbuddy.host";
+    /* 应用域名由平台分配、可能变更：跑在任一 *.workbuddy.host 下时以当前 origin 为准 */
+    try { if (/\.workbuddy\.host$/i.test(location.hostname)) HOST = location.origin; } catch (e) {}
     var KEY = "wbpk_CuEbv9EAEwwQYI92Z1RcYH_mwa0b6O1sk6njj7GmgTpz45jl7qncG2M";
     var same = false;
     try { same = (location.origin === HOST); } catch (e) {}
