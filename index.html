@@ -6573,7 +6573,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
       already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.", aiNoLike: "AI topics do not support likes yet", aiTag: "AI",
       draw3Title: "Fate Cards", draw3Sub: "Three hidden cards — choose one to add to your badge wall.",
-      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked", skillTrig: "Trigger {p}%",
+      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked", skillTrig: "Trigger {p}%", recycle: "Recycle", recycleAsk: "Recycle this card for {n} points?", recycleOk: "Confirm recycle", recycleGet: "Card recycled, +{n} points", recycleLedger: "Recycled {n}\u2019s card, +{p} pts", grantsGot: "Admin granted {n} draw chances",
       studioTitle: "Card Studio", stHair: "Hairstyle", stOutfit: "Outfit", stAcc: "Accessory", stWpn: "Weapon",
       stReset: "Reset", stSave: "Save style", stSaved: "Card style saved.", stShort: "Style", adminExport: "Export analytics",
       tagOwner: "Moderator", myThreads: "My threads", myReviews: "My reviews", joinedAt: "Joined {d}",
@@ -6631,7 +6631,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
       already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。", aiNoLike: "AI テーマはいいね非対応です", aiTag: "AI",
       draw3Title: "運命の三枚", draw3Sub: "裏向きの三枚から一枚を選び、バッジウォールへ加えましょう。",
-      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得", skillTrig: "発動 {p}%",
+      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得", skillTrig: "発動 {p}%", recycle: "回収", recycleAsk: "このカードを回収して {n} ポイントにしますか？", recycleOk: "回収する", recycleGet: "カードを回収し、+{n} ポイント", recycleLedger: "「{n}」のカードを回収、+{p} pt", grantsGot: "運営から抽選権 +{n}",
       studioTitle: "カード工房", stHair: "髪型", stOutfit: "服装", stAcc: "装飾", stWpn: "武器",
       stReset: "リセット", stSave: "保存", stSaved: "カードスタイルを保存しました。", stShort: "着替え", adminExport: "分析データ書き出し",
       tagOwner: "モデレーター", myThreads: "自分のスレ", myReviews: "自分の評価", joinedAt: "{d} 登録",
@@ -6689,7 +6689,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
       already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。", aiNoLike: "AI 主题暂不支持点赞", aiTag: "AI",
       draw3Title: "天命三选", draw3Sub: "三张暗牌，翻开其中一张，收入你的徽章墙。",
-      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章", skillTrig: "触发 {p}%",
+      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章", skillTrig: "触发 {p}%", recycle: "回收", recycleAsk: "确认回收该卡？将折算 {n} 积分", recycleOk: "确认回收", recycleGet: "卡片已回收，积分 +{n}", recycleLedger: "回收「{n}」卡，积分 +{p}", grantsGot: "管理员发放抽卡机会 +{n}",
       studioTitle: "卡牌工坊", stHair: "发型", stOutfit: "衣服", stAcc: "饰品", stWpn: "武器",
       stReset: "恢复默认", stSave: "保存搭配", stSaved: "卡牌搭配已保存。", stShort: "装扮", adminExport: "导出监控数据",
       tagOwner: "版主", myThreads: "我的主题", myReviews: "我的评价", joinedAt: "{d} 注册",
@@ -6751,31 +6751,31 @@ html[data-lang="en"]{letter-spacing:.01em}
   /* ---------------- 七阶品级（自高到低）：赤 → 橙 → 红 → 绿 → 青 → 蓝 → 紫 ----------------
      镶边 / 技能 / 触发率均按阶区分：触发率 99% → 10% 递减，技能效果随阶位增强。 */
   var TIERS = [
-    { n: "赤", c: "#ff3054", min: 88, trig: 99, skills: [
+    { n: "赤", c: "#ff3054", min: 88, trig: 99, pts: 70, skills: [
       { n: "天命·山河永镇", t: "攻", d: "伤害 +32%，无视敌方 30% 防御" },
       { n: "天命·龙魂觉醒", t: "辅", d: "五维 +12，暴击率 +35%" },
       { n: "天命·万军辟易", t: "破", d: "首回合伤害 ×1.8，震慑全军" } ] },
-    { n: "橙", c: "#ff8f2d", min: 85, trig: 85, skills: [
+    { n: "橙", c: "#ff8f2d", min: 85, trig: 85, pts: 60, skills: [
       { n: "焚天·烈焰连营", t: "攻", d: "伤害 +26%，灼烧 2 回合" },
       { n: "焚天·赤壁借风", t: "谋", d: "计策命中 +25%，火伤 +20%" },
       { n: "焚天·燎原之势", t: "破", d: "破防 25%，连击 2 次" } ] },
-    { n: "红", c: "#c9303c", min: 82, trig: 70, skills: [
+    { n: "红", c: "#c9303c", min: 82, trig: 70, pts: 50, skills: [
       { n: "破军·裂阵突袭", t: "攻", d: "伤害 +20%，破甲 18%" },
       { n: "破军·七进七出", t: "速", d: "先手 +20%，突击 2 次" },
       { n: "破军·单骑救主", t: "辅", d: "护盾（攻击 30%），援护友军" } ] },
-    { n: "绿", c: "#35b96e", min: 78, trig: 55, skills: [
+    { n: "绿", c: "#35b96e", min: 78, trig: 55, pts: 40, skills: [
       { n: "玄甲·不动如山", t: "防", d: "减伤 22%，反震 15%" },
       { n: "玄甲·铁壁坚阵", t: "防", d: "全军防御 +16%" },
       { n: "玄甲·陷阵之志", t: "攻", d: "伤害 +15%，受创回血 8%" } ] },
-    { n: "青", c: "#23b5c8", min: 72, trig: 40, skills: [
+    { n: "青", c: "#23b5c8", min: 72, trig: 40, pts: 30, skills: [
       { n: "疾风·千里奔袭", t: "速", d: "先手 +15%，闪避 +12%" },
       { n: "疾风·奇兵截道", t: "谋", d: "敌方命中 -14%" },
       { n: "疾风·追风逐电", t: "速", d: "连击 1 次，速度 +14%" } ] },
-    { n: "蓝", c: "#3f7fe0", min: 65, trig: 25, skills: [
+    { n: "蓝", c: "#3f7fe0", min: 65, trig: 25, pts: 20, skills: [
       { n: "疑兵·八门金锁", t: "谋", d: "敌方攻击 -10%" },
       { n: "疑兵·草木皆兵", t: "谋", d: "敌方士气 -12%" },
       { n: "疑兵·虚张声势", t: "辅", d: "受击 25% 概率免伤" } ] },
-    { n: "紫", c: "#9257e0", min: -1, trig: 10, skills: [
+    { n: "紫", c: "#9257e0", min: -1, trig: 10, pts: 10, skills: [
       { n: "坚壁·据守要津", t: "防", d: "减伤 8%" },
       { n: "坚壁·深沟高垒", t: "防", d: "生命 +8%" },
       { n: "坚壁·持久之计", t: "辅", d: "每回合回复 5%" } ] }
@@ -6880,7 +6880,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.seq.user++;
     var u = {
       uid: "u" + DB.seq.user, name: name, email: email, phone: phone, created: Date.now(),
-      points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 0,
+      points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 20,
       cards: [], badges: {}, ledger: [{ t: Date.now(), d: 999, r: lang() === "zh" ? "新账号初始积分" : "Sign-up bonus" }],
       notifs: [], role: "user", rg: regionOf()
     };
@@ -6888,6 +6888,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.session = u.uid;
     var r = tick(u);
     grantTestDraws(u);
+    ensureDefaultDraws(u);
     checkBadges(u);
     trackEv("register");
     SGCloud.account(u, "reg");
@@ -6919,6 +6920,20 @@ html[data-lang="en"]{letter-spacing:.01em}
     trackEv("test_quota", { n: q });
     return q;
   }
+  function ensureDefaultDraws(u) {
+    if (!u || u.d20) return 0;
+    u.d20 = 1;
+    if ((u.draws || 0) < 20) {
+      var add = 20 - (u.draws || 0);
+      u.draws = 20;
+      u.ledger = u.ledger || [];
+      u.ledger.unshift({ t: Date.now(), d: 0, r: "基础抽卡额度补足 +" + add });
+      if (u.ledger.length > 120) u.ledger.length = 120;
+      trackEv("draws20", { n: add });
+      return add;
+    }
+    return 0;
+  }
 
   function login(acc) {
     var u = findAccount(acc);
@@ -6926,6 +6941,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     DB.session = u.uid;
     var r = tick(u);
     grantTestDraws(u);
+    ensureDefaultDraws(u);
     checkBadges(u);
     trackEv("login");
     SGCloud.account(u, "login");
@@ -7822,7 +7838,39 @@ var BOTS = [
       '<div class="sg-card-ft"><span>' + tr.n + "阶 · " + g.total + "</span><span class=\"sp\"></span>" +
       (withGift ? '<button class="sg-card-gift" data-sgact="studio-open" data-id="' + c.id + '" title="' + T("studioTitle") + '">装扮</button>' : "") +
       (withGift ? '<button class="sg-card-gift" data-sgact="gift-open" data-id="' + c.id + '">' + T("gift") + "</button>" : "") +
+      (withGift ? '<button class="sg-card-gift sg-recycle" data-sgact="recycle" data-id="' + c.id + '">' + T("recycle") + "</button>" : "") +
       "</div></div>";
+  }
+
+  function openRecycle(cid) {
+    var u = me(); if (!u) return toast(T("likeNeed"), "err");
+    var c = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    if (!c) return;
+    var g = gById(c.gid); if (!g) return;
+    var tr = TIERS[tierOf(g)];
+    modal('<h3>' + T("recycle") + " · " + esc(g.name) + "</h3>" +
+      '<div class="sg-note" style="text-align:center;margin:10px 0">' + T("recycleAsk", { n: tr.pts }) + "</div>" +
+      '<div style="display:flex;gap:10px;justify-content:center;margin-top:14px">' +
+      '<button class="sgbtn" data-sgact="close">' + T("no") + "</button>" +
+      '<button class="sgbtn primary" data-sgact="recycle-yes" data-id="' + cid + '">' + T("recycleOk") + "</button></div>");
+  }
+  function doRecycle(cid) {
+    var u = me(); if (!u) return;
+    var k = -1;
+    (u.cards || []).forEach(function (x, i) { if (x.id === cid) k = i; });
+    if (k < 0) return;
+    var c = u.cards[k], g = gById(c.gid);
+    if (!g) return;
+    var tr = TIERS[tierOf(g)];
+    u.cards.splice(k, 1);
+    u.points = (u.points || 0) + tr.pts;
+    u.ledger = u.ledger || [];
+    u.ledger.unshift({ t: Date.now(), d: 0, r: T("recycleLedger", { n: g.name, p: tr.pts }) });
+    if (u.ledger.length > 120) u.ledger.length = 120;
+    checkBadges(u);
+    trackEv("recycle", { t: g.id, n: tr.pts });
+    save(); closeModal(); rerender();
+    toast(T("recycleGet", { n: tr.pts }), "ok");
   }
 
   /* ---------------- 弹窗 ---------------- */
@@ -8187,7 +8235,9 @@ var BOTS = [
         p_page: (location.hash || "#/map").slice(0, 120),
         p_sid: SGCloud.sid(),
         p_uid: u ? ("u" + hashNum(u.email || u.uid || "")) : null,
-        p_country: null
+        p_country: null,
+        p_ip: (SGCloud.ip && SGCloud.ip()) || null,
+        p_ua: (navigator.userAgent || "").slice(0, 200)
       });
     } catch (e) {}
   }
@@ -8201,6 +8251,45 @@ var BOTS = [
     var same = false;
     try { same = (location.origin === HOST); } catch (e) {}
     var cli = null, loading = false, seq = 0, waits = {}, frame = null, fready = false, fq = [];
+    var cip = null;
+    try { cip = localStorage.getItem("sg_ip"); } catch (e) {}
+    function fetchIP() {
+      try {
+        if (cip) return;
+        var urls = ["https://api.ipify.org?format=json", "https://api.ip.sb/ip", "https://myip.ipip.net"];
+        var i = 0;
+        function next() {
+          if (i >= urls.length || cip) return;
+          var u = urls[i++];
+          try {
+            fetch(u).then(function (r) { return r.text(); }).then(function (tx) {
+              var m = String(tx || "").match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+              if (m) {
+                cip = m[1];
+                try { localStorage.setItem("sg_ip", cip); } catch (e) {}
+              } else next();
+            })["catch"](next);
+          } catch (e) { next(); }
+        }
+        next();
+      } catch (e) {}
+    }
+    function grantsPoll(u) {
+      try {
+        if (!u || !u.email) return Promise.resolve(0);
+        return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120) }).then(function (r) {
+          var n = (r && r.ok) ? (r.n || 0) : 0;
+          if (n > 0 && me()) {
+            me().draws = (me().draws || 0) + n;
+            me().ledger = me().ledger || [];
+            me().ledger.unshift({ t: Date.now(), d: 0, r: "管理员发放抽卡机会 +" + n });
+            if (me().ledger.length > 120) me().ledger.length = 120;
+            save(); paintAcct(); toast(T("grantsGot", { n: n }), "ok");
+          }
+          return n;
+        });
+      } catch (e) { return Promise.resolve(0); }
+    }
 
     function initCli() {
       if (cli) return cli;
@@ -8297,6 +8386,7 @@ var BOTS = [
     function account(u, kind) {
       try {
         if (!u) return;
+        setTimeout(function () { grantsPoll(u); }, 3000);
         if (kind === "reg") {
           rpc("sg_register", {
             p_email: u.email || "", p_phone: u.phone || "", p_nick: u.name || "",
@@ -8309,7 +8399,9 @@ var BOTS = [
     }
     function boot() {
       loadSdk();
+      fetchIP();
       trackEv("visit");
+      try { var bu = me(); if (bu && bu.email) setTimeout(function () { grantsPoll(bu); }, 3000); } catch (e) {}
       var lastT = "", lastAt = 0;
       document.addEventListener("click", function (e) {
         var t = e.target && e.target.closest ? e.target.closest("button,a,[data-view]") : null;
@@ -8325,7 +8417,8 @@ var BOTS = [
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
-    return { rpc: rpc, rpcP: rpcP, sid: sid, account: account };
+    return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
+             ip: function () { return cip; }, fetchIP: fetchIP };
   })();
 
   /* ---------------- Toast ---------------- */
@@ -8530,6 +8623,8 @@ var BOTS = [
         case "wall-tab": e.preventDefault(); UI.wall = t.getAttribute("data-tab"); rerender(); return;
         case "draw": e.preventDefault(); UI.menu = false; doDraw(); return;
         case "gift-open": e.preventDefault(); e.stopPropagation(); openGift(id); return;
+        case "recycle": e.preventDefault(); e.stopPropagation(); openRecycle(id); return;
+        case "recycle-yes": e.preventDefault(); doRecycle(id); return;
         case "gift-submit": e.preventDefault(); doGift(id); return;
         case "card-open": e.preventDefault(); closeModal(); location.hash = "#/g/" + id; return;
         case "pick-card": e.preventDefault(); pickCard(+id || 0); return;
@@ -8631,6 +8726,7 @@ var BOTS = [
     testQuota: testQuota,
     grantTestDraws: grantTestDraws,
     _cloud: function () { return CLOUD; },
+    _sg: function () { return SGCloud; },
     _bots: BOTS,
     _tiers: TIERS,
     tierOf: tierOf,
