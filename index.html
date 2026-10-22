@@ -6571,7 +6571,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       errName: "Name must be 2–16 characters.", errEmail: "Enter a valid email address.",
       errPhone: "Enter a valid phone number.", errAgree: "Please accept the community rules.",
       errDupEmail: "This email is already registered.", errDupPhone: "This phone is already registered.",
-      errNoUser: "Account not found. Please sign up first.", errLogin: "Please sign in first.",
+      errNoUser: "Account not found on this device or in the cloud. Use the email / phone you registered with — accounts are shared across both sites; if you just registered, sign in on the same browser.", errLogin: "Please sign in first.",
+      regBusy: "Creating…", regNet: "Cloud registration failed (network busy). No account was created — please retry in a moment.",
+      phoneTaken: "This phone is already tied to another account. Sign in with that phone directly, or use a different number.",
+      cloudSynced: "Account synced to the cloud — sign in from any device now.",
       loggedIn: "Welcome back, {n}", registered: "Account created. Welcome, {n}!",
       checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
       already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.", aiNoLike: "AI topics do not support likes yet", aiTag: "AI",
@@ -6629,7 +6632,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       errName: "名前は2〜16文字。", errEmail: "有効なメールを入力。",
       errPhone: "有効な電話番号を入力。", errAgree: "規約に同意してください。",
       errDupEmail: "このメールは登録済みです。", errDupPhone: "この電話は登録済みです。",
-      errNoUser: "アカウントが見つかりません。", errLogin: "ログインしてください。",
+      errNoUser: "この端末にもクラウドにもアカウントがありません。登録時のメール／電話でログインしてください（両サイト共通）。", errLogin: "ログインしてください。",
+      regBusy: "作成中…", regNet: "クラウド登録に失敗しました。アカウントは作成されていません。しばらくしてから再試行してください。",
+      phoneTaken: "この電話は別アカウントに登録済みです。その電話で直接ログインするか、別の番号をご利用ください。",
+      cloudSynced: "クラウドに同期しました。どの端末からでもログインできます。",
       loggedIn: "おかえりなさい、{n}", registered: "登録完了。ようこそ {n} さん！",
       checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
       already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。", aiNoLike: "AI テーマはいいね非対応です", aiTag: "AI",
@@ -6687,7 +6693,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       errName: "名称需为 2–16 个字符。", errEmail: "请输入有效的邮箱地址。",
       errPhone: "请输入有效的手机号。", errAgree: "请先同意社区公约。",
       errDupEmail: "该邮箱已注册。", errDupPhone: "该手机号已注册。",
-      errNoUser: "账号不存在，请先注册。", errLogin: "请先登录。",
+      errNoUser: "本机和云端都没有这个账号。请用注册时的邮箱或手机号登录（两站通用）；若是刚注册，请回到注册时的浏览器登录。", errLogin: "请先登录。",
+      regBusy: "创建中…", regNet: "云端注册失败（网络异常），本次未创建账号，请稍后重试。",
+      phoneTaken: "该手机号已绑定其它账号，请直接用该手机号登录，或换一个手机号。",
+      cloudSynced: "账号已补登到云端，换设备也能登录了。",
       loggedIn: "欢迎回来，{n}", registered: "注册成功，欢迎 {n}！",
       checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
       already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。", aiNoLike: "AI 主题暂不支持点赞", aiTag: "AI",
@@ -6801,9 +6810,24 @@ html[data-lang="en"]{letter-spacing:.01em}
     if (!s) return null;
     for (var i = 0; i < DB.users.length; i++) {
       var u = DB.users[i];
-      if ((u.email || "").toLowerCase() === s || (u.phone || "").toLowerCase() === s || (u.name || "").toLowerCase() === s) return u;
+      if ((u.email || "").toLowerCase() === s || (u.name || "").toLowerCase() === s) return u;
+      if (samePhone(u.phone, s)) return u;
+    }
+    /* 手机号大小写/空格/短横/国际区号差异：按纯数字再匹配一次 */
+    var dg = String(s).replace(/[^0-9]/g, "");
+    if (dg.length >= 5) {
+      for (var j = 0; j < DB.users.length; j++) {
+        if (String(DB.users[j].phone || "").replace(/[^0-9]/g, "").slice(-dg.length) === dg) return DB.users[j];
+      }
     }
     return null;
+  }
+  function samePhone(a, b) {
+    var x = String(a || "").replace(/[^0-9]/g, ""), y = String(b || "").replace(/[^0-9]/g, "");
+    if (!x || !y) return false;
+    if (x === y) return true;
+    if (x.length >= 7 && y.length >= 7) return x.slice(-11) === y.slice(-11);
+    return false;
   }
   function notify(u, text) {
     if (!u) return;
@@ -6871,22 +6895,28 @@ html[data-lang="en"]{letter-spacing:.01em}
     return { already: false, gain: gain, streak: u.streak, draw: got };
   }
 
-  function register(name, email, phone, agree) {
+  function validateReg(name, email, phone, agree) {
     name = String(name || "").trim();
     email = String(email || "").trim();
     phone = String(phone || "").trim();
-    if (name.length < 2 || name.length > 16) return { err: T("errName") };
-    if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email)) return { err: T("errEmail") };
-    if (!/^\+?[0-9][0-9\-\s]{5,15}$/.test(phone)) return { err: T("errPhone") };
-    if (!agree) return { err: T("errAgree") };
-    if (DB.users.some(function (u) { return (u.email || "").toLowerCase() === email.toLowerCase(); })) return { err: T("errDupEmail") };
-    if (DB.users.some(function (u) { return (u.phone || "").replace(/[\s\-]/g, "") === phone.replace(/[\s\-]/g, ""); })) return { err: T("errDupPhone") };
+    if (name.length < 2 || name.length > 16) return T("errName");
+    if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(email)) return T("errEmail");
+    if (!/^\+?[0-9][0-9\-\s]{5,15}$/.test(phone)) return T("errPhone");
+    if (!agree) return T("errAgree");
+    if (DB.users.some(function (u) { return (u.email || "").toLowerCase() === email.toLowerCase(); })) return T("errDupEmail");
+    if (DB.users.some(function (u) { return samePhone(u.phone, phone); })) return T("errDupPhone");
+    return "";
+  }
+  function register(name, email, phone, agree, cloudOk) {
+    var bad = validateReg(name, email, phone, agree);
+    if (bad) return { err: bad };
+    name = String(name || "").trim(); email = String(email || "").trim(); phone = String(phone || "").trim();
     DB.seq.user++;
     var u = {
       uid: "u" + DB.seq.user, name: name, email: email, phone: phone, created: Date.now(),
       points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 20,
       cards: [], badges: {}, ledger: [{ t: Date.now(), d: 999, r: lang() === "zh" ? "新账号初始积分" : "Sign-up bonus" }],
-      notifs: [], role: "user", rg: regionOf()
+      notifs: [], role: "user", rg: regionOf(), cloudOk: cloudOk ? 1 : 0
     };
     DB.users.push(u);
     DB.session = u.uid;
@@ -6895,7 +6925,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     ensureDefaultDraws(u);
     checkBadges(u);
     trackEv("register");
-    SGCloud.account(u, "reg");
+    if (!cloudOk) SGCloud.account(u, "reg");   /* 云端注册已在 doAuth 里确认过就不再重复 */
     save();
     return { ok: true, user: u, tick: r };
   }
@@ -6949,20 +6979,39 @@ html[data-lang="en"]{letter-spacing:.01em}
     checkBadges(u);
     trackEv("login");
     SGCloud.account(u, "login");
+    healAccount(u);
     save();
     return { ok: true, user: u, tick: r };
   }
+  /* 本机账号若从未成功落到云端（例如注册时正好赶上服务中断），登录时自动补登，
+     否则换浏览器/换站点按手机号查不到这个账号。 */
+  function healAccount(u) {
+    try {
+      if (!u || !u.email || u.cloudOk || u._healing) return;
+      u._healing = 1;
+      SGCloud.lookup(u.email).then(function (ex) {
+        if (ex) { u.cloudOk = 1; delete u._healing; save(); return; }
+        SGCloud.registerAccount(u).then(function (r) {
+          delete u._healing;
+          if (r && r.ok) { u.cloudOk = 1; save(); toast(T("cloudSynced"), "ok", 3600); }
+        });
+      });
+    } catch (e) {}
+  }
   /* V13：通用账号跨站登录——本机无记录但云端已注册时，按云端资料在本机建号。
      积分/卡片为站点独立，首次在本站登录按新号初始化，随后由云端状态同步接管。 */
-  function registerRemote(info) {
+  function registerRemote(info, rawAcc) {
     DB.seq.user++;
+    /* 用手机号登录时保留用户输入的原始号码（云端只回脱敏号，存脱敏号会导致本机再也按手机号找不到人） */
+    var typed = String(rawAcc || "").trim();
+    var phone = (/^\+?[0-9][0-9\-\s]{5,15}$/.test(typed) && typed.indexOf("@") < 0) ? typed : (info.phone_masked || "");
     var u = {
       uid: "u" + DB.seq.user, name: info.nick || String(info.email).split("@")[0],
-      email: info.email, phone: info.phone_masked || "", created: Date.now(),
+      email: info.email, phone: phone, created: Date.now(),
       points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 20,
       cards: [], badges: {},
       ledger: [{ t: Date.now(), d: 999, r: lang() === "zh" ? "新账号初始积分（本站）" : "Sign-up bonus (this site)" }],
-      notifs: [], role: "user", rg: regionOf(), remote: true
+      notifs: [], role: "user", rg: regionOf(), remote: true, cloudOk: 1
     };
     DB.users.push(u);
     DB.session = u.uid;
@@ -7952,14 +8001,28 @@ var BOTS = [
     errEl.textContent = "";
     if (mode === "reg") {
       var nm = $("#sgRegName").value, em = $("#sgRegEmail").value, ph = $("#sgRegPhone").value, ag = $("#sgRegAgree").checked;
+      var bad = validateReg(nm, em, ph, ag);
+      if (bad) { errEl.textContent = bad; return; }
+      var btn = $("#sgAuthSubmit");
+      if (btn) { btn.disabled = true; btn.textContent = T("regBusy"); }
       /* V13：注册前查云端——邮箱已在任一站点注册则引导直接登录（账号两边通用） */
-      SGCloud.lookup(em).then(function (ex) {
-        if (ex) { errEl.textContent = T("dupSite"); return; }
-        var r = register(nm, em, ph, ag);
-        if (r.err) { errEl.textContent = r.err; return; }
-        closeModal(); paintAcct(); rerender();
-        toast(T("registered", { n: r.user.name }), "ok");
-        showTick(r.tick);
+      SGCloud.lookup(em, 7000).then(function (ex) {
+        if (ex) { if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); } errEl.textContent = T("dupSite"); return; }
+        /* 先确认云端落库，再建本地账号：避免"注册成功但换设备/换站点登录不上"的幽灵账号 */
+        SGCloud.registerAccount({ email: em, phone: ph, name: nm }).then(function (cr) {
+          if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); }
+          if (!cr || !cr.ok) {
+            errEl.textContent = cr && cr.err === "phone_taken" ? T("phoneTaken")
+              : cr && cr.err === "invalid_email" ? T("errEmail")
+                : T("regNet");
+            return;
+          }
+          var r = register(nm, em, ph, ag, true);
+          if (r.err) { errEl.textContent = r.err; return; }
+          closeModal(); paintAcct(); rerender();
+          toast(T("registered", { n: r.user.name }), "ok");
+          showTick(r.tick);
+        });
       });
     } else {
       var acc = $("#sgLoginAcc").value;
@@ -7968,7 +8031,7 @@ var BOTS = [
         /* V13：本机无记录 → 查云端通用账号，跨站登录 */
         SGCloud.lookup(acc).then(function (info) {
           if (!info) { errEl.textContent = l.err; return; }
-          var r2 = registerRemote(info);
+          var r2 = registerRemote(info, acc);
           closeModal(); paintAcct(); rerender();
           toast(T("loggedIn", { n: r2.user.name }), "ok");
           showTick(r2.tick);
@@ -8391,16 +8454,16 @@ var BOTS = [
       flush();
       setTimeout(function () { delete waits[id]; }, 6000);
     }
-    function relayP(name, args) {
+    function relayP(name, args, to) {
       return new Promise(function (resolve) {
         var id = ++seq;
         waits[id] = function (data) { resolve(data); };
         fq.push({ id: id, name: name, args: args });
         ensureFrame(); flush();
-        setTimeout(function () { if (waits[id]) { delete waits[id]; resolve(null); } }, 12000);
+        setTimeout(function () { if (waits[id]) { delete waits[id]; resolve(null); } }, to || 12000);
       });
     }
-    function rpcP(name, args) {
+    function rpcP(name, args, to) {
       try {
         if (same) {
           var c = initCli();
@@ -8409,7 +8472,7 @@ var BOTS = [
             return r && r.data !== undefined ? r.data : null;
           }, function () { return null; });
         }
-        return relayP(name, args);
+        return relayP(name, args, to);
       } catch (e) { return Promise.resolve(null); }
     }
     function rpc(name, args, retry) {
@@ -8430,10 +8493,10 @@ var BOTS = [
     }
     /* ---------- V13：账号查重 + 站点状态云端同步 ---------- */
     var pulling = false, pushT = null;
-    function lookup(acc) {
+    function lookup(acc, to) {
       try {
         if (!acc || String(acc).length < 3) return Promise.resolve(null);
-        return rpcP("sg_account_lookup", { p_acc: String(acc).slice(0, 120) })
+        return rpcP("sg_account_lookup", { p_acc: String(acc).slice(0, 120) }, to || 12000)
           .then(function (r) { return (r && r.ok && r.exists) ? r : null; })
           ["catch"](function () { return null; });
       } catch (e) { return Promise.resolve(null); }
@@ -8483,6 +8546,27 @@ var BOTS = [
       } catch (e) { return Promise.resolve(false); }
     }
 
+    function registerAccount(u, retry) {
+      /* 返回 {ok,err,net}：net=true 表示没连上云端（此时绝不能只在本地建号） */
+      try {
+        if (!u || !u.email) return Promise.resolve({ ok: false, net: true });
+        var t0 = Date.now();
+        return rpcP("sg_register", {
+          p_email: String(u.email || "").slice(0, 120), p_phone: String(u.phone || "").slice(0, 40),
+          p_nick: String(u.name || "").slice(0, 40), p_region: regionOf(),
+          p_source: (location.host || "").slice(0, 60)
+        }, 7000).then(function (r) {
+          if (!r) {
+            /* 只有"秒回空"（SDK/中继还没就绪）才值得重试；真超时说明云端不可达，直接报错 */
+            if (!retry && Date.now() - t0 < 2500) {
+              return new Promise(function (res) { setTimeout(function () { res(registerAccount(u, 1)); }, 600); });
+            }
+            return { ok: false, net: true };
+          }
+          return { ok: !!r.ok, err: r.err || "", net: false };
+        }, function () { return { ok: false, net: true }; });
+      } catch (e) { return Promise.resolve({ ok: false, net: true }); }
+    }
     function account(u, kind) {
       try {
         if (!u) return;
@@ -8518,7 +8602,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
-             lookup: lookup, pushSoon: pushSoon, statePull: statePull, site: function () { return SITE_ID; },
+             lookup: lookup, registerAccount: registerAccount, pushSoon: pushSoon, statePull: statePull, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
 
@@ -8867,7 +8951,7 @@ var BOTS = [
     }
     paintNav(); paintAcct();
     var u = me();
-    if (u) { var r = tick(u); if (!r.already) { checkBadges(u); save(); paintAcct(); setTimeout(function () { showTick(r); }, 700); } }
+    if (u) { healAccount(u); var r = tick(u); if (!r.already) { checkBadges(u); save(); paintAcct(); setTimeout(function () { showTick(r); }, 700); } }
     if (window.__SGAtlas && window.__SGAtlas.render) window.__SGAtlas.render();
   })();
 
