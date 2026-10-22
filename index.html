@@ -6480,6 +6480,9 @@ html[data-lang="en"]{letter-spacing:.01em}
   if (window.SGSocial) return;
 
   var KEY = "sg_social_v2";
+  /* V13：站点标识。国内站(workbuddy.host)=cn，海外站(github.io 等)=intl。
+     账号两边通用，但积分/卡片/发放额度按站点独立存储与发放。 */
+  var SITE_ID = /workbuddy\.host/i.test(location.hostname) ? "cn" : "intl";
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
@@ -6573,7 +6576,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
       already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.", aiNoLike: "AI topics do not support likes yet", aiTag: "AI",
       draw3Title: "Fate Cards", draw3Sub: "Three hidden cards — choose one to add to your badge wall.",
-      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked", skillTrig: "Trigger {p}%", recycle: "Recycle", recycleAsk: "Recycle this card for {n} points?", recycleOk: "Confirm recycle", recycleGet: "Card recycled, +{n} points", recycleLedger: "Recycled {n}\u2019s card, +{p} pts", grantsGot: "Admin granted {n} draw chances",
+      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked", skillTrig: "Trigger {p}%", recycle: "Recycle", recycleAsk: "Recycle this card for {n} points?", recycleOk: "Confirm recycle", recycleGet: "Card recycled, +{n} points", recycleLedger: "Recycled {n}\u2019s card, +{p} pts", grantsGot: "Admin granted {n} draw chances", dupSite: "This email is already registered on the other site. Accounts work on both sites, please sign in directly",
       studioTitle: "Card Studio", stHair: "Hairstyle", stOutfit: "Outfit", stAcc: "Accessory", stWpn: "Weapon",
       stReset: "Reset", stSave: "Save style", stSaved: "Card style saved.", stShort: "Style", adminExport: "Export analytics",
       tagOwner: "Moderator", myThreads: "My threads", myReviews: "My reviews", joinedAt: "Joined {d}",
@@ -6631,7 +6634,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
       already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。", aiNoLike: "AI テーマはいいね非対応です", aiTag: "AI",
       draw3Title: "運命の三枚", draw3Sub: "裏向きの三枚から一枚を選び、バッジウォールへ加えましょう。",
-      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得", skillTrig: "発動 {p}%", recycle: "回収", recycleAsk: "このカードを回収して {n} ポイントにしますか？", recycleOk: "回収する", recycleGet: "カードを回収し、+{n} ポイント", recycleLedger: "「{n}」のカードを回収、+{p} pt", grantsGot: "運営から抽選権 +{n}",
+      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得", skillTrig: "発動 {p}%", recycle: "回収", recycleAsk: "このカードを回収して {n} ポイントにしますか？", recycleOk: "回収する", recycleGet: "カードを回収し、+{n} ポイント", recycleLedger: "「{n}」のカードを回収、+{p} pt", grantsGot: "運営から抽選権 +{n}", dupSite: "このメールアドレスは別サイトで登録済みです。アカウントは両サイト共通、そのままログインしてください",
       studioTitle: "カード工房", stHair: "髪型", stOutfit: "服装", stAcc: "装飾", stWpn: "武器",
       stReset: "リセット", stSave: "保存", stSaved: "カードスタイルを保存しました。", stShort: "着替え", adminExport: "分析データ書き出し",
       tagOwner: "モデレーター", myThreads: "自分のスレ", myReviews: "自分の評価", joinedAt: "{d} 登録",
@@ -6689,7 +6692,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
       already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。", aiNoLike: "AI 主题暂不支持点赞", aiTag: "AI",
       draw3Title: "天命三选", draw3Sub: "三张暗牌，翻开其中一张，收入你的徽章墙。",
-      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章", skillTrig: "触发 {p}%", recycle: "回收", recycleAsk: "确认回收该卡？将折算 {n} 积分", recycleOk: "确认回收", recycleGet: "卡片已回收，积分 +{n}", recycleLedger: "回收「{n}」卡，积分 +{p}", grantsGot: "管理员发放抽卡机会 +{n}",
+      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章", skillTrig: "触发 {p}%", recycle: "回收", recycleAsk: "确认回收该卡？将折算 {n} 积分", recycleOk: "确认回收", recycleGet: "卡片已回收，积分 +{n}", recycleLedger: "回收「{n}」卡，积分 +{p}", grantsGot: "管理员发放抽卡机会 +{n}", dupSite: "该邮箱已在另一站点注册，账号两边通用，请直接登录",
       studioTitle: "卡牌工坊", stHair: "发型", stOutfit: "衣服", stAcc: "饰品", stWpn: "武器",
       stReset: "恢复默认", stSave: "保存搭配", stSaved: "卡牌搭配已保存。", stShort: "装扮", adminExport: "导出监控数据",
       tagOwner: "版主", myThreads: "我的主题", myReviews: "我的评价", joinedAt: "{d} 注册",
@@ -6737,6 +6740,7 @@ html[data-lang="en"]{letter-spacing:.01em}
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(DB)); }
     catch (e) { toast(T("saveFail"), "err", 6000); }
+    try { if (SGCloud && SGCloud.pushSoon) SGCloud.pushSoon(); } catch (e) {}
   }
   function GENS() { return (window.__SGAtlas && window.__SGAtlas.gens) || []; }
   function gById(id) { var a = GENS(); for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
@@ -6948,6 +6952,29 @@ html[data-lang="en"]{letter-spacing:.01em}
     save();
     return { ok: true, user: u, tick: r };
   }
+  /* V13：通用账号跨站登录——本机无记录但云端已注册时，按云端资料在本机建号。
+     积分/卡片为站点独立，首次在本站登录按新号初始化，随后由云端状态同步接管。 */
+  function registerRemote(info) {
+    DB.seq.user++;
+    var u = {
+      uid: "u" + DB.seq.user, name: info.nick || String(info.email).split("@")[0],
+      email: info.email, phone: info.phone_masked || "", created: Date.now(),
+      points: 999, streak: 0, bestStreak: 0, lastLogin: null, loginDays: [], draws: 20,
+      cards: [], badges: {},
+      ledger: [{ t: Date.now(), d: 999, r: lang() === "zh" ? "新账号初始积分（本站）" : "Sign-up bonus (this site)" }],
+      notifs: [], role: "user", rg: regionOf(), remote: true
+    };
+    DB.users.push(u);
+    DB.session = u.uid;
+    var r = tick(u);
+    ensureDefaultDraws(u);
+    checkBadges(u);
+    trackEv("login");
+    SGCloud.account(u, "login");
+    save();
+    return { ok: true, user: u, tick: r };
+  }
+
   function logout() {
     DB.session = null;
     save();
@@ -7922,16 +7949,32 @@ var BOTS = [
   }
   function doAuth(mode) {
     var errEl = $("#sgAuthErr");
+    errEl.textContent = "";
     if (mode === "reg") {
-      var r = register($("#sgRegName").value, $("#sgRegEmail").value, $("#sgRegPhone").value, $("#sgRegAgree").checked);
-      if (r.err) { errEl.textContent = r.err; return; }
-      closeModal(); paintAcct(); rerender();
-      toast(T("registered", { n: r.user.name }), "ok");
-      showTick(r.tick);
+      var nm = $("#sgRegName").value, em = $("#sgRegEmail").value, ph = $("#sgRegPhone").value, ag = $("#sgRegAgree").checked;
+      /* V13：注册前查云端——邮箱已在任一站点注册则引导直接登录（账号两边通用） */
+      SGCloud.lookup(em).then(function (ex) {
+        if (ex) { errEl.textContent = T("dupSite"); return; }
+        var r = register(nm, em, ph, ag);
+        if (r.err) { errEl.textContent = r.err; return; }
+        closeModal(); paintAcct(); rerender();
+        toast(T("registered", { n: r.user.name }), "ok");
+        showTick(r.tick);
+      });
     } else {
       var acc = $("#sgLoginAcc").value;
       var l = login(acc);
-      if (l.err) { errEl.textContent = l.err; return; }
+      if (l.err) {
+        /* V13：本机无记录 → 查云端通用账号，跨站登录 */
+        SGCloud.lookup(acc).then(function (info) {
+          if (!info) { errEl.textContent = l.err; return; }
+          var r2 = registerRemote(info);
+          closeModal(); paintAcct(); rerender();
+          toast(T("loggedIn", { n: r2.user.name }), "ok");
+          showTick(r2.tick);
+        });
+        return;
+      }
       closeModal(); paintAcct(); rerender();
       toast(T("loggedIn", { n: l.user.name }), "ok");
       showTick(l.tick);
@@ -8277,7 +8320,7 @@ var BOTS = [
     function grantsPoll(u) {
       try {
         if (!u || !u.email) return Promise.resolve(0);
-        return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120) }).then(function (r) {
+        return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }).then(function (r) {
           var n = (r && r.ok) ? (r.n || 0) : 0;
           if (n > 0 && me()) {
             me().draws = (me().draws || 0) + n;
@@ -8383,10 +8426,65 @@ var BOTS = [
         relay(name, args);
       } catch (e) {}
     }
+    /* ---------- V13：账号查重 + 站点状态云端同步 ---------- */
+    var pulling = false, pushT = null;
+    function lookup(acc) {
+      try {
+        if (!acc || String(acc).length < 3) return Promise.resolve(null);
+        return rpcP("sg_account_lookup", { p_acc: String(acc).slice(0, 120) })
+          .then(function (r) { return (r && r.ok && r.exists) ? r : null; })
+          ["catch"](function () { return null; });
+      } catch (e) { return Promise.resolve(null); }
+    }
+    function stateSnap(u) {
+      return { points: u.points || 0, draws: u.draws || 0, cards: u.cards || [], badges: u.badges || {},
+        ledger: (u.ledger || []).slice(0, 120), streak: u.streak || 0, bestStreak: u.bestStreak || 0,
+        loginDays: (u.loginDays || []).slice(-60), notifs: (u.notifs || []).slice(0, 50),
+        d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0 };
+    }
+    function pushSoon() {
+      if (pulling) return;
+      clearTimeout(pushT);
+      pushT = setTimeout(function () {
+        var u = me();
+        if (!u || !u.email) return;
+        if (u.remote && !u._pulled) return;   /* 先拉云端，再允许推送，避免覆盖 */
+        try {
+          rpcP("sg_state_put", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID,
+            p_data: JSON.stringify(stateSnap(u)) }).then(function (r) {
+            if (r && r.ok) { u._sync = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {} }
+          })["catch"](function () {});
+        } catch (e) {}
+      }, 2500);
+    }
+    function statePull() {
+      var u = me();
+      try {
+        if (!u || !u.email) return Promise.resolve(false);
+        return rpcP("sg_state_get", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID })
+          .then(function (r) {
+            if (!(r && r.ok && r.data)) { u._pulled = true; return false; }
+            var d = null;
+            try { d = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { return false; }
+            if (!d) return false;
+            var fresh = 0;
+            try { fresh = r.updated_at ? Date.parse(r.updated_at) : 0; } catch (e) {}
+            u._pulled = true;
+            if (u._sync && fresh && fresh <= u._sync - 1500) return true;   /* 本地较新，不覆盖 */
+            pulling = true;
+            for (var k in d) { if (d.hasOwnProperty(k)) u[k] = d[k]; }
+            save();
+            pulling = false;
+            paintAcct(); rerender();
+            return true;
+          })["catch"](function () { return false; });
+      } catch (e) { return Promise.resolve(false); }
+    }
+
     function account(u, kind) {
       try {
         if (!u) return;
-        setTimeout(function () { grantsPoll(u); }, 3000);
+        setTimeout(function () { statePull().then(function () { grantsPoll(me()); }); }, 3000);
         if (kind === "reg") {
           rpc("sg_register", {
             p_email: u.email || "", p_phone: u.phone || "", p_nick: u.name || "",
@@ -8401,7 +8499,7 @@ var BOTS = [
       loadSdk();
       fetchIP();
       trackEv("visit");
-      try { var bu = me(); if (bu && bu.email) setTimeout(function () { grantsPoll(bu); }, 3000); } catch (e) {}
+      try { var bu = me(); if (bu && bu.email) setTimeout(function () { statePull().then(function () { grantsPoll(me()); }); }, 3000); } catch (e) {}
       var lastT = "", lastAt = 0;
       document.addEventListener("click", function (e) {
         var t = e.target && e.target.closest ? e.target.closest("button,a,[data-view]") : null;
@@ -8418,6 +8516,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
+             lookup: lookup, pushSoon: pushSoon, statePull: statePull, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
 
