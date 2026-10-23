@@ -6572,7 +6572,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       errPhone: "Enter a valid phone number.", errAgree: "Please accept the community rules.",
       errDupEmail: "This email is already registered.", errDupPhone: "This phone is already registered.",
       errNoUser: "Account not found on this device or in the cloud. Use the email / phone you registered with — accounts are shared across both sites; if you just registered, sign in on the same browser.", errLogin: "Please sign in first.",
-      regBusy: "Creating…", regNet: "Cloud registration failed (network busy). No account was created — please retry in a moment.",
+      regBusy: "Creating…", regNet: "Cloud registration timed out — no account was created this time. Press Sign up once more to retry; if it keeps failing, try the China site (accounts are shared across both sites).",
       phoneTaken: "This phone is already tied to another account. Sign in with that phone directly, or use a different number.",
       cloudSynced: "Account synced to the cloud — sign in from any device now.",
       loggedIn: "Welcome back, {n}", registered: "Account created. Welcome, {n}!",
@@ -6633,7 +6633,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       errPhone: "有効な電話番号を入力。", errAgree: "規約に同意してください。",
       errDupEmail: "このメールは登録済みです。", errDupPhone: "この電話は登録済みです。",
       errNoUser: "この端末にもクラウドにもアカウントがありません。登録時のメール／電話でログインしてください（両サイト共通）。", errLogin: "ログインしてください。",
-      regBusy: "作成中…", regNet: "クラウド登録に失敗しました。アカウントは作成されていません。しばらくしてから再試行してください。",
+      regBusy: "作成中…", regNet: "クラウド登録がタイムアウトしました（今回アカウントは作成されていません）。もう一度「登録」を押して再試行してください。何度も失敗する場合は中国サイトでの登録もお試しください（アカウントは共通です）。",
       phoneTaken: "この電話は別アカウントに登録済みです。その電話で直接ログインするか、別の番号をご利用ください。",
       cloudSynced: "クラウドに同期しました。どの端末からでもログインできます。",
       loggedIn: "おかえりなさい、{n}", registered: "登録完了。ようこそ {n} さん！",
@@ -6694,7 +6694,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       errPhone: "请输入有效的手机号。", errAgree: "请先同意社区公约。",
       errDupEmail: "该邮箱已注册。", errDupPhone: "该手机号已注册。",
       errNoUser: "本机和云端都没有这个账号。请用注册时的邮箱或手机号登录（两站通用）；若是刚注册，请回到注册时的浏览器登录。", errLogin: "请先登录。",
-      regBusy: "创建中…", regNet: "云端注册失败（网络异常），本次未创建账号，请稍后重试。",
+      regBusy: "创建中…", regNet: "云端注册超时，本次未创建账号。请再点一次「立即注册」重试；若多次失败，可换另一个站点注册（账号两站通用）。",
       phoneTaken: "该手机号已绑定其它账号，请直接用该手机号登录，或换一个手机号。",
       cloudSynced: "账号已补登到云端，换设备也能登录了。",
       loggedIn: "欢迎回来，{n}", registered: "注册成功，欢迎 {n}！",
@@ -8006,15 +8006,17 @@ var BOTS = [
       var btn = $("#sgAuthSubmit");
       if (btn) { btn.disabled = true; btn.textContent = T("regBusy"); }
       /* V13：注册前查云端——邮箱已在任一站点注册则引导直接登录（账号两边通用） */
-      SGCloud.lookup(em, 7000).then(function (ex) {
+      SGCloud.lookup(em, 15000).then(function (ex) {
         if (ex) { if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); } errEl.textContent = T("dupSite"); return; }
         /* 先确认云端落库，再建本地账号：避免"注册成功但换设备/换站点登录不上"的幽灵账号 */
         SGCloud.registerAccount({ email: em, phone: ph, name: nm }).then(function (cr) {
           if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); }
           if (!cr || !cr.ok) {
-            errEl.textContent = cr && cr.err === "phone_taken" ? T("phoneTaken")
+            var why = cr && cr.err === "phone_taken" ? T("phoneTaken")
               : cr && cr.err === "invalid_email" ? T("errEmail")
                 : T("regNet");
+            errEl.textContent = why;
+            trackEv(cr && cr.net ? "regfail_net" : "regfail");
             return;
           }
           var r = register(nm, em, ph, ag, true);
@@ -8546,26 +8548,39 @@ var BOTS = [
       } catch (e) { return Promise.resolve(false); }
     }
 
+    function confirmExists(em) {
+      /* 只读确认：账号是否已在云端（用于"请求超时但可能已落库"的判定） */
+      return rpcP("sg_account_lookup", { p_acc: String(em || "").slice(0, 120) }, 10000).then(function (r) {
+        return !!(r && r.ok && r.exists);
+      }, function () { return false; });
+    }
     function registerAccount(u, retry) {
-      /* 返回 {ok,err,net}：net=true 表示没连上云端（此时绝不能只在本地建号） */
+      /* 返回 {ok,err,net}：net=true 表示确实没连上云端（此时绝不能只在本地建号） */
       try {
         if (!u || !u.email) return Promise.resolve({ ok: false, net: true });
-        var t0 = Date.now();
         return rpcP("sg_register", {
           p_email: String(u.email || "").slice(0, 120), p_phone: String(u.phone || "").slice(0, 40),
           p_nick: String(u.name || "").slice(0, 40), p_region: regionOf(),
           p_source: (location.host || "").slice(0, 60)
-        }, 7000).then(function (r) {
-          if (!r) {
-            /* 只有"秒回空"（SDK/中继还没就绪）才值得重试；真超时说明云端不可达，直接报错 */
-            if (!retry && Date.now() - t0 < 2500) {
-              return new Promise(function (res) { setTimeout(function () { res(registerAccount(u, 1)); }, 600); });
-            }
+        }, 20000).then(function (r) {
+          if (r) return { ok: !!r.ok, err: r.err || "", net: false };
+          /* 没有回包：可能只是响应慢/中继刚就绪，也可能服务器已写入但回程超时。
+             先向云端核对一次——已存在就按成功处理（幂等，不会重复建号）。 */
+          return confirmExists(u.email).then(function (ex) {
+            if (ex) return { ok: true, recovered: true, net: false };
+            if (!retry) return registerAccount(u, 1);
             return { ok: false, net: true };
-          }
-          return { ok: !!r.ok, err: r.err || "", net: false };
+          });
         }, function () { return { ok: false, net: true }; });
       } catch (e) { return Promise.resolve({ ok: false, net: true }); }
+    }
+    function warm() {
+      /* 预热：提前建好中继 iframe / 唤醒云函数，避免用户第一次点击就撞上冷启动超时 */
+      try {
+        if (same) { initCli(); }
+        if (!fready) ensureFrame();
+        rpcP("sg_account_lookup", { p_acc: "__warmup__" }, 10000);
+      } catch (e) {}
     }
     function account(u, kind) {
       try {
@@ -8584,6 +8599,7 @@ var BOTS = [
     function boot() {
       loadSdk();
       fetchIP();
+      setTimeout(warm, 900);
       trackEv("visit");
       try { var bu = me(); if (bu && bu.email) setTimeout(function () { statePull().then(function () { grantsPoll(me()); }); }, 3000); } catch (e) {}
       var lastT = "", lastAt = 0;
@@ -8602,7 +8618,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
-             lookup: lookup, registerAccount: registerAccount, pushSoon: pushSoon, statePull: statePull, site: function () { return SITE_ID; },
+             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, statePull: statePull, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
 
