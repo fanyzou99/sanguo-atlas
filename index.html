@@ -5293,6 +5293,96 @@ function renderPassPage(name){
     if(g.po>=82 && g.wu<76) return "scholar";
     return "officer";
   }
+  /* 特征补充表：依《三国志》《三国演义》记载，为程序化立绘补充专属特征。
+     字段：hat 冠帽（tie铁盔/shui水军盔/wen进贤冠/jin纶巾幅巾/turban黄巾/tribal蛮巾/teng藤甲盔）、
+     skin 脸肤色、brow 眉色、eye 瞳色、beard 胡须(0无须/1短髭/2长髯/3络腮)、scar 面部金疮、scales 体表鳞甲 */
+  const LOOKS = {
+    /* 魏 */
+    "蔡瑁":{hat:"shui",beard:1},                            /* 荆州水军都督（演义：练水军降曹） */
+    "张允":{hat:"shui",beard:2},                            /* 荆州水军副都督，与蔡瑁同掌水师 */
+    "曹仁":{hat:"tie",beard:1},                             /* 守樊城、江陵，「天人」之称 */
+    "曹洪":{hat:"tie",beard:3},                             /* 舍马献袍救曹操，「天下可无洪」 */
+    "曹休":{hat:"tie",beard:0},                             /* 曹家千里驹，壮年统兵 */
+    "高览":{hat:"tie",beard:2},                             /* 河北四庭柱之一 */
+    "刘晔":{hat:"wen",beard:1},                             /* 献霹雳车之谋，佐命之才 */
+    "杨修":{hat:"wen",beard:0},                             /* 恃才放旷，早年被诛 */
+    "陈群":{hat:"wen",beard:2},                             /* 创九品中正制 */
+    "钟繇":{hat:"wen",beard:2},                             /* 楷书之祖，位至太傅 */
+    "华歆":{hat:"wen",beard:1},                             /* 与邴原管宁并称，后助魏受禅 */
+    "王朗":{hat:"wen",beard:2},                             /* 经学家，演义中被武乡侯骂死 */
+    "董昭":{hat:"wen",beard:1},                             /* 劝迎天子都许之谋 */
+    "蒋济":{hat:"wen",beard:2},                             /* 四朝谋臣，太尉 */
+    "刘馥":{hat:"wen",beard:2},                             /* 单骑定扬州，兴学屯田 */
+    "何进":{hat:"tie",beard:3},                             /* 屠家出身为大将军，谋诛宦官 */
+    "李儒":{hat:"jin",beard:1},                             /* 董卓帐下第一谋士（演义） */
+    "李肃":{hat:"jin",beard:1},                             /* 以赤兔金珠说吕布 */
+    "牛辅":{hat:"tie",beard:3},                             /* 董卓婿，统西凉兵 */
+    "樊稠":{hat:"tie",beard:2},                             /* 西凉四将之一 */
+    "张济":{hat:"tie",beard:2},                             /* 西凉四将之一，张绣之叔 */
+    "田丰":{hat:"jin",beard:2},                             /* 刚而犯上，死狱中 */
+    "许攸":{hat:"jin",beard:1},                             /* 贪而不智，献乌巢之谋后被杀 */
+    "郭图":{hat:"jin",beard:1},                             /* 逢迎袁氏，谗陷田丰张郃 */
+    "逢纪":{hat:"jin",beard:2},                             /* 袁绍谋士 */
+    "麴义":{hat:"tie",beard:1},                             /* 界桥八百先登破白马 */
+    "蒋义渠":{hat:"tie",beard:2},                           /* 袁绍帐下大将 */
+    "皇甫嵩":{hat:"tie",beard:1},                           /* 平黄巾首功，汉末名将 */
+    /* 吴 */
+    "周泰":{hat:"tie",beard:1,scar:1},                      /* 演义：金疮遍体，肤如刻画 */
+    "韩当":{hat:"tie",beard:3},                             /* 石城侯，江东三朝宿将 */
+    "蒋钦":{hat:"tie",beard:1},                             /* 江表虎臣，贵而守约 */
+    "陈武":{hat:"tie",beard:2},                             /* 庐江宿将，合肥战殁 */
+    "董袭":{hat:"tie",beard:2},                             /* 坚守楼船沉江而死 */
+    "潘璋":{hat:"tie",beard:3},                             /* 粗豪奢侈，麾下擒关羽 */
+    "朱然":{hat:"tie",beard:1},                             /* 守江陵名震敌国 */
+    "朱桓":{hat:"tie",beard:2},                             /* 轻财贵义，力敌曹仁 */
+    "吕范":{hat:"wen",beard:1},                             /* 治严整有威，出为将入为相 */
+    "诸葛恪":{hat:"wen",beard:0},                           /* 少有才名而狂傲，早亡 */
+    "张昭":{hat:"jin",beard:2},                             /* 内事不决问张昭，议论简练 */
+    "张纮":{hat:"jin",beard:1},                             /* 与张昭并称「二张」 */
+    "顾雍":{hat:"jin",beard:2},                             /* 为相十九年，沉默寡言 */
+    "虞翻":{hat:"jin",beard:1},                             /* 直言犯上，流放交州注易 */
+    "陆绩":{hat:"wen",beard:0},                             /* 怀橘遗亲，博学多识 */
+    "阚泽":{hat:"wen",beard:1},                             /* 家贫佣书，演义献诈降书 */
+    "薛综":{hat:"wen",beard:2},                             /* 依杖风议，儒林领袖 */
+    "程秉":{hat:"wen",beard:1},                             /* 逮事郑玄，通五经 */
+    /* 蜀 */
+    "马良":{hat:"wen",beard:1,brow:"#dcd6c8"},              /* 演义：眉间有白毛，白眉最良 */
+    "马谡":{hat:"wen",beard:1},                             /* 言过其实，失街亭 */
+    "董允":{hat:"wen",beard:2},                             /* 蒋费之后蜀中柱石 */
+    "廖化":{hat:"tie",beard:1},                             /* 果烈，蜀中无大将廖化作先锋 */
+    "周仓":{beard:3},                                       /* 演义：虬髯黑面，捧刀随关公 */
+    "陈到":{hat:"tie",beard:2},                             /* 名位常亚赵云，统白毦兵 */
+    "向宠":{hat:"tie",beard:0},                             /* 出师表所称「性行淑均」 */
+    "简雍":{hat:"jin",beard:1},                             /* 谈笑风生，优游风议 */
+    "孙乾":{hat:"wen",beard:2},                             /* 从刘备周旋，使不辱命 */
+    "糜竺":{hat:"wen",beard:1},                             /* 倾家纾难，雍容敦雅 */
+    "糜芳":{hat:"tie",beard:0},                             /* 献江陵降吴 */
+    "张松":{hat:"jin",beard:0},                             /* 演义：身短而放旷，暗献西川图 */
+    "谯周":{hat:"jin",beard:2},                             /* 蜀中儒宗，劝后主降魏 */
+    "秦宓":{hat:"wen",beard:1},                             /* 舌辩张温，以「天」为对 */
+    "刘巴":{hat:"wen",beard:1},                             /* 才智绝人，铸直百钱 */
+    "霍峻":{hat:"tie",beard:1},                             /* 葭萌城数百守岁余 */
+    "陈震":{hat:"wen",beard:2},                             /* 奉使吴国，善外交辞令 */
+    "蒋斌":{hat:"tie",beard:0},                             /* 蒋琬之子，守汉城 */
+    /* 群雄 · 南蛮 */
+    "张梁":{hat:"turban",beard:2},                          /* 黄巾「人公将军」 */
+    "沙摩柯":{skin:"#b05a4a",eye:"#2f7d4f",hat:"tribal",beard:3}, /* 演义：面如噀血，碧眼突出 */
+    "兀突骨":{skin:"#7d8f63",hat:"teng",beard:2,scales:1},  /* 演义：身长丈二，遍体鳞甲，藤甲覆身 */
+    "孟优":{hat:"tribal",beard:2},                          /* 孟获之弟，惯使飞刀 */
+    "忙牙长":{hat:"tribal",beard:1},                        /* 蛮将，使截头大刀 */
+    "木鹿大王":{hat:"tribal",beard:2},                      /* 驱虎豹象兵，通鸟语 */
+    "金环三结":{hat:"tribal",beard:2},                      /* 三洞蛮王之首 */
+    "董荼那":{hat:"tribal",beard:1},                        /* 第二洞蛮王，反缚孟获献蜀 */
+    "阿会喃":{hat:"tribal",beard:0},                        /* 第三洞蛮王 */
+    "带来洞主":{hat:"tribal",beard:1},                      /* 祝融夫人之弟 */
+    "高定":{hat:"tie",beard:2},                             /* 越嶲夷王，斩雍闿归蜀 */
+    "雍闿":{hat:"tribal",beard:2},                          /* 建宁豪帅，煽动南中叛乱 */
+    "朱褒":{hat:"tie",beard:1},                             /* 柯太守，与雍闿同叛 */
+    "公孙度":{hat:"tie",beard:2},                           /* 辽东侯，雄踞一州 */
+    "公孙渊":{hat:"tie",beard:1},                           /* 燕王，叛魏自立后被诛 */
+    "公孙康":{hat:"tie",beard:1},                           /* 斩二袁首级献曹 */
+    "公孙恭":{hat:"tie",beard:0}                            /* 公孙康之弟，被渊夺位 */
+  };
     function headArt(g, mode){
     const mini = mode==="mini";
     const uid  = "h" + String(g.id||"x").replace(/[^0-9a-zA-Z]/g,"") + (mini?"m":"f");
@@ -5300,7 +5390,8 @@ function renderPassPage(name){
     const role = gRole(g);
     const f    = fc(g.faction);
     const ec   = eraColor(g);
-    const skin = HEAD_SKIN[gPick(seed,1,HEAD_SKIN.length)];
+    const look = LOOKS[g.name] || null;
+    const skin = look && look.skin ? look.skin : HEAD_SKIN[gPick(seed,1,HEAD_SKIN.length)];
     let age = 0;
     if(g.birth && g.death && g.death > g.birth) age = g.death - g.birth;
     let hairIdx;
@@ -5315,6 +5406,12 @@ function renderPassPage(name){
     if(age>0 && age<32) beard = 0;
     if(role==="warrior" && beard===0) beard = 2;
     if((role==="strategist"||role==="scholar") && beard<2) beard = 2;
+    if(look){
+      if(look.beard != null) beard = look.beard;
+      if(role==="lady"){ if(look.beard != null) beard = 0; }
+    }
+    const browC  = (look && look.brow) || hair.h;
+    const pupilC = (look && look.eye) || "#2b2118";
 
     const cx = 100;
     const rw = 26 + (gPick(seed,4,3)-1)*2;             /* 脸半宽 24/26/28 */
@@ -5381,11 +5478,11 @@ function renderPassPage(name){
     /* 眉 */
     const bw = (role==="warrior"||role==="king") ? 3.8 : (role==="lady" ? 2.2 : 2.8);
     if(role==="lady"){
-      s += '<path d="M '+(cx-19)+' '+(browY+1)+' Q '+(cx-11)+' '+(browY-5)+' '+(cx-3)+' '+(browY-1)+'" stroke="'+hair.h+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
-      s += '<path d="M '+(cx+19)+' '+(browY+1)+' Q '+(cx+11)+' '+(browY-5)+' '+(cx+3)+' '+(browY-1)+'" stroke="'+hair.h+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
+      s += '<path d="M '+(cx-19)+' '+(browY+1)+' Q '+(cx-11)+' '+(browY-5)+' '+(cx-3)+' '+(browY-1)+'" stroke="'+browC+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
+      s += '<path d="M '+(cx+19)+' '+(browY+1)+' Q '+(cx+11)+' '+(browY-5)+' '+(cx+3)+' '+(browY-1)+'" stroke="'+browC+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
     }else{
-      s += '<path d="M '+(cx-21)+' '+(browY-2)+' Q '+(cx-12)+' '+(browY-6)+' '+(cx-3)+' '+(browY)+'" stroke="'+hair.h+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
-      s += '<path d="M '+(cx+21)+' '+(browY-2)+' Q '+(cx+12)+' '+(browY-6)+' '+(cx+3)+' '+(browY)+'" stroke="'+hair.h+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
+      s += '<path d="M '+(cx-21)+' '+(browY-2)+' Q '+(cx-12)+' '+(browY-6)+' '+(cx-3)+' '+(browY)+'" stroke="'+browC+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
+      s += '<path d="M '+(cx+21)+' '+(browY-2)+' Q '+(cx+12)+' '+(browY-6)+' '+(cx+3)+' '+(browY)+'" stroke="'+browC+'" stroke-width="'+bw+'" fill="none" stroke-linecap="round"/>';
     }
     /* 眼 */
     const ex = 11, ew = 6.6, er = 2.9;
@@ -5393,7 +5490,7 @@ function renderPassPage(name){
       const dir = px < cx ? -1 : 1;
       s += '<ellipse cx="'+px+'" cy="'+eyeY+'" rx="'+ew+'" ry="4" fill="#f7f2e7"/>';
       s += '<path d="M '+(px-ew)+' '+(eyeY)+' Q '+px+' '+(eyeY-4.6)+' '+(px+ew)+' '+(eyeY)+'" stroke="'+shade(hair.h,14)+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
-      s += '<circle cx="'+(px+dir*0.7)+'" cy="'+(eyeY+0.4)+'" r="'+er+'" fill="#2b2118"/>';
+      s += '<circle cx="'+(px+dir*0.7)+'" cy="'+(eyeY+0.4)+'" r="'+er+'" fill="'+pupilC+'"/>';
       s += '<circle cx="'+(px+dir*1.4)+'" cy="'+(eyeY-1)+'" r="0.95" fill="#fff" opacity=".85"/>';
     });
     /* 鼻 */
@@ -5415,8 +5512,25 @@ function renderPassPage(name){
         +  ' Q '+(cx-rw+12)+' '+(bot-9)+' '+(cx-rw+3)+' '+(eyeY+10)+' Z" fill="'+hair.h+'" opacity=".92"/>';
       s += '<path d="M '+(cx-11)+' '+(mouthY-3)+' Q '+cx+' '+(mouthY-8)+' '+(cx+11)+' '+(mouthY-3)+' L '+(cx+9)+' '+mouthY+' Q '+cx+' '+(mouthY-3.6)+' '+(cx-9)+' '+mouthY+' Z" fill="'+hair.h+'"/>';
     }
+    /* 面部特征标记：金疮 / 鳞甲 */
+    if(look && look.scar){
+      s += '<g stroke="#a6675a" stroke-width="1.7" opacity=".8" fill="none" stroke-linecap="round">'
+        +  '<path d="M '+(cx+rw*0.42)+' '+(browY+5)+' l 5.5 13"/>'
+        +  '<path d="M '+(cx-rw*0.52)+' '+(eyeY+15)+' l -4.5 11"/>'
+        +  '<path d="M '+(cx-rw*0.18)+' '+(browY-5)+' l 6.5 4.5"/>'
+        +  '<path d="M '+(cx+rw*0.6)+' '+(eyeY+18)+' l 3.5 9"/></g>';
+    }
+    if(look && look.scales){
+      for(let r=0;r<3;r++){
+        const sy = top + 26 + r*11;
+        s += '<path d="M '+(cx-rw+5)+' '+sy+' q 5.5 6 11 0 q 5.5 6 11 0" stroke="#55703f" stroke-width="1.4" fill="none" opacity=".65"/>';
+        s += '<path d="M '+(cx+rw-27)+' '+(sy+5)+' q 5.5 6 11 0 q 5.5 6 11 0" stroke="#55703f" stroke-width="1.4" fill="none" opacity=".65"/>';
+      }
+    }
     /* 头冠 */
-    if(role==="king"){
+    const hatKind = (look && look.hat) || (role==="king" ? "king" : role==="warrior" ? "warrior"
+      : role==="strategist" ? "strategist" : role==="scholar" ? "scholar" : role==="lady" ? "lady" : "officer");
+    if(hatKind==="king"){
       s += '<path d="M '+(cx-rw-2)+' '+(top+4)+' C '+(cx-rw-2)+' '+(top-20)+', '+(cx-rw*0.5)+' '+(top-28)+', '+cx+' '+(top-28)
         +  ' C '+(cx+rw*0.5)+' '+(top-28)+', '+(cx+rw+2)+' '+(top-20)+', '+(cx+rw+2)+' '+(top+4)+' Z" fill="'+hair.h+'"/>';
       s += '<rect x="'+(cx-40)+'" y="'+(top-40)+'" width="80" height="11" rx="3" fill="#212630" stroke="#d9bd76" stroke-width="1.3"/>';
@@ -5425,7 +5539,7 @@ function renderPassPage(name){
         s += '<circle cx="'+(cx-35+i*2.2)+'" cy="'+(top-27+i*6)+'" r="1.9" fill="'+(i%2?"#d9bd76":"#eae3d2")+'"/>';
         s += '<circle cx="'+(cx+35-i*2.2)+'" cy="'+(top-27+i*6)+'" r="1.9" fill="'+(i%2?"#d9bd76":"#eae3d2")+'"/>';
       }
-    }else if(role==="warrior"){
+    }else if(hatKind==="warrior"){
       s += '<path d="M '+(cx-rw-5)+' '+(top+6)+' C '+(cx-rw-5)+' '+(top-30)+', '+(cx+rw+5)+' '+(top-30)+', '+(cx+rw+5)+' '+(top+6)+' Z" fill="#3a4152" stroke="#1d212a" stroke-width="1.6"/>';
       s += '<path d="M '+(cx-rw-5)+' '+(top+3)+' Q '+cx+' '+(top+12)+' '+(cx+rw+5)+' '+(top+3)+'" stroke="#d9bd76" stroke-width="2.6" fill="none"/>';
       s += '<path d="M '+cx+' '+(top-30)+' L '+cx+' '+(top-42)+'" stroke="'+ec+'" stroke-width="3"/>';
@@ -5449,7 +5563,56 @@ function renderPassPage(name){
       s += '<ellipse cx="'+cx+'" cy="'+(top-36)+'" rx="12" ry="3.6" fill="#d9bd76" opacity=".72"/>';
       s += '<path d="M '+(cx-13)+' '+(top-41)+' L '+(cx+13)+' '+(top-46)+'" stroke="#d9bd76" stroke-width="1.9"/>';
       s += '<circle cx="'+(cx+13)+'" cy="'+(top-46)+'" r="2.4" fill="#c94a3a"/>';
+    }else if(hatKind==="tie" || hatKind==="shui"){
+      /* 铁盔（武官兜鍪）；水军盔为青碧色带波纹 */
+      const kc = hatKind==="shui" ? "#3f5b66" : "#454c5c";
+      const kd = hatKind==="shui" ? "#26383f" : "#20242e";
+      const kt = hatKind==="shui" ? "#9fd3d9" : "#c94a3a";
+      s += '<path d="M '+(cx-rw-6)+' '+(top+8)+' C '+(cx-rw-6)+' '+(top-26)+', '+(cx+rw+6)+' '+(top-26)+', '+(cx+rw+6)+' '+(top+8)+' Z" fill="'+kc+'" stroke="'+kd+'" stroke-width="1.6"/>';
+      s += '<path d="M '+(cx-rw-6)+' '+(top+6)+' Q '+cx+' '+(top+14)+' '+(cx+rw+6)+' '+(top+6)+'" stroke="'+kd+'" stroke-width="2.4" fill="none"/>';
+      s += '<path d="M '+cx+' '+(top-26)+' L '+cx+' '+(top-37)+'" stroke="'+kt+'" stroke-width="3"/>';
+      s += '<circle cx="'+cx+'" cy="'+(top-40)+'" r="4.2" fill="'+kt+'"/>';
+      s += '<path d="M '+(cx-rw-9)+' '+(top+8)+' L '+(cx-rw-9)+' '+(eyeY+24)+' L '+(cx-rw+1)+' '+(eyeY+24)+' L '+(cx-rw+1)+' '+(top+8)+' Z" fill="'+kc+'" stroke="'+kd+'" stroke-width="1"/>';
+      s += '<path d="M '+(cx+rw+9)+' '+(top+8)+' L '+(cx+rw+9)+' '+(eyeY+24)+' L '+(cx+rw-1)+' '+(eyeY+24)+' L '+(cx+rw-1)+' '+(top+8)+' Z" fill="'+kc+'" stroke="'+kd+'" stroke-width="1"/>';
+      if(hatKind==="shui"){
+        s += '<path d="M '+(cx-11)+' '+(top-12)+' Q '+(cx-5.5)+' '+(top-17)+' '+cx+' '+(top-12)+' Q '+(cx+5.5)+' '+(top-7)+' '+(cx+11)+' '+(top-12)+'" stroke="#9fd3d9" stroke-width="1.8" fill="none" opacity=".9"/>';
+      }
+    }else if(hatKind==="wen"){
+      /* 进贤冠（文官儒臣）：前展三梁 */
+      s += '<path d="M '+(cx-rw+1)+' '+(top+3)+' L '+(cx-rw+3)+' '+(top-24)+' L '+(cx+rw-3)+' '+(top-24)+' L '+(cx+rw-1)+' '+(top+3)+' Z" fill="#2c313d" stroke="#181c25" stroke-width="1.2"/>';
+      for(let i=0;i<3;i++){
+        s += '<rect x="'+(cx-9+i*6.6)+'" y="'+(top-21)+'" width="3.2" height="21" rx="1.4" fill="#d9bd76" opacity=".72"/>';
+      }
+      s += '<rect x="'+(cx-rw+1)+'" y="'+(top+1)+'" width="'+(rw*2-2)+'" height="4.6" rx="2" fill="#d9bd76" opacity=".55"/>';
+    }else if(hatKind==="jin"){
+      /* 纶巾幅巾（谋士儒将）：软帽中缝，脑后垂带 */
+      s += '<path d="M '+(cx-rw-2)+' '+(top+6)+' C '+(cx-rw-2)+' '+(top-24)+', '+(cx+rw+2)+' '+(top-24)+', '+(cx+rw+2)+' '+(top+6)+' Q '+cx+' '+(top-4)+' '+(cx-rw-2)+' '+(top+6)+' Z" fill="#333a48" stroke="#20242e" stroke-width="1.2"/>';
+      s += '<path d="M '+cx+' '+(top-24)+' L '+cx+' '+(top-33)+'" stroke="#333a48" stroke-width="3.4"/>';
+      s += '<circle cx="'+cx+'" cy="'+(top-35)+'" r="3.4" fill="#424a5a"/>';
+      s += '<path d="M '+(cx-rw+2)+' '+(top+2)+' Q '+cx+' '+(top-12)+' '+(cx+rw-2)+' '+(top+2)+'" stroke="#d9bd76" stroke-width="1.5" fill="none" opacity=".5"/>';
+      s += '<path d="M '+(cx+rw)+' '+(top-8)+' Q '+(cx+rw+15)+' '+(top-4)+' '+(cx+rw+12)+' '+(top+20)+'" stroke="#333a48" stroke-width="4" fill="none"/>';
+    }else if(hatKind==="turban"){
+      /* 黄巾（黄巾军）：黄帛裹首，结缨于侧 */
+      s += '<path d="M '+(cx-rw-3)+' '+(top+8)+' C '+(cx-rw-3)+' '+(top-20)+', '+(cx+rw+3)+' '+(top-20)+', '+(cx+rw+3)+' '+(top+8)+' Q '+cx+' '+(top-2)+' '+(cx-rw-3)+' '+(top+8)+' Z" fill="#d8b53a" stroke="#a8862a" stroke-width="1.4"/>';
+      s += '<path d="M '+(cx-rw-3)+' '+(top+4)+' Q '+cx+' '+(top-7)+' '+(cx+rw+3)+' '+(top+4)+'" stroke="#a8862a" stroke-width="2" fill="none"/>';
+      s += '<path d="M '+(cx+rw-2)+' '+(top-8)+' q 11 -7 17 1 q -9 3 -17 4 Z" fill="#d8b53a" stroke="#a8862a" stroke-width="1"/>';
+    }else if(hatKind==="tribal"){
+      /* 蛮巾（南蛮部将）：赤帛头带，插羽坠牙 */
+      s += '<path d="M '+(cx-rw-2)+' '+(top+13)+' L '+(cx-rw-1)+' '+(top+1)+' L '+(cx+rw+1)+' '+(top+1)+' L '+(cx+rw+2)+' '+(top+13)+' Q '+cx+' '+(top+7)+' '+(cx-rw-2)+' '+(top+13)+' Z" fill="#a33f30" stroke="#6e2820" stroke-width="1.2"/>';
+      s += '<path d="M '+(cx-rw+3)+' '+(top+1)+' Q '+(cx-rw-1)+' '+(top-22)+' '+(cx-rw-6)+' '+(top-31)+'" stroke="#3f7d4a" stroke-width="2.6" fill="none"/>';
+      s += '<ellipse cx="'+(cx-rw-7)+'" cy="'+(top-34)+'" rx="3.4" ry="7" fill="#5aa06a" transform="rotate(24 '+(cx-rw-7)+' '+(top-34)+')"/>';
+      s += '<path d="M '+(cx+rw-4)+' '+(top+1)+' Q '+(cx+rw+2)+' '+(top-18)+' '+(cx+rw+7)+' '+(top-26)+'" stroke="#c94a3a" stroke-width="2.6" fill="none"/>';
+      s += '<ellipse cx="'+(cx+rw+8)+'" cy="'+(top-29)+'" rx="3.2" ry="6.6" fill="#e06a55" transform="rotate(-22 '+(cx+rw+8)+' '+(top-29)+')"/>';
+      s += '<path d="M '+(cx-4.5)+' '+(top+13)+' l 4.5 9 l 4.5 -9 Z" fill="#e9e3d3" stroke="#b7ad93" stroke-width=".8"/>';
+    }else if(hatKind==="teng"){
+      /* 藤甲盔（藤甲兵）：青藤编就，弧纹层叠 */
+      s += '<path d="M '+(cx-rw-4)+' '+(top+8)+' C '+(cx-rw-4)+' '+(top-26)+', '+(cx+rw+4)+' '+(top-26)+', '+(cx+rw+4)+' '+(top+8)+' Z" fill="#6f8752" stroke="#4a5c36" stroke-width="1.6"/>';
+      s += '<path d="M '+(cx-rw-4)+' '+(top-16)+' Q '+cx+' '+(top-5)+' '+(cx+rw+4)+' '+(top-16)+'" stroke="#4a5c36" stroke-width="1.8" fill="none"/>';
+      s += '<path d="M '+(cx-rw-4)+' '+(top-6)+' Q '+cx+' '+(top+5)+' '+(cx+rw+4)+' '+(top-6)+'" stroke="#4a5c36" stroke-width="1.8" fill="none"/>';
+      s += '<path d="M '+cx+' '+(top-26)+' L '+cx+' '+(top-36)+'" stroke="#8a6a3a" stroke-width="3"/>';
+      s += '<path d="M '+(cx-rw+3)+' '+(top-20)+' q 6 -8 12 0 q 6 -8 12 0 q 6 -8 12 0" stroke="#8fae6b" stroke-width="1.6" fill="none" opacity=".8"/>';
     }else{
+      /* 普通官吏幞头 */
       s += '<path d="M '+(cx-rw-2)+' '+(top+5)+' C '+(cx-rw-2)+' '+(top-22)+', '+(cx+rw+2)+' '+(top-22)+', '+(cx+rw+2)+' '+(top+5)+' Q '+cx+' '+(top-5)+' '+(cx-rw-2)+' '+(top+5)+' Z" fill="#3c4350"/>';
       s += '<path d="M '+cx+' '+(top-22)+' L '+cx+' '+(top-31)+'" stroke="#2a303c" stroke-width="2.2"/>';
       s += '<circle cx="'+cx+'" cy="'+(top-33)+'" r="3" fill="#3c4350"/>';
@@ -6105,7 +6268,7 @@ function renderPassPage(name){
           ${ancient
             ? ("·　本册为<b>特典·古代武将</b>（先秦至明清共 "+POOL.length+" 位），与三国武将<b>分册统计</b>，排名只在古代名将内部计算；「时代」列标注所属朝代，可按时代筛选与排序。<br>")
             : ("·　本册为<b>三国武将</b>（魏 / 蜀 / 吴 / 群雄共 "+POOL.length+" 名），排名只在三国内部计算；32 位特典·古代武将另设「古代武将名录 / 列表」两册。<br>")}
-          ·　<b>交手场次</b>取自《三国志》与《三国演义》的主要战事条目，非全量战绩；<b>关系</b>项数含血缘、姻亲、君臣、师徒、挚友与宿敌。　·　武将形象：<b>${Object.keys(PORTRAITS).length} 位代表性武将</b>为 AI 生成原创立绘（依史书记载绘制，如关羽丹凤长髯、张飞豹头环眼、孙权碧眼紫髯），其余武将为程序化生成形象；均为原创绘制，非任何游戏原画。
+          ·　<b>交手场次</b>取自《三国志》与《三国演义》的主要战事条目，非全量战绩；<b>关系</b>项数含血缘、姻亲、君臣、师徒、挚友与宿敌。　·　武将形象：<b>${Object.keys(PORTRAITS).length} 位代表性武将</b>为 AI 生成原创立绘（依史书记载绘制，如关羽丹凤长髯、张飞豹头环眼、孙权碧眼紫髯），其余武将为程序化生成形象，另依《三国志》《三国演义》记载为 ${Object.keys(LOOKS).length} 位武将补充专属特征（如马良白眉、周泰金疮满面、沙摩柯面如噀血碧眼、兀突骨遍体鳞甲藤甲、张梁黄巾裹首）；均为原创绘制，非任何游戏原画。
         </div>
       </div>
       <div class="toolbar">
