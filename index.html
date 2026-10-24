@@ -8405,18 +8405,37 @@ var BOTS = [
       if (cli) return cli;
       if (!same) return null;
       if (window.WorkBuddyCloud && window.WorkBuddyCloud.createWorkBuddyCloud) {
-        try { cli = window.WorkBuddyCloud.createWorkBuddyCloud({ endpoint: HOST, publishableKey: KEY }); } catch (e) { cli = null; }
+        try { cli = window.WorkBuddyCloud.createWorkBuddyCloud({ endpoint: HOST, publishableKey: KEY }) || null; } catch (e) { cli = null; }
       }
       return cli;
     }
     function loadSdk() {
+      /* 失败可重挂：移动端弱网/初始化异常时多次尝试，直到 whenSdk 超时为止 */
       if (loading || cli || !same) return;
+      if ((loadSdk._n || 0) >= 6) return;
+      loadSdk._n = (loadSdk._n || 0) + 1;
       loading = true;
       var s = document.createElement("script");
-      s.src = "./sdk.js";
+      s.src = "./sdk.js?r=" + loadSdk._n;
       s.onload = function () { loading = false; initCli(); };
       s.onerror = function () { loading = false; };
       (document.head || document.documentElement).appendChild(s);
+    }
+    function whenSdk(toMs) {
+      /* 等待 SDK 客户端就绪（脚本加载 + createWorkBuddyCloud 成功），期间自动重试。
+         修复：此前同源路径在 SDK 未就绪时"立即返回 null"，移动端一旦初始化失败，
+         所有云端调用（含 visit 上报、注册）都会静默失败。 */
+      if (cli) return Promise.resolve(true);
+      if (!same) return Promise.resolve(false);
+      var t0 = Date.now();
+      return new Promise(function (res) {
+        (function chk() {
+          if (initCli()) return res(true);
+          if (Date.now() - t0 > (toMs || 12000)) return res(false);
+          if (!loading) loadSdk();
+          setTimeout(chk, 400);
+        })();
+      });
     }
     function sid() {
       try {
@@ -8468,11 +8487,13 @@ var BOTS = [
     function rpcP(name, args, to) {
       try {
         if (same) {
-          var c = initCli();
-          if (!c) { loadSdk(); return Promise.resolve(null); }
-          return Promise.resolve(c.database.rpc(name, args)).then(function (r) {
-            return r && r.data !== undefined ? r.data : null;
-          }, function () { return null; });
+          return whenSdk(12000).then(function (ok) {
+            var c = ok ? initCli() : null;
+            if (!c) return null;
+            return Promise.resolve(c.database.rpc(name, args)).then(function (r) {
+              return r && r.data !== undefined ? r.data : null;
+            }, function () { return null; });
+          });
         }
         return relayP(name, args, to);
       } catch (e) { return Promise.resolve(null); }
@@ -8480,14 +8501,12 @@ var BOTS = [
     function rpc(name, args, retry) {
       try {
         if (same) {
-          var c = initCli();
-          if (!c) {
-            loadSdk();
-            if (retry !== false) setTimeout(function () { rpc(name, args, false); }, 1500);
-            return;
-          }
-          var p = c.database.rpc(name, args);
-          if (p && p.then) p.then(function () {}, function () {});
+          whenSdk(12000).then(function (ok) {
+            var c = ok ? initCli() : null;
+            if (!c) return;
+            var p = c.database.rpc(name, args);
+            if (p && p.then) p.then(function () {}, function () {});
+          });
           return;
         }
         relay(name, args);
@@ -8577,7 +8596,7 @@ var BOTS = [
     function warm() {
       /* 预热：提前建好中继 iframe / 唤醒云函数，避免用户第一次点击就撞上冷启动超时 */
       try {
-        if (same) { initCli(); }
+        if (same) whenSdk(12000);
         if (!fready) ensureFrame();
         rpcP("sg_account_lookup", { p_acc: "__warmup__" }, 10000);
       } catch (e) {}
