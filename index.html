@@ -276,7 +276,7 @@ header.top{
 #regCard .rc-city:hover{color:#fff0c0}
 #regCard .rc-src{margin-top:7px;font-size:9.5px;color:#6f6858;letter-spacing:.04em}
 
-/* ---------- 城市图鉴 ---------- */
+/* ---------- 城市列表 ---------- */
 .ctygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:1180px){.ctygrid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:760px){.ctygrid{grid-template-columns:repeat(2,1fr)}}
@@ -498,13 +498,23 @@ footer.foot{
 .gcard{display:flex;flex-wrap:wrap;border:1px solid #6b5a38;border-radius:16px;overflow:hidden;
   background:linear-gradient(150deg,#2c2519,#1b1813);box-shadow:var(--shadow);margin-bottom:18px}
 .gcard .art{flex:0 0 210px;background:#11151c;line-height:0;border-right:1px solid rgba(201,169,78,.28);position:relative}
-.gcard .art.has-img{cursor:zoom-in}
+.gcard .art.has-img{cursor:default}
 .gcard .art.has-img:hover .artsrc{background:rgba(201,169,78,.85);color:#241a08}
 .gcard .art .artsrc{position:absolute;left:0;right:0;bottom:0;padding:3px 6px 4px;font-size:8.5px;letter-spacing:.12em;
 .gcard .art svg{display:block;width:100%;height:auto}
 .gcard .art img{display:block;width:100%;height:auto}
 .gcard .art .artsrc{position:absolute;left:0;right:0;bottom:0;padding:3px 6px 4px;font-size:8.5px;letter-spacing:.12em;
   text-align:center;color:rgba(232,201,136,.72);background:linear-gradient(180deg,rgba(10,12,16,0),rgba(10,12,16,.82));pointer-events:none}
+/* 武将大图查看按钮 */
+.gcard .art .zoomb{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:2;
+  font-family:inherit;font-size:10.5px;letter-spacing:.1em;white-space:nowrap;padding:5px 11px;border-radius:7px;
+  border:1px solid rgba(232,201,136,.55);background:rgba(16,14,10,.86);color:#f0dfb4;cursor:pointer;transition:.18s}
+.gcard .art .zoomb:hover{background:linear-gradient(135deg,#e8c988,#c9a45c);color:#241a08;border-color:#e8c988}
+/* 详情页评论区标题 */
+.cmhead{margin:22px 0 10px;padding:0 2px}
+.cmhead h3{font-size:15px;letter-spacing:.16em;color:#e8c988;margin:0 0 6px;font-weight:600}
+.cmhead h3::before{content:"◆";font-size:9px;vertical-align:2px;margin-right:8px;color:#c9a45c}
+.cmhead p{font-size:10.5px;color:var(--ink-3);letter-spacing:.05em;margin:0}
 .gcard .meta{flex:1 1 320px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .gcard .nm{font-size:32px;letter-spacing:.18em;color:#f4eeda;font-weight:700;line-height:1.05;margin:0}
 .gcard .zi{font-size:11.5px;color:var(--ink-3);letter-spacing:.18em}
@@ -570,7 +580,7 @@ footer.foot{
 .gtb .nm{font-size:13px;color:#f2ecdb;letter-spacing:.06em}
 .gtb .zi2{font-size:9.5px;color:var(--ink-3);margin-left:5px}
 .gtb .tot{font-weight:700;color:#e8c988}
-.gtb .avv{display:inline-block;width:26px;height:26px;border-radius:6px;vertical-align:-8px;margin-right:7px;overflow:hidden;background:#1a1f28}
+.gtb .avv{display:inline-block;width:22px;height:22px;border-radius:5px;vertical-align:-6px;margin-right:6px;overflow:hidden;background:#1a1f28;opacity:.92}
 .gtb .avv svg{display:block;width:100%;height:100%}
 .gtb .avv img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 14%}
 .gtb .minib{display:inline-block;width:34px;height:6px;border-radius:3px;background:#303848;vertical-align:1px;margin-right:6px;overflow:hidden}
@@ -983,6 +993,11 @@ footer.foot{
   padding:2px 8px 3px;border-bottom-right-radius:9px;text-shadow:0 1px 3px rgba(0,0,0,.6);
   box-shadow:0 1px 8px color-mix(in srgb,var(--tc,#c9a45c) 55%, transparent);
 }
+/* 卡片升级：等级加成角标 / 升级按钮 */
+.sg-card-lv{position:absolute;right:6px;top:26px;z-index:2;font-size:9px;font-weight:700;letter-spacing:.04em;
+  color:#241a08;background:linear-gradient(135deg,#ffe6a8,#e0b862);padding:1px 6px;border-radius:999px;
+  box-shadow:0 1px 6px rgba(0,0,0,.45)}
+.sg-card-gift.sg-up{color:#241a08;background:linear-gradient(135deg,#e8c988,#c9a45c);border-color:#e8c988;font-weight:700}
 /* 按阶技能条 */
 .sg-card-skill{
   display:flex;align-items:center;gap:5px;margin:7px 7px 0;padding:4px 7px;border-radius:6px;
@@ -1061,6 +1076,27 @@ footer.foot{
 .zmprose{font-size:12.5px;line-height:1.95;color:var(--ink-2);text-align:justify}
 .zmmeta{font-size:10.5px;color:var(--ink-3);letter-spacing:.06em;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line-2)}
 @media(max-width:760px){.zmwrap{flex-direction:column}.zmleft{flex:none;max-width:100%}.zmright{max-height:44vh}}
+
+/* 武将大图查看（自包含弹窗，独立于社区模块） */
+.pz-mask{position:fixed;inset:0;z-index:9999;background:rgba(6,8,11,.88);display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto}
+.pz-box{position:relative;width:min(96vw,1120px);max-height:93vh;overflow:auto;padding:18px 20px 20px;border-radius:14px;
+  border:1px solid rgba(201,164,92,.5);background:linear-gradient(160deg,#232b38,#161a22);box-shadow:0 26px 80px rgba(0,0,0,.65)}
+.pz-x{position:absolute;right:12px;top:6px;border:0;background:none;color:var(--ink-3);font-family:inherit;font-size:24px;line-height:1;cursor:pointer}
+.pz-x:hover{color:#e8c988}
+.pz-hd h3{margin:0 0 6px;font-size:16px;letter-spacing:.14em;color:#f2ecdb}
+.pz-sub{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:12px}
+.pz-body{display:flex;gap:18px;align-items:flex-start}
+.pz-left{flex:0 0 46%;overflow:auto;border-radius:10px;line-height:0;background:#11151c;cursor:zoom-in;border:1px solid var(--line-2)}
+.pz-left img{display:block;width:100%;max-height:72vh;object-fit:contain}
+.pz-left.full{cursor:zoom-out}
+.pz-left.full img{width:auto;max-width:none;max-height:none}
+.pz-right{flex:1;min-width:0;max-height:72vh;overflow:auto;padding-right:6px}
+.pz-tag{font-size:11px;letter-spacing:.14em;color:#e8c988;margin:6px 0 7px;padding-left:8px;border-left:2px solid #c9a45c}
+.pz-tag.yy{color:#a7b8da;border-left-color:#5b8dd0;margin-top:16px}
+.pz-tag small{color:var(--ink-3);letter-spacing:.04em;margin-left:6px;font-size:9.5px}
+.pz-prose{font-size:12.5px;line-height:1.95;color:var(--ink-2);text-align:justify}
+.pz-meta{font-size:10.5px;color:var(--ink-3);letter-spacing:.06em;margin-top:14px;padding-top:10px;border-top:1px dashed var(--line-2)}
+@media(max-width:760px){.pz-body{flex-direction:column}.pz-left{flex:none;max-width:100%}.pz-right{max-height:44vh}}
 
 /* 抽卡展示 */
 .sg-drawbox{position:relative;display:grid;place-items:center;padding:8px 0 2px}
@@ -1220,11 +1256,11 @@ footer.foot{
     </div>
     <div class="nav" id="nav">
       <button data-view="map">天下形势</button>
-      <button data-view="cities">城市图鉴</button>
-      <button data-view="gens">武将图鉴</button>
-      <button data-view="list">武将名录</button>
-      <button data-view="alist">古代武将名录</button>
-      <button data-view="agens">古代武将列表</button>
+      <button data-view="cities">城市列表</button>
+      <button data-view="list">三国武将名录</button>
+      <button data-view="gens">三国武将列表</button>
+      <button data-view="alist">历史武将名录</button>
+      <button data-view="agens">历史武将列表</button>
       <button data-view="forum">论武坛</button>
     </div>
     <div class="sgacct" id="sgAcct"></div>
@@ -1254,14 +1290,14 @@ footer.foot{
   <div id="app"></div>
   <footer class="foot">
     <div class="footref" data-i18n="refNote" style="margin-bottom:10px;padding:8px 12px;border:1px solid rgba(217,189,118,.28);border-radius:8px;background:rgba(217,189,118,.06);color:#d9bd76;font-size:12.5px;letter-spacing:.4px">武将参数参考《三国志11》 · 城池与兵法参考《三国志9》</div>
-    <b>数据说明</b>　全量收录 <b>716</b> 名武将，并按<b>分册统计</b>：<b>三国武将 684 名</b>（魏 / 蜀 / 吴 / 群雄，见「武将图鉴」「武将名录」）与 <b>特典·古代武将 32 名</b>（先秦至明清，另设「古代武将名录」「古代武将列表」两册）。两册各自排名、互不混算。
+    <b>数据说明</b>　全量收录 <b>716</b> 名武将，并按<b>分册统计</b>：<b>三国武将 684 名</b>（魏 / 蜀 / 吴 / 群雄，见「三国武将名录」「三国武将列表」）与 <b>特典·古代武将 32 名</b>（先秦至明清，另设「历史武将名录」「历史武将列表」两册）。两册各自排名、互不混算。
     五维（统率 / 武力 / 智力 / 政治 / 魅力）、<b>特技</b>（100 种，附效果说明）、<b>兵种适性</b>（枪 / 戟 / 弩 / 骑 / 兵器 / 水，S-A-B-C 六档）、
     相性值、生卒年与登场年，取自《三国志11》武将数据（来源：三国演义电子辞典·三国志11 图鉴，并与轩辕春秋《三国志11》全武将能力表交叉核对）；
     「擅长兵法」参考《三国志9》兵法体系（兵种兵法：突击、突进、熊手、乱舞、齐射、乱射、骑射、投石、猛冲；计略兵法与策略兵法）。
     126 名重点武将附人工整理的字号、称号、生平与名句；其余武将的<b>阵营归属由相性值推导</b>（详情页标注「相性推导」），生平资料从略。<br>
     <b>评分口径</b>：<b>五维合计</b> ＝ 统率 ＋ 武力 ＋ 智力 ＋ 政治 ＋ 魅力（满分 500，反映武将总体能力体量）；<b>综合能力</b> ＝ 五维合计 ÷ 5，四舍五入取整（满分 100，即五维等权算术平均）。两项排名在<b>两册内分别计算</b>（三国武将 684 名内 / 特典·古代武将 32 名内），数值相同者并列；「合计」保留了取整前的精度，因此同分排序比「综合」更细。
-    <b>城市数据</b>：「城市图鉴」收录 <b>53</b> 座城池（参考《三国志9》城池体系，补入河西、辽东、南中、岭南边城），人口为汉末郡国估算户口，兵役人口、可动员兵额、经济GDP 与综合实力均按公开公式推导（详见该页「口径说明」）；舆图按 <b>10×10 = 100 区块</b>划分，左下角「区域志」随视野自动切换区块内容。<br>
-    <b>武将图鉴与作战明细</b>：「武将图鉴」（三国 684 名）与「古代武将列表」（古代 32 名）各以一张总表提供本册武将的五维 / 合计 / 综合 / 相性 / 生卒 / 交手场次 / 关系项数排序，古代册另设「时代」列并支持按时代筛选排序（先秦 → 明清）；两册排名互不混算。武将详情页增设三层展开——形象卡、<b>《作战明细》</b>与<b>《人物关系》</b>。《作战明细》以《三国志》为主、《三国演义》为辅，整理了 <b>149</b> 条主要交手记录（覆盖 <b>100+</b> 位武将），按「主动方 — 结果（阵斩 / 生擒 / 击败 / 击退 / 围困 / 射伤 / 招降 / 不分胜负）— 被动方」逐条罗列，并给出胜败统计与终局（被谁所斩、被谁所擒）；《人物关系》收录 <b>171</b> 条血缘、姻亲、君臣、师徒、挚友与宿敌关系，宿敌多为史书与演义中反复交手、终局相杀者。武将形象为按武将数据（阵营与朝代主色、身份冠服、主力兵种、生卒年龄、脸型种子）程序化生成的原创 SVG 立绘——甲胄兜鍪随阵营与朝代变色，兵器剪影按兵种适性分画戟/长枪/弩弓/大刀四型，谋士执羽扇，构图参考《三国无双》与《率土之滨》的卡面风格，非游戏原画素材。<br>
+    <b>城市数据</b>：「城市列表」收录 <b>53</b> 座城池（参考《三国志9》城池体系，补入河西、辽东、南中、岭南边城），人口为汉末郡国估算户口，兵役人口、可动员兵额、经济GDP 与综合实力均按公开公式推导（详见该页「口径说明」）；舆图按 <b>10×10 = 100 区块</b>划分，左下角「区域志」随视野自动切换区块内容。<br>
+    <b>武将图鉴与作战明细</b>：「三国武将列表」（三国 684 名）与「历史武将列表」（历史 32 名）各以一张总表提供本册武将的五维 / 合计 / 综合 / 相性 / 生卒 / 交手场次 / 关系项数排序，古代册另设「时代」列并支持按时代筛选排序（先秦 → 明清）；两册排名互不混算。武将详情页增设三层展开——形象卡、<b>《作战明细》</b>与<b>《人物关系》</b>。《作战明细》以《三国志》为主、《三国演义》为辅，整理了 <b>149</b> 条主要交手记录（覆盖 <b>100+</b> 位武将），按「主动方 — 结果（阵斩 / 生擒 / 击败 / 击退 / 围困 / 射伤 / 招降 / 不分胜负）— 被动方」逐条罗列，并给出胜败统计与终局（被谁所斩、被谁所擒）；《人物关系》收录 <b>171</b> 条血缘、姻亲、君臣、师徒、挚友与宿敌关系，宿敌多为史书与演义中反复交手、终局相杀者。武将形象为按武将数据（阵营与朝代主色、身份冠服、主力兵种、生卒年龄、脸型种子）程序化生成的原创 SVG 立绘——甲胄兜鍪随阵营与朝代变色，兵器剪影按兵种适性分画戟/长枪/弩弓/大刀四型，谋士执羽扇，构图参考《三国无双》与《率土之滨》的卡面风格，非游戏原画素材。<br>
     地图为参考《三国志11》大地图风格绘制的三国时期<b>历史形势示意</b>舆图，山川城池为艺术化抽象表达，不代表任何现代地理边界与行政区划。本页仅供游戏数据可视化与爱好者参考。
   </footer>
 </div>
@@ -1798,7 +1834,7 @@ const BIO = {"曹操":{"sgz":"曹操（155—220），字孟德，小名阿瞒�
 
   /* ================= 城池数据（参考《三国志9》城池体系）=================
      pop 人口(万) / com 商业 / agr 农业 / dfn 城防 / sec 治安 / str 战略(0-100)
-     兵役人口、经济GDP、综合实力由公式推导（见「城市图鉴」口径说明） */
+     兵役人口、经济GDP、综合实力由公式推导（见「城市列表」口径说明） */
   const CITY_DATA = [
     {n:"洛阳",py:"司隶",f:"魏",x:112.4,y:34.6,pop:42,com:92,agr:74,dfn:86,sec:66,str:98,lv:"都城",prod:"铜器·书籍·漆器",who:["董卓","曹操","钟繇","司马懿"],d:"东汉帝都，天下首善之区。董卓焚城后残破不堪，曹操迎献帝都许，后营建洛阳为魏都，重立太学、修复宫室。"},
     {n:"长安",py:"司隶",f:"魏",x:108.9,y:34.3,pop:30,com:84,agr:70,dfn:88,sec:62,str:96,lv:"都城",prod:"铜器·织锦·马匹",who:["董卓","李傕","钟繇","张既"],d:"西汉故都，三辅之地。董卓挟献帝西迁于此，李傕、郭汜相攻，关中残破；钟繇镇关中，招抚流民，稍复旧观。"},
@@ -1888,7 +1924,7 @@ const BIO = {"曹操":{"sgz":"曹操（155—220），字孟德，小名阿瞒�
     {n:"湘 江", c:[112.9,27.6], r:-76}, {n:"济 水", c:[115.4,35.6], r:-2}
   ];
 
-  /* ---------- 城池派生指标（口径透明，公式见「城市图鉴」说明） ---------- */
+  /* ---------- 城池派生指标（口径透明，公式见「城市列表」说明） ---------- */
   const CITY_PMAX = CITY_DATA.reduce(function(a,c){ return Math.max(a, c.pop); }, 1);
   CITY_DATA.forEach(function(c){
     c.mil  = Math.round(c.pop * 0.15 * 10) / 10;              /* 兵役人口 = 人口 × 15%% */
@@ -3070,7 +3106,7 @@ function mFineDef(){
     MAPV.ty=(ch-MP.H*MAPV.k)/2;
     mapApply();
   }
-  /* 聚焦某城（由「城市图鉴」跳转而来） */
+  /* 聚焦某城（由「城市列表」跳转而来） */
   function mapFocusCity(name){
     const c = CITY_DATA.find(function(x){ return x.n===name; });
     if(!c) return false;
@@ -3104,7 +3140,7 @@ function mFineDef(){
     townsEl    = document.getElementById("towns");
     curTileKey = "";
 
-    /* 区域志内点击城名 → 跳转城市图鉴 */
+    /* 区域志内点击城名 → 跳转城市列表 */
     if(regCardEl){
       regCardEl.addEventListener("click", function(e){
         const t = e.target.closest ? e.target.closest(".rc-city") : null;
@@ -3196,7 +3232,7 @@ function mFineDef(){
     resizeH = function(){ mapApply(); };
     window.addEventListener("resize", resizeH);
 
-    /* 初始定位：优先「城市图鉴」跳转的聚焦城，其次 ?mz= 倍率，默认整图全览 */
+    /* 初始定位：优先「城市列表」跳转的聚焦城，其次 ?mz= 倍率，默认整图全览 */
     let mz = 1;
     try{ mz = parseFloat(new URLSearchParams(window.location.search).get("mz")) || 1; }catch(err){}
     mz = (mz>=0.5 && mz<=20) ? mz : 1;   /* V4: 支持 3080×2000，上限 10 → 20 */
@@ -3907,7 +3943,7 @@ function renderMap(){
         <div class="panel">
           <h3 style="margin:0 0 12px;font-size:12px;letter-spacing:.18em;color:var(--gold-2)">雄城榜 · 前十</h3>
           <div class="top10">${cityTopHtml}</div>
-          <div class="maphint" style="margin-top:10px">排序依据：综合实力 ＝ 人口 40% ＋ 商业 20% ＋ 农业 15% ＋ 城防 15% ＋ 战略 10%。点击城名进入「城市图鉴」查看全表与口径。</div>
+          <div class="maphint" style="margin-top:10px">排序依据：综合实力 ＝ 人口 40% ＋ 商业 20% ＋ 农业 15% ＋ 城防 15% ＋ 战略 10%。点击城名进入「城市列表」查看全表与口径。</div>
         </div>
         <div class="panel">
           <h3 style="margin:0 0 12px;font-size:12px;letter-spacing:.18em;color:var(--gold-2)">武将综合能力 · 前十</h3>
@@ -4997,7 +5033,7 @@ function renderCityPage(name){
       c.py+' · '+fn(c.f)+' · 综合实力 <b>'+c.pow+'</b> · 人口 '+c.pop+' 万 · 物产 '+c.prod)
     + '<div class="ctbar">'
     +   '<button class="ctbtn" id="ctBack">‹ 返回舆图</button>'
-    +   '<button class="ctbtn" id="ctAtlas">城市图鉴</button>'
+    +   '<button class="ctbtn" id="ctAtlas">城市列表</button>'
     +   '<span class="sp"></span>'
     +   '<span class="ctlbl">缩放</span>'
     +   '<button class="ctbtn sq" id="ctZin">＋</button><button class="ctbtn sq" id="ctZout">－</button><button class="ctbtn" id="ctZfit">全览</button>'
@@ -5175,10 +5211,10 @@ function renderPassPage(name){
 
     app.innerHTML = `
       <div class="section-head">
-        <h2>${ancient ? "古代武将名录" : "武将名录"}</h2>
+        <h2>${ancient ? "历史武将名录" : "三国武将名录"}</h2>
         <p>${ancient
-            ? ("特典阵容 · 收录 <b>"+POOL.length+"</b> 位古代名将（先秦至明清），与三国武将分册统计 · 点击卡片查看详细参数与技能")
-            : ("三国武将 <b>"+POOL.length+"</b> 名（魏 / 蜀 / 吴 / 群雄）· 与 32 位特典·古代武将<b>分册统计</b> · 点击卡片查看详细参数与技能")}</p>
+            ? ("历史武将 · 收录 <b>"+POOL.length+"</b> 位古代名将（先秦至明清），与三国武将分册统计 · 名录以卡片图鉴呈现，点击卡片查看详细参数与技能")
+            : ("三国武将 <b>"+POOL.length+"</b> 名（魏 / 蜀 / 吴 / 群雄）· 与 32 位特典·历史武将<b>分册统计</b> · 名录以卡片图鉴呈现，点击卡片查看详细参数与技能")}</p>
         <p class="algonote">评分口径：<b>五维合计</b> ＝ 统率 ＋ 武力 ＋ 智力 ＋ 政治 ＋ 魅力（满分 500）；<b>综合能力</b> ＝ 五维合计 ÷ 5（等权算术平均，四舍五入取整，满分 100）　·　<b>排名在本册内计算</b></p>
       </div>
       <div class="toolbar">
@@ -5723,28 +5759,45 @@ function renderPassPage(name){
     return headArt(g, "mini");
   }
 
-  /* ---------------- 立绘放大鉴赏（双击头像） ---------------- */
+  /* ---------------- 立绘放大鉴赏（武将大图查看，自包含弹窗） ---------------- */
   function openPortraitZoom(g){
-    if(!hasPortrait(g)){ toast("该武将暂无高清立绘，头像为程序化生成", "info"); return; }
+    const oldMask = document.getElementById("pzMask");
+    if(oldMask) oldMask.parentNode.removeChild(oldMask);
+    if(!hasPortrait(g)) return;
     const b = (typeof BIO !== "undefined") ? (BIO[g.name] || null) : null;
-    const bioKeys = b ? Object.keys(b) : [];
     const sgzHtml = (b && b.sgz)
-      ? '<div class="zmtag">《三国志》注解 <small>西晋 · 陈寿</small></div><div class="zmprose">'+esc(b.sgz)+'</div>'
-      : '<div class="zmprose" style="color:var(--ink-3)">《三国志》无专传，事迹散见于相关列传与裴松之注引；参见《三国演义》相应回目。</div>';
+      ? '<div class="pz-tag">《三国志》注解 <small>西晋 · 陈寿</small></div><div class="pz-prose">'+esc(b.sgz)+'</div>'
+      : '<div class="pz-prose" style="color:var(--ink-3)">《三国志》无专传，事迹散见于相关列传与裴松之注引；参见《三国演义》相应回目。</div>';
     const yyHtml = (b && b.yy)
-      ? '<div class="zmtag yy">《三国演义》注解 <small>明 · 罗贯中</small></div><div class="zmprose">'+esc(b.yy)+'</div>'
+      ? '<div class="pz-tag yy">《三国演义》注解 <small>明 · 罗贯中</small></div><div class="pz-prose">'+esc(b.yy)+'</div>'
       : '';
     const ziTxt = g.zi ? ('字 '+esc(g.zi)+' · ') : '';
-    const html = '<h3>'+esc(g.name)+' · 立绘鉴赏</h3>'
-      + '<div class="sub">'+ziTxt+esc(fn(g.faction))+'　·　左侧高清立绘，点击图片可在 1× / 原始尺寸 间切换　·　右侧为《三国志》《三国演义》注解</div>'
-      + '<div class="zmwrap">'
-      + '<div class="zmleft" id="zmLeft"><img id="zmImg" src="'+PORTRAITS[g.name]+'" alt="'+esc(g.name)+' 立绘"></div>'
-      + '<div class="zmright">'+sgzHtml+yyHtml
-      + '<div class="zmmeta">立绘为 AI 生成原创形象（非任何游戏原画），依据史书与演义中的外貌记载绘制　·　点击左侧图片可切换原始尺寸查看细节</div>'
-      + '</div></div>';
-    const d = modal(html, "zmodal");
-    const left = d.querySelector("#zmLeft");
+    const mask = document.createElement("div");
+    mask.id = "pzMask";
+    mask.className = "pz-mask";
+    mask.innerHTML = '<div class="pz-box">'
+      + '<button class="pz-x" id="pzClose" title="关闭（Esc）">×</button>'
+      + '<div class="pz-hd"><h3>'+esc(g.name)+' · 立绘鉴赏</h3>'
+      + '<div class="pz-sub">'+ziTxt+esc(fn(g.faction))+'　·　左侧高清立绘，点击图片在「适应窗口 / 原始尺寸」间切换　·　右侧为《三国志》《三国演义》注解</div></div>'
+      + '<div class="pz-body">'
+      + '<div class="pz-left" id="pzLeft"><img src="'+PORTRAITS[g.name]+'" alt="'+esc(g.name)+' 立绘"></div>'
+      + '<div class="pz-right">'+sgzHtml+yyHtml
+      + '<div class="pz-meta">立绘为 AI 生成原创形象（非任何游戏原画），依据史书与演义中的外貌记载绘制　·　点击左侧图片可切换原始尺寸查看细节</div>'
+      + '</div></div></div>';
+    document.body.appendChild(mask);
+    document.documentElement.style.overflow = "hidden";
+    function closePz(){
+      const m = document.getElementById("pzMask");
+      if(m) m.parentNode.removeChild(m);
+      document.documentElement.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+    }
+    function onKey(e){ if(e.key === "Escape") closePz(); }
+    mask.addEventListener("click", function(e){ if(e.target === mask) closePz(); });
+    document.getElementById("pzClose").addEventListener("click", closePz);
+    const left = document.getElementById("pzLeft");
     left.addEventListener("click", function(){ left.classList.toggle("full"); });
+    document.addEventListener("keydown", onKey);
   }
 
   /* ---------------- 作战明细 · 人物关系（数据索引） ---------------- */
@@ -5917,7 +5970,7 @@ function renderPassPage(name){
     const anc = isAncient(g);
     const poolName = anc ? "古代名将" : "三国武将";
     const poolSize = anc ? ANCIENT.length : SAN_GUO.length;
-    const backTxt  = anc ? "← 返回古代武将名录" : "← 返回名录";
+    const backTxt  = anc ? "← 返回历史武将名录" : "← 返回三国武将名录";
     const backHash = anc ? "#/alist" : "#/list";
     const same = GENERALS.filter(x=>x.faction===g.faction && x.id!==g.id)
       .sort((a,b)=> Math.abs(a.sum-g.sum)-Math.abs(b.sum-g.sum) || b.sum-a.sum).slice(0,5);
@@ -5935,7 +5988,7 @@ function renderPassPage(name){
     app.innerHTML = `
       <div class="back" id="back">${backTxt}</div>
       <div class="gcard">
-        <div class="art${hasPortrait(g)?' has-img':''}">${artFor(g)}${hasPortrait(g)?'<div class="artsrc">AI 生成原创立绘 · 双击放大</div>':''}</div>
+        <div class="art${hasPortrait(g)?' has-img':''}">${artFor(g)}${hasPortrait(g)?'<div class="artsrc">AI 生成原创立绘</div><button class="zoomb" id="zoomBtn">武将大图查看</button>':''}</div>
         <div class="meta">
           <div>
             <h2 class="nm">${esc(g.name)}</h2>
@@ -6081,24 +6134,19 @@ function renderPassPage(name){
       </div>
       ${duelBlock(g)}
       ${relBlock(g)}
+      <div class="cmhead">
+        <h3>武将品评</h3>
+        <p>所有已注册用户均可在此评论并打分；评论内容会同步到「论武坛 · 武将品评」，可在坛内检索浏览</p>
+      </div>
       <div class="sg-embed" data-sg="gen" data-key="${g.id}"></div>`;
     document.getElementById("back").addEventListener("click",()=>go(backHash));
     app.querySelectorAll(".relc").forEach(el=>el.addEventListener("click",()=>go("#/g/"+el.getAttribute("data-id"))));
     app.querySelectorAll(".relcard").forEach(el=>el.addEventListener("click",()=>go("#/g/"+el.getAttribute("data-id"))));
-    const artEl = app.querySelector(".gcard .art");
-    if(artEl){
-      artEl.addEventListener("dblclick", function(e){ e.preventDefault(); openPortraitZoom(g); });
-      /* 触屏双击支持 */
-      let lastTap = 0;
-      artEl.addEventListener("touchend", function(e){
-        const now = Date.now();
-        if(now - lastTap < 320){ e.preventDefault(); openPortraitZoom(g); lastTap = 0; }
-        else lastTap = now;
-      });
-    }
+    const zbtn = document.getElementById("zoomBtn");
+    if(zbtn) zbtn.addEventListener("click", function(){ openPortraitZoom(g); });
   }
 
-  /* ---------------- 城市图鉴 ---------------- */
+  /* ---------------- 城市列表 ---------------- */
   function cityRankColor(v){ return v>=85?"#e0554a":v>=75?"#d9a441":v>=62?"#4fae7c":"#5b8dd0"; }
   function cityBar(v){
     return '<span class="track"><span class="fill" style="display:block;width:'+Math.max(2,Math.min(100,v))+'%;background:'+cityRankColor(v)+'"></span></span>';
@@ -6206,7 +6254,7 @@ function renderPassPage(name){
 
     app.innerHTML = `
       <div class="section-head">
-        <h2>城市图鉴</h2>
+        <h2>城市列表</h2>
         <p>收录 ${CITY_DATA.length} 座城池（参考《三国志9》城池体系）· 人口 / 兵役人口 / 经济GDP / 商业 / 农业 / 城防 / 治安 / 战略 全维对照 · 按综合实力排名</p>
       </div>
       <div class="panel" style="margin-bottom:16px;background:linear-gradient(180deg,#2a2318,#221d14);border-color:#4d4226">
@@ -6370,10 +6418,10 @@ function renderPassPage(name){
 
     app.innerHTML = `
       <div class="section-head">
-        <h2>${ancient ? "古代武将列表" : "武将图鉴"}</h2>
+        <h2>${ancient ? "历史武将列表" : "三国武将列表"}</h2>
         <p>${ancient
-            ? ("特典阵容 · <b>"+POOL.length+"</b> 位古代名将按时代列出（先秦 → 明清）· 五维 / 合计 / 综合 / 相性 / 交手场次 / 关系项数 全维排序 · 点击行进入详情")
-            : ("三国武将 <b>"+POOL.length+"</b> 名一表总览（古代武将另册）· 五维 / 合计 / 综合 / 相性 / 生卒 / 交手场次 / 关系项数 全维排序 · 点击行进入详情")}</p>
+            ? ("历史武将 · <b>"+POOL.length+"</b> 位古代名将按时代列出（先秦 → 明清）· 数据列表以属性数值为主，头像仅作缩略标识 · 五维 / 合计 / 综合 / 相性 / 交手场次 / 关系项数 全维排序 · 点击行进入详情")
+            : ("三国武将 <b>"+POOL.length+"</b> 名一表总览（历史武将另册）· 数据列表以属性数值为主，头像仅作缩略标识 · 五维 / 合计 / 综合 / 相性 / 生卒 / 交手场次 / 关系项数 全维排序 · 点击行进入详情")}</p>
         <p class="algonote">评分口径：<b>五维合计</b> ＝ 统率 ＋ 武力 ＋ 智力 ＋ 政治 ＋ 魅力（满分 500）；<b>综合能力</b> ＝ 五维合计 ÷ 5（四舍五入，满分 100）　·　<b>交手</b>列显示「胜∶负」场次　·　<b>排名在本册内计算</b></p>
       </div>
       <div class="gpcgrid">${podium}</div>
@@ -6582,7 +6630,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     en: {
       "h1":"Three Kingdoms Generals Atlas","sub":"SAN GUO ATLAS · 716 Generals · 53 Cities",
       "refNote":"General stats ref. 《Romance of the Three Kingdoms XI》 · Cities & tactics ref. 《Sangokushi IX》",
-      "map":"Map","cities":"Cities","gens":"Generals","list":"Roster","alist":"Ancient Roster","agens":"Ancient Generals",
+      "map":"Map","cities":"Cities","gens":"TK Generals List","list":"TK Generals Gallery","alist":"Historical Gallery","agens":"Historical List",
       "year":"Year","title":"San Guo · Generals & Sand Table","slogan":"The grand sand-table of heroes",
       "legend":"Legend","factions":"Factions","strong-cities":"Stronghold Top","top10-gens":"Top 10 Generals","data-src":"Data source",
       "strategy":"STRATEGY · Province","tactics":"TACTICS · Cities & Roads","parcels":"PARCEL · 10000-grid",
@@ -6602,7 +6650,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     ja: {
       "h1":"三国志武将全図鑑","sub":"サンゴウ・アトラス · 武将716 · 城池53",
       "refNote":"武将パラメータは『三國志11』準拠 · 城と兵法は『三國志IX』準拠",
-      "map":"天下形勢","cities":"都市図鑑","gens":"武将図鑑","list":"武将名録","alist":"古代武将名録","agens":"古代武将一覧",
+      "map":"天下形勢","cities":"都市一覧","gens":"三国武将一覧","list":"三国武将名録","alist":"歴史武将名録","agens":"歴史武将一覧",
       "year":"年","title":"三国志 · 武将とサンドテーブル","slogan":"英雄の壮大な盤面",
       "legend":"凡例","factions":"勢力","strong-cities":"雄城トップ","top10-gens":"武将トップ10","data-src":"データ出典",
       "strategy":"戦略 · 州","tactics":"戦術 · 都市と街道","parcels":"区画 · 万マス盤",
@@ -6622,7 +6670,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     zh: {
       "h1":"三国武将全图鉴","sub":"SAN GUO ATLAS · 武将 716 · 城池 53",
       "refNote":"武将参数参考《三国志11》 · 城池与兵法参考《三国志9》",
-      "map":"天下形势","cities":"城市图鉴","gens":"武将图鉴","list":"武将名录","alist":"古代武将名录","agens":"古代武将列表",
+      "map":"天下形势","cities":"城市列表","gens":"三国武将列表","list":"三国武将名录","alist":"历史武将名录","agens":"历史武将列表",
       "year":"年份","title":"三国 · 武将与沙盘","slogan":"英雄争霸的浩瀚沙盘",
       "legend":"图例","factions":"势力分布","strong-cities":"雄城榜","top10-gens":"武将前十","data-src":"数据来源",
       "strategy":"战略 · 州域","tactics":"战术 · 城池路网","parcels":"地块 · 万格沙盘",
@@ -6645,8 +6693,8 @@ html[data-lang="en"]{letter-spacing:.01em}
 
   /* 标签 -> 字典 key 映射（针对导航按钮等已知文本） */
   var LABEL2KEY = {
-    "天下形势":"map","城市图鉴":"cities","武将图鉴":"gens","武将名录":"list",
-    "古代武将名录":"alist","古代武将列表":"agens","年份":"year",
+    "天下形势":"map","城市列表":"cities","三国武将名录":"list","三国武将列表":"gens",
+    "历史武将名录":"alist","历史武将列表":"agens","年份":"year",
     "图例":"legend","势力分布":"factions","雄城榜":"strong-cities","武将前十":"top10-gens",
     "数据来源":"data-src","搜索武将…":"search","生平":"bio",
     "史载":"sgz","演义":"yy","详情":"detail","返回":"back",
@@ -6698,11 +6746,11 @@ html[data-lang="en"]{letter-spacing:.01em}
     // 面板区标题与说明（section-head / chiplbl / algonote）
     document.querySelectorAll('.section-head h2').forEach(function(el){
       var t=(el.textContent||'').trim();
-      if(t==="武将图鉴") el.textContent=d['gens'];
-      else if(t==="武将名录") el.textContent=d['list'];
-      else if(t==="古代武将列表") el.textContent=d['agens'];
-      else if(t==="古代武将名录") el.textContent=d['alist'];
-      else if(t==="城市图鉴") el.textContent=d['cities'];
+      if(t==="三国武将列表") el.textContent=d['gens'];
+      else if(t==="三国武将名录") el.textContent=d['list'];
+      else if(t==="历史武将列表") el.textContent=d['agens'];
+      else if(t==="历史武将名录") el.textContent=d['alist'];
+      else if(t==="城市列表") el.textContent=d['cities'];
       else if(t==="天下形势") el.textContent=d['map'];
     });
     document.querySelectorAll('.section-head .algonote, .algonote').forEach(function(el){
@@ -7078,6 +7126,18 @@ html[data-lang="en"]{letter-spacing:.01em}
   }
   function tierSkill(g) {
     var tr = TIERS[tierOf(g)];
+    return tr.skills[hashNum(g.name || "x") % tr.skills.length];
+  }
+  /* 卡片等级：基础阶由武将综合能力决定，可用积分逐阶提升（每 1000 积分升 1 阶，最高至「赤」） */
+  var UPGRADE_COST = 1000;
+  function cardTierIdx(c, g) {
+    var base = tierOf(g);
+    var up = (c && c.up) || 0;
+    return Math.max(0, base - up);
+  }
+  function cardTier(c, g) { return TIERS[cardTierIdx(c, g)]; }
+  function cardSkill(c, g) {
+    var tr = TIERS[cardTierIdx(c, g)];
     return tr.skills[hashNum(g.name || "x") % tr.skills.length];
   }
 
@@ -7541,18 +7601,37 @@ html[data-lang="en"]{letter-spacing:.01em}
     var m = {
       "战报": { c: "#c96a4f", ic: "战" }, "阵容": { c: "#6b9fe8", ic: "阵" },
       "史料": { c: "#a78bda", ic: "史" }, "闲聊": { c: "#4fb37d", ic: "谈" },
-      "站务": { c: "#cf9f55", ic: "务" }
+      "站务": { c: "#cf9f55", ic: "务" }, "武将品评": { c: "#c9a45c", ic: "评" }
     };
     return m[c] || { c: "#8a93a3", ic: "论" };
   }
   function catLabel(c) {
-    return ({ "战报": T("catWar"), "阵容": T("catForm"), "史料": T("catHist"), "闲聊": T("catChat"), "站务": T("catSite") })[c] || c;
+    return ({ "战报": T("catWar"), "阵容": T("catForm"), "史料": T("catHist"), "闲聊": T("catChat"), "站务": T("catSite"), "武将品评": "武将品评" })[c] || c;
   }
 
   /* ---------------- 渲染：论坛列表 ---------------- */
+  /* 武将详情页的品评（DB.comments kind="gen"）在此派生成「武将品评」条目，实现详情页 ⇄ 论武坛 同步 */
+  function genCommentPosts() {
+    var out = [];
+    (DB.comments || []).forEach(function (c) {
+      if (c.kind !== "gen" || c.parent || c.deleted) return;
+      var g = gById(c.key) || gByName(c.key);
+      if (!g) return;
+      var kids = (DB.comments || []).filter(function (x) { return x.parent === c.id && !x.deleted; }).length;
+      out.push({
+        id: "gcm-" + c.id, cat: "武将品评", title: "评 · " + g.name, body: c.body || "",
+        uid: c.uid, created: c.created, likes: c.likes || [], pinned: false, deleted: false,
+        derived: true, gid: g.id, gname: g.name, rating: c.rating || 0, repsN: kids
+      });
+    });
+    return out;
+  }
   function visiblePosts() {
     var arr = allPosts().filter(function (p) { return !p.deleted; });
-    if (UI.cat !== "all") arr = arr.filter(function (p) { return p.cat === UI.cat; });
+    var der = genCommentPosts();
+    if (UI.cat === "武将品评") { arr = der; }
+    else if (UI.cat !== "all") { arr = arr.filter(function (p) { return p.cat === UI.cat; }); der = []; }
+    else { arr = arr.concat(der); }
     if (UI.q) {
       var q = UI.q.toLowerCase();
       arr = arr.filter(function (p) {
@@ -7562,8 +7641,8 @@ html[data-lang="en"]{letter-spacing:.01em}
     arr.sort(function (a, b) {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       if (UI.sort === "hot") {
-        var la = (a.cloud ? (a.likesN || 0) : a.likes.length) + allReplies().filter(function (r) { return r.pid === a.id; }).length;
-        var lb2 = (b.cloud ? (b.likesN || 0) : b.likes.length) + allReplies().filter(function (r) { return r.pid === b.id; }).length;
+        var la = (a.cloud ? (a.likesN || 0) : a.likes.length) + (a.derived ? (a.repsN || 0) : allReplies().filter(function (r) { return r.pid === a.id; }).length);
+        var lb2 = (b.cloud ? (b.likesN || 0) : b.likes.length) + (b.derived ? (b.repsN || 0) : allReplies().filter(function (r) { return r.pid === b.id; }).length);
         return lb2 - la || b.created - a.created;
       }
       return b.created - a.created;
@@ -7576,18 +7655,21 @@ html[data-lang="en"]{letter-spacing:.01em}
     var last = reps.length ? reps[reps.length - 1].created : p.created;
     var m = catMeta(p.cat);
     var body = String(p.body || "").replace(/\s+/g, " ");
-    return '<article class="sg-th" data-sgact="open-thread" data-id="' + p.id + '">' +
+    var repN = p.derived ? (p.repsN || 0) : reps.length;
+    var likeN = p.cloud ? (p.likesN || 0) : p.likes.length;
+    return '<article class="sg-th" data-sgact="' + (p.derived ? "open-gen" : "open-thread") + '" data-id="' + (p.derived ? p.gid : p.id) + '">' +
       '<div class="sg-th-ic" style="--c:' + m.c + '">' + m.ic + "</div>" +
       '<div class="sg-th-main"><div class="sg-th-top">' +
       '<span class="sg-cat" style="color:' + m.c + '">' + esc(catLabel(p.cat)) + "</span>" +
       '<h3>' + esc(p.title) + "</h3>" +
+      (p.derived && p.rating ? '<span class="sg-cat" style="color:#e8c988;letter-spacing:0">' + "★".repeat(p.rating) + "</span>" : "") +
       (p.pinned ? '<span class="sg-pin">TOP</span>' : "") + roleTag(u) +
       "</div>" +
       '<p class="sg-th-ex">' + esc(body.slice(0, 150)) + "</p>" +
       '<div class="sg-th-meta"><span>' + esc(u.name) + "</span><span>" + ago(p.created) + "</span>" +
-      "<span>" + T("replies") + " <b>" + reps.length + "</b></span><span>" + T("like") + " <b>" + (p.cloud ? (p.likesN || 0) : p.likes.length) + "</b></span>" +
-      "<span>" + T("reply") + " · " + ago(last) + "</span></div></div>" +
-      '<div class="sg-th-side"><b>' + reps.length + "</b><span>" + T("replies") + "</span></div></article>";
+      "<span>" + (p.derived ? "回复" : T("replies")) + " <b>" + repN + "</b></span><span>" + T("like") + " <b>" + likeN + "</b></span>" +
+      "<span>" + (p.derived ? "点击前往武将页参与讨论" : T("reply") + " · " + ago(last)) + "</span></div></div>" +
+      '<div class="sg-th-side"><b>' + repN + "</b><span>" + (p.derived ? "评" : T("replies")) + "</span></div></article>";
   }
   /* ---------------- 论坛 AI 机器人（10 位，跨阵营常驻笔友） ----------------
    话题每 20 分钟自动轮换一帖，全部内容入云端数据库，全站共享同一份。 */
@@ -7877,12 +7959,14 @@ var BOTS = [
 
   function renderForum() {
     var posts = visiblePosts();
+    var gcmN = genCommentPosts().length;
     var totalReps = allReplies().filter(function (r) { return !r.deleted; }).length;
     var counts = {};
     allPosts().forEach(function (p) { counts[p.cat] = (counts[p.cat] || 0) + 1; });
-    var cats = ["all", "战报", "阵容", "史料", "闲聊", "站务"];
+    counts["武将品评"] = gcmN;
+    var cats = ["all", "战报", "阵容", "史料", "闲聊", "站务", "武将品评"];
     var chips = cats.map(function (c) {
-      var n = c === "all" ? allPosts().length : (counts[c] || 0);
+      var n = c === "all" ? (allPosts().length + gcmN) : (counts[c] || 0);
       return '<button class="sgchip' + (UI.cat === c ? " on" : "") + '" data-sgact="set-cat" data-cat="' + c + '">' +
         (c === "all" ? T("all") : esc(catLabel(c))) + '<span class="n">' + n + "</span></button>";
     }).join("");
@@ -8176,9 +8260,11 @@ var BOTS = [
   function cardHTML(c, withGift) {
     var g = gById(c.gid);
     if (!g) return "";
-    var ti = tierOf(g), tr = TIERS[ti], sk = tierSkill(g);
+    var ti = cardTierIdx(c, g), tr = TIERS[ti], sk = cardSkill(c, g);
+    var canUp = ti > 0, upN = (c.up || 0);
     return '<div class="sg-card" style="--fc:' + facColor(g.faction) + ';--tc:' + tr.c + '" data-sgact="card-open" data-id="' + g.id + '">' +
       '<span class="sg-card-tier">' + tr.n + "</span>" +
+      (upN ? '<span class="sg-card-lv">+' + upN + "</span>" : "") +
       (c.from ? '<span class="sg-card-new">赠</span>' : "") +
       '<div class="sg-card-art">' + styledArtSVG(g, c.style, false) + '<span class="sg-cd-rar">' + "★".repeat(ti + 1) + "</span></div>" +
       '<div class="sg-card-hd"><span class="sg-card-fac">' + esc(g.faction) + '</span><span class="sg-card-rar" style="color:' + tr.c + '">' + tr.n + "阶 · " + tr.trig + "%</span></div>" +
@@ -8191,6 +8277,7 @@ var BOTS = [
       '<div class="sg-card-skill"><i>' + sk.t + '</i><em>' + esc(sk.n) + "</em><b>" + tr.trig + "%</b></div>" +
       '<div class="sg-card-ft"><span>' + tr.n + "阶 · " + g.total + "</span><span class=\"sp\"></span>" +
       (withGift ? '<button class="sg-card-gift" data-sgact="studio-open" data-id="' + c.id + '" title="' + T("studioTitle") + '">装扮</button>' : "") +
+      (withGift ? '<button class="sg-card-gift' + (canUp ? " sg-up" : "") + '" data-sgact="card-up" data-id="' + c.id + '" title="消耗 ' + fmt(UPGRADE_COST) + ' 积分提升一阶">' + (canUp ? "升级" : "满阶") + "</button>" : "") +
       (withGift ? '<button class="sg-card-gift" data-sgact="gift-open" data-id="' + c.id + '">' + T("gift") + "</button>" : "") +
       (withGift ? '<button class="sg-card-gift sg-recycle" data-sgact="recycle" data-id="' + c.id + '">' + T("recycle") + "</button>" : "") +
       "</div></div>";
@@ -9020,6 +9107,7 @@ var BOTS = [
         case "set-cat": e.preventDefault(); UI.cat = t.getAttribute("data-cat"); rerender(); return;
         case "set-sort": e.preventDefault(); UI.sort = t.getAttribute("data-sort"); rerender(); return;
         case "open-thread": e.preventDefault(); location.hash = "#/forum/t/" + id; return;
+        case "open-gen": e.preventDefault(); location.hash = "#/g/" + id; return;
         case "back-forum": e.preventDefault(); location.hash = "#/forum"; return;
         case "new-post": e.preventDefault(); openPost(); return;
         case "post-submit": e.preventDefault(); doPost(); return;
@@ -9121,6 +9209,27 @@ var BOTS = [
         case "wall-tab": e.preventDefault(); UI.wall = t.getAttribute("data-tab"); rerender(); return;
         case "draw": e.preventDefault(); UI.menu = false; doDraw(); return;
         case "gift-open": e.preventDefault(); e.stopPropagation(); openGift(id); return;
+        case "card-up": {
+          e.preventDefault(); e.stopPropagation();
+          var uu = me();
+          if (!uu) { toast(T("likeNeed"), "err"); openAuth("login"); return; }
+          var card = (uu.cards || []).filter(function (x) { return x.id === id; })[0];
+          if (!card) return;
+          var gg = gById(card.gid); if (!gg) return;
+          var tiNow = cardTierIdx(card, gg);
+          if (tiNow <= 0) return toast("「" + gg.name + "」已是最高品阶（" + TIERS[0].n + "阶），无需再升", "info");
+          if ((uu.points || 0) < UPGRADE_COST) return toast("积分不足：升级一阶需 " + fmt(UPGRADE_COST) + " 积分，当前 " + fmt(uu.points || 0), "err");
+          uu.points = (uu.points || 0) - UPGRADE_COST;
+          card.up = (card.up || 0) + 1;
+          var tiAfter = cardTierIdx(card, gg);
+          uu.ledger = uu.ledger || [];
+          uu.ledger.unshift({ t: Date.now(), d: -UPGRADE_COST, r: "卡片升级：" + gg.name + " " + TIERS[tiNow].n + "阶 → " + TIERS[tiAfter].n + "阶" });
+          if (uu.ledger.length > 120) uu.ledger.length = 120;
+          checkBadges(uu); trackEv("cardup", { t: gg.id });
+          save(); rerender();
+          toast("升级成功：「" + gg.name + "」提升为 " + TIERS[tiAfter].n + "阶（" + TIERS[tiAfter].trig + "% 触发）", "ok", 4200);
+          return;
+        }
         case "recycle": e.preventDefault(); e.stopPropagation(); openRecycle(id); return;
         case "recycle-yes": e.preventDefault(); doRecycle(id); return;
         case "gift-submit": e.preventDefault(); doGift(id); return;
