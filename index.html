@@ -1040,6 +1040,11 @@ footer.foot{
   color:var(--ink-3);background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+/* V21 作战：卡面等级徽标 */
+.sg-card-lv{
+  display:inline-block;margin-left:4px;padding:1px 5px;border-radius:5px;vertical-align:1px;
+  font-size:9px;font-weight:700;color:#0e1116;background:linear-gradient(135deg,#e8c988,#c9a45c);letter-spacing:.02em;
+}
 
 /* 卡面立绘：与武将详情页同源（AI 立绘 / 程序化画像） */
 .sg-artwrap{position:relative;width:100%;height:100%;line-height:0}
@@ -1299,6 +1304,7 @@ footer.foot{
         <button data-view="agens">古代列表</button>
       </span>
       <span class="ngrp">
+        <button data-view="battle">出征</button>
         <button data-view="forum">论武坛</button>
       </span>
     </div>
@@ -6533,7 +6539,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     en: {
       "h1":"Three Kingdoms Generals Atlas","sub":"SAN GUO ATLAS · 716 Generals · 53 Cities",
       "refNote":"General stats ref. 《Romance of the Three Kingdoms XI》 · Cities & tactics ref. 《Sangokushi IX》",
-      "map":"Map","cities":"Cities","gens":"Generals","list":"Roster","alist":"Ancient Roster","agens":"Ancient Generals","wall":"Portrait Wall",
+      "map":"Map","cities":"Cities","gens":"Generals","list":"Roster","alist":"Ancient Roster","agens":"Ancient Generals","wall":"Portrait Wall","nav-battle":"Campaign",
       "navg-map":"ATLAS","navg-gens":"GENERALS","navg-anc":"ANCIENT",
       "year":"Year","title":"San Guo · Generals & Sand Table","slogan":"The grand sand-table of heroes",
       "legend":"Legend","factions":"Factions","strong-cities":"Stronghold Top","top10-gens":"Top 10 Generals","data-src":"Data source",
@@ -6554,7 +6560,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     ja: {
       "h1":"三国志武将全図鑑","sub":"サンゴウ・アトラス · 武将716 · 城池53",
       "refNote":"武将パラメータは『三國志11』準拠 · 城と兵法は『三國志IX』準拠",
-      "map":"天下形勢","cities":"都市図鑑","gens":"武将図鑑","list":"武将名録","alist":"古代武将名録","agens":"古代武将一覧","wall":"立絵壁",
+      "map":"天下形勢","cities":"都市図鑑","gens":"武将図鑑","list":"武将名録","alist":"古代武将名録","agens":"古代武将一覧","wall":"立絵壁","nav-battle":"出陣",
       "navg-map":"地図","navg-gens":"武将","navg-anc":"古代",
       "year":"年","title":"三国志 · 武将とサンドテーブル","slogan":"英雄の壮大な盤面",
       "legend":"凡例","factions":"勢力","strong-cities":"雄城トップ","top10-gens":"武将トップ10","data-src":"データ出典",
@@ -6575,7 +6581,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     zh: {
       "h1":"三国武将全图鉴","sub":"SAN GUO ATLAS · 武将 716 · 城池 53",
       "refNote":"武将参数参考《三国志11》 · 城池与兵法参考《三国志9》",
-      "map":"天下形势","cities":"城市图鉴","gens":"武将图鉴","list":"武将名录","alist":"古代武将名录","agens":"古代武将列表","wall":"立绘墙",
+      "map":"天下形势","cities":"城市图鉴","gens":"武将图鉴","list":"武将名录","alist":"古代武将名录","agens":"古代武将列表","wall":"立绘墙","nav-battle":"出征",
       "navg-map":"舆图","navg-gens":"武将","navg-anc":"古代",
       "year":"年份","title":"三国 · 武将与沙盘","slogan":"英雄争霸的浩瀚沙盘",
       "legend":"图例","factions":"势力分布","strong-cities":"雄城榜","top10-gens":"武将前十","data-src":"数据来源",
@@ -6599,7 +6605,7 @@ html[data-lang="en"]{letter-spacing:.01em}
 
   /* 标签 -> 字典 key 映射（针对导航按钮等已知文本） */
   var LABEL2KEY = {
-    "天下形势":"map","城市图鉴":"cities","武将图鉴":"gens","武将名录":"list","立绘墙":"wall",
+    "天下形势":"map","城市图鉴":"cities","武将图鉴":"gens","武将名录":"list","立绘墙":"wall","出征":"nav-battle",
     "古代武将名录":"alist","古代武将列表":"agens","年份":"year",
     "图例":"legend","势力分布":"factions","雄城榜":"strong-cities","武将前十":"top10-gens",
     "数据来源":"data-src","搜索武将…":"search","生平":"bio",
@@ -6628,7 +6634,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     var h1 = document.querySelector('.brand h1'); if(h1) h1.textContent = d['h1'];
     var sub = document.querySelector('.brand .sub'); if(sub) sub.textContent = d['sub'];
     // 导航按钮（按 data-view）
-    var viewKey = {map:'map',cities:'cities',gens:'gens',list:'list',alist:'alist',agens:'agens',wall:'wall'};
+    var viewKey = {map:'map',cities:'cities',gens:'gens',list:'list',alist:'alist',agens:'agens',wall:'wall',battle:'nav-battle'};
     document.querySelectorAll('.nav button[data-view]').forEach(function(b){
       var v = b.getAttribute('data-view');
       if(viewKey[v]) b.textContent = d[viewKey[v]];
@@ -6826,6 +6832,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       permBrowse: "Browse", permPost: "Post / reply", permReview: "Review / like", permDel: "Delete", permGift: "Gift cards",
       account: "Account", signOutOk: "Signed out.", importOk: "Data imported.", importBad: "Invalid file.",
       confirmImport: "Importing replaces ALL local community data. Continue?", yes: "Yes", no: "Cancel",
+      bTitle: "Campaign", bSub: "Choose a home city · clear stages · raise generals · conquer", pickSpawn: "Choose your birthplace", spawnDesc: "Every lord picks one city on the map as home base, then wages war from there", spawnOk: "Home city set: {n}", stageTitle: "Story stages", stage: "Stage {n}", stageClear: "Cleared", stageCur: "Current", stageLock: "Locked", firstReward: "First-clear reward", spGain: "+{n} skill pts", squad: "Battle squad", squadDesc: "Up to 3 generals per battle · troops grow +1000 per level", fight: "Fight", sweep: "Sweep", sweepDesc: "Sweep cleared stages: 60% exp + shards, no equipment drops", wild: "Skirmish", pvp: "Arena · Challenge Lords", shopT: "Points shop", bagT: "Bag", vs: "VS", victory: "Victory", defeat: "Defeat", rounds: "Rounds", battleLog: "Battle report", remain: "Survivors", expGain: "EXP +{n}", lvUp: "{n} reached Lv.{m}", dropEquip: "Equipment gained: {n}", dropMount: "Mount gained: {n}", dropShards: "Shards gained: {n} ×{m}", rewardPts: "Points +{n}", againF: "Fight again", backBattle: "Back to campaign", expFull: "EXP {a}/{b}", growTitle: "General training", starUp: "Star up", starMax: "Max star reached", starUpCost: "Costs {n} shards of the same general", starUpOk: "Star up! All stats +8%, troops +10%", shard: "Shards", shardsOf: "\"{n}\" shards {a}/{b}", synth: "Synthesize", synthOk: "Shards synthesized into card: {n}", synthNot: "Not enough shards", spPool: "Skill pts", spAlloc: "Allocate skill points ({n} left)", equipT: "Equipment", mountT: "Mount", eqHead: "Helm", eqBody: "Armor", eqLegs: "Greaves", eqWpn: "Weapon", eqAmu: "Amulet", eqBrc: "Bracelet", eqEmpty: "Empty", eqUp: "Level up", eqStar: "Star up", eqUpOk: "Equipment leveled up", eqStarOk: "Equipment star up!", eqLack: "Not enough points", wpnLock: "Weapon type mismatch (needs {n})", bagEq: "Equipment", bagMt: "Stable", bagShard: "Shard chest", wear: "Equip", takeOff: "Unequip", ride: "Ride", shopEquip: "Equip chest ({n})", shopMount: "Mount ({n})", shopShard: "Shard chest (random 6)", buy: "Redeem", buyOk: "Redeemed", tut1: "Chaos descends... Take this general card and crush the Yellow Turban remnant in Stage 1-1!", tut1Btn: "Accept the card", tut2: "First victory! A hero joins your cause —", tut2Btn: "Recruit", tut3: "Two battles, two wins! Your army is ready — the card pool now awaits!", tut3Btn: "Go draw cards", needCard: "At least 1 general required", pvpDesc: "Sparring with other lords: EXP + points", sweepOk: "Sweep complete", lvShort: "Lv.{n}", troopShort: "Troops {n}", skip: "Skip", starLvNeed: "Requires general Lv.{n}",
       close: "Close", back: "Back", rate5: "5 stars", noAccount: "No account? Sign up", hasAccount: "Already registered? Sign in",
       cardOf: "Card", serial: "No.", gotFrom: "Received from {n}", empty: "Empty"
     },
@@ -6949,7 +6956,8 @@ html[data-lang="en"]{letter-spacing:.01em}
       account: "账号", signOutOk: "已退出登录。", importOk: "数据已导入。", importBad: "文件格式不正确。",
       confirmImport: "导入将覆盖全部本地社区数据，是否继续？", yes: "继续", no: "取消",
       close: "关闭", back: "返回", rate5: "五星", noAccount: "还没有账号？去注册", hasAccount: "已注册？去登录",
-      cardOf: "卡牌", serial: "编号", gotFrom: "得自 {n}", empty: "空"
+      cardOf: "卡牌", serial: "编号", gotFrom: "得自 {n}", empty: "空",
+      bTitle: "出征", bSub: "选出生城 · 打关卡 · 养武将 · 争天下", pickSpawn: "选择出生地", spawnDesc: "每位主公在大地图上选一座城作为出生地，此后以该城为起点征战天下", spawnOk: "已定都 {n}", stageTitle: "主线关卡", stage: "第 {n} 关", stageClear: "已通关", stageCur: "当前", stageLock: "未解锁", firstReward: "首通奖励", spGain: "技能点 +{n}", squad: "出战阵容", squadDesc: "每战最多 3 名武将出战 · 兵力按等级递增（每级 +1000）", fight: "开战", sweep: "扫荡", sweepDesc: "扫荡已通关卡：获得 60% 经验与碎片，无装备掉落", wild: "野战", pvp: "演武 · 挑战诸侯", shopT: "积分商店", bagT: "背包", vs: "VS", victory: "大 捷", defeat: "惜 败", rounds: "回合", battleLog: "战报", remain: "残兵", expGain: "经验 +{n}", lvUp: "{n} 升到 Lv.{m}", dropEquip: "获得装备：{n}", dropMount: "获得坐骑：{n}", dropShards: "获得碎片：{n} ×{m}", rewardPts: "积分 +{n}", againF: "再战", backBattle: "返回出征", expFull: "经验 {a}/{b}", growTitle: "武将培养", starUp: "升星", starMax: "已达星级上限", starUpCost: "消耗同名碎片 ×{n}", starUpOk: "升星成功！全属性 +8%、兵力 +10%", shard: "碎片", shardsOf: "「{n}」碎片 {a}/{b}", synth: "合成", synthOk: "碎片已合成整卡：{n}", synthNot: "碎片不足", spPool: "技能点", spAlloc: "分配技能点（剩余 {n} 点）", equipT: "装备", mountT: "坐骑", eqHead: "头盔", eqBody: "上身", eqLegs: "下身", eqWpn: "武器", eqAmu: "项链", eqBrc: "手镯", eqEmpty: "空", eqUp: "升级", eqStar: "升星", eqUpOk: "装备升级成功", eqStarOk: "装备升星成功", eqLack: "积分不足", wpnLock: "武器类型不匹配（需 {n}）", bagEq: "装备库", bagMt: "坐骑厩", bagShard: "碎片匣", wear: "穿戴", takeOff: "卸下", ride: "骑乘", shopEquip: "装备箱（{n}）", shopMount: "坐骑（{n}）", shopShard: "碎片匣（随机 6 片）", buy: "兑换", buyOk: "兑换成功", tut1: "乱世降临……主公请收下这张武将卡，点「开战」讨伐 1-1 黄巾余党！", tut1Btn: "收下武将卡", tut2: "首战告捷！军中士气大振，又有一名豪杰来投——", tut2Btn: "招募入队", tut3: "两局两胜！军威已立，现在可以去抽卡池招募更多名将了！", tut3Btn: "开始抽卡", needCard: "至少需要 1 名武将出战", pvpDesc: "与各地诸侯切磋，赢取经验与积分", sweepOk: "扫荡完成", lvShort: "Lv.{n}", troopShort: "兵力 {n}", skip: "跳过", starLvNeed: "需武将达到 Lv.{n}",
     }
   };
   function lang() { try { return localStorage.getItem("sg_lang") || "zh"; } catch (e) { return "zh"; } }
@@ -7304,11 +7312,24 @@ html[data-lang="en"]{letter-spacing:.01em}
     }
     return pool[pool.length - 1];
   }
+  /* 引导送卡：保证武力可战（wu≥45），找不到就放宽 */
+  function rollStarter() {
+    var pool = GENS().filter(function (g) { return g.era !== "古代" && (g.wu || 0) >= 45; });
+    if (!pool.length) return rollGeneral();
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   function draw(u) {
     if ((u.draws || 0) <= 0) return { err: T("noDraw") };
     var g = rollGeneral();
     if (!g) return { err: T("noDraw") };
     u.draws--;
+    /* V21：抽卡可出整卡或碎片（45% 出碎片，数量按品级：紫2 → 白8） */
+    if (Math.random() < 0.45) {
+      var ti = tierOf(g), n = 8 - ti;
+      addShards(u, g.id, n);
+      save();
+      return { ok: true, shard: true, gen: g, n: n };
+    }
     var c = mkCard(g.id);
     u.cards = u.cards || [];
     u.cards.unshift(c);
@@ -8172,7 +8193,7 @@ var BOTS = [
       (c.from ? '<span class="sg-card-new">赠</span>' : "") +
       '<div class="sg-card-art">' + styledArtSVG(g, c.style, false) + '<span class="sg-cd-rar">' + "★".repeat(tr.star || (ti + 1)) + "</span></div>" +
       '<div class="sg-card-hd"><span class="sg-card-fac">' + esc(g.faction) + '</span><span class="sg-card-rar" style="color:' + tr.c + '">' + tr.grade + "级 · " + tr.n + " · " + tr.trig + "%</span></div>" +
-      '<div class="sg-card-nm">' + esc(g.name) + "</div>" +
+      '<div class="sg-card-nm">' + esc(g.name) + ((c.lv || 1) > 1 || (c.stars || 0) > 0 ? ' <span class="sg-card-lv">Lv.' + (c.lv || 1) + ((c.stars || 0) ? " +" + c.stars + "★" : "") + "</span>" : "") + "</div>" +
       '<div class="sg-card-zi">' + (g.zi ? "字 " + esc(g.zi) : esc(g.title || "")) + "</div>" +
       '<div class="sg-card-stats">' +
       '<div><b>' + g.st + "</b><span>统</span></div><div><b>" + g.wu + "</b><span>武</span></div>" +
@@ -8184,6 +8205,7 @@ var BOTS = [
       (picking ? '<span class="sg-card-price">+' + fmt(tr.pts) + " " + T("pts") + "</span>" : '<span>' + tierLabel(tr) + " · " + tr.star + "★</span>") +
       '<span class="sp"></span>' +
       (withGift && !picking ? '<button class="sg-card-gift" data-sgact="studio-open" data-id="' + c.id + '" title="' + T("studioTitle") + '">装扮</button>' : "") +
+      (withGift && !picking ? '<button class="sg-card-gift" data-sgact="grow-open" data-id="' + c.id + '" title="' + T("growTitle") + '">培养</button>' : "") +
       (withGift && !picking ? '<button class="sg-card-gift" data-sgact="gift-open" data-id="' + c.id + '">' + T("gift") + "</button>" : "") +
       (withGift && !picking ? '<button class="sg-card-gift sg-recycle" data-sgact="recycle" data-id="' + c.id + '">' + T("recycle") + "</button>" : "") +
       "</div></div>";
@@ -8593,10 +8615,11 @@ var BOTS = [
     st.done = true;
     var g = st.picks[i] || st.picks[0];
     u.draws--;
-    var c = mkCard(g.id);
-    u.cards = u.cards || [];
-    u.cards.unshift(c);
-    var nb = checkBadges(u);
+    /* V21：45% 抽出同名碎片（数量按品级 紫2 → 白8），否则整卡 */
+    var shardHit = Math.random() < 0.45, shardN = 8 - tierOf(g), c = null;
+    if (shardHit) { addShards(u, g.id, shardN); }
+    else { c = mkCard(g.id); u.cards = u.cards || []; u.cards.unshift(c); }
+    var nb = shardHit ? [] : checkBadges(u);
     var ti = tierOf(g), tr = TIERS[ti], sk = tierSkill(g);
     trackEv("draw", { r: ti + 1 });
     save();
@@ -8606,6 +8629,15 @@ var BOTS = [
       if (k === i) el.classList.add("done"); else el.classList.add("dim");
     }
     setTimeout(function () {
+      if (shardHit) {
+        modal('<h3 style="text-align:center">' + T("dropShards", { n: esc(g.name), m: shardN }) + "</h3>" +
+          '<div class="sg-note" style="text-align:center;margin:8px 0">' + T("shardsOf", { n: esc(g.name), a: (me().shards || {})[g.id] || 0, b: SYNTH[tierOf(g)] }) + "</div>" +
+          '<div style="display:flex;gap:8px;margin-top:16px">' +
+          ((u.draws || 0) > 0 ? '<button class="sgbtn" style="flex:1" data-sgact="draw-again">' + T("drawAgain") + "</button>" : "") +
+          '<button class="sgbtn primary" style="flex:1" data-sgact="close">' + T("close") + "</button></div>");
+        rerender();
+        return;
+      }
       var extra = nb.length ? T("badgeUnlocked") + " ×" + nb.length : T("points") + " " + fmt(u.points);
       modal('<h3 style="text-align:center">' + T("drawGot", { n: esc(g.name) }) + "</h3>" +
         '<div class="sg-drawbox" style="--tc:' + tr.c + '"><div class="sg-drawrays"></div><div class="sg-drawcard">' + cardHTML(c, false) + "</div></div>" +
@@ -8888,7 +8920,8 @@ var BOTS = [
       return { points: u.points || 0, draws: u.draws || 0, cards: u.cards || [], badges: u.badges || {},
         ledger: (u.ledger || []).slice(0, 120), streak: u.streak || 0, bestStreak: u.bestStreak || 0,
         loginDays: (u.loginDays || []).slice(-60), notifs: (u.notifs || []).slice(0, 50),
-        d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0 };
+        d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0,
+        bat: u.bat || null, shards: u.shards || {}, eqs: u.eqs || [], mts: u.mts || [] };
     }
     function pushSoon() {
       if (pulling) return;
@@ -9066,6 +9099,13 @@ var BOTS = [
       navActive("forum"); paintNav(); paintAcct(); return true;
     }
     if (p[0] === "me") { setApp(renderMe()); navActive(""); paintNav(); paintAcct(); return true; }
+    if (p[0] === "battle") {
+      var u0 = me();
+      if (!u0) { setApp('<div class="sg-page"><div class="sg-panel" style="text-align:center;padding:34px 20px"><div class="sg-muted" style="margin-bottom:14px">' + T("bTitle") + " · " + T("bSub") + '</div><button class="sgbtn primary" data-sgact="auth-open" data-tab="login">' + T("login") + "</button></div></div>"); navActive("battle"); paintNav(); paintAcct(); return true; }
+      if (p[1] === "f" && p[2]) setApp(renderFight(decodeURIComponent(p[2])));
+      else setApp(renderBattle());
+      navActive("battle"); paintNav(); paintAcct(); return true;
+    }
     if (p[0] === "u" && p[1]) { setApp(renderUser(p[1])); navActive(""); paintNav(); paintAcct(); return true; }
     return false;
   }
@@ -9076,7 +9116,7 @@ var BOTS = [
     paintNav(); paintAcct();
     var h = (location.hash || "");
     if (UI.selR && !/^#\/me/.test(h)) UI.selR = null;
-    if (/^#\/(forum|me|u)\b/.test(h)) return;
+    if (/^#\/(forum|me|u|battle)\b/.test(h)) return;
     $$("#app .sg-embed").forEach(function (el) {
       var kind = el.getAttribute("data-sg"), key = el.getAttribute("data-key");
       if (!kind || !key) return;
@@ -9299,6 +9339,568 @@ var BOTS = [
     }
   });
 
+  /* ================= V21 作战系统：出生地 / 关卡 / 回合战斗 / 养成 / 装备 / 坐骑 / 商店 ================= */
+  var WTYPES = ["长枪", "大刀", "长剑", "铁戟", "弓弩", "羽扇"];
+  var MT_NAMES = ["驽马", "白马", "乌骓", "爪黄飞电", "绝影", "的卢", "赤兔"];
+  var SLOT_KEYS = ["head", "body", "legs", "wpn", "amu", "brc"];
+  var SYNTH = [120, 90, 70, 50, 35, 25, 15];          /* 各品级合成整卡所需同名碎片 */
+  var STAR_COST = [30, 45, 60, 90, 120];               /* 升到第 1~5 颗额外星所需同名碎片 */
+  var STAGE_NAMES = ["黄巾乱起","颍川首捷","宛城围剿","虎牢关前","汜水破敌","迁都长安","界桥对峙","白马解围","官渡相持","乌巢焚粮","长坂追击","赤壁鏖兵","南郡争夺","潼关恶战","合肥惊魂","定军山高","汉水截击","樊城围城","夷陵火起","街亭断陇","陈仓攻坚","五丈原对垒","淮南三叛","寿春围城","铁笼山困","剑阁天险","阴平偷渡","洛阳风变","蜀道扫穴","天下定鼎"];
+  var BATUI = { tab: "stage", fight: null, res: null, speed: 1, squad: [], pvpIdx: 0, bagTab: "eq", growId: null };
+
+  function ensureBat(u) {
+    if (!u) return null;
+    if (!u.bat) u.bat = { spawn: null, stage: 1, hist: {}, sp: 0, tut: 0 };
+    if (!u.shards) u.shards = {};
+    if (!u.eqs) u.eqs = [];
+    if (!u.mts) u.mts = [];
+    if (!u.bat.hist) u.bat.hist = {};
+    return u.bat;
+  }
+  function addShards(u, gid, n) { ensureBat(u); u.shards[gid] = (u.shards[gid] || 0) + n; }
+  function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
+  function eqOf(c) {
+    var out = { atk: 0, def: 0, hp: 0, spd: 0 }, u = me(), list = (u && u.eqs) || [];
+    SLOT_KEYS.forEach(function (sl) {
+      var id = c && c.eq && c.eq[sl]; if (!id) return;
+      var e = list.filter(function (x) { return x.id === id; })[0]; if (!e) return;
+      var m = 1 + 0.12 * ((e.lv || 1) - 1), s = 1 + 0.18 * (e.st || 0), b = (7 - e.ti);
+      if (sl === "wpn") out.atk += Math.round(b * 8 * m * s);
+      else if (sl === "body" || sl === "legs") out.def += Math.round(b * 7 * m * s);
+      else if (sl === "head") { out.def += Math.round(b * 4 * m * s); out.hp += 0.02 * b * m * s; }
+      else if (sl === "amu") { out.atk += Math.round(b * 3 * m * s); out.hp += 0.025 * b * m * s; }
+      else if (sl === "brc") { out.def += Math.round(b * 3 * m * s); out.spd += Math.round(b * 2 * m * s); }
+    });
+    return out;
+  }
+  function mountOf(c) {
+    var u = me(); if (!u || !c || !c.mt) return null;
+    var m = u.mts.filter(function (x) { return x.id === c.mt; })[0];
+    if (!m) return null;
+    return { hp: 0.08 * (1 + 0.15 * (m.st || 0)) * (m.ti + 1) * 0.5, spd: 0.10 + 0.02 * ((m.lv || 1) - 1) + 0.03 * (m.st || 0), m: m };
+  }
+  function cardLv(c) { return c.lv || 1; }
+  function expNeed(lv) { return 60 + lv * 30; }
+  function troopOfCard(c, g) {
+    var ti = tierOf(g), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
+    var t = Math.min(1000 * cardLv(c), tr.troop);
+    t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
+    return t;
+  }
+  function mkEquip(slot, ti) { DB.seq.card++; return { id: "e" + DB.seq.card, slot: slot, ti: ti, lv: 1, st: 0 }; }
+  function mkMount(ti) { DB.seq.card++; return { id: "m" + DB.seq.card, ti: ti, lv: 1, st: 0 }; }
+  function slotName(sl) { return T("eq" + sl.charAt(0).toUpperCase() + sl.slice(1)); }
+  function eqName(e) { return slotName(e.slot) + "·" + TIERS[e.ti].n + (e.st ? " +" + e.st + "★" : ""); }
+
+  /* ---------- 关卡敌人 ---------- */
+  var _stagePool = null;
+  function stagePool() {
+    if (_stagePool) return _stagePool;
+    _stagePool = GENS().filter(function (g) { return g.era !== "古代" && g.total >= 40; })
+      .sort(function (a, b) { return a.total - b.total; });
+    return _stagePool;
+  }
+  function stageBoss(n) {
+    var p = stagePool();
+    return p[Math.min(p.length - 1, Math.floor((n - 1) * (p.length - 1) / 29))];
+  }
+  function stageEnemies(n) {
+    var boss = stageBoss(n), cnt = n <= 5 ? 1 : n <= 15 ? 2 : 3, arr = [], p = stagePool();
+    var bi = p.indexOf(boss), lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
+    /* 早期关卡敌方强度系数：让新手期的白板卡也能赢，随关卡推进恢复 1.0 */
+    var m = n <= 3 ? 0.55 : n <= 6 ? 0.75 : n <= 10 ? 0.9 : 1;
+    arr.push({ gid: boss.id, lv: lv, m: m });
+    var used = {}; used[boss.id] = 1;
+    for (var i = 1; i < cnt; i++) {
+      var j = Math.max(0, Math.min(p.length - 1, bi + Math.floor((Math.random() * 2 - 1) * 40)));
+      if (used[p[j].id]) j = Math.max(0, bi - i);
+      used[p[j].id] = 1;
+      arr.push({ gid: p[j].id, lv: Math.max(1, lv - 1), m: m });
+    }
+    return arr;
+  }
+  function pseudoUnit(e) {
+    var c = { gid: e.gid, lv: e.lv || 1 };
+    var un = unitOf(c, "B");
+    if (un && e.m) { un.atk = Math.round(un.atk * e.m); un.def = Math.round(un.def * e.m); }
+    return un;
+  }
+  function unitOf(c, side) {
+    var g = gById(c.gid); if (!g) return null;
+    var lv = cardLv(c), ti = tierOf(g), tr = TIERS[ti], spa = c.spa || {}, eq = eqOf(c), mt = mountOf(c), stars = c.stars || 0;
+    var atk = Math.round((g.wu + (spa.wu || 0) + (g["in"] || 0) * 0.3 + Math.floor((lv - 1) * 0.8)) * (1 + 0.08 * stars)) + eq.atk;
+    var def = Math.round((g.st + (spa.st || 0) + (g.ch || 0) * 0.1 + Math.floor((lv - 1) * 0.6)) * (1 + 0.08 * stars)) + eq.def;
+    var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd;
+    return { side: side, cid: c.id || "", gid: g.id, name: g.name, ti: ti, lv: lv, atk: atk, def: def, spd: spd,
+      troop: troopOfCard(c, g), troopMax: troopOfCard(c, g), trig: tr.trig, sk: tierSkill(g), alive: true };
+  }
+  function simulate(A, B) {
+    var log = [], round = 0;
+    while (round < 30) {
+      round++;
+      var order = A.concat(B).filter(function (u) { return u.alive; }).sort(function (x, y) { return y.spd - x.spd; });
+      for (var i = 0; i < order.length; i++) {
+        var u = order[i]; if (!u.alive) continue;
+        var foes = (u.side === "A" ? B : A).filter(function (v) { return v.alive; });
+        if (!foes.length) break;
+        var tgt = foes[Math.floor(Math.random() * foes.length)];
+        var skillHit = Math.random() * 100 < u.trig, mult = 1, tag = "";
+        if (skillHit) { mult = 1.7; tag = u.sk.n; }
+        if (Math.random() < 0.08) { mult *= 1.5; }
+        var dmg = Math.max(10, Math.round((u.atk * 6 + u.troopMax * 0.12) * (0.85 + Math.random() * 0.3) * mult / (1 + tgt.def * 0.018)));
+        tgt.troop -= dmg;
+        var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: dmg, sk: tag };
+        if (tgt.troop <= 0) { tgt.troop = 0; tgt.alive = false; line.dead = tgt.name; }
+        log.push(line);
+        var aAlive = A.some(function (v) { return v.alive; }), bAlive = B.some(function (v) { return v.alive; });
+        if (!(aAlive && bAlive)) break;
+      }
+      var aa = A.some(function (v) { return v.alive; }), bb = B.some(function (v) { return v.alive; });
+      if (!(aa && bb)) break;
+    }
+    var pR = A.reduce(function (s, u) { return s + u.troop; }, 0), eR = B.reduce(function (s, u) { return s + u.troop; }, 0);
+    var pM = A.reduce(function (s, u) { return s + u.troopMax; }, 0) || 1, eM = B.reduce(function (s, u) { return s + u.troopMax; }, 0) || 1;
+    var win = eR <= 0 ? true : (pR <= 0 ? false : (pR / pM >= eR / eM));
+    var stars = !win ? 0 : (pR / pM >= 0.6 ? 3 : pR / pM >= 0.3 ? 2 : 1);
+    return { win: win, stars: stars, log: log, rounds: round, pR: pR, pM: pM, eR: eR, eM: eM };
+  }
+  /* ---------- 经验 / 掉落 / 结算 ---------- */
+  function gainExp(c, exp, ups) {
+    c.lv = cardLv(c); c.exp = c.exp || 0; var g = gById(c.gid);
+    c.exp += exp;
+    while (c.lv < 70 && c.exp >= expNeed(c.lv)) { c.exp -= expNeed(c.lv); c.lv++; if (ups) ups.push(g.name + " → Lv." + c.lv); }
+    if (c.lv >= 70) c.exp = 0;
+  }
+  function rollDropTi(stage) {
+    var maxTi = Math.min(6, Math.floor(stage / 4) + 1);
+    var r = Math.pow(Math.random(), 1.35);
+    return Math.min(maxTi, Math.floor(r * (maxTi + 1)));
+  }
+  function fightSettle(kind, stage, res, foeName) {
+    var u = me(); if (!u) return null;
+    ensureBat(u);
+    var out = { exp: 0, pts: 0, ups: [], shards: [], eq: null, mt: null, sp: 0 };
+    var squad = BATUI.squad.map(function (id) { return (u.cards || []).filter(function (c) { return c.id === id; })[0]; }).filter(Boolean);
+    var baseExp = 40 + stage * 18;
+    if (kind === "stage") {
+      out.exp = res.win ? baseExp : Math.round(baseExp * 0.3);
+      out.pts = res.win ? 10 + stage * 10 : stage * 2;
+      var first = !u.bat.hist[stage] && res.win;
+      if (first) { u.bat.hist[stage] = res.stars; u.bat.sp += 5; out.sp = 5; out.pts += 20 + stage * 5; }
+      else if (res.win) u.bat.hist[stage] = Math.max(u.bat.hist[stage] || 0, res.stars);
+      if (res.win) {
+        if (u.bat.stage <= stage) u.bat.stage = Math.min(30, stage + 1);
+        var nSh = 1 + Math.floor(Math.random() * 2);
+        for (var i = 0; i < nSh; i++) {
+          var sg = squad.length ? squad[Math.floor(Math.random() * squad.length)].gid : stageBoss(stage).id;
+          addShards(u, sg, 1); out.shards.push(gById(sg).name);
+        }
+        if (first || Math.random() < 0.35) {
+          var e = mkEquip(SLOT_KEYS[Math.floor(Math.random() * SLOT_KEYS.length)], rollDropTi(stage));
+          u.eqs.push(e); out.eq = e;
+        }
+        if (stage >= 5 && Math.random() < 0.08) {
+          var m = mkMount(Math.max(1, rollDropTi(stage))); u.mts.push(m); out.mt = m;
+        }
+        /* 新手引导：1-1 / 1-2 首胜送普通卡（走剧情），带 Lv.3 保证可战 */
+        if (u.bat.tut === 1 && stage === 1) { var g2 = rollStarter(); if (g2) { var nc2 = mkCard(g2.id); nc2.lv = 3; u.cards.unshift(nc2); } u.bat.tut = 2; out.tutCard = g2 ? g2.name : ""; }
+        else if (u.bat.tut === 2 && stage === 2) { var g3 = rollStarter(); if (g3) { var nc3 = mkCard(g3.id); nc3.lv = 3; u.cards.unshift(nc3); } u.bat.tut = 3; out.tutCard2 = g3 ? g3.name : ""; }
+      }
+    } else if (kind === "sweep") {
+      out.exp = Math.round(baseExp * 0.6); out.pts = stage * 3;
+      var n2 = 1 + Math.floor(Math.random() * 2);
+      for (var j = 0; j < n2; j++) { var sg2 = stageBoss(stage).id; addShards(u, sg2, 1); out.shards.push(gById(sg2).name); }
+    } else if (kind === "pvp") {
+      var avgLv = squad.length ? Math.round(squad.reduce(function (s, c) { return s + cardLv(c); }, 0) / squad.length) : 1;
+      out.exp = res.win ? 60 + avgLv * 10 : Math.round((60 + avgLv * 10) * 0.3);
+      out.pts = res.win ? 40 + BATUI.pvpIdx * 20 : 10;
+      if (res.win) { addShards(u, squad.length ? squad[0].gid : rollGeneral().id, 1); out.shards.push(squad.length ? gById(squad[0].gid).name : ""); }
+    }
+    squad.forEach(function (c) { gainExp(c, out.exp, out.ups); });
+    if (out.pts) addPoints(u, out.pts, T("bTitle") + " · " + (foeName || ""));
+    save();
+    return out;
+  }
+
+  /* ---------- 页面渲染 ---------- */
+  function batHero(u) {
+    var cleared = Object.keys(u.bat.hist).length;
+    return '<div class="sg-hero"><div class="sg-hero-row"><div class="grow"><h2>' + T("bTitle") + "</h2><p>" + T("bSub") + "</p>" +
+      '<div class="sg-note" style="margin-top:6px">' + (u.bat.spawn ? "⚑ " + T("spawnOk", { n: esc(u.bat.spawn) }) : "") +
+      "　·　" + T("stageTitle") + " " + cleared + "/30　·　" + T("spPool") + " <b>" + (u.bat.sp || 0) + "</b>　·　" + T("points") + " <b>" + fmt(u.points) + "</b></div></div></div></div>";
+  }
+  function renderBattle() {
+    var u = me(); if (!u) return "";
+    ensureBat(u);
+    var html = '<div class="sg-page">' + batHero(u);
+    if (!u.bat.spawn) {
+      var CD = (window.__SGAtlas && window.__SGAtlas.cityData) || [];
+      var cities = CD.filter(function (c) { return c.lv === "都城" || c.lv === "州治"; }).slice(0, 12);
+      html += '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("pickSpawn") + "</h3></div>" +
+        '<div class="sg-note" style="margin-bottom:10px">' + T("spawnDesc") + "</div>" +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+        cities.map(function (c) { return '<button class="sgbtn sm" data-bat="spawn" data-n="' + esc(c.n) + '" style="border-color:' + facColor(c.f) + '">' + esc(c.n) + ' <small style="opacity:.7">' + esc(c.lv) + "</small></button>"; }).join("") +
+        "</div></div></div>";
+      return html;
+    }
+    /* 新手引导：无卡先送一张 */
+    if (!(u.cards || []).length) {
+      html += '<div class="sg-panel" style="text-align:center;padding:30px 20px"><div class="sg-muted" style="margin-bottom:14px">' + T("tut1") + "</div>" +
+        '<button class="sgbtn primary" data-bat="tut-card">' + T("tut1Btn") + "</button></div></div>";
+      return html;
+    }
+    var tabs = [["stage", T("stageTitle")], ["pvp", T("pvp")], ["shop", T("shopT")], ["bag", T("bagT")]];
+    html += '<div class="sg-panel"><div class="sgchips" style="margin-bottom:12px">' +
+      tabs.map(function (t) { return '<button class="sgchip' + (BATUI.tab === t[0] ? " on" : "") + '" data-bat="tab" data-v="' + t[0] + '">' + t[1] + "</button>"; }).join("") + "</div>";
+    if (BATUI.tab === "stage") html += batStageTab(u);
+    else if (BATUI.tab === "pvp") html += batPvpTab(u);
+    else if (BATUI.tab === "shop") html += batShopTab(u);
+    else html += batBagTab(u);
+    html += "</div></div>";
+    return html;
+  }
+  function batStageTab(u) {
+    var squadHTML = squadPicker(u);
+    var rows = "";
+    for (var n = 1; n <= 30; n++) {
+      var boss = stageBoss(n), tr = TIERS[tierOf(boss)];
+      var st = u.bat.hist[n], locked = n > u.bat.stage;
+      rows += '<div class="sg-rankline" style="cursor:default"><span class="i" style="background:' + (locked ? "#3a4252" : tr.c) + ';color:#10131a">' + n + "</span>" +
+        '<span><b>' + esc(STAGE_NAMES[n - 1]) + "</b> <small style='color:var(--ink-3)'>" + esc(boss.name) + " · " + tierLabel(tr) + " · Lv." + Math.max(1, Math.round(n * 2.2)) + "</small></span>" +
+        '<span class="sp"></span>' + (st ? "<small style='color:#e8c988'>" + "★".repeat(st) + "</small>　" : "") +
+        (locked ? '<small style="color:var(--ink-3)">' + T("stageLock") + "</small>" :
+          '<button class="sgbtn sm primary" data-bat="fight" data-n="' + n + '">' + (st ? T("againF") : T("fight")) + "</button>" +
+          (st ? ' <button class="sgbtn sm ghost" data-bat="sweep" data-n="' + n + '" title="' + T("sweepDesc") + '">' + T("sweep") + "</button>" : "")) +
+        "</div>";
+    }
+    return '<div class="sg-note" style="margin-bottom:8px">' + T("firstReward") + "：" + T("spGain", { n: 5 }) + " + " + T("squadDesc") + "</div>" + squadHTML +
+      '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("stageTitle") + "（1-1 → 1-30）</h3></div>" + rows;
+  }
+  function squadPicker(u) {
+    var cards = u.cards || [];
+    var chosen = BATUI.squad.filter(function (id) { return cards.some(function (c) { return c.id === id; }); });
+    BATUI.squad = chosen;
+    var items = cards.slice(0, 24).map(function (c) {
+      var g = gById(c.gid); if (!g) return "";
+      var on = chosen.indexOf(c.id) >= 0;
+      return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="squad" data-id="' + c.id + '">' + esc(g.name) + " Lv." + cardLv(c) + (on ? " ✓" : "") + "</button>";
+    }).join("");
+    var pw = chosen.length ? chosen.map(function (id) { var c = cards.filter(function (x) { return x.id === id; })[0], g = gById(c.gid); return unitOf(c, "A"); }).filter(Boolean) : [];
+    var pwSum = pw.reduce(function (s, un) { return s + un.atk + un.def + Math.round(un.troop / 1000); }, 0);
+    return '<div class="sg-panel-hd"><h3><i>·</i>' + T("squad") + '（' + chosen.length + '/3）</h3><span class="sp"></span><small style="color:var(--ink-3)">战力 ' + pwSum + "</small></div>" +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">' + items + "</div>";
+  }
+  function pvpFoes(u) {
+    var myAvg = (u.cards || []).length ? Math.round((u.cards || []).reduce(function (s, c) { return s + cardLv(c); }, 0) / (u.cards || []).length) : 1;
+    var others = DB.users.filter(function (x) { return x.uid !== u.uid; });
+    var foes = others.slice(0, 8).map(function (o, i) {
+      var cards = (o.cards || []).length ? o.cards.slice(0, 3).map(function (c) { return { gid: c.gid, lv: Math.max(1, Math.min(70, myAvg + i)) }; })
+        : [0, 1, 2].map(function () { var g = rollGeneral(); return { gid: g ? g.id : stagePool()[0].id, lv: Math.max(1, Math.min(70, myAvg + i)) }; });
+      return { name: o.name, cards: cards, lv: Math.max(1, Math.min(70, myAvg + i)) };
+    });
+    if (!foes.length) foes = [{ name: "演武官", cards: [{ gid: stagePool()[100].id, lv: myAvg }], lv: myAvg }];
+    return foes;
+  }
+  function batPvpTab(u) {
+    var foes = pvpFoes(u);
+    var rows = foes.map(function (f, i) {
+      var sq = f.cards.map(function (c) { var g = gById(c.gid); return g ? esc(g.name) + " Lv." + c.lv : ""; }).filter(Boolean).join(" · ");
+      return '<div class="sg-rankline"><span class="i">' + esc(f.name.slice(0, 1)) + "</span><span><b>" + esc(f.name) + "</b> <small style='color:var(--ink-3)'>" + sq + "</small></span>" +
+        '<span class="sp"></span><button class="sgbtn sm primary" data-bat="pvp" data-i="' + i + '">' + T("fight") + "</button></div>";
+    }).join("");
+    return '<div class="sg-note" style="margin-bottom:8px">' + T("pvpDesc") + "</div>" + squadPicker(u) +
+      '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("pvp") + "</h3></div>" + rows;
+  }
+  function batShopTab(u) {
+    var eqRow = TIERS.map(function (t, i) {
+      return '<button class="sgchip" data-bat="buy-eq" data-i="' + i + '" style="border-color:' + t.c + '">' + T("shopEquip", { n: tierLabel(t) }) + " · " + fmt(t.pts) + "</button>";
+    }).join(" ");
+    var mtRow = TIERS.map(function (t, i) {
+      return '<button class="sgchip" data-bat="buy-mt" data-i="' + i + '" style="border-color:' + t.c + '">' + T("shopMount", { n: tierLabel(t) }) + " · " + fmt(Math.round(t.pts * 1.5)) + "</button>";
+    }).join(" ");
+    return '<div class="sg-note" style="margin-bottom:10px">' + T("shopT") + " · " + T("points") + " <b>" + fmt(u.points) + "</b></div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>' + T("bagEq") + "</h3></div><div style='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0'>" + eqRow + "</div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>' + T("bagMt") + "</h3></div><div style='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0'>" + mtRow + "</div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>' + T("bagShard") + "</h3></div><div style='margin:8px 0'><button class=" + '"sgbtn sm primary" data-bat="buy-shard">' + T("shopShard") + " · 300 " + T("pts") + "</button></div>";
+  }
+  function batBagTab(u) {
+    var t = BATUI.bagTab;
+    var chips = [["eq", T("bagEq") + " " + (u.eqs || []).length], ["mt", T("bagMt") + " " + (u.mts || []).length], ["sh", T("bagShard") + " " + Object.keys(u.shards || {}).length]].map(function (x) {
+      return '<button class="sgchip' + (t === x[0] ? " on" : "") + '" data-bat="bagtab" data-v="' + x[0] + '">' + x[1] + "</button>";
+    }).join(" ");
+    var body = "";
+    if (t === "eq") {
+      body = (u.eqs || []).map(function (e) {
+        var worn = (u.cards || []).filter(function (c) { return c.eq && Object.keys(c.eq).some(function (k) { return c.eq[k] === e.id; }); })[0];
+        var wg = worn ? gById(worn.gid) : null;
+        return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[e.ti].c + ';color:#10131a">' + slotName(e.slot).slice(0, 1) + "</span>" +
+          "<span><b style='color:" + TIERS[e.ti].c + "'>" + eqName(e) + "</b> <small style='color:var(--ink-3)'>Lv." + (e.lv || 1) + (wg ? " · " + esc(wg.name) : " · " + T("eqEmpty")) + "</small></span>" +
+          '<span class="sp"></span>' +
+          '<button class="sgbtn sm ghost" data-bat="eq-up" data-id="' + e.id + '">' + T("eqUp") + " " + fmt(eqUpCost(e)) + "</button>" +
+          '<button class="sgbtn sm ghost" data-bat="eq-star" data-id="' + e.id + '">' + T("eqStar") + " " + fmt(eqStarCost(e)) + "</button>" +
+          (worn ? '<button class="sgbtn sm" data-bat="eq-off" data-id="' + e.id + '">' + T("takeOff") + "</button>" : "") +
+          "</div>";
+      }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+    } else if (t === "mt") {
+      body = (u.mts || []).map(function (m) {
+        var worn = (u.cards || []).filter(function (c) { return c.mt === m.id; })[0];
+        var wg = worn ? gById(worn.gid) : null;
+        return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[m.ti].c + ';color:#10131a">骑</span>' +
+          "<span><b style='color:" + TIERS[m.ti].c + "'>" + MT_NAMES[m.ti] + (m.st ? " +" + m.st + "★" : "") + "</b> <small style='color:var(--ink-3)'>Lv." + (m.lv || 1) + (wg ? " · " + esc(wg.name) : "") + "</small></span>" +
+          '<span class="sp"></span>' +
+          '<button class="sgbtn sm ghost" data-bat="mt-up" data-id="' + m.id + '">' + T("eqUp") + " " + fmt(mtUpCost(m)) + "</button>" +
+          '<button class="sgbtn sm ghost" data-bat="mt-star" data-id="' + m.id + '">' + T("eqStar") + " " + fmt(mtStarCost(m)) + "</button>" +
+          "</div>";
+      }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+    } else {
+      body = Object.keys(u.shards || {}).filter(function (k) { return u.shards[k] > 0; }).map(function (gid) {
+        var g = gById(gid); if (!g) return "";
+        var ti = tierOf(g), need = SYNTH[ti], have = u.shards[gid];
+        return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(g.name.slice(0, 1)) + "</span>" +
+          "<span><b>" + esc(g.name) + "</b> <small style='color:var(--ink-3)'>" + tierLabel(TIERS[ti]) + "</small></span>" +
+          '<span class="sp"></span><small>' + have + "/" + need + "</small>　" +
+          '<button class="sgbtn sm primary" data-bat="synth" data-id="' + gid + '"' + (have >= need ? "" : " disabled") + ">" + T("synth") + "</button></div>";
+      }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+    }
+    return '<div style="display:flex;gap:6px;margin-bottom:10px">' + chips + "</div>" + body;
+  }
+  function eqUpCost(e) { return Math.max(10, Math.round(TIERS[e.ti].pts * 0.4) * (e.lv || 1)); }
+  function eqStarCost(e) { return TIERS[e.ti].pts * ((e.st || 0) + 2) * 2; }
+  function mtUpCost(m) { return Math.max(12, Math.round(TIERS[m.ti].pts * 0.5) * (m.lv || 1)); }
+  function mtStarCost(m) { return Math.round(TIERS[m.ti].pts * ((m.st || 0) + 2) * 2.4); }
+
+  /* ---------- 战斗页（自动战报） ---------- */
+  function fightKeyCards(key) {
+    var u = me(); ensureBat(u);
+    var kind = key.charAt(0), num = key.slice(1);
+    var squad = BATUI.squad.map(function (id) { return (u.cards || []).filter(function (c) { return c.id === id; })[0]; }).filter(Boolean);
+    if (!squad.length) squad = (u.cards || []).slice(0, 1);
+    if (kind === "s") return { kind: "stage", stage: +num, squad: squad, enemies: stageEnemies(+num), foe: STAGE_NAMES[+num - 1] };
+    if (kind === "w") return { kind: "sweep", stage: +num, squad: squad, enemies: stageEnemies(+num), foe: STAGE_NAMES[+num - 1] };
+    if (kind === "p") { var f = pvpFoes(u)[+num] || pvpFoes(u)[0]; BATUI.pvpIdx = +num; return { kind: "pvp", stage: 1, squad: squad, enemies: f.cards, foe: f.name }; }
+    return null;
+  }
+  function renderFight(key) {
+    var u = me(); if (!u) return "";
+    ensureBat(u);
+    if (!BATUI.fight || BATUI.fight.key !== key) {
+      var fk = fightKeyCards(key);
+      if (!fk) return renderBattle();
+      BATUI.fight = fk; BATUI.fight.key = key; BATUI.res = null;
+    }
+    var fk = BATUI.fight;
+    var myUnits = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
+    var foeUnits = fk.enemies.map(pseudoUnit).filter(Boolean);
+    var head = '<div class="sg-page"><div class="sg-hero"><div class="sg-hero-row"><div class="grow"><h2>' + esc(fk.foe) + "</h2><p>" +
+      (fk.kind === "sweep" ? T("sweepDesc") : T("squadDesc")) + "</p></div>" +
+      '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button></div></div>";
+    var roster = '<div class="sg-panel"><div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;padding:6px 0 12px">' +
+      '<div style="min-width:220px">' + myUnits.map(function (un) { return unitRow(un, "A"); }).join("") + "</div>" +
+      '<div style="font-size:26px;color:var(--gold-2);font-weight:800">' + T("vs") + "</div>" +
+      '<div style="min-width:220px">' + foeUnits.map(function (un) { return unitRow(un, "B"); }).join("") + "</div></div>";
+    if (!BATUI.res) {
+      return head + roster + '<div class="sg-panel" style="text-align:center;padding:22px">' +
+        '<button class="sgbtn primary" data-bat="go" data-key="' + esc(key) + '">' + (fk.kind === "sweep" ? T("sweep") : T("fight")) + "</button></div></div>";
+    }
+    var res = BATUI.res, out = res.out;
+    var logHTML = res.log.map(function (l) {
+      return '<div class="sg-logline" data-r="' + l.r + '"><span class="r">' + l.r + "</span>" +
+        '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + "</span>" +
+        (l.sk ? '<span class="sk">【' + esc(l.sk) + "】</span>" : "") +
+        "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + "</b>" +
+        (l.dead ? '<span class="dead">✝ ' + esc(l.dead) + "</span>" : "") + "</div>";
+    }).join("");
+    var rewards = "";
+    if (out) {
+      rewards = '<div class="sg-note">' + T("expGain", { n: out.exp }) + "　·　" + (out.pts ? T("rewardPts", { n: out.pts }) + "　·　" : "") +
+        (out.sp ? T("spGain", { n: out.sp }) + "　·　" : "") +
+        (out.shards.length ? T("dropShards", { n: out.shards.join("、"), m: 1 }) + "　·　" : "") +
+        (out.eq ? T("dropEquip", { n: eqName(out.eq) }) + "　·　" : "") +
+        (out.mt ? T("dropMount", { n: MT_NAMES[out.mt.ti] }) + "　·　" : "") +
+        (out.ups || []).join("　·　") + "</div>";
+    }
+    return head + roster +
+      '<div class="sg-panel"><div style="text-align:center;padding:8px 0"><b style="font-size:22px;color:' + (res.win ? "#e8c988" : "#c97070") + ';letter-spacing:.2em">' +
+      (res.win ? ["", "★ 险胜", "★★ 大胜", "★★★ 完胜"][res.stars] : T("defeat")) + "</b>" +
+      '<div class="sg-note" style="margin-top:4px">' + T("remain") + "：我军 " + fmt(res.pR) + " / " + fmt(res.pM) + " · 敌军 " + fmt(res.eR) + " / " + fmt(res.eM) + " · " + T("rounds") + " " + res.rounds + "</div>" +
+      (rewards ? '<div style="margin-top:8px">' + rewards + "</div>" : "") + "</div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>' + T("battleLog") + "</h3><span class=\"sp\"></span>" +
+      '<button class="sgbtn sm ghost" data-bat="speed">×' + BATUI.speed + "</button>" +
+      '<button class="sgbtn sm ghost" data-bat="skip">' + T("skip") + "</button></div>" +
+      '<div id="sgBatLog" style="max-height:320px;overflow:auto;margin-top:8px">' + logHTML + "</div>" +
+      '<div style="text-align:center;margin-top:12px">' +
+      (fk.kind === "stage" && res.win ? '<button class="sgbtn primary" data-bat="fight" data-n="' + (fk.stage + 1) + '">' + T("againF") + "（" + T("stage", { n: fk.stage + 1 }) + "）</button> " : "") +
+      '<button class="sgbtn ghost" data-bat="back">' + T("backBattle") + "</button></div></div></div>";
+  }
+  function unitRow(un, side) {
+    var tr = TIERS[un.ti];
+    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 8px;margin-bottom:4px;border:1px solid ' + tr.c + '55;border-radius:8px;background:rgba(255,255,255,.03)">' +
+      '<b style="color:' + tr.c + '">' + esc(un.name) + "</b><small style='color:var(--ink-3)'>" + T("lvShort", { n: un.lv }) + " · " + T("troopShort", { n: troopTxt(un.troop) }) + "</small></div>";
+  }
+  function playLog() {
+    var box = document.getElementById("sgBatLog");
+    if (!box) return;
+    var lines = Array.prototype.slice.call(box.querySelectorAll(".sg-logline"));
+    lines.forEach(function (l) { l.style.display = "none"; });
+    var i = 0;
+    function step() {
+      if (!document.getElementById("sgBatLog")) return; /* 页面已切换 */
+      if (i >= lines.length) return;
+      lines[i].style.display = ""; i++;
+      if (i % 4 === 0 || i >= lines.length) box.scrollTop = box.scrollHeight;
+      BATUI._timer = setTimeout(step, Math.max(40, 320 / BATUI.speed));
+    }
+    clearTimeout(BATUI._timer);
+    step();
+  }
+  function skipLog() {
+    clearTimeout(BATUI._timer);
+    var box = document.getElementById("sgBatLog");
+    if (box) box.querySelectorAll(".sg-logline").forEach(function (l) { l.style.display = ""; });
+  }
+
+  /* ---------- 培养弹窗（等级 / 升星 / 技能点 / 装备 / 坐骑） ---------- */
+  function growOpen(cardId) {
+    var u = me(); if (!u) return;
+    var c = (u.cards || []).filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return;
+    var g = gById(c.gid); if (!g) return;
+    ensureBat(u);
+    var ti = tierOf(g), tr = TIERS[ti], lv = cardLv(c), need = expNeed(lv);
+    var have = u.shards[g.id] || 0;
+    var stTarget = (c.stars || 0);
+    var starCost = stTarget < 5 ? STAR_COST[stTarget] : 0;
+    var lvNeed = (stTarget + 1) * 10;
+    var spa = c.spa || {}; var spLeft = u.bat.sp || 0;
+    var statDefs = [["wu", "武"], ["st", "统"], ["in", "智"], ["ch", "魅"], ["po", "政"]];
+    var spHTML = statDefs.map(function (sd) {
+      return '<span class="sgchip">' + sd[1] + " " + (g[sd[0]] || 0) + (spa[sd[0]] ? '<b style="color:#e8c988"> +' + spa[sd[0]] + "</b>" : "") +
+        ' <button class="sgbtn sm ghost" data-bat="sp-add" data-st="' + sd[0] + '" data-id="' + c.id + '"' + (spLeft > 0 ? "" : " disabled") + ">+1</button></span>";
+    }).join(" ");
+    var eq = c.eq || {};
+    var eqHTML = SLOT_KEYS.map(function (sl) {
+      var id = eq[sl], e = id ? u.eqs.filter(function (x) { return x.id === id; })[0] : null;
+      if (e) return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[e.ti].c + ';color:#10131a">' + slotName(sl).slice(0, 1) + "</span>" +
+        "<span><b style='color:" + TIERS[e.ti].c + "'>" + eqName(e) + "</b> <small>Lv." + (e.lv || 1) + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm ghost" data-bat="eq-up" data-id="' + e.id + '">' + T("eqUp") + "</button>" +
+        '<button class="sgbtn sm" data-bat="eq-off" data-id="' + e.id + '">' + T("takeOff") + "</button></div>";
+      return '<div class="sg-rankline"><span class="i" style="opacity:.45">' + slotName(sl).slice(0, 1) + "</span><span style='color:var(--ink-3)'>" + slotName(sl) + " · " + T("eqEmpty") + "</span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm ghost" data-bat="eq-pick" data-slot="' + sl + '" data-id="' + c.id + '">' + T("wear") + "</button></div>";
+    }).join("");
+    var mt = c.mt ? u.mts.filter(function (x) { return x.id === c.mt; })[0] : null;
+    var mtHTML = mt ?
+      '<div class="sg-rankline"><span class="i" style="background:' + TIERS[mt.ti].c + ';color:#10131a">骑</span><span><b style="color:' + TIERS[mt.ti].c + '">' + MT_NAMES[mt.ti] + (mt.st ? " +" + mt.st + "★" : "") + "</b> <small>Lv." + (mt.lv || 1) + "</small></span><span class=\"sp\"></span>" +
+      '<button class="sgbtn sm ghost" data-bat="mt-up" data-id="' + mt.id + '">' + T("eqUp") + "</button>" +
+      '<button class="sgbtn sm" data-bat="mt-off" data-id="' + c.id + '">' + T("takeOff") + "</button></div>" :
+      '<div class="sg-rankline"><span class="i" style="opacity:.45">骑</span><span style="color:var(--ink-3)">' + T("mountT") + " · " + T("eqEmpty") + '</span><span class="sp"></span><button class="sgbtn sm ghost" data-bat="mt-pick" data-id="' + c.id + '">' + T("ride") + "</button></div>";
+    modal('<h3>' + T("growTitle") + " · " + esc(g.name) + "</h3>" +
+      '<div class="sub" style="text-align:center">' + tierLabel(tr) + " · " + T("lvShort", { n: lv }) + " · " + "★".repeat(tr.star) + (c.stars ? '<b style="color:#e8c988"> +' + c.stars + "★</b>" : "") + "</div>" +
+      '<div style="margin:12px 0 4px"><div class="sg-note">' + T("expFull", { a: fmt(c.exp || 0), b: fmt(need) }) + '</div><div class="sg-prog"><i style="width:' + Math.min(100, (c.exp || 0) / need * 100) + '%"></i></div></div>' +
+      '<div class="sg-rankline"><span class="i" style="background:' + tr.c + ';color:#10131a">★</span><span><b>' + T("starUp") + "</b> <small style='color:var(--ink-3)'>" +
+      (stTarget >= 5 ? T("starMax") : lv < lvNeed ? T("starLvNeed", { n: lvNeed }) : T("starUpCost", { n: starCost }) + "（" + T("shardsOf", { n: g.name, a: have, b: starCost }) + "）") + "</small></span><span class=\"sp\"></span>" +
+      '<button class="sgbtn sm primary" data-bat="starup" data-id="' + c.id + '"' + (stTarget >= 5 || lv < lvNeed || have < starCost ? " disabled" : "") + ">" + T("starUp") + "</button></div>" +
+      '<div class="sg-note" style="margin:10px 0 4px">' + T("spAlloc", { n: spLeft }) + "</div><div style='display:flex;flex-wrap:wrap;gap:6px'>" + spHTML + "</div>" +
+      '<div class="sg-note" style="margin:12px 0 4px">' + T("equipT") + " · " + T("eqWpn") + "：" + wtypeOf(g) + "</div>" + eqHTML +
+      '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
+      '<div style="text-align:center;margin-top:14px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
+  }
+  function eqPicker(cardId, slot) {
+    var u = me(); var c = (u.cards || []).filter(function (x) { return x.id === cardId; })[0];
+    var g = c ? gById(c.gid) : null;
+    var list = (u.eqs || []).filter(function (e) { return e.slot === slot && !(u.cards || []).some(function (cc) { return cc.eq && cc.eq[slot] === e.id; }); })
+      .filter(function (e) { return slot !== "wpn" || !e.wt || (g && wtypeOf(g) === e.wt); });
+    var html = list.map(function (e) {
+      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[e.ti].c + ';color:#10131a">' + slotName(slot).slice(0, 1) + "</span>" +
+        "<span><b style='color:" + TIERS[e.ti].c + "'>" + eqName(e) + "</b> <small>Lv." + (e.lv || 1) + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm primary" data-bat="eq-wear" data-id="' + e.id + '" data-cid="' + cardId + '">' + T("wear") + "</button></div>";
+    }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+    modal("<h3>" + slotName(slot) + "</h3>" + html + '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  function mtPicker(cardId) {
+    var u = me();
+    var list = (u.mts || []).filter(function (m) { return !(u.cards || []).some(function (cc) { return cc.mt === m.id; }); });
+    var html = list.map(function (m) {
+      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[m.ti].c + ';color:#10131a">骑</span><span><b style="color:' + TIERS[m.ti].c + '">' + MT_NAMES[m.ti] + (m.st ? " +" + m.st + "★" : "") + "</b> <small>Lv." + (m.lv || 1) + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm primary" data-bat="mt-ride" data-id="' + m.id + '" data-cid="' + cardId + '">' + T("ride") + "</button></div>";
+    }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+    modal("<h3>" + T("mountT") + "</h3>" + html + '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  function refreshBattle() {
+    closeModal();
+    if (/^#\/battle/.test(location.hash || "")) {
+      var p = routeParts();
+      if (p[1] === "f" && p[2]) setApp(renderFight(decodeURIComponent(p[2])));
+      else setApp(renderBattle());
+      paintAcct();
+    }
+  }
+
+  /* ---------- 作战事件（data-bat 委托） ---------- */
+  document.addEventListener("click", function (e) {
+    var gt = e.target.closest('[data-sgact="grow-open"]');
+    if (gt) { var gu = me(); if (gu) { ensureBat(gu); growOpen(gt.getAttribute("data-id")); } return; }
+    var t = e.target.closest("[data-bat]");
+    if (!t) return;
+    var u = me(); if (!u) return;
+    ensureBat(u);
+    var act = t.getAttribute("data-bat"), id = t.getAttribute("data-id"), v = t.getAttribute("data-v");
+    var key = t.getAttribute("data-key"), n = +t.getAttribute("data-n") || 0, i = +t.getAttribute("data-i") || 0;
+    switch (act) {
+      case "spawn": u.bat.spawn = t.getAttribute("data-n"); save(); toast(T("spawnOk", { n: u.bat.spawn }), "ok"); refreshBattle(); return;
+      case "tut-card": { var g0 = rollStarter(); if (g0) { var nc0 = mkCard(g0.id); nc0.lv = 3; u.cards.unshift(nc0); u.bat.tut = 1; save(); toast(T("tut1Btn") + "：" + g0.name, "ok"); } refreshBattle(); return; }
+      case "tab": BATUI.tab = v; BATUI.res = null; BATUI.fight = null; refreshBattle(); return;
+      case "bagtab": BATUI.bagTab = v; refreshBattle(); return;
+      case "squad": {
+        var idx = BATUI.squad.indexOf(id);
+        if (idx >= 0) BATUI.squad.splice(idx, 1);
+        else { if (BATUI.squad.length >= 3) return toast(T("squadDesc"), "err"); BATUI.squad.push(id); }
+        refreshBattle(); return;
+      }
+      case "fight": location.hash = "#/battle/f/s" + n; return;
+      case "sweep": location.hash = "#/battle/f/w" + n; return;
+      case "pvp": location.hash = "#/battle/f/p" + i; return;
+      case "back": BATUI.fight = null; BATUI.res = null; location.hash = "#/battle"; return;
+      case "go": {
+        var fk = fightKeyCards(key); if (!fk) return;
+        var A = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
+        if (!A.length) return toast(T("needCard"), "err");
+        var B = fk.enemies.map(pseudoUnit).filter(Boolean);
+        var res = simulate(A, B);
+        res.out = fightSettle(fk.kind, fk.stage, res, fk.foe);
+        BATUI.res = res; setApp(renderFight(key)); playLog();
+        if (res.win && fk.kind === "stage" && fk.stage <= 2 && u.bat.tut === 3 && !u._tut3Shown) {
+          u._tut3Shown = true; save();
+          modal('<h3>' + T("tut3") + '</h3><div style="text-align:center;margin-top:14px"><button class="sgbtn primary" data-bat="tut-draw">' + T("tut3Btn") + "</button></div>");
+        } else if (res.out && res.out.tutCard) {
+          toast(T("tut2") + " " + res.out.tutCard, "ok", 6000);
+        } else if (res.out && res.out.tutCard2) {
+          toast(T("tut3"), "ok", 6000);
+        }
+        return;
+      }
+      case "tut-draw": closeModal(); location.hash = "#/me"; return;
+      case "speed": BATUI.speed = BATUI.speed >= 8 ? 1 : BATUI.speed * 2; t.textContent = "×" + BATUI.speed; clearTimeout(BATUI._timer); playLog(); return;
+      case "skip": skipLog(); return;
+      case "buy-eq": { var ti1 = i, price = TIERS[ti1].pts; if ((u.points || 0) < price) return toast(T("eqLack"), "err"); addPoints(u, -price, T("shopT") + " · " + T("shopEquip", { n: TIERS[ti1].n })); var ne = mkEquip(SLOT_KEYS[Math.floor(Math.random() * SLOT_KEYS.length)], ti1); ne.wt = WTYPES[Math.floor(Math.random() * WTYPES.length)]; u.eqs.push(ne); save(); toast(T("buyOk") + "：" + eqName(ne), "ok"); refreshBattle(); return; }
+      case "buy-mt": { var ti2 = i, price2 = Math.round(TIERS[ti2].pts * 1.5); if ((u.points || 0) < price2) return toast(T("eqLack"), "err"); addPoints(u, -price2, T("shopT") + " · " + T("shopMount", { n: TIERS[ti2].n })); u.mts.push(mkMount(ti2)); save(); toast(T("buyOk"), "ok"); refreshBattle(); return; }
+      case "buy-shard": { if ((u.points || 0) < 300) return toast(T("eqLack"), "err"); addPoints(u, -300, T("shopT") + " · " + T("bagShard")); var names = []; for (var k = 0; k < 6; k++) { var gg = rollGeneral(); addShards(u, gg.id, 1); names.push(gg.name); } save(); toast(T("buyOk") + "：" + names.join("、"), "ok", 6000); refreshBattle(); return; }
+      case "synth": { var g3 = gById(id); if (!g3) return; var ti3 = tierOf(g3), need3 = SYNTH[ti3]; if ((u.shards[id] || 0) < need3) return toast(T("synthNot"), "err"); u.shards[id] -= need3; var nc = mkCard(id); u.cards.unshift(nc); checkBadges(u); save(); toast(T("synthOk", { n: g3.name }), "ok"); refreshBattle(); return; }
+      case "grow-open": growOpen(id); return;
+      case "starup": { var c4 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c4) return; var g4 = gById(c4.gid), st4 = c4.stars || 0; if (st4 >= 5) return; var cost4 = STAR_COST[st4]; if (cardLv(c4) < (st4 + 1) * 10) return toast(T("starLvNeed", { n: (st4 + 1) * 10 }), "err"); if ((u.shards[g4.id] || 0) < cost4) return toast(T("synthNot"), "err"); u.shards[g4.id] -= cost4; c4.stars = st4 + 1; save(); toast(T("starUpOk"), "ok"); growOpen(id); return; }
+      case "sp-add": { var c5 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c5) return; if ((u.bat.sp || 0) <= 0) return; u.bat.sp--; c5.spa = c5.spa || {}; var st5 = t.getAttribute("data-st"); c5.spa[st5] = (c5.spa[st5] || 0) + 1; save(); growOpen(id); return; }
+      case "eq-pick": eqPicker(id, t.getAttribute("data-slot")); return;
+      case "eq-wear": { var c6 = (u.cards || []).filter(function (x) { return x.id === t.getAttribute("data-cid"); })[0]; var e6 = (u.eqs || []).filter(function (x) { return x.id === id; })[0]; if (!c6 || !e6) return; var g6 = gById(c6.gid); if (e6.slot === "wpn") { if (!e6.wt) e6.wt = wtypeOf(g6); else if (g6 && wtypeOf(g6) !== e6.wt) return toast(T("wpnLock", { n: e6.wt }), "err"); } c6.eq = c6.eq || {}; c6.eq[e6.slot] = e6.id; save(); growOpen(c6.id); return; }
+      case "eq-off": { var e7 = (u.eqs || []).filter(function (x) { return x.id === id; })[0]; if (!e7) return; (u.cards || []).forEach(function (cc) { if (cc.eq && cc.eq[e7.slot] === e7.id) delete cc.eq[e7.slot]; }); var c7 = (u.cards || []).filter(function (x) { return x.eq && x.eq[e7.slot] === e7.id; })[0]; save(); if (c7) growOpen(c7.id); else refreshBattle(); return; }
+      case "eq-up": { var e8 = (u.eqs || []).filter(function (x) { return x.id === id; })[0]; if (!e8) return; if ((e8.lv || 1) >= 20) return; var cost8 = eqUpCost(e8); if ((u.points || 0) < cost8) return toast(T("eqLack"), "err"); addPoints(u, -cost8, T("eqUp") + " · " + eqName(e8)); e8.lv = (e8.lv || 1) + 1; save(); toast(T("eqUpOk") + " Lv." + e8.lv, "ok"); refreshBattle(); return; }
+      case "eq-star": { var e9 = (u.eqs || []).filter(function (x) { return x.id === id; })[0]; if (!e9) return; if ((e9.st || 0) >= 5) return; var cost9 = eqStarCost(e9); if ((u.points || 0) < cost9) return toast(T("eqLack"), "err"); addPoints(u, -cost9, T("eqStar") + " · " + eqName(e9)); e9.st = (e9.st || 0) + 1; save(); toast(T("eqStarOk"), "ok"); refreshBattle(); return; }
+      case "mt-pick": mtPicker(id); return;
+      case "mt-ride": { var c10 = (u.cards || []).filter(function (x) { return x.id === t.getAttribute("data-cid"); })[0]; var m10 = (u.mts || []).filter(function (x) { return x.id === id; })[0]; if (!c10 || !m10) return; c10.mt = m10.id; save(); growOpen(c10.id); return; }
+      case "mt-off": { var c11 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c11) return; delete c11.mt; save(); growOpen(c11.id); return; }
+      case "mt-up": { var m12 = (u.mts || []).filter(function (x) { return x.id === id; })[0]; if (!m12) return; if ((m12.lv || 1) >= 20) return; var cost12 = mtUpCost(m12); if ((u.points || 0) < cost12) return toast(T("eqLack"), "err"); addPoints(u, -cost12, T("eqUp") + " · " + MT_NAMES[m12.ti]); m12.lv = (m12.lv || 1) + 1; save(); toast(T("eqUpOk") + " Lv." + m12.lv, "ok"); refreshBattle(); return; }
+      case "mt-star": { var m13 = (u.mts || []).filter(function (x) { return x.id === id; })[0]; if (!m13) return; if ((m13.st || 0) >= 5) return; var cost13 = mtStarCost(m13); if ((u.points || 0) < cost13) return toast(T("eqLack"), "err"); addPoints(u, -cost13, T("eqStar") + " · " + MT_NAMES[m13.ti]); m13.st = (m13.st || 0) + 1; save(); toast(T("eqStarOk"), "ok"); refreshBattle(); return; }
+    }
+  });
+
   /* ---------------- 初始化 ---------------- */
   DB = load();
   if (!DB) seed();
@@ -9320,6 +9922,7 @@ var BOTS = [
     _sg: function () { return SGCloud; },
     _bots: BOTS,
     _tiers: TIERS,
+    _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss }; },
     tierOf: tierOf,
     tierSkill: tierSkill,
     _tick: tick,
