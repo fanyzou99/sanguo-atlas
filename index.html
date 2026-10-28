@@ -9500,6 +9500,12 @@ var BOTS = [
     ["rice", "wood", "copper", "iron", "coin"].forEach(function (k) { if (r && r[k]) u.res[k] = Math.max(0, Math.round((u.res[k] || 0) + r[k])); });
   }
   function gameDate(gm) { var m = (((gm || 0) % 444) + 444) % 444; return { y: 184 + Math.floor(m / 12), mo: m % 12 + 1 }; }
+  /* V24 实时时间：进入起 184年1月，每真实 1 小时推进 1 个月；战斗每月额外 +1（gmBase） */
+  function gMonth(u) {
+    if (!u || !u.bat) return 0;
+    if (u.bat.gmT0 == null) { u.bat.gmT0 = Date.now(); u.bat.gmBase = 0; }
+    return (((u.bat.gmBase || 0) + Math.floor((Date.now() - u.bat.gmT0) / 3600000)) % 444 + 444) % 444;
+  }
   function seasonFac(mo) {
     if (mo >= 7 && mo <= 9) return { g: 0.55, m: 1.6 };   /* 秋收：粮贱 铜铁贵 */
     if (mo >= 10) return { g: 1.7, m: 0.55 };             /* 冬季：粮贵 铜铁贱 */
@@ -9526,7 +9532,15 @@ var BOTS = [
       st5: "The battle line wavers; a gap is about to be torn open!",
       skAct: "{n} unleashes 【{s}】 — the ranks are thrown into chaos!",
       skCri: "{n} strikes a mortal opening — a devastating blow!",
-      remT: "left {n}", storyT: "— Round {n} —"
+      remT: "left {n}", storyT: "— Round {n} —",
+      mapT: "City Map", popT: "Population", houseT: "Households", palaceT: "Palace", wallT: "City Wall",
+      governT: "Hall Governance", governHint: "Appointments, policy and tax are all handled in the Palace",
+      bldOptT: "Upgrade", demT: "Demolish", demOk: "{n} demolished — some materials refunded",
+      vacT: "Vacant Lot", pickBld: "Build on this lot (mind the footprint)", noFit: "Not enough room at this spot — try another",
+      bldNew: "Build", bldNewOk: "{n} built (Lv.1)", bldOnce: "This building already exists in the city",
+      wallUpT: "Reinforce", wallUpOk: "Wall reinforced: height +1, now faced with {m}", wallMax: "Wall already at maximum reinforcement",
+      mobsT: "Outlaws Around the City", mobHint: "Click an outlaw camp outside the walls to scout it, then organize a squad to hunt it down",
+      mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month"
     },
     zh: {
       homeT: "主页", lordT: "君主", cityT: "城池内政", officeT: "政治任命", buildT: "城内建设", polT: "政策调整",
@@ -9541,7 +9555,15 @@ var BOTS = [
       st5: "敌阵摇摇欲坠，破敌就在此刻！",
       skAct: "{n} 挺枪跃马，发动【{s}】，千军辟易！",
       skCri: "{n} 招觑得真切，一击致命，威力倍增！",
-      remT: "余 {n}", storyT: "— 第 {n} 回合 —"
+      remT: "余 {n}", storyT: "— 第 {n} 回合 —",
+      mapT: "城池图", popT: "人口", houseT: "户数", palaceT: "大殿", wallT: "城墙",
+      governT: "大殿理政", governHint: "政治任命、政策调整与收税均在点开大殿后办理",
+      bldOptT: "升级", demT: "铲除", demOk: "{n} 已铲除，返还部分材料",
+      vacT: "空地", pickBld: "在此空地建造（注意占地格数）", noFit: "此处空地不够，换一块试试",
+      bldNew: "建造", bldNewOk: "{n} 建成（Lv.1）", bldOnce: "城内已有同类建筑",
+      wallUpT: "加固", wallUpOk: "城墙加固完成：高度 +1，外观更新为{m}", wallMax: "城墙已达最高加固",
+      mobsT: "周边野怪", mobHint: "点击城外的贼寇查看情报，组织麾下武将出征讨伐",
+      mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没"
     },
     ja: {
       homeT: "ホーム", lordT: "君主", cityT: "都市内政", officeT: "登用・任命", buildT: "都市建設", polT: "政策",
@@ -9556,7 +9578,15 @@ var BOTS = [
       st5: "敵陣揺らめく、勝機は今！",
       skAct: "{n} が【{s}】を発動、千軍も退く！",
       skCri: "{n} の一撃、急所を突き威力倍増！",
-      remT: "残り {n}", storyT: "— 第 {n} 回合 —"
+      remT: "残り {n}", storyT: "— 第 {n} 回合 —",
+      mapT: "城池図", popT: "人口", houseT: "戸数", palaceT: "大殿", wallT: "城壁",
+      governT: "大殿執務", governHint: "任命・政策・徴税はいずれも大殿で行う",
+      bldOptT: "昇級", demT: "取り壊し", demOk: "{n} を取り壊し、資材を一部返還",
+      vacT: "空き地", pickBld: "ここに建設（占地マスに注意）", noFit: "ここは空きが足りない、別の場所へ",
+      bldNew: "建設", bldNewOk: "{n} を建設（Lv.1）", bldOnce: "同種の建物はすでにある",
+      wallUpT: "増強", wallUpOk: "城壁を増強：高さ +1、外観は{m}に更新", wallMax: "城壁は最大増強済み",
+      mobsT: "周辺の賊", mobHint: "城外の賊をクリックして情報を探り、配下の武将で部隊を組んで討伐せよ",
+      mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも"
     }
   };
   function gt(k, v) {
@@ -9600,6 +9630,9 @@ var BOTS = [
     BUILDINGS.forEach(function (x) { if (b[x.k] == null) b[x.k] = 1; });
     if (!u.bat.city.pol) u.bat.city.pol = "farm";
     if (!u.bat.off) u.bat.off = {};
+    if (!u.bat.city.plots || !u.bat.city.plots.length) u.bat.city.plots = defaultPlots();
+    if (u.bat.city.wallMat == null) u.bat.city.wallMat = 0;
+    if (u.bat.city.incGm == null) u.bat.city.incGm = -1;
     return u.bat.city;
   }
   function polFac(u) {
@@ -9638,7 +9671,75 @@ var BOTS = [
     var base = 400 + 120 * (c.bld.market || 0) + 80 * (c.bld.wall || 0);
     return Math.round(base * (1 + offEff(u, "sz")) * (c.pol === "trade" ? 1.15 : 1));
   }
-  function canTax(u) { var c = ensureCity(u); return (u.bat.gm || 0) !== c.taxGm; }
+  function canTax(u) { var c = ensureCity(u); return gMonth(u) !== c.taxGm; }
+  /* ================= V24 城池图：格子建造 / 城墙加固 / 周边野怪 ================= */
+  var GRID_W = 10, GRID_H = 6;
+  var PALACE_B = { k: "palace", n: "大殿", nen: "大殿", en: "Palace", icon: "🏛" };
+  function mfoot(k) { return k === "palace" ? { w: 2, h: 2 } : k === "market" ? { w: 3, h: 3 } : { w: 2, h: 1 }; }
+  function defaultPlots() {
+    return [{ k: "palace", x: 4, y: 2 }, { k: "market", x: 0, y: 2 }, { k: "farm", x: 0, y: 0 }, { k: "lumber", x: 3, y: 0 }, { k: "smith", x: 6, y: 0 }, { k: "camp", x: 8, y: 0 }];
+  }
+  function wallMatIdx(lv) { return Math.max(0, Math.min(4, Math.floor((Math.min(lv, 10) - 1) / 2))); }
+  function wallMatName(lv) {
+    var l = lang();
+    var M = l === "zh" ? ["夯土", "包木", "垒石", "包铜", "镶铁"] : l === "ja" ? ["土壁", "木包", "石積", "銅包", "鉄扉"] : ["Rammed Earth", "Timber", "Stone", "Bronze", "Iron"];
+    return M[wallMatIdx(lv)];
+  }
+  function wallColor(lv) { return ["#8a7a5a", "#8a6d3b", "#7d8590", "#c98a4b", "#aab3bd"][wallMatIdx(lv)]; }
+  function wallCost(u) {
+    var lv = ensureCity(u).bld.wall || 1, m = 1 - offEff(u, "jz");
+    var out = { wood: Math.round(450 * lv * m), coin: Math.round(350 * lv * m) };
+    if (lv >= 5) out.iron = Math.round(60 * (lv - 4) * m);
+    if (lv >= 7) out.copper = Math.round(80 * (lv - 6) * m);
+    return out;
+  }
+  var MOB_TYPES = [
+    { k: "bandit", n: "山贼", nen: "山賊", en: "Bandits", icon: "🗡" },
+    { k: "huang", n: "黄巾余党", nen: "黄巾残党", en: "Yellow-Turban Remnants", icon: "🟡" },
+    { k: "pirate", n: "水贼海盗", nen: "水賊海賊", en: "River Pirates", icon: "⛵" },
+    { k: "qiang", n: "羌兵游骑", nen: "羌兵遊騎", en: "Qiang Riders", icon: "🏹" }
+  ];
+  function mobTypeName(t) { var l = lang(); return l === "zh" ? t.n : l === "ja" ? t.nen : t.en; }
+  var MOB_SPOTS = [[8, 4], [44, 2], [80, 4], [8, 46], [92, 46], [8, 92], [44, 96], [80, 92]];
+  function ensureMobs(u) {
+    var c = ensureCity(u), gm = gMonth(u);
+    if (!c.mobs || c.mobsGm !== gm) {
+      var pool = stagePool(), mobs = [];
+      var cnt = 3 + hashNum((u.bat.spawn || "洛阳") + "mc" + gm) % 3;
+      var usedSpots = {};
+      for (var i = 0; i < cnt; i++) {
+        var s = hashNum("mb" + gm + "_" + i);
+        var ty = MOB_TYPES[hashNum("mt" + gm + "_" + i) % MOB_TYPES.length];
+        var lv = Math.max(1, Math.min(30, 1 + Math.floor(gm / 2) + (s % 3)));
+        var boss = pool[Math.min(pool.length - 1, Math.floor(lv * 2.4) + (s % 7))];
+        var si = (s >> 4) % MOB_SPOTS.length;
+        while (usedSpots[si]) si = (si + 1) % MOB_SPOTS.length;
+        usedSpots[si] = 1;
+        mobs.push({ i: i, t: ty.k, lv: lv, gid: boss.id, troop: 400 + lv * 260, spot: MOB_SPOTS[si], dead: false });
+      }
+      c.mobs = mobs; c.mobsGm = gm;
+    }
+    return c.mobs;
+  }
+  function mobEnemies(u, mob) {
+    var arr = [{ gid: mob.gid, lv: mob.lv, m: 0.9 }], pool = stagePool();
+    var bi = Math.max(0, pool.map(function (x) { return x.id; }).indexOf(mob.gid));
+    var n = Math.min(2, Math.floor(mob.lv / 6));
+    for (var i = 0; i < n; i++) { var j = Math.max(0, bi - 1 - i); arr.push({ gid: pool[j].id, lv: Math.max(1, mob.lv - 1), m: 0.75 }); }
+    return arr;
+  }
+  function cityPop(u) {
+    var c = ensureCity(u), cityName = u.bat.spawn || "洛阳";
+    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
+    var base = (cd ? cd.pop : 20) * 10000;
+    return Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0)));
+  }
+  /* 月份推进时结算内政产出（战斗推进或实时整点推进，先到先结算） */
+  function tickMonth(u) {
+    var c = ensureCity(u), gm = gMonth(u);
+    if (c.incGm !== gm) { c.incGm = gm; return cityMonthly(u); }
+    return null;
+  }
   /* 战报剧情：每回合开场白 + 技能发动描写 */
   var STORY = ["st1", "st2", "st3", "st4", "st5"];
 
@@ -9777,10 +9878,10 @@ var BOTS = [
     var out = { exp: 0, pts: 0, ups: [], shards: [], eq: null, mt: null, sp: 0, loot: { rice: 0, copper: 0, iron: 0, coin: 0 } };
     var squad = BATUI.squad.map(function (id) { return (u.cards || []).filter(function (c) { return c.id === id; })[0]; }).filter(Boolean);
     var baseExp = 40 + stage * 18;
-    /* 游戏时间：每打一仗推进 1 个月（184年1月 → 220年12月循环） */
-    u.bat.gm = (((u.bat.gm || 0) + 1) % 444);
-    /* V23 内政：月份推进时城内建筑按等级自动产出 */
-    var monthInc = cityMonthly(u);
+    /* 游戏时间：每打一仗推进 1 个月（184年1月 → 220年12月循环）；实时每 1 小时也 +1（gMonth） */
+    u.bat.gmBase = (u.bat.gmBase || 0) + 1;
+    /* V23 内政：月份推进时城内建筑按等级自动产出（本月未结算才结算） */
+    var monthInc = tickMonth(u);
     /* 战后兵力回写：现役士兵 = 战损剩余，需回游戏空间补员 */
     if (res && res.units && res.units.A) res.units.A.forEach(function (un, i) { var c = squad[i]; if (c && un) c.sold = Math.max(0, un.troop); });
     if (kind === "stage") {
@@ -9832,6 +9933,18 @@ var BOTS = [
         out.loot.rice = 250 + Math.floor(Math.random() * 120);
         out.loot.copper = 40 + Math.floor(Math.random() * 30); out.loot.iron = 40 + Math.floor(Math.random() * 30);
       } else { out.loot.coin = 60; out.loot.rice = 30; out.loot.wood = 12; }
+    } else if (kind === "monster") {
+      /* V24 野怪讨伐：stage 传入野怪等级 */
+      out.exp = res.win ? 30 + stage * 16 : Math.round((30 + stage * 16) * 0.3);
+      out.pts = res.win ? 8 + stage * 6 : 2;
+      if (res.win) {
+        out.loot.coin = 220 + stage * 80 + Math.floor(Math.random() * Math.max(1, stage * 30));
+        out.loot.rice = 120 + stage * 36 + Math.floor(Math.random() * Math.max(1, stage * 12));
+        out.loot.wood = 30 + stage * 8;
+        out.loot.copper = 18 + stage * 8; out.loot.iron = 18 + stage * 8;
+        var sgM = squad.length ? squad[Math.floor(Math.random() * squad.length)].gid : stagePool()[0].id;
+        addShards(u, sgM, 1); out.shards.push(gById(sgM).name);
+      } else { out.loot.coin = 30 + stage * 6; out.loot.rice = 15 + stage * 3; }
     }
     /* V23 加成：校尉（出战经验 +10%）与 强兵政策（经验 +10%） */
     if (out.exp) { var xwF = 1 + offEff(u, "xw") + (ensureCity(u).pol === "war" ? 0.10 : 0); if (xwF > 1) out.exp = Math.round(out.exp * xwF); }
@@ -9847,28 +9960,20 @@ var BOTS = [
   function batHero(u) {
     var cleared = Object.keys(u.bat.hist).length;
     ensureRes(u);
-    var gd = gameDate(u.bat.gm || 0);
-    return '<div class="sg-hero"><div class="sg-hero-row"><div class="grow"><h2>' + T("bTitle") + "</h2><p>" + T("bSub") + "</p>" +
+    var gd = gameDate(gMonth(u));
+    BATUI._lastGm = gMonth(u);
+    var dateBadge = '<span id="sgDateBadge" style="position:absolute;right:0;top:2px;font-size:12px;color:#e8c988;border:1px solid #c9a45c66;border-radius:8px;padding:4px 10px;background:rgba(201,164,92,.08);white-space:nowrap;z-index:2">📅 ' + T("gsDate", { y: gd.y, m: gd.mo }) + "</span>";
+    return '<div class="sg-hero"><div class="sg-hero-row" style="position:relative"><div class="grow"><h2>' + T("bTitle") + "</h2><p>" + T("bSub") + "</p>" +
       '<div class="sg-note" style="margin-top:6px">' + (u.bat.spawn ? "⚑ " + T("spawnOk", { n: esc(u.bat.spawn) }) : "") +
       "　·　" + T("stageTitle") + " " + cleared + "/30　·　" + T("spPool") + " <b>" + (u.bat.sp || 0) + "</b>　·　" + T("points") + " <b>" + fmt(u.points) + "</b></div>" +
-      '<div class="sg-note" style="margin-top:3px">📅 ' + T("gsDate", { y: gd.y, m: gd.mo }) +
-      "　·　🌾 " + fmt(u.res.rice) + "　·　🪵 " + fmt(u.res.wood || 0) + "　·　⛏ " + fmt(u.res.copper) + "　·　🔩 " + fmt(u.res.iron) + "　·　🪙 " + fmt(u.res.coin) +
-      '　<a href="#/me" style="color:#e8c988">' + T("gsT") + " ›</a></div></div></div></div>";
+      '<div class="sg-note" style="margin-top:3px">🌾 ' + fmt(u.res.rice) + "　·　🪵 " + fmt(u.res.wood || 0) + "　·　⛏ " + fmt(u.res.copper) + "　·　🔩 " + fmt(u.res.iron) + "　·　🪙 " + fmt(u.res.coin) +
+      '　<a href="#/me" style="color:#e8c988">' + T("gsT") + " ›</a></div>" + dateBadge + "</div></div></div>";
   }
   function renderBattle() {
     var u = me(); if (!u) return "";
     ensureBat(u);
     var html = '<div class="sg-page">' + batHero(u);
-    if (!u.bat.spawn) {
-      var CD = (window.__SGAtlas && window.__SGAtlas.cityData) || [];
-      var cities = CD.filter(function (c) { return c.lv === "都城" || c.lv === "州治"; }).slice(0, 12);
-      html += '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("pickSpawn") + "</h3></div>" +
-        '<div class="sg-note" style="margin-bottom:10px">' + T("spawnDesc") + "</div>" +
-        '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
-        cities.map(function (c) { return '<button class="sgbtn sm" data-bat="spawn" data-n="' + esc(c.n) + '" style="border-color:' + facColor(c.f) + '">' + esc(c.n) + ' <small style="opacity:.7">' + esc(c.lv) + "</small></button>"; }).join("") +
-        "</div></div></div>";
-      return html;
-    }
+    if (!u.bat.spawn) { u.bat.spawn = "洛阳"; save(); }
     /* 新手引导：无卡先送一张 */
     if (!(u.cards || []).length) {
       html += '<div class="sg-panel" style="text-align:center;padding:30px 20px"><div class="sg-muted" style="margin-bottom:14px">' + T("tut1") + "</div>" +
@@ -9896,7 +10001,187 @@ var BOTS = [
       '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 11px">🔩 ' + fmt(u.res.iron) + "</span>" +
       '<span style="border:1px solid #c9a45c66;border-radius:999px;padding:4px 11px;color:#e8c988">🪙 ' + fmt(u.res.coin) + "</span></div>";
   }
+  /* ---------- V24 洛阳城池图（游戏主页） ---------- */
+  function cityMapHTML(u) {
+    var c = ensureCity(u), plots = c.plots || [];
+    var occ = {};
+    plots.forEach(function (p) { var f = mfoot(p.k); for (var dx = 0; dx < f.w; dx++) for (var dy = 0; dy < f.h; dy++) occ[(p.x + dx) + "," + (p.y + dy)] = p.k; });
+    var cells = "";
+    for (var y = 0; y < GRID_H; y++) for (var x = 0; x < GRID_W; x++) {
+      var k = occ[x + "," + y];
+      if (!k) { cells += '<div><button class="sg-citye" data-bat="cell" data-x="' + x + '" data-y="' + y + '" title="' + gt("vacT") + '">＋</button></div>'; continue; }
+      var f = mfoot(k);
+      var isAnchor = plots.some(function (p) { return p.k === k && p.x === x && p.y === y; });
+      if (!isAnchor) continue;
+      var b = k === "palace" ? PALACE_B : BUILDINGS.filter(function (b2) { return b2.k === k; })[0];
+      if (!b) continue;
+      var lv = c.bld[k] || 0;
+      cells += '<div style="grid-column:' + (x + 1) + ' / span ' + f.w + ';grid-row:' + (y + 1) + ' / span ' + f.h + '">' +
+        '<button class="sg-cityb' + (k === "palace" ? " sg-palace" : "") + '" data-bat="bld" data-k="' + k + '">' +
+        '<span class="ic">' + b.icon + '</span><span class="nm">' + bldName(b) + '</span><span class="lv">' + (k === "palace" ? (lang() === "en" ? "Govern" : lang() === "ja" ? "執務" : "理政") : "Lv." + lv) + "</span></button></div>";
+    }
+    var wl = Math.min(10, c.bld.wall || 1), col = wallColor(wl);
+    var sh = [];
+    for (var i = 1; i <= wl; i++) sh.push("0 0 0 " + (i * 2) + "px " + (i % 2 ? col : "rgba(0,0,0,.30)"));
+    var mobs = ensureMobs(u);
+    var mobBadges = mobs.map(function (m) {
+      var ty = MOB_TYPES.filter(function (t) { return t.k === m.t; })[0] || MOB_TYPES[0];
+      var g = gById(m.gid);
+      return '<span class="sg-mob' + (m.dead ? " dead" : "") + '" data-bat="mob" data-i="' + m.i + '" style="left:' + m.spot[0] + '%;top:' + m.spot[1] + '%">' +
+        ty.icon + " " + mobTypeName(ty) + " Lv." + m.lv + '<i style="font-style:normal;opacity:.7">（' + (g ? esc(g.name) : "贼首") + "）</i>" + (m.dead ? " ☠" : "") + "</span>";
+    }).join("");
+    return '<div style="position:relative;margin:18px 6px 8px">' +
+      '<div style="position:relative;border:' + (4 + wl) + 'px solid ' + col + ';border-radius:8px;box-shadow:' + sh.join(",") + ';padding:10px;background:linear-gradient(155deg,rgba(138,109,59,.14),rgba(0,0,0,.10))">' +
+      '<div style="display:grid;grid-template-columns:repeat(' + GRID_W + ',1fr);grid-auto-rows:46px;gap:4px">' + cells + "</div>" +
+      mobBadges + "</div>" +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn sm" data-bat="wall">🏯 ' + gt("wallT") + " · Lv." + wl + " · " + wallMatName(wl) + "</button></div>" +
+      "</div>";
+  }
+  function palaceOpen() {
+    var u = me(); if (!u) return;
+    ensureCity(u);
+    var c = u.bat.city, cards = u.cards || [], inc = cityPreview(u);
+    var offRows = OFFICES.map(function (o) {
+      var cid = u.bat.off[o.k], holder = null, hg = null;
+      if (cid) holder = cards.filter(function (x) { return x.id === cid; })[0];
+      if (holder) hg = gById(holder.gid);
+      return '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">' + esc(offName(o).slice(0, 1)) + "</span>" +
+        "<span><b>" + esc(offName(o)) + "</b> <small style='color:var(--ink-3)'>" + offDesc(o) + "（" + o.stN + "）</small><br>" +
+        "<small>" + (hg ? '<b style="color:#e8c988">' + esc(hg.name) + "</b> Lv." + cardLv(holder) : '<span style="color:var(--ink-3)">' + gt("offEmpty") + "</span>") + "</small></span>" +
+        '<span class="sp"></span><button class="sgbtn sm' + (holder ? " ghost" : " primary") + '" data-bat="office" data-k="' + o.k + '">' + gt("appointT", { n: "" }).trim() + "</button></div>";
+    }).join("");
+    var polRow = '<div class="sgchips" style="margin:6px 0 10px">' + POLICIES.map(function (p) {
+      var on = c.pol === p.k;
+      return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="pol-set" data-k="' + p.k + '" title="' + esc(polDesc(p)) + '">' + polName(p) + (on ? " ✓" : "") + "</button>";
+    }).join("") + "</div>";
+    var taxOk = canTax(u);
+    var taxHTML = '<div class="sg-rankline"><span class="i" style="background:#c9a45c;color:#10131a">税</span>' +
+      "<span><b>" + gt("taxBtn") + "</b> <small style='color:var(--ink-3)'>" + gt("taxGain", { n: fmt(taxAmount(u)) }) + "</small></span><span class=\"sp\"></span>" +
+      '<button class="sgbtn sm primary" data-bat="tax"' + (taxOk ? "" : " disabled") + ">" + gt("taxBtn") + "</button>" +
+      (taxOk ? "" : '<small style="color:var(--ink-3)">' + gt("taxCd") + "</small>") + "</div>" +
+      '<div class="sg-note" style="margin:6px 0 4px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) + "</div>";
+    modal("<h3>🏛 " + gt("governT") + " · " + esc(u.bat.spawn || "洛阳") + "</h3>" +
+      '<div class="sg-note" style="margin-bottom:8px">' + gt("governHint") + "</div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>🎖 ' + gt("officeT") + "</h3></div>" + offRows +
+      '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>📜 ' + gt("polT") + "</h3></div>" + polRow +
+      '<div class="sg-panel-hd" style="margin-top:8px"><h3><i>·</i>🪙 ' + gt("taxBtn") + "</h3></div>" + taxHTML +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
+  }
+  function bldOpen(k) {
+    var u = me(); if (!u) return;
+    if (k === "palace") { palaceOpen(); return; }
+    var b = BUILDINGS.filter(function (x) { return x.k === k; })[0];
+    if (!b) return;
+    var c = ensureCity(u), lv = c.bld[k] || 0, max = lv >= 10;
+    var cost = bldCost(u, k);
+    var costTxt = Object.keys(cost).map(function (rk) {
+      return (rk === "wood" ? "🪵" : rk === "coin" ? "🪙" : rk === "rice" ? "🌾" : "🔩") + fmt(cost[rk]);
+    }).join(" ");
+    var can = !max && Object.keys(cost).every(function (rk) { return (u.res[rk] || 0) >= cost[rk]; });
+    var incTxt = Object.keys(b.out || {}).map(function (rk) {
+      return (rk === "rice" ? "🌾" : rk === "wood" ? "🪵" : rk === "iron" ? "🔩" : "🪙") + " +" + fmt((b.out[rk] || 0) * lv);
+    }).join(" · ");
+    modal("<h3>" + b.icon + " " + bldName(b) + " · Lv." + lv + "</h3>" +
+      '<div class="sg-note" style="margin-bottom:6px">' + bldDesc(b) + (incTxt ? "　·　" + gt("incomeT") + " " + incTxt : "") + "</div>" +
+      '<div class="sg-rankline"><span>' + (max ? gt("bldMax") : costTxt) + '</span><span class="sp"></span>' +
+      '<button class="sgbtn sm primary" data-bat="build-up" data-k="' + k + '"' + (can ? "" : " disabled") + ">" + (max ? gt("bldMax") : gt("bldOptT")) + "</button>" +
+      '<button class="sgbtn sm ghost" data-bat="demolish" data-k="' + k + '">' + gt("demT") + "</button></div>" +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  function cellOpen(x, y) {
+    var u = me(); if (!u) return;
+    var c = ensureCity(u), plots = c.plots || [];
+    var rows = BUILDINGS.filter(function (b) { return b.k !== "wall"; }).map(function (b) {
+      var f = mfoot(b.k);
+      var fit = x + f.w <= GRID_W && y + f.h <= GRID_H;
+      if (fit) for (var dx = 0; dx < f.w && fit; dx++) for (var dy = 0; dy < f.h && fit; dy++) {
+        if (plots.some(function (p) { var pf = mfoot(p.k); return x + dx >= p.x && x + dx < p.x + pf.w && y + dy >= p.y && y + dy < p.y + pf.h; })) fit = false;
+      }
+      var has = plots.some(function (p) { return p.k === b.k; });
+      var cost = bldCost(u, b.k);
+      var costTxt = Object.keys(cost).map(function (rk) {
+        return (rk === "wood" ? "🪵" : rk === "coin" ? "🪙" : rk === "rice" ? "🌾" : "🔩") + fmt(cost[rk]);
+      }).join(" ");
+      return '<div class="sg-rankline"><span class="i" style="background:#8a6d3b;color:#f5e6c4">' + b.icon + "</span>" +
+        "<span><b>" + bldName(b) + "</b> <small style='color:var(--ink-3)'>" + f.w + "×" + f.h + "格 · " + bldDesc(b) + "</small></span><span class=\"sp\"></span>" +
+        '<small style="color:var(--ink-3)">' + costTxt + "</small>　" +
+        '<button class="sgbtn sm primary" data-bat="build-new" data-k="' + b.k + '" data-x="' + x + '" data-y="' + y + '"' + (fit && !has ? "" : " disabled") + ">" + gt("bldNew") + "</button></div>";
+    }).join("");
+    modal("<h3>🧱 " + gt("vacT") + "（" + (x + 1) + "," + (y + 1) + "）</h3>" +
+      '<div class="sg-note" style="margin-bottom:8px">' + gt("pickBld") + "</div>" + rows +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  function wallOpen() {
+    var u = me(); if (!u) return;
+    var c = ensureCity(u), lv = Math.min(10, c.bld.wall || 1), cost = wallCost(u), max = lv >= 10;
+    var costTxt = Object.keys(cost).map(function (rk) {
+      return (rk === "wood" ? "🪵" : rk === "coin" ? "🪙" : rk === "iron" ? "🔩" : "⛏") + fmt(cost[rk]);
+    }).join(" ");
+    var can = !max && Object.keys(cost).every(function (rk) { return (u.res[rk] || 0) >= cost[rk]; });
+    modal("<h3>🏯 " + gt("wallT") + " · Lv." + lv + " · " + wallMatName(lv) + "</h3>" +
+      '<div class="sg-note" style="margin-bottom:8px">' + bldDesc(BUILDINGS.filter(function (x) { return x.k === "wall"; })[0]) + "</div>" +
+      '<div class="sg-rankline"><span>' + (max ? gt("bldMax") : costTxt) + '</span><span class="sp"></span>' +
+      '<button class="sgbtn sm primary" data-bat="wall-up"' + (can ? "" : " disabled") + ">" + (max ? gt("bldMax") : gt("wallUpT")) + "</button></div>" +
+      '<div class="sg-note" style="margin-top:8px">' + (max ? gt("wallMax") : gt("wallUpOk", { m: wallMatName(lv + 1) })) + "</div>" +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  function mobOpen(idx) {
+    var u = me(); if (!u) return;
+    var mob = ensureMobs(u)[idx]; if (!mob) return;
+    BATUI._mobOpen = idx;
+    var ty = MOB_TYPES.filter(function (t) { return t.k === mob.t; })[0] || MOB_TYPES[0];
+    var g = gById(mob.gid);
+    var lootTxt = "🪙 " + fmt(220 + mob.lv * 80) + "± · 🌾 " + fmt(120 + mob.lv * 36) + " · 🪵 " + fmt(30 + mob.lv * 8) + " · ⛏🔩 " + fmt(18 + mob.lv * 8) + " · " + T("bagShard") + " ×1";
+    var cards = u.cards || [];
+    var chosen = BATUI.squad.filter(function (id) { return cards.some(function (c) { return c.id === id; }); });
+    BATUI.squad = chosen;
+    var sqHTML = cards.slice(0, 24).map(function (c) {
+      var gg = gById(c.gid); if (!gg) return "";
+      var on = chosen.indexOf(c.id) >= 0;
+      return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="mobsq" data-id="' + c.id + '">' + esc(gg.name) + " Lv." + cardLv(c) + (on ? " ✓" : "") + "</button>";
+    }).join("");
+    modal("<h3>" + ty.icon + " " + mobTypeName(ty) + " · Lv." + mob.lv + (mob.dead ? " ☠" : "") + "</h3>" +
+      '<div class="sg-rankline"><span class="i" style="background:#7a3d3d;color:#ffd9d9">贼</span>' +
+      "<span><b>" + gt("mobLead") + "：" + (g ? esc(g.name) : "贼首") + "</b> <small style='color:var(--ink-3)'>" + (g ? tierLabel(TIERS[tierOf(g)]) : "") + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">⚔</span><span><b>' + gt("mobTroop") + "：" + fmt(mob.troop) + "</b></span></div>" +
+      '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>' + T("squad") + "（" + chosen.length + "/3）</h3></div>" +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">' + sqHTML + "</div>" +
+      '<div class="sg-note" style="margin:6px 0">' + gt("mobLoot") + "：" + lootTxt + "</div>" +
+      (mob.dead ? '<div class="sg-note" style="color:#e07f7f">' + gt("mobGone") + "</div>" :
+        '<div style="text-align:center;margin-top:12px"><button class="sgbtn primary" data-bat="mob-fight" data-i="' + idx + '">⚔ ' + gt("mobFight") + "</button> " +
+        '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>"));
+  }
   function batHomeTab(u) {
+    ensureCity(u); ensureMobs(u);
+    var c = u.bat.city, cityName = u.bat.spawn || "洛阳";
+    var pop = cityPop(u), houses = Math.round(pop / 5);
+    var cards = u.cards || [];
+    /* 出征入口 */
+    var quick = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">' +
+      '<button class="sgbtn primary" data-bat="tab" data-v="stage">⚔ ' + gt("gotoStage") + "</button>" +
+      '<button class="sgbtn" data-bat="tab" data-v="pvp">🏹 ' + T("pvp") + "</button>" +
+      '<button class="sgbtn" data-bat="tab" data-v="shop">🛒 ' + T("shopT") + "</button>" +
+      '<button class="sgbtn" data-bat="tab" data-v="bag">🎒 ' + T("bagT") + "</button>" +
+      '<a class="sgbtn" href="#/me" style="text-decoration:none">👑 ' + gt("gotoGs") + "</a></div>";
+    return quick +
+      '<div class="sg-panel-hd"><h3><i>·</i>🏙 ' + gt("mapT") + " · " + esc(cityName) + "</h3><span class=\"sp\"></span>" +
+      '<small style="color:var(--ink-3)">' + gt("underling", { n: cards.length }) + "</small></div>" +
+      '<div class="sg-note" style="margin:8px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b></div>" +
+      '<div style="margin:6px 0 0">' + homeResBar(u) + "</div>" +
+      cityMapHTML(u) +
+      '<div class="sg-note">' + gt("mobsT") + "：" + gt("mobHint") + "</div>" +
+      '<style>.sg-cityb{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:linear-gradient(150deg,#3a3122,#2b2418);border:1px solid #8a6d3b;border-radius:6px;color:#f5e6c4;cursor:pointer;font-size:10px;padding:2px;transition:.15s}' +
+      '.sg-cityb:hover{border-color:var(--gold);box-shadow:0 4px 14px rgba(0,0,0,.4)}' +
+      '.sg-cityb .ic{font-size:17px;line-height:1.1}.sg-cityb .nm{font-weight:700;letter-spacing:.08em}.sg-cityb .lv{font-size:9px;color:#e8c988}' +
+      '.sg-palace{background:linear-gradient(150deg,#4a3c1e,#332a12);border-color:#c9a45c}' +
+      '.sg-citye{width:100%;height:100%;border:1px dashed var(--line-2);border-radius:6px;background:transparent;color:var(--ink-3);cursor:pointer;font-size:14px;opacity:.5}' +
+      '.sg-citye:hover{opacity:1;border-color:var(--gold);color:var(--gold-2)}' +
+      '.sg-mob{position:absolute;transform:translate(-50%,-50%);border:1px solid #b05555;border-radius:999px;background:rgba(120,40,40,.32);color:#ffd9d9;font-size:11px;padding:3px 10px;cursor:pointer;white-space:nowrap;z-index:3;transition:.15s}' +
+      '.sg-mob:hover{background:rgba(150,50,50,.5);border-color:#e07f7f}' +
+      '.sg-mob.dead{opacity:.35;filter:grayscale(1)}' +
+      '@media(max-width:640px){.sg-mob{font-size:9px;padding:2px 7px}}</style>';
+  }
+  function batHomeTabLegacy(u) {
     ensureCity(u);
     var c = u.bat.city, gd = gameDate(u.bat.gm || 0);
     var inc = cityPreview(u);
@@ -10105,6 +10390,12 @@ var BOTS = [
     if (kind === "s") return { kind: "stage", stage: +num, squad: squad, enemies: stageEnemies(+num), foe: STAGE_NAMES[+num - 1] };
     if (kind === "w") return { kind: "sweep", stage: +num, squad: squad, enemies: stageEnemies(+num), foe: STAGE_NAMES[+num - 1] };
     if (kind === "p") { var f = pvpFoes(u)[+num] || pvpFoes(u)[0]; BATUI.pvpIdx = +num; return { kind: "pvp", stage: 1, squad: squad, enemies: f.cards, foe: f.name }; }
+    if (kind === "m") {
+      var mobs = ensureMobs(u), mob = mobs[+num] || mobs[0];
+      if (!mob) return null;
+      var mty = MOB_TYPES.filter(function (t) { return t.k === mob.t; })[0] || MOB_TYPES[0];
+      return { kind: "monster", stage: mob.lv, squad: squad, enemies: mobEnemies(u, mob), foe: mobTypeName(mty), mob: mob };
+    }
     return null;
   }
   function renderFight(key) {
@@ -10348,7 +10639,7 @@ var BOTS = [
     var g = gById(c.gid); if (!g) return "";
     var tr = TIERS[tierOf(g)];
     var lv = cardLv(c), cap = troopOfCard(c, g), sold = (c.sold == null ? cap : Math.min(c.sold, cap));
-    var gd = gameDate(u.bat.gm || 0), mp = marketPrices(u.bat.gm || 0);
+    var gd = gameDate(gMonth(u)), mp = marketPrices(gMonth(u));
     var spa = c.spa || {}, spLeft = u.bat.sp || 0;
     var art = "";
     try { art = window.__SGAtlas && window.__SGAtlas.artFor ? window.__SGAtlas.artFor(g) : ""; } catch (e) {}
@@ -10461,7 +10752,7 @@ var BOTS = [
       }
       case "buy": case "sell": {
         var rkey = t.getAttribute("data-r"), n = +t.getAttribute("data-n") || 0;
-        var mp = marketPrices(u.bat.gm || 0), price = mp[rkey];
+        var mp = marketPrices(gMonth(u)), price = mp[rkey];
         if (!price || !n) return;
         if (act === "buy") {
           var cost = Math.round(price * n);
@@ -10493,6 +10784,61 @@ var BOTS = [
     switch (act) {
       /* ---------- V23 内政 ---------- */
       case "office": appointOpen(t.getAttribute("data-k")); return;
+      /* ---------- V24 城池图 ---------- */
+      case "bld": bldOpen(t.getAttribute("data-k")); return;
+      case "cell": cellOpen(+t.getAttribute("data-x"), +t.getAttribute("data-y")); return;
+      case "wall": wallOpen(); return;
+      case "wall-up": {
+        ensureCity(u);
+        var cw = u.bat.city, lvw = cw.bld.wall || 1;
+        if (lvw >= 10) return toast(gt("wallMax"), "err");
+        var costW = wallCost(u), lackW = Object.keys(costW).filter(function (rk) { return (u.res[rk] || 0) < costW[rk]; });
+        if (lackW.length) return toast(gt("bldNoRes"), "err");
+        Object.keys(costW).forEach(function (rk) { u.res[rk] -= costW[rk]; });
+        cw.bld.wall = lvw + 1;
+        save(); toast(gt("wallUpOk", { m: wallMatName(lvw + 1) }), "ok"); closeModal(); refreshBattle(); return;
+      }
+      case "build-new": {
+        ensureCity(u);
+        var nk = t.getAttribute("data-k"), nx = +t.getAttribute("data-x"), ny = +t.getAttribute("data-y");
+        var nb = BUILDINGS.filter(function (x) { return x.k === nk; })[0]; if (!nb) return;
+        var cc = u.bat.city;
+        if (cc.plots.some(function (p) { return p.k === nk; })) return toast(gt("bldOnce"), "err");
+        var fn2 = mfoot(nk);
+        if (nx + fn2.w > GRID_W || ny + fn2.h > GRID_H) return toast(gt("noFit"), "err");
+        var clash = false;
+        for (var dx2 = 0; dx2 < fn2.w && !clash; dx2++) for (var dy2 = 0; dy2 < fn2.h && !clash; dy2++) {
+          if (cc.plots.some(function (p) { var pf = mfoot(p.k); return nx + dx2 >= p.x && nx + dx2 < p.x + pf.w && ny + dy2 >= p.y && ny + dy2 < p.y + pf.h; })) clash = true;
+        }
+        if (clash) return toast(gt("noFit"), "err");
+        var costN = bldCost(u, nk), lackN = Object.keys(costN).filter(function (rk) { return (u.res[rk] || 0) < costN[rk]; });
+        if (lackN.length) return toast(gt("bldNoRes"), "err");
+        Object.keys(costN).forEach(function (rk) { u.res[rk] -= costN[rk]; });
+        cc.plots.push({ k: nk, x: nx, y: ny });
+        cc.bld[nk] = Math.max(1, cc.bld[nk] || 0);
+        save(); toast(gt("bldNewOk", { n: bldName(nb) }), "ok"); closeModal(); refreshBattle(); return;
+      }
+      case "demolish": {
+        ensureCity(u);
+        var dk = t.getAttribute("data-k");
+        if (dk === "palace") return;
+        var db = BUILDINGS.filter(function (x) { return x.k === dk; })[0];
+        var dc = u.bat.city;
+        if (!db || !dc.plots.some(function (p) { return p.k === dk; })) return;
+        dc.plots = dc.plots.filter(function (p) { return p.k !== dk; });
+        addRes(u, { wood: Math.round(db.cost.wood * (dc.bld[dk] || 1) * 0.3), coin: Math.round(db.cost.coin * (dc.bld[dk] || 1) * 0.3) });
+        dc.bld[dk] = 0;
+        save(); toast(gt("demOk", { n: bldName(db) }), "ok"); closeModal(); refreshBattle(); return;
+      }
+      case "mob": mobOpen(+t.getAttribute("data-i")); return;
+      case "mob-fight": location.hash = "#/battle/f/m" + (+t.getAttribute("data-i") || 0); return;
+      case "mobsq": {
+        var midx = BATUI._mobOpen || 0;
+        var sq2 = BATUI.squad.indexOf(id);
+        if (sq2 >= 0) BATUI.squad.splice(sq2, 1);
+        else { if (BATUI.squad.length >= 3) return toast(T("squadDesc"), "err"); BATUI.squad.push(id); }
+        mobOpen(midx); return;
+      }
       case "appoint": {
         ensureCity(u);
         var ok2 = t.getAttribute("data-k"), nid = t.getAttribute("data-id") || "";
@@ -10526,7 +10872,7 @@ var BOTS = [
         ensureCity(u);
         if (!canTax(u)) return toast(gt("taxCd"), "err");
         var amt = taxAmount(u);
-        u.bat.city.taxGm = u.bat.gm || 0;
+        u.bat.city.taxGm = gMonth(u);
         u.res.coin = (u.res.coin || 0) + amt;
         save(); toast(gt("taxGain", { n: fmt(amt) }), "ok"); refreshBattle(); return;
       }
@@ -10552,6 +10898,7 @@ var BOTS = [
         var B = fk.enemies.map(pseudoUnit).filter(Boolean);
         var res = simulate(A, B);
         res.out = fightSettle(fk.kind, fk.stage, res, fk.foe);
+        if (fk.kind === "monster" && res.win && fk.mob) { fk.mob.dead = true; save(); }
         BATUI.res = res; setApp(renderFight(key)); playLog();
         if (res.win && fk.kind === "stage" && fk.stage <= 2 && u.bat.tut === 3 && !u._tut3Shown) {
           u._tut3Shown = true; save();
@@ -10589,6 +10936,18 @@ var BOTS = [
   /* ---------------- 初始化 ---------------- */
   DB = load();
   if (!DB) seed();
+  /* V24 实时时间：每分钟检查整点，进入新月份自动结算内政产出并刷新城池图 */
+  setInterval(function () {
+    if (/^#\/battle/.test(location.hash || "")) {
+      var u = me(); if (!u) return;
+      var nm = gMonth(u);
+      if (nm !== BATUI._lastGm) {
+        try { tickMonth(u); save(); } catch (e) {}
+        BATUI._lastGm = nm;
+        refreshBattle();
+      }
+    }
+  }, 60000);
   /* 先暴露公共句柄：init 里的 render() 依赖 window.SGSocial.handleRoute 拦截社区路由 */
   window.SGSocial = {
     handleRoute: handleRoute,
@@ -10607,7 +10966,7 @@ var BOTS = [
     _sg: function () { return SGCloud; },
     _bots: BOTS,
     _tiers: TIERS,
-    _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes }; },
+    _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes, gMonth: gMonth, ensureCity: ensureCity, ensureMobs: ensureMobs, mobEnemies: mobEnemies, cityPop: cityPop, wallCost: wallCost }; },
     tierOf: tierOf,
     tierSkill: tierSkill,
     _tick: tick,
