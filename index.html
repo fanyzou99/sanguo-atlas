@@ -1215,6 +1215,18 @@ footer.foot{
   border:1px solid rgba(217,189,118,.22);background:#0d1117}
 .sg-card-art svg{display:block;width:100%;height:100%}
 .sg-card-art .sg-cd-rar{position:absolute;right:5px;top:4px;font-size:10px;color:var(--tc,#e8c15c);text-shadow:0 1px 6px #000,0 0 10px color-mix(in srgb,var(--tc,#e8c15c) 60%, transparent);letter-spacing:.06em}
+/* V33 详情页卡图完整显示 + 装备槽 */
+#gsArt img{display:block;width:100%;height:auto}
+.gs-duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:1060px){.gs-duo{grid-template-columns:1fr!important}}
+.sg-eqslot{display:flex;align-items:center;gap:8px;border:1px solid var(--line-2,#333a46);border-radius:9px;padding:7px 9px;margin-top:7px;background:rgba(0,0,0,.14)}
+.sg-eqslot .eqi{flex:0 0 30px;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:15px;background:#2a3040;color:#c8d2dc}
+.sg-eqslot .eqb{min-width:0;flex:1;text-align:left}
+.sg-eqslot .eqb b{display:block;font-size:12.5px;color:var(--ink);letter-spacing:.03em}
+.sg-eqslot .eqb small{display:block;font-size:10.5px;color:var(--ink-3);margin-top:1px}
+.sg-eqslot .eqb small b{display:inline;font-size:10.5px}
+.sg-eqslot .equses{color:#e8a05c;font-weight:700}
+.sg-eqslot .eqperm{color:#7fce9f;font-weight:700}
 .sg-card.studio-open{outline:2px solid var(--gold-2)}
 
 /* 卡牌工坊 */
@@ -6927,7 +6939,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       permBrowse: "Browse", permPost: "Post / reply", permReview: "Review / like", permDel: "Delete", permGift: "Gift cards",
       account: "Account", signOutOk: "Signed out.", importOk: "Data imported.", importBad: "Invalid file.",
       confirmImport: "Importing replaces ALL local community data. Continue?", yes: "Yes", no: "Cancel",
-      bTitle: "Game", bSub: "Rule a city · govern the realm · lead your generals to conquer", pickSpawn: "Choose your birthplace", spawnDesc: "Every lord picks one city on the map as home base, then wages war from there", spawnOk: "Home city set: {n}", stageTitle: "Story stages", stage: "Stage {n}", stageClear: "Cleared", stageCur: "Current", stageLock: "Locked", firstReward: "First-clear reward", spGain: "+{n} skill pts", squad: "Battle squad", squadDesc: "Up to 3 generals per battle · troops grow +1000 per level", fight: "Fight", sweep: "Sweep", sweepDesc: "Sweep cleared stages: 60% exp + shards, no equipment drops", wild: "Skirmish", pvp: "Arena · Challenge Lords", shopT: "Points shop", bagT: "Bag", vs: "VS", victory: "Victory", defeat: "Defeat", rounds: "Rounds", battleLog: "Battle report", remain: "Survivors", expGain: "EXP +{n}", lvUp: "{n} reached Lv.{m}", dropEquip: "Equipment gained: {n}", dropMount: "Mount gained: {n}", dropShards: "Shards gained: {n} ×{m}", rewardPts: "Points +{n}", againF: "Fight again", backBattle: "Back to game", expFull: "EXP {a}/{b}", growTitle: "General training", starUp: "Star up", starMax: "Max star reached", starUpCost: "Costs {n} shards of the same general", starUpOk: "Star up! All stats +8%, troops +10%", shard: "Shards", shardsOf: "\"{n}\" shards {a}/{b}", synth: "Synthesize", synthOk: "Shards synthesized into card: {n}", synthNot: "Not enough shards", spPool: "Skill pts", spAlloc: "Allocate skill points ({n} left)", equipT: "Equipment", mountT: "Mount", eqHead: "Helm", eqBody: "Armor", eqLegs: "Greaves", eqWpn: "Weapon", eqAmu: "Amulet", eqBrc: "Bracelet", eqEmpty: "Empty", eqUp: "Level up", eqStar: "Star up", eqUpOk: "Equipment leveled up", eqStarOk: "Equipment star up!", eqLack: "Not enough points", wpnLock: "Weapon type mismatch (needs {n})", bagEq: "Equipment", bagMt: "Stable", bagShard: "Shard chest", wear: "Equip", takeOff: "Unequip", ride: "Ride", shopEquip: "Equip chest ({n})", shopMount: "Mount ({n})", shopShard: "Shard chest (random 6)", buy: "Redeem", buyOk: "Redeemed", tut1: "Chaos descends... Take this general card and crush the Yellow Turban remnant in Stage 1-1!", tut1Btn: "Accept the card", tut2: "First victory! A hero joins your cause —", tut2Btn: "Recruit", tut3: "Two battles, two wins! Your army is ready — the card pool now awaits!", tut3Btn: "Go draw cards", needCard: "At least 1 general required", pvpDesc: "Sparring with other lords: EXP + points", sweepOk: "Sweep complete", lvShort: "Lv.{n}", troopShort: "Troops {n}", skip: "Skip", starLvNeed: "Requires general Lv.{n}",
+      bTitle: "Game", bSub: "Rule a city · govern the realm · lead your generals to conquer", pickSpawn: "Choose your birthplace", spawnDesc: "Every lord picks one city on the map as home base, then wages war from there", spawnOk: "Home city set: {n}", stageTitle: "Story stages", stage: "Stage {n}", stageClear: "Cleared", stageCur: "Current", stageLock: "Locked", firstReward: "First-clear reward", spGain: "+{n} skill pts", squad: "Battle squad", squadDesc: "Up to 3 generals per battle · troops grow +1000 per level", fight: "Fight", sweep: "Sweep", sweepDesc: "Sweep cleared stages: 60% exp + shards, no equipment drops", wild: "Skirmish", pvp: "Arena · Challenge Lords", shopT: "Points shop", bagT: "Bag", vs: "VS", victory: "Victory", defeat: "Defeat", rounds: "Rounds", battleLog: "Battle report", remain: "Survivors", expGain: "EXP +{n}", lvUp: "{n} reached Lv.{m}", dropEquip: "Equipment gained: {n}", dropMount: "Mount gained: {n}", dropShards: "Shards gained: {n} ×{m}", rewardPts: "Points +{n}", againF: "Fight again", backBattle: "Back to game", expFull: "EXP {a}/{b}", growTitle: "General training", starUp: "Star up", starMax: "Max star reached", starUpCost: "Costs {n} shards of the same general", starUpOk: "Star up! All stats +8%, troops +10%", shard: "Shards", shardsOf: "\"{n}\" shards {a}/{b}", synth: "Synthesize", synthOk: "Shards synthesized into card: {n}", synthNot: "Not enough shards", spPool: "Skill pts", spAlloc: "Allocate skill points ({n} left)", equipT: "Equipment", mountT: "Mount", eqHead: "Helm", eqBody: "Armor", eqLegs: "Greaves", eqWpn: "Weapon", eqAmu: "Amulet", eqBrc: "Bracelet", eqEmpty: "Empty", eqUp: "Level up", eqStar: "Star up", eqUpOk: "Equipment leveled up", eqStarOk: "Equipment star up!", eqLack: "Not enough points", wpnLock: "Weapon type mismatch (needs {n})", bagEq: "Equipment", bagMt: "Stable", bagShard: "Shard chest", wear: "Equip", takeOff: "Unequip", ride: "Ride", shopEquip: "Equip chest ({n})", shopMount: "Mount ({n})", shopShard: "Shard chest (random 6)", buy: "Redeem", buyOk: "Redeemed", decoT: "General's Gear", decoNote: "Weapons (incl. fans) · mounts (incl. carts) · armour · helms", eqAdd: "Add", eqChange: "Change", eqEmptyHint: "Empty · tap to add", eqUsesLeft: "{n} battles left", eqPerm: "Permanent", eqShopT: "Equipment Shop", eqShopHi: "Premium (S/A/B/C) · points · permanent", eqShopLo: "Basic (D/E/F) · coins & ores · wears out", eqShopNote: "Basic gear loses 1 durability per battle and breaks after {n} battles; premium gear (S/A/B/C) is permanent", eqShopGo: "Buy at the Equipment Shop", eqArmN: "Armour", eqLackRes: "Not enough coins / copper / iron", wearOk: "Equipped {n}", rideOk: "Riding {n}", takeOffOk: "Removed", eqWornOut: "Worn out: {n}", tut1: "Chaos descends... Take this general card and crush the Yellow Turban remnant in Stage 1-1!", tut1Btn: "Accept the card", tut2: "First victory! A hero joins your cause —", tut2Btn: "Recruit", tut3: "Two battles, two wins! Your army is ready — the card pool now awaits!", tut3Btn: "Go draw cards", needCard: "At least 1 general required", pvpDesc: "Sparring with other lords: EXP + points", sweepOk: "Sweep complete", lvShort: "Lv.{n}", troopShort: "Troops {n}", skip: "Skip", starLvNeed: "Requires general Lv.{n}",
       gsT: "Game Space", gsLogin: "Sign in to enter the Game Space: train generals, recruit soldiers and trade at the market", gsHint: "Click a card to open its own page: allocate points · pick troop type · recruit soldiers · trade",
       gsDate: "Year {y} · Month {m}", gsMarket: "Market", gsGrain: "Grain (shi)", gsWood: "Wood (jin)", gsCopper: "Copper (jin)", gsIron: "Iron (jin)", gsCoin: "Coins",
       gsBuy: "Buy", gsSell: "Sell", gsPrice: "Price (coins)", gsHave: "Stock", gsCoinHave: "Coins",
@@ -7060,7 +7072,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       confirmImport: "导入将覆盖全部本地社区数据，是否继续？", yes: "继续", no: "取消",
       close: "关闭", back: "返回", rate5: "五星", noAccount: "还没有账号？去注册", hasAccount: "已注册？去登录",
       cardOf: "卡牌", serial: "编号", gotFrom: "得自 {n}", empty: "空",
-      bTitle: "游戏", bSub: "君临城池 · 内政治理 · 麾下群英 · 征战天下", pickSpawn: "选择出生地", spawnDesc: "每位主公在大地图上选一座城作为出生地，此后以该城为起点征战天下", spawnOk: "已定都 {n}", stageTitle: "主线关卡", stage: "第 {n} 关", stageClear: "已通关", stageCur: "当前", stageLock: "未解锁", firstReward: "首通奖励", spGain: "技能点 +{n}", squad: "出战阵容", squadDesc: "每战最多 3 名武将出战 · 兵力按等级递增（每级 +1000）", fight: "开战", sweep: "扫荡", sweepDesc: "扫荡已通关卡：获得 60% 经验与碎片，无装备掉落", wild: "野战", pvp: "演武 · 挑战诸侯", shopT: "积分商店", bagT: "背包", vs: "VS", victory: "大 捷", defeat: "惜 败", rounds: "回合", battleLog: "战报", remain: "残兵", expGain: "经验 +{n}", lvUp: "{n} 升到 Lv.{m}", dropEquip: "获得装备：{n}", dropMount: "获得坐骑：{n}", dropShards: "获得碎片：{n} ×{m}", rewardPts: "积分 +{n}", againF: "再战", backBattle: "返回游戏", expFull: "经验 {a}/{b}", growTitle: "武将培养", starUp: "升星", starMax: "已达星级上限", starUpCost: "消耗同名碎片 ×{n}", starUpOk: "升星成功！全属性 +8%、兵力 +10%", shard: "碎片", shardsOf: "「{n}」碎片 {a}/{b}", synth: "合成", synthOk: "碎片已合成整卡：{n}", synthNot: "碎片不足", spPool: "技能点", spAlloc: "分配技能点（剩余 {n} 点）", equipT: "装备", mountT: "坐骑", eqHead: "头盔", eqBody: "上身", eqLegs: "下身", eqWpn: "武器", eqAmu: "项链", eqBrc: "手镯", eqEmpty: "空", eqUp: "升级", eqStar: "升星", eqUpOk: "装备升级成功", eqStarOk: "装备升星成功", eqLack: "积分不足", wpnLock: "武器类型不匹配（需 {n}）", bagEq: "装备库", bagMt: "坐骑厩", bagShard: "碎片匣", wear: "穿戴", takeOff: "卸下", ride: "骑乘", shopEquip: "装备箱（{n}）", shopMount: "坐骑（{n}）", shopShard: "碎片匣（随机 6 片）", buy: "兑换", buyOk: "兑换成功", tut1: "乱世降临……主公请收下这张武将卡，点「开战」讨伐 1-1 黄巾余党！", tut1Btn: "收下武将卡", tut2: "首战告捷！军中士气大振，又有一名豪杰来投——", tut2Btn: "招募入队", tut3: "两局两胜！军威已立，现在可以去抽卡池招募更多名将了！", tut3Btn: "开始抽卡", needCard: "至少需要 1 名武将出战", pvpDesc: "与各地诸侯切磋，赢取经验与积分", sweepOk: "扫荡完成", lvShort: "Lv.{n}", troopShort: "兵力 {n}", skip: "跳过", starLvNeed: "需武将达到 Lv.{n}",
+      bTitle: "游戏", bSub: "君临城池 · 内政治理 · 麾下群英 · 征战天下", pickSpawn: "选择出生地", spawnDesc: "每位主公在大地图上选一座城作为出生地，此后以该城为起点征战天下", spawnOk: "已定都 {n}", stageTitle: "主线关卡", stage: "第 {n} 关", stageClear: "已通关", stageCur: "当前", stageLock: "未解锁", firstReward: "首通奖励", spGain: "技能点 +{n}", squad: "出战阵容", squadDesc: "每战最多 3 名武将出战 · 兵力按等级递增（每级 +1000）", fight: "开战", sweep: "扫荡", sweepDesc: "扫荡已通关卡：获得 60% 经验与碎片，无装备掉落", wild: "野战", pvp: "演武 · 挑战诸侯", shopT: "积分商店", bagT: "背包", vs: "VS", victory: "大 捷", defeat: "惜 败", rounds: "回合", battleLog: "战报", remain: "残兵", expGain: "经验 +{n}", lvUp: "{n} 升到 Lv.{m}", dropEquip: "获得装备：{n}", dropMount: "获得坐骑：{n}", dropShards: "获得碎片：{n} ×{m}", rewardPts: "积分 +{n}", againF: "再战", backBattle: "返回游戏", expFull: "经验 {a}/{b}", growTitle: "武将培养", starUp: "升星", starMax: "已达星级上限", starUpCost: "消耗同名碎片 ×{n}", starUpOk: "升星成功！全属性 +8%、兵力 +10%", shard: "碎片", shardsOf: "「{n}」碎片 {a}/{b}", synth: "合成", synthOk: "碎片已合成整卡：{n}", synthNot: "碎片不足", spPool: "技能点", spAlloc: "分配技能点（剩余 {n} 点）", equipT: "装备", mountT: "坐骑", eqHead: "头盔", eqBody: "盔甲", eqLegs: "下身", eqWpn: "武器", eqAmu: "项链", eqBrc: "手镯", eqEmpty: "空", eqUp: "升级", eqStar: "升星", eqUpOk: "装备升级成功", eqStarOk: "装备升星成功", eqLack: "积分不足", wpnLock: "武器类型不匹配（需 {n}）", bagEq: "装备库", bagMt: "坐骑厩", bagShard: "碎片匣", wear: "穿戴", takeOff: "卸下", ride: "骑乘", shopEquip: "装备箱（{n}）", shopMount: "坐骑（{n}）", shopShard: "碎片匣（随机 6 片）", buy: "兑换", buyOk: "兑换成功", decoT: "武将装饰", decoNote: "武器（含羽扇）· 坐骑（含木轮车）· 盔甲 · 头盔", eqAdd: "添加", eqChange: "更换", eqEmptyHint: "空 · 点击添加", eqUsesLeft: "剩 {n} 次作战", eqPerm: "永久", eqShopT: "装备商店", eqShopHi: "高级装备（S/A/B/C）· 积分购买 · 永久有效", eqShopLo: "低级装备（D/E/F）· 金币铜铁 · 会损耗", eqShopNote: "低级装备每作战 1 次损耗 1 次，{n} 次后自动损毁；高级装备（S/A/B/C）永久有效", eqShopGo: "可去装备商店购买", eqArmN: "盔甲", eqLackRes: "金币 / 铜 / 铁不足", wearOk: "已装备 {n}", rideOk: "已骑乘 {n}", takeOffOk: "已卸下", eqWornOut: "因损耗损毁：{n}", tut1: "乱世降临……主公请收下这张武将卡，点「开战」讨伐 1-1 黄巾余党！", tut1Btn: "收下武将卡", tut2: "首战告捷！军中士气大振，又有一名豪杰来投——", tut2Btn: "招募入队", tut3: "两局两胜！军威已立，现在可以去抽卡池招募更多名将了！", tut3Btn: "开始抽卡", needCard: "至少需要 1 名武将出战", pvpDesc: "与各地诸侯切磋，赢取经验与积分", sweepOk: "扫荡完成", lvShort: "Lv.{n}", troopShort: "兵力 {n}", skip: "跳过", starLvNeed: "需武将达到 Lv.{n}",
       gsT: "游戏空间", gsLogin: "登录后进入游戏空间，点选武将卡进行培养、募兵与集市经营", gsHint: "点击卡片进入专属详情页：分配点数 · 选择兵种 · 招募士兵 · 集市经营",
       gsDate: "{y}年{m}月", gsMarket: "集市", gsGrain: "粮草（石）", gsWood: "木头（斤）", gsCopper: "铜（斤）", gsIron: "铁（斤）", gsCoin: "铜钱",
       gsBuy: "买入", gsSell: "卖出", gsPrice: "现价（钱）", gsHave: "库存", gsCoinHave: "铜钱",
@@ -9671,7 +9683,7 @@ var BOTS = [
 
   /* ================= V21 作战系统：出生地 / 关卡 / 回合战斗 / 养成 / 装备 / 坐骑 / 商店 ================= */
   var WTYPES = ["长枪", "大刀", "长剑", "铁戟", "弓弩", "羽扇"];
-  var MT_NAMES = ["驽马", "白马", "乌骓", "爪黄飞电", "绝影", "的卢", "赤兔"];
+  var MT_NAMES = ["木轮车", "白马", "乌骓", "爪黄飞电", "绝影", "的卢", "赤兔"];
   var SLOT_KEYS = ["head", "body", "legs", "wpn", "amu", "brc"];
   var SYNTH = [120, 90, 70, 50, 35, 25, 15];          /* 各品级合成整卡所需同名碎片 */
   var STAR_COST = [30, 45, 60, 90, 120];               /* 升到第 1~5 颗额外星所需同名碎片 */
@@ -9684,6 +9696,9 @@ var BOTS = [
     if (!u.shards) u.shards = {};
     if (!u.eqs) u.eqs = [];
     if (!u.mts) u.mts = [];
+    /* V33：旧存档低级装备补损耗计数（作战 10 次后损毁） */
+    u.eqs.forEach(function (e) { if ((e.ti || 0) >= 4 && e.uses == null) e.uses = EQ_LO_USES; });
+    u.mts.forEach(function (m) { if ((m.ti || 0) >= 4 && m.uses == null) m.uses = EQ_LO_USES; });
     if (!u.bat.hist) u.bat.hist = {};
     ensureRes(u);
     return u.bat;
@@ -10094,8 +10109,11 @@ var BOTS = [
     t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
     return t;
   }
-  function mkEquip(slot, ti) { DB.seq.card++; return { id: "e" + DB.seq.card, slot: slot, ti: ti, lv: 1, st: 0 }; }
-  function mkMount(ti) { DB.seq.card++; return { id: "m" + DB.seq.card, ti: ti, lv: 1, st: 0 }; }
+  /* V33 装备耐久：高级装备（品阶 S/A/B/C = ti 0~3）永久有效；低级装备（D/E/F = ti 4~6）作战 10 次自动损毁 */
+  var EQ_LO_USES = 10;
+  function eqIsPerm(e) { return (e.ti || 0) <= 3; }
+  function mkEquip(slot, ti) { DB.seq.card++; var e = { id: "e" + DB.seq.card, slot: slot, ti: ti, lv: 1, st: 0 }; if (ti >= 4) e.uses = EQ_LO_USES; return e; }
+  function mkMount(ti) { DB.seq.card++; var m = { id: "m" + DB.seq.card, ti: ti, lv: 1, st: 0 }; if (ti >= 4) m.uses = EQ_LO_USES; return m; }
   function slotName(sl) { return T("eq" + sl.charAt(0).toUpperCase() + sl.slice(1)); }
   function eqName(e) { return slotName(e.slot) + "·" + TIERS[e.ti].n + (e.st ? " +" + e.st + "★" : ""); }
 
@@ -10218,6 +10236,31 @@ var BOTS = [
     /* V32：优先用实际出战卡（野怪以城市编队出战，不能沿用 pvp 小队） */
     var squad = (squadCards && squadCards.length) ? squadCards.slice()
       : BATUI.squad.map(function (id) { return (u.cards || []).filter(function (c) { return c.id === id; })[0]; }).filter(Boolean);
+    /* V33 低级装备损耗：出战武将身上的低级（D/E/F）装备/坐骑每作战 1 次扣 1，用完自动损毁 */
+    var _gone = [], _worn = 0;
+    squad.forEach(function (c) {
+      SLOT_KEYS.forEach(function (sl) {
+        var eqId = c.eq && c.eq[sl]; if (!eqId) return;
+        var e = (u.eqs || []).filter(function (x) { return x.id === eqId; })[0]; if (!e) return;
+        if (e.uses != null) {
+          e.uses--; _worn++;
+          if (e.uses <= 0) { _gone.push(e); delete c.eq[sl]; }
+        }
+      });
+      if (c.mt) {
+        var m = (u.mts || []).filter(function (x) { return x.id === c.mt; })[0];
+        if (m && m.uses != null) {
+          m.uses--; _worn++;
+          if (m.uses <= 0) { _gone.push(m); delete c.mt; }
+        }
+      }
+    });
+    if (_gone.length) {
+      var goneNames = _gone.map(function (x) { return x.slot ? eqName(x) : MT_NAMES[x.ti] + (x.st ? " +" + x.st + "★" : ""); });
+      u.eqs = (u.eqs || []).filter(function (x) { return _gone.indexOf(x) < 0; });
+      u.mts = (u.mts || []).filter(function (x) { return _gone.indexOf(x) < 0; });
+      out.eqWornOut = goneNames;
+    }
     var baseExp = 40 + stage * 18;
     /* 游戏时间：每打一仗推进 1 个月（184年1月 → 220年12月循环）；实时每 1 小时也 +1（gMonth） */
     u.bat.gmBase = (u.bat.gmBase || 0) + 1;
@@ -11294,6 +11337,7 @@ var BOTS = [
         (out.shards.length ? T("dropShards", { n: out.shards.join("、"), m: 1 }) + "　·　" : "") +
         (out.eq ? T("dropEquip", { n: eqName(out.eq) }) + "　·　" : "") +
         (out.mt ? T("dropMount", { n: MT_NAMES[out.mt.ti] }) + "　·　" : "") +
+        (out.eqWornOut && out.eqWornOut.length ? '<b style="color:#e8a05c">⚠ ' + T("eqWornOut", { n: out.eqWornOut.join("、") }) + "</b>　·　" : "") +
         (out.ups || []).join("　·　") + "</div>";
     }
     return head + roster +
@@ -11447,6 +11491,60 @@ var BOTS = [
       '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
       '<div style="text-align:center;margin-top:14px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
   }
+  /* ---------- V33 武将装饰：装备选择 / 装备商店（游戏空间详情页） ---------- */
+  var EQ_SHOP_HI = [0, 1, 2, 3], EQ_SHOP_LO = [4, 5, 6];
+  function eqPricePts(ti) { return TIERS[ti].pts * 2; }
+  function eqPriceRes(ti) { return { coin: TIERS[ti].pts * 6, copper: TIERS[ti].pts * 2, iron: TIERS[ti].pts * 2 }; }
+  function eqShopOpen(cardId) {
+    var u = me(); var c = (u.cards || []).filter(function (x) { return x.id === cardId; })[0];
+    if (!c) return; var g = gById(c.gid); if (!g) return;
+    ensureRes(u);
+    var wt = wtypeOf(g);
+    var row = function (label, slot, isMt) {
+      var hi = EQ_SHOP_HI.map(function (ti) {
+        return '<button class="sgbtn sm primary" data-gs="eqshop-buy" data-id="' + c.id + '" data-slot="' + (isMt ? "mt" : slot) + '" data-ti="' + ti + '">' + TIERS[ti].grade + " · " + fmt(eqPricePts(ti)) + "★</button>";
+      }).join(" ");
+      var lo = EQ_SHOP_LO.map(function (ti) {
+        var p = eqPriceRes(ti);
+        return '<button class="sgbtn sm" data-gs="eqshop-buy" data-id="' + c.id + '" data-slot="' + (isMt ? "mt" : slot) + '" data-ti="' + ti + '">' + TIERS[ti].grade + " · 🪙" + fmt(p.coin) + "+⛏" + fmt(p.copper) + "🔩" + fmt(p.iron) + "</button>";
+      }).join(" ");
+      return '<div style="margin:8px 0 4px"><b style="font-size:12.5px;letter-spacing:.06em">' + label + "</b></div>" +
+        '<div class="sg-note" style="font-size:10.5px">' + T("eqShopHi") + '</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px">' + hi + "</div>" +
+        '<div class="sg-note" style="font-size:10.5px">' + T("eqShopLo") + '</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px">' + lo + "</div>";
+    };
+    modal("<h3>🛒 " + T("eqShopT") + " · " + esc(g.name) + "</h3>" +
+      '<div class="sg-note">' + T("eqShopNote", { n: EQ_LO_USES }) + "　·　⚔ " + T("eqWpn") + "：" + wt + "　·　" + T("points") + " <b>" + fmt(u.points) + "</b>　·　🪙 " + fmt(u.res.coin) + " · ⛏ " + fmt(u.res.copper) + " · 🔩 " + fmt(u.res.iron) + "</div>" +
+      row(T("eqWpn") + "（" + wt + "）", "wpn", false) +
+      row(T("eqHead"), "head", false) +
+      row(T("eqBody"), "body", false) +
+      row(T("mountT"), "mt", true) +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
+  }
+  function eqGSList(cardId, slot) {
+    var u = me(); var c = (u.cards || []).filter(function (x) { return x.id === cardId; })[0];
+    var g = c ? gById(c.gid) : null;
+    var list = (u.eqs || []).filter(function (e) { return e.slot === slot && !(u.cards || []).some(function (cc) { return cc.eq && cc.eq[slot] === e.id; }); })
+      .filter(function (e) { return slot !== "wpn" || !e.wt || (g && wtypeOf(g) === e.wt); });
+    var html = list.map(function (e) {
+      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[e.ti].c + ';color:#10131a">' + slotName(slot).slice(0, 1) + "</span>" +
+        "<span><b style='color:" + TIERS[e.ti].c + "'>" + eqName(e) + "</b> <small>Lv." + (e.lv || 1) + (e.uses != null ? ' · <b class="equses">' + T("eqUsesLeft", { n: e.uses }) + "</b>" : ' · <b class="eqperm">' + T("eqPerm") + "</b>") + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm primary" data-gs="eq-wear-gs" data-id="' + e.id + '" data-cid="' + cardId + '">' + T("wear") + "</button></div>";
+    }).join("") || '<div class="sg-muted">' + T("empty") + "　" + T("eqShopGo") + '</div>';
+    modal("<h3>" + slotName(slot) + "</h3>" + html + '<div style="text-align:center;margin-top:12px">' +
+      '<button class="sgbtn primary" data-gs="eqshop" data-id="' + cardId + '">🛒 ' + T("eqShopT") + "</button> " +
+      '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  function mtGSList(cardId) {
+    var u = me();
+    var list = (u.mts || []).filter(function (m) { return !(u.cards || []).some(function (cc) { return cc.mt === m.id; }); });
+    var html = list.map(function (m) {
+      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[m.ti].c + ';color:#10131a">骑</span><span><b style="color:' + TIERS[m.ti].c + '">' + MT_NAMES[m.ti] + (m.st ? " +" + m.st + "★" : "") + "</b> <small>Lv." + (m.lv || 1) + (m.uses != null ? ' · <b class="equses">' + T("eqUsesLeft", { n: m.uses }) + "</b>" : ' · <b class="eqperm">' + T("eqPerm") + "</b>") + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm primary" data-gs="mt-ride-gs" data-id="' + m.id + '" data-cid="' + cardId + '">' + T("ride") + "</button></div>";
+    }).join("") || '<div class="sg-muted">' + T("empty") + "　" + T("eqShopGo") + '</div>';
+    modal("<h3>" + T("mountT") + "</h3>" + html + '<div style="text-align:center;margin-top:12px">' +
+      '<button class="sgbtn primary" data-gs="eqshop" data-id="' + cardId + '">🛒 ' + T("eqShopT") + "</button> " +
+      '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
   function eqPicker(cardId, slot) {
     var u = me(); var c = (u.cards || []).filter(function (x) { return x.id === cardId; })[0];
     var g = c ? gById(c.gid) : null;
@@ -11543,13 +11641,37 @@ var BOTS = [
         '<button class="sgbtn sm ghost" data-gs="sell" data-r="' + key + '" data-n="100" data-id="' + c.id + '">' + T("gsSell") + " 100</button>" +
         '<button class="sgbtn sm ghost" data-gs="sell" data-r="' + key + '" data-n="1000" data-id="' + c.id + '">' + T("gsSell") + " 1000</button></div>";
     };
+    /* V33 武将装饰：装备槽（武器含羽扇 / 坐骑含木轮车 / 盔甲 / 头盔） */
+    var eqMap33 = c.eq || {};
+    var eqRows33 = [
+      { icon: "⚔", label: T("eqWpn") + " · " + wtypeOf(g), id: eqMap33.wpn, isMt: false, slot: "wpn" },
+      { icon: "🐎", label: T("mountT"), id: c.mt, isMt: true },
+      { icon: "🛡", label: T("eqArmN"), id: eqMap33.body, isMt: false, slot: "body" },
+      { icon: "⛑", label: T("eqHead"), id: eqMap33.head, isMt: false, slot: "head" }
+    ].map(function (r) {
+      var it = r.id ? (r.isMt ? (u.mts || []).filter(function (x) { return x.id === r.id; })[0] : (u.eqs || []).filter(function (x) { return x.id === r.id; })[0]) : null;
+      var pickAct = r.isMt ? "mt-pick-gs" : "eq-pick-gs", offAct = r.isMt ? "mt-off-gs" : "eq-off-gs";
+      var slotAttr = r.isMt ? "" : ' data-slot="' + r.slot + '"';
+      var sub, btns;
+      if (it) {
+        var nm = r.isMt ? MT_NAMES[it.ti] + (it.st ? " +" + it.st + "★" : "") : eqName(it);
+        sub = '<small><b style="color:' + TIERS[it.ti].c + '">' + nm + "</b> · Lv." + (it.lv || 1) + (it.uses != null ? ' · <b class="equses">⏳ ' + T("eqUsesLeft", { n: it.uses }) + "</b>" : ' · <b class="eqperm">♾ ' + T("eqPerm") + "</b>") + "</small>";
+        btns = '<button class="sgbtn sm ghost" data-gs="' + pickAct + '"' + slotAttr + ' data-id="' + c.id + '">' + T("eqChange") + "</button>" +
+          '<button class="sgbtn sm" data-gs="' + offAct + '" data-id="' + (r.isMt ? c.id : it.id) + '" data-cid="' + c.id + '">' + T("takeOff") + "</button>";
+      } else {
+        sub = "<small>" + T("eqEmptyHint") + "</small>";
+        btns = '<button class="sgbtn sm primary" data-gs="' + pickAct + '"' + slotAttr + ' data-id="' + c.id + '">＋ ' + T("eqAdd") + "</button>";
+      }
+      return '<div class="sg-eqslot"><span class="eqi">' + r.icon + '</span><div class="eqb"><b>' + r.label + "</b>" + sub + "</div>" + btns + "</div>";
+    }).join("");
     return '<div class="sg-page">' +
       '<div class="sg-hero"><div class="sg-hero-row"><div class="grow"><h2>' + T("gsT") + " · " + esc(g.name) + "</h2><p>" + T("gsHint") + "</p>" +
       '<div class="sg-note" style="margin-top:6px">📅 ' + T("gsDate", { y: gd.y, m: gd.mo }) + "　·　" + tierLabel(tr) + " · " + T("lvShort", { n: lv }) +
       (c.stars ? " · +" + c.stars + "★" : "") + "　·　" + T("spPool") + " <b>" + spLeft + "</b></div>" +
       '<div style="margin-top:10px">' + gsResBar(u) + "</div></div>" +
       '<button class="sgbtn sm ghost" data-sgact="go-me">‹ ' + T("backBattle").replace("返回游戏", "返回").replace("Back to game", "Back") + "</button></div></div>" +
-      '<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start" class="gs-grid">' +
+      '<div style="display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start" class="gs-grid">' +
+      '<div style="display:flex;flex-direction:column;gap:16px;min-width:0">' +
       '<div class="sg-panel" style="text-align:center">' +
       '<div class="sg-card-art" style="height:auto;cursor:zoom-in" id="gsArt">' + art + '</div>' +
       '<div style="margin-top:10px"><b style="font-size:16px;letter-spacing:.1em;color:var(--ink)">' + esc(g.name) + "</b> " +
@@ -11558,13 +11680,18 @@ var BOTS = [
       '<div style="margin-top:8px"><div class="sg-note">' + T("expFull", { a: fmt(c.exp || 0), b: fmt(expNeed(lv)) }) + '</div><div class="sg-prog"><i style="width:' + Math.min(100, (c.exp || 0) / expNeed(lv) * 100) + '%"></i></div></div>' +
       '<div style="margin-top:12px;text-align:left"><div class="sg-note">' + T("gsSold") + "：" + T("gsSoldOf", { a: fmt(sold), b: fmt(cap) }) + '</div><div class="sg-prog"><i style="width:' + pct + '%"></i></div></div>' +
       "</div>" +
+      '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>🎖 ' + T("decoT") + '</h3><span class="sp"></span><button class="sgbtn sm primary" data-gs="eqshop" data-id="' + c.id + '">🛒 ' + T("eqShopT") + "</button></div>" +
+      '<div class="sg-note" style="margin-bottom:2px">' + T("decoNote") + "</div>" + eqRows33 + "</div>" +
+      "</div>" +
       '<div style="display:flex;flex-direction:column;gap:16px;min-width:0">' +
+      '<div class="gs-duo">' +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("gsCardData") + " · " + T("gsPoints").replace("{n}", spLeft) + "</h3></div>" +
       '<div class="sg-note" style="margin-bottom:8px">' + (spLeft > 0 ? T("spAlloc", { n: spLeft }) : T("gsNoSp")) + "</div>" + spHTML +
       '<div class="sg-note" style="margin-top:10px">' + T("gsCapNote") + "</div></div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>✨ ' + T("skillUpT") + " · " + T("skPointT") + ' <span style="color:#e8c988">' + skp + "</span></h3></div>" +
       spRow + skHTML + dupRow +
       '<div class="sg-note" style="margin-top:8px;font-size:11px">' + T("absorbRule") + "</div></div>" +
+      "</div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("gsArm") + "</h3></div>" +
       '<div class="sgchips" style="margin-bottom:8px">' + armHTML + "</div>" +
       '<div class="sg-note">' + T("gsArmNote") + "　·　" + T("equipT") + "/" + T("eqWpn") + "：" + wtypeOf(g) + "</div></div>" +
@@ -11598,7 +11725,8 @@ var BOTS = [
     var u = me(); if (!u) return;
     ensureBat(u); ensureRes(u);
     var act = t.getAttribute("data-gs"), cid = t.getAttribute("data-id");
-    var c = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    /* V33：装备/坐骑按钮 data-id 为物品 id，卡片 id 放 data-cid */
+    var c = (u.cards || []).filter(function (x) { return x.id === (t.getAttribute("data-cid") || cid); })[0];
     function rg() {
       closeModal();
       var m = (location.hash || "").match(/^#\/gs\/([^/?#]+)/);
@@ -11607,6 +11735,46 @@ var BOTS = [
     }
     if (!c && act !== "noop") return;
     switch (act) {
+      /* ---------- V33 武将装饰：装备槽 / 装备商店 ---------- */
+      case "eq-pick-gs": eqGSList(cid, t.getAttribute("data-slot")); return;
+      case "mt-pick-gs": mtGSList(cid); return;
+      case "eqshop": eqShopOpen(cid); return;
+      case "eq-wear-gs": {
+        var eW = (u.eqs || []).filter(function (x) { return x.id === cid; })[0];
+        if (!eW) return;
+        var gW = gById(c.gid);
+        if (eW.slot === "wpn") { if (!eW.wt) eW.wt = wtypeOf(gW); else if (gW && wtypeOf(gW) !== eW.wt) return toast(T("wpnLock", { n: eW.wt }), "err"); }
+        c.eq = c.eq || {}; c.eq[eW.slot] = eW.id;
+        save(); toast(T("wearOk", { n: eqName(eW) }), "ok"); rg(); return;
+      }
+      case "eq-off-gs": {
+        var eO = (u.eqs || []).filter(function (x) { return x.id === cid; })[0]; if (!eO) return;
+        (u.cards || []).forEach(function (cc) { if (cc.eq && cc.eq[eO.slot] === eO.id) delete cc.eq[eO.slot]; });
+        save(); toast(T("takeOffOk"), "ok"); rg(); return;
+      }
+      case "mt-ride-gs": {
+        var mR = (u.mts || []).filter(function (x) { return x.id === cid; })[0]; if (!mR) return;
+        c.mt = mR.id; save(); toast(T("rideOk", { n: MT_NAMES[mR.ti] }), "ok"); rg(); return;
+      }
+      case "mt-off-gs": { delete c.mt; save(); toast(T("takeOffOk"), "ok"); rg(); return; }
+      case "eqshop-buy": {
+        var slotB = t.getAttribute("data-slot"), tiB = +t.getAttribute("data-ti");
+        var isMtB = slotB === "mt", gB = gById(c.gid), neB;
+        if (tiB <= 3) {
+          var pr = eqPricePts(tiB);
+          if ((u.points || 0) < pr) return toast(T("eqLack"), "err");
+          addPoints(u, -pr, T("eqShopT") + " · " + TIERS[tiB].n);
+        } else {
+          var pr2 = eqPriceRes(tiB);
+          ensureRes(u);
+          if ((u.res.coin || 0) < pr2.coin || (u.res.copper || 0) < pr2.copper || (u.res.iron || 0) < pr2.iron) return toast(T("eqLackRes"), "err");
+          u.res.coin -= pr2.coin; u.res.copper -= pr2.copper; u.res.iron -= pr2.iron;
+        }
+        if (isMtB) { neB = mkMount(tiB); u.mts.push(neB); }
+        else { neB = mkEquip(slotB, tiB); if (slotB === "wpn") neB.wt = wtypeOf(gB); u.eqs.push(neB); }
+        save(); toast(T("buyOk") + "：" + (isMtB ? MT_NAMES[neB.ti] : eqName(neB)) + (neB.uses != null ? "（" + T("eqUsesLeft", { n: neB.uses }) + "）" : ""), "ok", 4200);
+        eqShopOpen(cid); return;
+      }
       case "sp": {
         if ((u.bat.sp || 0) <= 0) return toast(T("gsNoSp"), "err");
         u.bat.sp--; c.spa = c.spa || {};
