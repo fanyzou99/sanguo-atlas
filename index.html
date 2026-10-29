@@ -4924,7 +4924,7 @@ function ctCityModel(c){
   stats.peri = Math.round(per*10)/10;
   stats.area = Math.round(outer.w*outer.h/(sc*sc)*0.75/100)/10;
   stats.zoneN = list.length + ((zones._inner||[]).filter(function(z){return z.w>60;}).length) + (palaceZone?1:0);
-  return {svg:s, zones:list.concat((zones._inner||[]).filter(function(z){return z.w>60;})).concat(palaceZone?[palaceZone]:[]), stats:stats, W:W, H:H};
+  return {svg:s, zones:list.concat((zones._inner||[]).filter(function(z){return z.w>60;})).concat(palaceZone?[palaceZone]:[]), stats:stats, W:W, H:H, outer:outer, moat:moat, gates:gates, palaceRect:palace, innerRect:inner};
 }
 /* ============ 关隘模型 ============ */
 function ctPassModel(p){
@@ -6534,7 +6534,7 @@ function renderPassPage(name){
     faction: FACTION, esc: esc, rarity: rarity, rarName: RAR_NAME,
     roleName: roleName, artFor: artFor, hasPortrait: hasPortrait, avFor: avFor,
     headArt: headArt, avatarSVG: avatarSVG, artZoom: openArtZoom,
-    cityData: CITY_DATA, state: state
+    cityData: CITY_DATA, cityModel: ctCityModel, tierOf: ctTierOf, state: state
   };
   render();
 })();
@@ -6925,7 +6925,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "Day {d} streak · +{p} points", checkinDraw: " · 1 draw chance earned",
       already: "Already checked in today.", drawGot: "You drew {n}!", noDraw: "No draw chance left.", aiNoLike: "AI topics do not support likes yet", aiTag: "AI",
       draw3Title: "Fate Cards", draw3Sub: "Three hidden cards — choose one to add to your card wall.",
-      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked", skillTrig: "Trigger {p}%", recycle: "Recycle", recycleAsk: "Recycle this card for {n} points?", recycleOk: "Confirm recycle", recycleGet: "Card recycled, +{n} points", recycleLedger: "Recycled {n}\u2019s card, +{p} pts", bulkRecycle: "Bulk recycle", bulkExit: "Exit", selAll: "Select all", selNone: "Clear", selCount: "{n} selected", selEmpty: "Select at least one card first.", bulkAsk: "Recycle {n} card(s) into {p} points? This cannot be undone.", bulkOk: "Recycle now", bulkGet: "{n} card(s) recycled, +{p} points", bulkLedger: "Recycled {n} card(s), +{p} pts", recycleValues: "Recycle value: {v}", grantsGot: "Admin granted {n} draw chances", grantsGotPts: "Admin granted {n} points", menuT: "Menu", myCities: "My cities", cityLocked: "Not yet unlocked", mobCity: "Raiding the city", mobCityHint: "This band has broken into the city! Monthly output drops by 40% until it is wiped out.", raidLoss: "Raided: output -40%", raidLoot: "City raid ×1.5 loot", catRecycle: "Recycle by class", catHint: "Check the classes to recycle — all cards of those classes will be recycled in batch. S/A/B cards cannot be batch-recycled, only individually.", sabSolo: "individual only", batchDraw: "Batch draw", bdNeed: "need {n}", bdAuto: "Auto-recycle on draw", bdAutoHint: "Checked classes are recycled into points immediately when drawn.", bdSab: "S/A/B cannot be auto/batch-recycled — recycle individually.", bdDone: "Done", bdDrawn: "Drawn {n}", bdRecycled: "Recycled {n} (+{p} pts)", bdShards: "Shards ×{n}", bdKept: "Kept {n} → wall", bdNone: "No card kept.", bdLedger: "Batch-draw auto-recycled {n} card(s), +{p} pts", grantCardGot: "Admin granted {t} card ×{n}", csTierLv: "Color · Level", rosterT: "Garrison Generals", teamT: "Battle Formations", addRoster: "Station", rosterFull: "A city can station at most 40 generals", dupName: "Duplicate name — one general once per city", noRoster: "No generals stationed here yet", posFront: "Vanguard", posCenter: "Center", posLeft: "Left Wing", posRight: "Right Wing", posCav: "Cavalry", cavNeed: "Cavalry slot needs a cavalry-capable general (Cavalry S/A or Cavalry arm)", frontNeed: "Vanguard needs shield/spear infantry", teamUsed: "Already deployed in another slot", slotEmpty: "Empty", unlockCity: "Unlock", unlockAsk: "Unlock {n}? Costs 1,000 points + 1,000 of each resource from this city. New city starts at Lv.1.", unlockOk: "{n} unlocked", ptsLack: "Not enough points", resLackCity: "Not enough resources in this city", transportT: "Transport", transFrom: "From", transTo: "To", transOk: "Caravan sent {n} → {m}", transSame: "Choose two different cities", transEmpty: "Nothing to transport", caravanT: "Trade Caravans", merchantT: "Foreign Merchant", merchantFrom: "from {n}", merchantPrice: "Buy {a} · Sell {b}", merchantDone: "Deal done", skillUpT: "Skill Cultivation", absorbT: "Consume duplicate", absorbOk: "Consumed {n} → +1 skill point", absorbNone: "No same-name duplicate of the same grade (S/A/B/C)", dupsN: "{n} same-grade duplicate(s)", dupHigh: "top dup Lv.{n} — absorb from it", absorbSug: "Tip: better to absorb from the Lv.{n} high-level duplicate", absorbRule: "Same-grade is judged by grade (S/A/B/C), independent of card level. Each duplicate consumed → +1 skill point. Tip: use your highest-level card to absorb lower ones.", skUnlock: "Unlock", skUnlocked: "Unlocked", skNeed: "Needs {n} skill points", skOk: "Skill unlocked: {n}", skPointT: "Skill points", pickT: "Pick from list", pickHint: "Click rows to tick, then press Confirm", pkSelN: "Selected {n}/{m}", pkNone: "Select at least one general first", pkApply: "Confirm", pkOk: "Done", pkAddOk: "{n} general(s) stationed", pkRosterOk: "{a} stationed, {b} failed", pkSwap: "Swap", slotRemove: "Remove", pkEmpty: "No generals available", pkRemove: "Click to remove", pkTier: "Tier", pkGen: "General", pkLv: "Lv", pkArm: "Arms", pkSt: "ST", pkWu: "WU", pkIn: "IN", pkPo: "PO", pkCh: "CH", pkTroop: "Troops", pkNote: "Note", sideAtk: "ATK · Attacker", sideDef: "DEF · Defender", roundMidT: "Round", sneakT: "Sneak", sneakDesc: "Ambush stronger foes with a small force: INT gap above 30 always succeeds; 20\u201330 is a coin flip; below 20 fails and the whole army is annihilated.", sneakDiff: "INT gap {d}", sneakWin: "Sneak succeeded!", sneakFail: "Sneak failed \u2014 the whole army was annihilated!", absAllT: "Batch absorb", absAllOk: "Absorbed {a} card(s), auto-unlocked {s} skill(s)", shopXch: "Points \u21c4 Resources", shopXchOut: "1,000 points \u2192 100,000 of any one resource", shopXchIn: "200,000 of a resource \u2192 1,000 points", xchOutOk: "Exchanged: resource +100,000", xchInOk: "Exchanged: points +1,000", tradeBns: "Trade bonus: INT {i} (+{i}% volume) \u00d7 Lv multiplier {m} \u2192 \u00d7{b}%", lbAttr: "Attr", lbTroop: "Troops", lbPos: "Post", lb10: "Per 10 lv", dupSite: "This email is already registered on the other site. Accounts work on both sites, please sign in directly",
+      draw3Hint: "PICK ONE CARD", drawAgain: "Draw again", badgeUnlocked: "Badges unlocked", skillTrig: "Trigger {p}%", recycle: "Recycle", recycleAsk: "Recycle this card for {n} points?", recycleOk: "Confirm recycle", recycleGet: "Card recycled, +{n} points", recycleLedger: "Recycled {n}\u2019s card, +{p} pts", bulkRecycle: "Bulk recycle", bulkExit: "Exit", selAll: "Select all", selNone: "Clear", selCount: "{n} selected", selEmpty: "Select at least one card first.", bulkAsk: "Recycle {n} card(s) into {p} points? This cannot be undone.", bulkOk: "Recycle now", bulkGet: "{n} card(s) recycled, +{p} points", bulkLedger: "Recycled {n} card(s), +{p} pts", recycleValues: "Recycle value: {v}", grantsGot: "Admin granted {n} draw chances", grantsGotPts: "Admin granted {n} points", menuT: "Menu", myCities: "My cities", cityLocked: "Not yet unlocked", mobCity: "Raiding at the gate", mobCityHint: "This band is looting outside the city gate! Monthly output drops by 40% until it is wiped out.", raidLoss: "Raided: output -40%", raidLoot: "Gate raid ×1.5 loot", catRecycle: "Recycle by class", catHint: "Check the classes to recycle — all cards of those classes will be recycled in batch. S/A/B cards cannot be batch-recycled, only individually.", sabSolo: "individual only", batchDraw: "Batch draw", bdNeed: "need {n}", bdAuto: "Auto-recycle on draw", bdAutoHint: "Checked classes are recycled into points immediately when drawn.", bdSab: "S/A/B cannot be auto/batch-recycled — recycle individually.", bdDone: "Done", bdDrawn: "Drawn {n}", bdRecycled: "Recycled {n} (+{p} pts)", bdShards: "Shards ×{n}", bdKept: "Kept {n} → wall", bdNone: "No card kept.", bdLedger: "Batch-draw auto-recycled {n} card(s), +{p} pts", grantCardGot: "Admin granted {t} card ×{n}", csTierLv: "Color · Level", rosterT: "Garrison Generals", teamT: "Battle Formations", addRoster: "Station", rosterFull: "A city can station at most 40 generals", dupName: "Duplicate name — one general once per city", noRoster: "No generals stationed here yet", posFront: "Vanguard", posCenter: "Center", posLeft: "Left Wing", posRight: "Right Wing", posCav: "Cavalry", cavNeed: "Cavalry slot needs a cavalry-capable general (Cavalry S/A or Cavalry arm)", frontNeed: "Vanguard needs shield/spear infantry", teamUsed: "Already deployed in another slot", slotEmpty: "Empty", unlockCity: "Unlock", unlockAsk: "Unlock {n}? Costs 1,000 points + 1,000 of each resource from this city. New city starts at Lv.1.", unlockOk: "{n} unlocked", ptsLack: "Not enough points", resLackCity: "Not enough resources in this city", transportT: "Transport", transFrom: "From", transTo: "To", transOk: "Caravan sent {n} → {m}", transSame: "Choose two different cities", transEmpty: "Nothing to transport", caravanT: "Trade Caravans", merchantT: "Foreign Merchant", merchantFrom: "from {n}", merchantPrice: "Buy {a} · Sell {b}", merchantDone: "Deal done", skillUpT: "Skill Cultivation", absorbT: "Consume duplicate", absorbOk: "Consumed {n} → +1 skill point", absorbNone: "No same-name duplicate of the same grade (S/A/B/C)", dupsN: "{n} same-grade duplicate(s)", dupHigh: "top dup Lv.{n} — absorb from it", absorbSug: "Tip: better to absorb from the Lv.{n} high-level duplicate", absorbRule: "Same-grade is judged by grade (S/A/B/C), independent of card level. Each duplicate consumed → +1 skill point. Tip: use your highest-level card to absorb lower ones.", skUnlock: "Unlock", skUnlocked: "Unlocked", skNeed: "Needs {n} skill points", skOk: "Skill unlocked: {n}", skPointT: "Skill points", pickT: "Pick from list", pickHint: "Click rows to tick, then press Confirm", pkSelN: "Selected {n}/{m}", pkNone: "Select at least one general first", pkApply: "Confirm", pkOk: "Done", pkAddOk: "{n} general(s) stationed", pkRosterOk: "{a} stationed, {b} failed", pkSwap: "Swap", slotRemove: "Remove", pkEmpty: "No generals available", pkRemove: "Click to remove", pkTier: "Tier", pkGen: "General", pkLv: "Lv", pkArm: "Arms", pkSt: "ST", pkWu: "WU", pkIn: "IN", pkPo: "PO", pkCh: "CH", pkTroop: "Troops", pkNote: "Note", sideAtk: "ATK · Attacker", sideDef: "DEF · Defender", roundMidT: "Round", sneakT: "Sneak", sneakDesc: "Ambush stronger foes with a small force: INT gap above 30 always succeeds; 20\u201330 is a coin flip; below 20 fails and the whole army is annihilated.", sneakDiff: "INT gap {d}", sneakWin: "Sneak succeeded!", sneakFail: "Sneak failed \u2014 the whole army was annihilated!", absAllT: "Batch absorb", absAllOk: "Absorbed {a} card(s), auto-unlocked {s} skill(s)", shopXch: "Points \u21c4 Resources", shopXchOut: "1,000 points \u2192 100,000 of any one resource", shopXchIn: "200,000 of a resource \u2192 1,000 points", xchOutOk: "Exchanged: resource +100,000", xchInOk: "Exchanged: points +1,000", tradeBns: "Trade bonus: INT {i} (+{i}% volume) \u00d7 Lv multiplier {m} \u2192 \u00d7{b}%", lbAttr: "Attr", lbTroop: "Troops", lbPos: "Post", lb10: "Per 10 lv", dupSite: "This email is already registered on the other site. Accounts work on both sites, please sign in directly",
       studioTitle: "Card Studio", stHair: "Hairstyle", stOutfit: "Outfit", stAcc: "Accessory", stWpn: "Weapon",
       stReset: "Reset", stSave: "Save style", stSaved: "Card style saved.", stShort: "Style", adminExport: "Export analytics",
       tagOwner: "Moderator", myThreads: "My threads", myReviews: "My reviews", joinedAt: "Joined {d}",
@@ -6995,7 +6995,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "連続 {d} 日 · +{p} 点", checkinDraw: " · 抽選権1回",
       already: "本日は既にログイン済み。", drawGot: "{n} を引きました！", noDraw: "抽選権がありません。", aiNoLike: "AI テーマはいいね非対応です", aiTag: "AI",
       draw3Title: "運命の三枚", draw3Sub: "裏向きの三枚から一枚を選び、カードウォールへ加えましょう。",
-      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得", skillTrig: "発動 {p}%", recycle: "回収", recycleAsk: "このカードを回収して {n} ポイントにしますか？", recycleOk: "回収する", recycleGet: "カードを回収し、+{n} ポイント", recycleLedger: "「{n}」のカードを回収、+{p} pt", bulkRecycle: "一括回収", bulkExit: "終了", selAll: "全て選択", selNone: "選択解除", selCount: "{n} 枚選択", selEmpty: "先にカードを選択してください。", bulkAsk: "{n} 枚を回収して {p} ポイントにしますか？元に戻せません。", bulkOk: "回収する", bulkGet: "{n} 枚を回収し、+{p} ポイント", bulkLedger: "{n} 枚を回収、+{p} pt", recycleValues: "回収値：{v}", grantsGot: "運営から抽選権 +{n}", grantsGotPts: "運営からポイント +{n}", menuT: "メニュー", myCities: "都市一覧", cityLocked: "未開放", mobCity: "城内劫掠中", mobCityHint: "この賊は城内に侵入！討伐まで月産出が 40% 減少します。", raidLoss: "劫掠中：産出 -40%", raidLoot: "城内討伐 ×1.5 戦利品", catRecycle: "分類回収", catHint: "回収したいクラスにチェックを入れてください。該当クラスの全カードを一括回収します。S/A/B は一括回収できず、個別回収のみ可能です。", sabSolo: "個別のみ", batchDraw: "連続抽選", bdNeed: "{n} 必要", bdAuto: "抽選時の自動回収", bdAutoHint: "チェックしたクラスは抽選後に即ポイントへ自動換算されます。", bdSab: "S/A/B は自動/一括回収できません（個別回収のみ）。", bdDone: "完了", bdDrawn: "{n} 枚抽選", bdRecycled: "回収 {n} 枚（+{p} pt）", bdShards: "欠片 ×{n}", bdKept: "保持 {n} 枚 → ウォール", bdNone: "保持カードなし。", bdLedger: "連続抽選の自動回収 {n} 枚、+{p} pt", grantCardGot: "運営から{t}カード ×{n}", lbAttr: "属性", lbTroop: "帯兵", lbPos: "職位", lb10: "10級毎", dupSite: "このメールアドレスは別サイトで登録済みです。アカウントは両サイト共通、そのままログインしてください",
+      draw3Hint: "一枚を選んでください", drawAgain: "もう一度", badgeUnlocked: "バッジ獲得", skillTrig: "発動 {p}%", recycle: "回収", recycleAsk: "このカードを回収して {n} ポイントにしますか？", recycleOk: "回収する", recycleGet: "カードを回収し、+{n} ポイント", recycleLedger: "「{n}」のカードを回収、+{p} pt", bulkRecycle: "一括回収", bulkExit: "終了", selAll: "全て選択", selNone: "選択解除", selCount: "{n} 枚選択", selEmpty: "先にカードを選択してください。", bulkAsk: "{n} 枚を回収して {p} ポイントにしますか？元に戻せません。", bulkOk: "回収する", bulkGet: "{n} 枚を回収し、+{p} ポイント", bulkLedger: "{n} 枚を回収、+{p} pt", recycleValues: "回収値：{v}", grantsGot: "運営から抽選権 +{n}", grantsGotPts: "運営からポイント +{n}", menuT: "メニュー", myCities: "都市一覧", cityLocked: "未開放", mobCity: "城門で略奪中", mobCityHint: "この賊は城門外で略奪！討伐まで月産出が 40% 減少します。", raidLoss: "劫掠中：産出 -40%", raidLoot: "城門討伐 ×1.5 戦利品", catRecycle: "分類回収", catHint: "回収したいクラスにチェックを入れてください。該当クラスの全カードを一括回収します。S/A/B は一括回収できず、個別回収のみ可能です。", sabSolo: "個別のみ", batchDraw: "連続抽選", bdNeed: "{n} 必要", bdAuto: "抽選時の自動回収", bdAutoHint: "チェックしたクラスは抽選後に即ポイントへ自動換算されます。", bdSab: "S/A/B は自動/一括回収できません（個別回収のみ）。", bdDone: "完了", bdDrawn: "{n} 枚抽選", bdRecycled: "回収 {n} 枚（+{p} pt）", bdShards: "欠片 ×{n}", bdKept: "保持 {n} 枚 → ウォール", bdNone: "保持カードなし。", bdLedger: "連続抽選の自動回収 {n} 枚、+{p} pt", grantCardGot: "運営から{t}カード ×{n}", lbAttr: "属性", lbTroop: "帯兵", lbPos: "職位", lb10: "10級毎", dupSite: "このメールアドレスは別サイトで登録済みです。アカウントは両サイト共通、そのままログインしてください",
       studioTitle: "カード工房", stHair: "髪型", stOutfit: "服装", stAcc: "装飾", stWpn: "武器",
       stReset: "リセット", stSave: "保存", stSaved: "カードスタイルを保存しました。", stShort: "着替え", adminExport: "分析データ書き出し",
       tagOwner: "モデレーター", myThreads: "自分のスレ", myReviews: "自分の評価", joinedAt: "{d} 登録",
@@ -7056,7 +7056,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       checkin: "连续登录第 {d} 天 · +{p} 积分", checkinDraw: " · 获得 1 次抽卡机会",
       already: "今日已签到。", drawGot: "你抽到了 {n}！", noDraw: "没有抽卡机会。", aiNoLike: "AI 主题暂不支持点赞", aiTag: "AI",
       draw3Title: "天命三选", draw3Sub: "三张暗牌，翻开其中一张，收入你的卡牌墙。",
-      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章", skillTrig: "触发 {p}%", recycle: "回收", recycleAsk: "确认回收该卡？将折算 {n} 积分", recycleOk: "确认回收", recycleGet: "卡片已回收，积分 +{n}", recycleLedger: "回收「{n}」卡，积分 +{p}", bulkRecycle: "批量回收", bulkExit: "退出多选", selAll: "全选", selNone: "清空", selCount: "已选 {n} 张", selEmpty: "请先选择要回收的卡牌。", bulkAsk: "将回收 {n} 张卡牌，折算 {p} 积分。回收后卡牌不可恢复，确认继续？", bulkOk: "确认回收", bulkGet: "已回收 {n} 张，积分 +{p}", bulkLedger: "回收 {n} 张卡牌，积分 +{p}", recycleValues: "回收价：{v}", grantsGot: "管理员发放抽卡机会 +{n}", grantsGotPts: "管理员发放积分 +{n}", catRecycle: "按分类回收", catHint: "勾选要回收的类别，确认后该类别下所有卡牌将批量回收折算积分。S/A/B 级不可批量回收，仅能单独回收。", sabSolo: "仅可单独回收", batchDraw: "批量抽卡", bdNeed: "需 {n}", bdAuto: "抽到自动回收", bdAutoHint: "勾选的类别抽到后立即自动回收折算积分", bdSab: "S/A/B 级不可自动/批量回收，只能单独回收。", bdDone: "完成", bdDrawn: "共抽 {n} 张", bdRecycled: "自动回收 {n} 张（+{p} 积分）", bdShards: "碎片 ×{n}", bdKept: "留存 {n} 张入卡牌墙", bdNone: "本次没有留存卡牌。", bdLedger: "批量抽卡自动回收 {n} 张，积分 +{p}", grantCardGot: "管理员发放 {t} 卡 ×{n}", csTierLv: "颜色·等级", rosterT: "驻城武将", teamT: "武将编队", addRoster: "驻城", rosterFull: "单城最多驻扎 40 名武将", dupName: "武将重名——同一座城只能驻扎同一名武将一次", noRoster: "此城暂无驻军，先从卡牌墙派驻", posFront: "前锋", posCenter: "中军", posLeft: "左军", posRight: "右军", posCav: "骑军", cavNeed: "骑军仅限具备骑兵能力的武将（骑兵适性 S/A 或已选骑兵）", frontNeed: "前锋仅限刀盾兵 / 枪兵 / 戟兵等步兵", teamUsed: "该武将已在本城其它位置出战", slotEmpty: "空缺", unlockCity: "解锁", unlockAsk: "解锁 {n}？需消耗 1000 积分与各资源 1000（由当前城池支付）。新城市为最低等级（Lv.1）。", unlockOk: "已解锁 {n}", ptsLack: "积分不足", resLackCity: "本城资源不足", transportT: "资源运输", transFrom: "从", transTo: "到", transOk: "运输队已出发 {n} → {m}", transSame: "起点与终点不能相同", transEmpty: "没有可运输的资源", caravanT: "商队与运输", merchantT: "胡商来市", merchantFrom: "来自 {n}", merchantPrice: "收购 {a} · 出售 {b}", merchantDone: "交易完成", skillUpT: "技能修炼", absorbT: "吞噬同名同阶", absorbOk: "已吞噬 {n}，技能点 +1", absorbNone: "没有同名同阶（S/A/B/C 品阶相同）的卡牌可供吞噬", dupsN: "同名同阶 {n} 张", dupHigh: "同名卡最高 Lv.{n}，建议由它吞噬", absorbSug: "本卡等级较低，建议打开 Lv.{n} 的同名卡执行吞噬", absorbRule: "同阶按品阶（S/A/B/C）判定，与卡牌升级等级无关；每吞噬 1 张同名同阶卡 → 技能点 +1。建议由高等级卡吞噬低等级卡。", skUnlock: "解锁", skUnlocked: "已解锁", skNeed: "需 {n} 技能点", skOk: "已解锁技能：{n}", skPointT: "技能点", pickT: "列表选择武将", pickHint: "点击行勾选武将，确认后生效", pkSelN: "已选 {n}/{m}", pkNone: "请先勾选武将", pkApply: "确认", pkOk: "操作成功", pkAddOk: "已派驻 {n} 名武将", pkRosterOk: "已派驻 {a} 名，{b} 名未成功", pkSwap: "更换", slotRemove: "撤下", pkEmpty: "暂无可选武将", pkRemove: "点击移除", pkTier: "品阶", pkGen: "武将", pkLv: "等级", pkArm: "兵种", pkSt: "统", pkWu: "武", pkIn: "智", pkPo: "政", pkCh: "魅", pkTroop: "兵力", pkNote: "备注", sideAtk: "攻打方", sideDef: "防守方", roundMidT: "回合", sneakT: "偷袭", sneakDesc: "以低等级武将和少量兵力偷袭强敌：智力差 30 以上必定成功；20\u201330 随机胜负；20 以下失败且全军覆没。", sneakDiff: "智力差 {d}", sneakWin: "偷袭成功！", sneakFail: "偷袭失败，全军覆没！", absAllT: "批量吞噬", absAllOk: "已吞噬 {a} 张，自动顺序解锁 {s} 个技能", shopXch: "积分 ⇄ 资源", shopXchOut: "每 1000 积分可兑换 100,000 任意一种资源", shopXchIn: "每 200,000 资源可兑换 1000 积分", xchOutOk: "兑换成功：资源 +100,000", xchInOk: "兑换成功：积分 +1,000", tradeBns: "兑换加成：智力 {i}（每点 +1% 兑换量）× 等级倍率 {m} → 合计 ×{b}%", menuT: "菜单", myCities: "我的城市", cityLocked: "尚未解锁", mobCity: "城内劫掠中", mobCityHint: "有贼寇破城而入！剿灭前月产出下降 40%。", raidLoss: "劫掠中：产出 -40%", raidLoot: "城内讨伐 ×1.5 缴获", dupSite: "该邮箱已在另一站点注册，账号两边通用，请直接登录",
+      draw3Hint: "点 击 选 牌", drawAgain: "再抽一次", badgeUnlocked: "解锁徽章", skillTrig: "触发 {p}%", recycle: "回收", recycleAsk: "确认回收该卡？将折算 {n} 积分", recycleOk: "确认回收", recycleGet: "卡片已回收，积分 +{n}", recycleLedger: "回收「{n}」卡，积分 +{p}", bulkRecycle: "批量回收", bulkExit: "退出多选", selAll: "全选", selNone: "清空", selCount: "已选 {n} 张", selEmpty: "请先选择要回收的卡牌。", bulkAsk: "将回收 {n} 张卡牌，折算 {p} 积分。回收后卡牌不可恢复，确认继续？", bulkOk: "确认回收", bulkGet: "已回收 {n} 张，积分 +{p}", bulkLedger: "回收 {n} 张卡牌，积分 +{p}", recycleValues: "回收价：{v}", grantsGot: "管理员发放抽卡机会 +{n}", grantsGotPts: "管理员发放积分 +{n}", catRecycle: "按分类回收", catHint: "勾选要回收的类别，确认后该类别下所有卡牌将批量回收折算积分。S/A/B 级不可批量回收，仅能单独回收。", sabSolo: "仅可单独回收", batchDraw: "批量抽卡", bdNeed: "需 {n}", bdAuto: "抽到自动回收", bdAutoHint: "勾选的类别抽到后立即自动回收折算积分", bdSab: "S/A/B 级不可自动/批量回收，只能单独回收。", bdDone: "完成", bdDrawn: "共抽 {n} 张", bdRecycled: "自动回收 {n} 张（+{p} 积分）", bdShards: "碎片 ×{n}", bdKept: "留存 {n} 张入卡牌墙", bdNone: "本次没有留存卡牌。", bdLedger: "批量抽卡自动回收 {n} 张，积分 +{p}", grantCardGot: "管理员发放 {t} 卡 ×{n}", csTierLv: "颜色·等级", rosterT: "驻城武将", teamT: "武将编队", addRoster: "驻城", rosterFull: "单城最多驻扎 40 名武将", dupName: "武将重名——同一座城只能驻扎同一名武将一次", noRoster: "此城暂无驻军，先从卡牌墙派驻", posFront: "前锋", posCenter: "中军", posLeft: "左军", posRight: "右军", posCav: "骑军", cavNeed: "骑军仅限具备骑兵能力的武将（骑兵适性 S/A 或已选骑兵）", frontNeed: "前锋仅限刀盾兵 / 枪兵 / 戟兵等步兵", teamUsed: "该武将已在本城其它位置出战", slotEmpty: "空缺", unlockCity: "解锁", unlockAsk: "解锁 {n}？需消耗 1000 积分与各资源 1000（由当前城池支付）。新城市为最低等级（Lv.1）。", unlockOk: "已解锁 {n}", ptsLack: "积分不足", resLackCity: "本城资源不足", transportT: "资源运输", transFrom: "从", transTo: "到", transOk: "运输队已出发 {n} → {m}", transSame: "起点与终点不能相同", transEmpty: "没有可运输的资源", caravanT: "商队与运输", merchantT: "胡商来市", merchantFrom: "来自 {n}", merchantPrice: "收购 {a} · 出售 {b}", merchantDone: "交易完成", skillUpT: "技能修炼", absorbT: "吞噬同名同阶", absorbOk: "已吞噬 {n}，技能点 +1", absorbNone: "没有同名同阶（S/A/B/C 品阶相同）的卡牌可供吞噬", dupsN: "同名同阶 {n} 张", dupHigh: "同名卡最高 Lv.{n}，建议由它吞噬", absorbSug: "本卡等级较低，建议打开 Lv.{n} 的同名卡执行吞噬", absorbRule: "同阶按品阶（S/A/B/C）判定，与卡牌升级等级无关；每吞噬 1 张同名同阶卡 → 技能点 +1。建议由高等级卡吞噬低等级卡。", skUnlock: "解锁", skUnlocked: "已解锁", skNeed: "需 {n} 技能点", skOk: "已解锁技能：{n}", skPointT: "技能点", pickT: "列表选择武将", pickHint: "点击行勾选武将，确认后生效", pkSelN: "已选 {n}/{m}", pkNone: "请先勾选武将", pkApply: "确认", pkOk: "操作成功", pkAddOk: "已派驻 {n} 名武将", pkRosterOk: "已派驻 {a} 名，{b} 名未成功", pkSwap: "更换", slotRemove: "撤下", pkEmpty: "暂无可选武将", pkRemove: "点击移除", pkTier: "品阶", pkGen: "武将", pkLv: "等级", pkArm: "兵种", pkSt: "统", pkWu: "武", pkIn: "智", pkPo: "政", pkCh: "魅", pkTroop: "兵力", pkNote: "备注", sideAtk: "攻打方", sideDef: "防守方", roundMidT: "回合", sneakT: "偷袭", sneakDesc: "以低等级武将和少量兵力偷袭强敌：智力差 30 以上必定成功；20\u201330 随机胜负；20 以下失败且全军覆没。", sneakDiff: "智力差 {d}", sneakWin: "偷袭成功！", sneakFail: "偷袭失败，全军覆没！", absAllT: "批量吞噬", absAllOk: "已吞噬 {a} 张，自动顺序解锁 {s} 个技能", shopXch: "积分 ⇄ 资源", shopXchOut: "每 1000 积分可兑换 100,000 任意一种资源", shopXchIn: "每 200,000 资源可兑换 1000 积分", xchOutOk: "兑换成功：资源 +100,000", xchInOk: "兑换成功：积分 +1,000", tradeBns: "兑换加成：智力 {i}（每点 +1% 兑换量）× 等级倍率 {m} → 合计 ×{b}%", menuT: "菜单", myCities: "我的城市", cityLocked: "尚未解锁", mobCity: "城门劫掠中", mobCityHint: "有贼寇进抵城门外劫掠！剿灭前月产出下降 40%。", raidLoss: "劫掠中：产出 -40%", raidLoot: "城门讨伐 ×1.5 缴获", dupSite: "该邮箱已在另一站点注册，账号两边通用，请直接登录",
       studioTitle: "卡牌工坊", stHair: "发型", stOutfit: "衣服", stAcc: "饰品", stWpn: "武器",
       stReset: "恢复默认", stSave: "保存搭配", stSaved: "卡牌搭配已保存。", stShort: "装扮", adminExport: "导出监控数据",
       tagOwner: "版主", myThreads: "我的主题", myReviews: "我的评价", joinedAt: "{d} 注册",
@@ -9757,7 +9757,7 @@ var BOTS = [
       bldNew: "Build", bldNewOk: "{n} built (Lv.1)", bldOnce: "This building already exists in the city",
       wallUpT: "Reinforce", wallUpOk: "Wall reinforced: height +1, now faced with {m}", wallMax: "Wall already at maximum reinforcement",
       mobsT: "Outlaws Around the City", mobHint: "Click an outlaw camp outside the walls to scout it, then organize a squad to hunt it down",
-      mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month", mobTeamT: "Deploy Formation", mobTeamRow: "Formation {n}", mobTeamOn: "selected", mobTeamSel: "Formation {n} deploys", mobCenterRule: "3+ generals incl. a Center; if the Center falls, the battle is lost", mobLackN: "need {n} more", mobLackCenter: "no Center", mobNoTeam: "No formation qualifies — at least 3 generals including a Center are required.", mobCenterDown: "Center routed — the whole army retreats"
+      mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month", recruitT: "Recruit Hall", recruitDesc: "Recruit heroes here: each draw picks one of three generals; duplicate shards can be synthesized into cards.", recruitHint: "Heroes can be recruited", recruitGo: "Recruit Now", recruitQuota: "Recruit quotas", recruitQuotaHint: "earned via check-ins and points", recruitSynth: "Duplicate generals turn into shards — synthesize them in the card wall.", campCap: "Troop cap +{n}%", mobTeamT: "Deploy Formation", mobTeamRow: "Formation {n}", mobTeamOn: "selected", mobTeamSel: "Formation {n} deploys", mobCenterRule: "3+ generals incl. a Center; if the Center falls, the battle is lost", mobLackN: "need {n} more", mobLackCenter: "no Center", mobNoTeam: "No formation qualifies — at least 3 generals including a Center are required.", mobCenterDown: "Center routed — the whole army retreats"
     },
     zh: {
       homeT: "主页", lordT: "君主", cityT: "城池内政", officeT: "政治任命", buildT: "城内建设", polT: "政策调整",
@@ -9780,7 +9780,7 @@ var BOTS = [
       bldNew: "建造", bldNewOk: "{n} 建成（Lv.1）", bldOnce: "城内已有同类建筑",
       wallUpT: "加固", wallUpOk: "城墙加固完成：高度 +1，外观更新为{m}", wallMax: "城墙已达最高加固",
       mobsT: "周边野怪", mobHint: "点击城外的贼寇查看情报，组织麾下武将出征讨伐",
-      mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没", mobTeamT: "出战编队", mobTeamRow: "编队 {n}", mobTeamOn: "已选", mobTeamSel: "编队 {n} 出战", mobCenterRule: "至少 3 将且须含中军；中军被击溃即判负", mobLackN: "缺 {n} 人", mobLackCenter: "缺中军", mobNoTeam: "没有可出战的编队：需至少 3 名武将且含中军。", mobCenterDown: "中军被击溃 · 全军败退"
+      mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没", recruitT: "招募处", recruitDesc: "在此招募天下英杰：每次招募从三位武将中择一收入麾下，亦可用碎片合成武将。", recruitHint: "可招募武将", recruitGo: "前往招募", recruitQuota: "招募次数", recruitQuotaHint: "签到与积分兑换可获取", recruitSynth: "重复武将自动转为碎片，可在卡牌墙合成。", campCap: "带兵上限 +{n}%", mobTeamT: "出战编队", mobTeamRow: "编队 {n}", mobTeamOn: "已选", mobTeamSel: "编队 {n} 出战", mobCenterRule: "至少 3 将且须含中军；中军被击溃即判负", mobLackN: "缺 {n} 人", mobLackCenter: "缺中军", mobNoTeam: "没有可出战的编队：需至少 3 名武将且含中军。", mobCenterDown: "中军被击溃 · 全军败退"
     },
     ja: {
       homeT: "ホーム", lordT: "君主", cityT: "都市内政", officeT: "登用・任命", buildT: "都市建設", polT: "政策",
@@ -9803,7 +9803,7 @@ var BOTS = [
       bldNew: "建設", bldNewOk: "{n} を建設（Lv.1）", bldOnce: "同種の建物はすでにある",
       wallUpT: "増強", wallUpOk: "城壁を増強：高さ +1、外観は{m}に更新", wallMax: "城壁は最大増強済み",
       mobsT: "周辺の賊", mobHint: "城外の賊をクリックして情報を探り、配下の武将で部隊を組んで討伐せよ",
-      mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも", mobTeamT: "出撃部隊", mobTeamRow: "部隊 {n}", mobTeamOn: "選択中", mobTeamSel: "部隊 {n} 出撃", mobCenterRule: "3将以上かつ中軍必須。中軍壊滅で敗北", mobLackN: "あと {n} 名", mobLackCenter: "中軍なし", mobNoTeam: "出撃可能な部隊がありません（3将以上・中軍必須）。", mobCenterDown: "中軍壊滅・全軍敗退"
+      mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも", recruitT: "招募所", recruitDesc: "ここで武将を招募：抽選ごとに三人の武将から一人を選び、欠片からの合成にも対応。", recruitHint: "武将を招募可", recruitGo: "招募へ", recruitQuota: "招募回数", recruitQuotaHint: "署名とポイント交換で獲得", recruitSynth: "重複武将は自動で欠片に変換、カードウォールで合成できます。", campCap: "率兵上限 +{n}%", mobTeamT: "出撃部隊", mobTeamRow: "部隊 {n}", mobTeamOn: "選択中", mobTeamSel: "部隊 {n} 出撃", mobCenterRule: "3将以上かつ中軍必須。中軍壊滅で敗北", mobLackN: "あと {n} 名", mobLackCenter: "中軍なし", mobNoTeam: "出撃可能な部隊がありません（3将以上・中軍必須）。", mobCenterDown: "中軍壊滅・全軍敗退"
     }
   };
   function gt(k, v) {
@@ -9829,6 +9829,8 @@ var BOTS = [
     { k: "market", n: "集市",   nen: "市場",   en: "Market",    icon: "🏪", out: { coin: 60 },  cost: { wood: 400, coin: 150 }, dzh: "铜钱 +60/级·月，税基", den: "Coins +60/lv·mo, tax base" },
     { k: "smith",  n: "铁匠铺", nen: "鉄匠舗", en: "Smithy",    icon: "🔩", out: { iron: 25 },  cost: { wood: 350, coin: 250 }, dzh: "铁 +25/级·月", den: "Iron +25/lv·mo" },
     { k: "camp",   n: "兵营",   nen: "兵営",   en: "Barracks",  icon: "⚔",  out: { rice: 10 },  cost: { wood: 500, coin: 300 }, dzh: "带兵上限 +2%/级", den: "Troop cap +2%/lv" },
+    { k: "market2", n: "商栈", nen: "商棧", en: "Trade House", icon: "📒", out: { coin: 45 }, cost: { wood: 600, coin: 400 }, dzh: "铜钱 +45/级·月，东市贸易", den: "Coins +45/lv·mo, East Market" },
+    { k: "recruit", n: "招募处", nen: "招募処", en: "Recruit Hall", icon: "🎖", out: { coin: 15 }, cost: { wood: 450, coin: 300 }, dzh: "铜钱 +15/级·月；可在此招募武将", den: "Coins +15/lv·mo; recruit heroes here" },
     { k: "wall",   n: "城墙",   nen: "城壁",   en: "City Wall", icon: "🏯", out: { coin: 20 },  cost: { wood: 450, coin: 350 }, dzh: "税收 +10%/级", den: "Tax +10%/lv" }
   ];
   function bldName(b) { var l = lang(); return l === "zh" ? b.n : l === "ja" ? b.nen : b.en; }
@@ -9866,7 +9868,7 @@ var BOTS = [
     ensureRes(u);
     if (!u.bat.city) u.bat.city = { bld: { farm: 1, lumber: 1, market: 1, smith: 1, camp: 1, wall: 1 }, pol: "farm", taxGm: -1 };
     var c = u.bat.city, b = c.bld || (c.bld = {});
-    BUILDINGS.forEach(function (x) { if (b[x.k] == null) b[x.k] = 1; });
+    BUILDINGS.forEach(function (x) { if (b[x.k] == null) b[x.k] = (x.k === "market2" || x.k === "recruit") ? 0 : 1; });
     if (!c.pol) c.pol = "farm";
     if (!u.bat.off) u.bat.off = {};
     if (!c.plots || !c.plots.length) c.plots = defaultPlots();
@@ -10366,7 +10368,7 @@ var BOTS = [
     }
     var tabs = [["home", gt("homeT")], ["stage", T("stageTitle")], ["pvp", T("pvp")], ["shop", T("shopT")], ["bag", T("bagT")]];
     var cur = tabs.filter(function (t) { return t[0] === BATUI.tab; })[0] || tabs[0];
-    html += '<div class="sg-panel"><div style="position:relative;display:inline-block;margin-bottom:12px;z-index:5">' +
+    html += '<div class="sg-panel"><div style="position:relative;display:inline-block;margin-bottom:12px;z-index:60">' +
       '<button class="sgbtn primary" data-bat="tabmenu" style="min-width:180px;display:flex;align-items:center;justify-content:space-between;gap:14px">☰ ' + cur[1] + '<span style="opacity:.8">' + (BATUI.tabmenu ? "▴" : "▾") + "</span></button>" +
       (BATUI.tabmenu ? '<div style="position:absolute;left:0;top:calc(100% + 6px);min-width:220px;background:var(--panel,#1d2027);border:1px solid var(--line-2,#3a3f4a);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.45);padding:6px;display:flex;flex-direction:column;z-index:9">' +
         tabs.map(function (t) { return '<button data-bat="tab" data-v="' + t[0] + '" style="text-align:left;padding:10px 14px;border:none;background:transparent;color:' + (BATUI.tab === t[0] ? "#e8c988" : "var(--ink,#dfe3ea)") + ";border-radius:7px;cursor:pointer;font-size:13.5px;font-weight:" + (BATUI.tab === t[0] ? "700" : "400") + '">' + (BATUI.tab === t[0] ? "● " : "○ ") + t[1] + "</button>"; }).join("") +
@@ -10582,7 +10584,148 @@ var BOTS = [
     s += "</svg>";
     return s;
   }
+  /* V34：城池图改用「城市图鉴」等距复原画风；无数据的城池回退旧格子图 */
   function cityMapHTML(u) {
+    var ctx = null;
+    try { ctx = gameCityCtx(u); } catch (e) { ctx = null; }
+    if (ctx && ctx.M) return cityMapAtlasHTML(u, ctx);
+    return cityMapLegacyHTML(u);
+  }
+  /* 按城池名取图鉴模型 + 建筑锚点指派 */
+  function gameCityCtx(u) {
+    var cityName = u.bat.cur || u.bat.spawn || "洛阳";
+    var AX = window.__SGAtlas || {};
+    var cd = (AX.cityData || []).filter(function (x) { return x.n === cityName; })[0];
+    var mkModel = AX.cityModel;
+    if (!cd || typeof mkModel !== "function") return null;
+    var M = mkModel(cd);
+    if (!M || !M.zones || !M.zones.length) return null;
+    var zs = M.zones, used = {};
+    function pick(pred, not) {
+      for (var i = 0; i < zs.length; i++) {
+        if (used[i]) continue;
+        if (not && not(i)) continue;
+        if (pred(zs[i])) { used[i] = 1; return i; }
+      }
+      return -1;
+    }
+    var a = {};
+    a.palace = pick(function (z) { return z.kind === "palace"; });
+    if (a.palace < 0) a.palace = pick(function (z) { return z.kind === "office"; });
+    a.market = pick(function (z) { return z.kind === "market"; });
+    a.market2 = pick(function (z) { return z.kind === "market" || z.kind === "ward" || z.kind === "res"; }, function (i) { return i === a.market; });
+    a.farm = pick(function (z) { return z.kind === "granary"; });
+    if (a.farm < 0) a.farm = pick(function (z) { return z.kind === "ward" || z.kind === "res"; });
+    a.smith = pick(function (z) { return z.kind === "armory"; });
+    a.camp = pick(function (z) { return z.kind === "camp"; });
+    a.lumber = pick(function (z) { return z.kind === "drill" || z.kind === "stable" || z.kind === "wharf"; });
+    if (a.lumber < 0) a.lumber = pick(function (z) { return z.kind === "ward" || z.kind === "res"; });
+    a.recruit = pick(function (z) { return z.kind === "school" || z.kind === "garden" || z.kind === "office" || z.kind === "res" || z.kind === "ward"; });
+    return { M: M, cd: cd, a: a };
+  }
+  function zcPct(M, zi, fx, fy) {
+    var z = (M.zones || [])[zi];
+    if (!z) return [50, 50];
+    var x = (z.x + z.w * (fx == null ? 0.5 : fx)) / M.W * 100;
+    var y = (z.y + z.h * (fy == null ? 0.5 : fy)) / M.H * 100;
+    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+  }
+  function bldAttrTxt(b, lv) {
+    if (!b || !lv || lv <= 0) return "";
+    var keys = Object.keys(b.out || {});
+    if (!keys.length) return "";
+    return keys.map(function (rk) { return resIcon(rk) + " +" + fmt(Math.round((b.out[rk] || 0) * lv)) + "/月"; }).join(" ");
+  }
+  /* 野怪点位：全部在城墙/护城河之外的郊野带；入城劫掠者显示在城门外 */
+  function mobSpotsAtlas(M) {
+    var o = M.outer, mo = M.moat, W = M.W, H = M.H;
+    function cl(p) { return [Math.max(24, Math.min(W - 24, p[0])), Math.max(24, Math.min(H - 24, p[1]))]; }
+    var l, gate;
+    if (o && mo) {
+      l = [
+        cl([o.x + o.w * 0.20, mo.y - 40]),
+        cl([o.x + o.w * 0.58, mo.y - 48]),
+        cl([o.x + o.w + mo.th + 54, o.y + o.h * 0.30]),
+        cl([mo.x - 54, o.y + o.h * 0.46]),
+        cl([o.x + o.w + mo.th + 60, o.y + o.h * 0.70]),
+        cl([o.x + o.w * 0.16, mo.y + mo.h + 48]),
+        cl([o.x + o.w * 0.52, mo.y + mo.h + 58]),
+        cl([mo.x - 60, o.y + o.h * 0.74])
+      ];
+      gate = cl([o.x + o.w * 0.5, mo.y + mo.h + 36]);
+    } else {
+      l = [[8, 8], [50, 6], [92, 8], [5, 50], [95, 52], [10, 93], [50, 95], [90, 93]];
+      gate = [50, 90];
+    }
+    return { list: l, gate: gate };
+  }
+  function cityMapAtlasHTML(u, ctx) {
+    var M = ctx.M, c = ensureCity(u), cityName = u.bat.cur || u.bat.spawn || "洛阳";
+    var mobs = ensureMobs(u);
+    var spots = mobSpotsAtlas(M);
+    function P(p) { return "left:" + (Math.round(p[0] / M.W * 1000) / 10) + "%;top:" + (Math.round(p[1] / M.H * 1000) / 10) + "%"; }
+    var chips = "";
+    var BKEYS = ["palace", "farm", "lumber", "market", "market2", "smith", "camp", "recruit"];
+    BKEYS.forEach(function (k) {
+      var zi = ctx.a[k];
+      if (zi == null || zi < 0) return;
+      var pos = zcPct(M, zi);
+      var inner;
+      if (k === "palace") {
+        inner = '<button class="sg-zbld palace" data-bat="bld" data-k="palace"><b>🏛 ' + gt("palaceT") + "</b><i>" + gt("governT") + "</i></button>";
+      } else {
+        var b = BUILDINGS.filter(function (x) { return x.k === k; })[0];
+        if (!b) return;
+        var lv = c.bld[k] || 0;
+        if (lv > 0) {
+          var attr = bldAttrTxt(b, lv) || (k === "recruit" ? gt("recruitHint") : "");
+          inner = '<button class="sg-zbld" data-bat="bld" data-k="' + k + '"><b>' + b.icon + " " + bldName(b) + " Lv." + lv + "</b>" + (attr ? "<i>" + attr + "</i>" : "") + "</button>";
+        } else {
+          inner = '<button class="sg-zbld empty" data-bat="bld" data-k="' + k + '"><b>＋ ' + bldName(b) + "</b><i>" + gt("bldNew") + " · " + bldDesc(b) + "</i></button>";
+        }
+      }
+      chips += '<span class="sg-zchip" style="left:' + pos[0] + "%;top:" + pos[1] + '%">' + inner + "</span>";
+    });
+    var wl = Math.min(10, c.bld.wall || 1);
+    var o = M.outer, mo = M.moat;
+    var wallPos = (o && mo) ? [o.x + o.w * 0.5, Math.min(M.H - 24, mo.y + mo.h + mo.th * 0.55 + 16)] : [50, 90];
+    wallPos = [Math.round(wallPos[0] / M.W * 1000) / 10, Math.round(wallPos[1] / M.H * 1000) / 10];
+    chips += '<span class="sg-zchip wall" style="left:' + wallPos[0] + "%;top:" + wallPos[1] + '%">' +
+      '<button class="sg-zbld wallb" data-bat="wall"><b>🏯 ' + gt("wallT") + " Lv." + wl + "</b><i>" + wallMatName(wl) + "</i></button></span>";
+    var mobBadges = mobs.map(function (m) {
+      var ty = MOB_TYPES.filter(function (t) { return t.k === m.t; })[0] || MOB_TYPES[0];
+      var g = gById(m.gid);
+      var raiding = m.inCity && !m.dead;
+      var pos = raiding ? spots.gate : spots.list[m.i % spots.list.length];
+      var pp = [Math.round(pos[0] / M.W * 1000) / 10, Math.round(pos[1] / M.H * 1000) / 10];
+      return '<span class="sg-mob' + (m.dead ? " dead" : raiding ? " raid" : "") + '" data-bat="mob" data-i="' + m.i + '" style="left:' + pp[0] + "%;top:" + pp[1] + '%">' +
+        ty.icon + " " + mobTypeName(ty) + " Lv." + m.lv + '<i style="font-style:normal;opacity:.7">（' + (g ? esc(g.name) : "贼首") + "）</i>" + (m.dead ? " ☠" : raiding ? " 🚨" : "") + "</span>";
+    }).join("");
+    var oPct = (o && mo) ? [Math.round(o.x / M.W * 1000) / 10, Math.round(o.y / M.H * 1000) / 10, Math.round((o.x + o.w) / M.W * 1000) / 10, Math.round((o.y + o.h) / M.H * 1000) / 10] : null;
+    return '<div class="sg-field sg-atlas-field"' + (oPct ? ' data-outer="' + oPct.join(",") + '"' : "") + ">" +
+      '<svg class="sg-atlassvg" viewBox="0 0 ' + M.W + " " + M.H + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' + M.svg + "</svg>" +
+      chips + mobBadges +
+      '<div style="position:absolute;right:10px;bottom:6px;font-size:10px;color:rgba(60,48,24,.75);letter-spacing:.14em;text-shadow:0 1px 2px rgba(255,255,255,.4)">' + esc(cityName) + " · " + gt("mapT") + "</div>" +
+      '<style>' +
+      ".sg-atlas-field{position:relative;padding:0;border-radius:14px;overflow:hidden;border:1px solid rgba(232,201,136,.25);box-shadow:0 10px 30px rgba(0,0,0,.45)}" +
+      ".sg-mob{position:absolute;transform:translate(-50%,-50%);border:1px solid #b05555;border-radius:999px;background:rgba(110,32,32,.72);color:#ffd9d9;font-size:11px;padding:3px 10px;cursor:pointer;white-space:nowrap;z-index:7;transition:.15s;box-shadow:0 3px 8px rgba(0,0,0,.5)}" +
+      ".sg-mob:hover{background:rgba(150,50,50,.85);border-color:#e07f7f;transform:translate(-50%,-50%) scale(1.05)}" +
+      ".sg-mob.dead{opacity:.35;filter:grayscale(1)}" +
+      ".sg-mob.raid{background:rgba(170,40,40,.85);border-color:#ff8080;animation:sgRaid 1.1s ease-in-out infinite}" +
+      "@keyframes sgRaid{0%,100%{box-shadow:0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 16px 5px rgba(255,90,90,.6)}}" +
+      ".sg-atlassvg{display:block;width:100%;height:auto}" +
+      ".sg-zchip{position:absolute;transform:translate(-50%,-50%);z-index:6}" +
+      ".sg-zbld{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid rgba(120,96,40,.85);border-radius:999px;background:rgba(28,22,10,.78);padding:3px 10px;cursor:pointer;white-space:nowrap;transition:.15s;box-shadow:0 3px 8px rgba(0,0,0,.45)}" +
+      ".sg-zbld b{font-size:10.5px;color:#f5e6c4;letter-spacing:.04em;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.9)}" +
+      ".sg-zbld i{font-size:8.5px;color:#e8c988;font-style:normal;opacity:.9}" +
+      ".sg-zbld:hover{transform:translateY(-2px) scale(1.05);border-color:#e8c988;background:rgba(52,40,16,.9)}" +
+      ".sg-zbld.palace{border-color:#c9a45c;background:rgba(60,44,12,.85)}" +
+      ".sg-zbld.empty{border-style:dashed;background:rgba(28,22,10,.55)}" +
+      ".sg-zbld.wallb{border-color:rgba(150,110,60,.9)}" +
+      "@media(max-width:640px){.sg-zbld{padding:2px 7px}.sg-zbld b{font-size:9px}.sg-zbld i{display:none}.sg-mob{font-size:9px;padding:2px 7px}}" +
+      "</style></div>";
+  }
+  function cityMapLegacyHTML(u) {
     var c = ensureCity(u), plots = c.plots || [];
     var occ = {};
     plots.forEach(function (p) { var f = mfoot(p.k); for (var dx = 0; dx < f.w; dx++) for (var dy = 0; dy < f.h; dy++) occ[(p.x + dx) + "," + (p.y + dy)] = p.k; });
@@ -10691,6 +10834,7 @@ var BOTS = [
   function bldOpen(k) {
     var u = me(); if (!u) return;
     if (k === "palace") { palaceOpen(); return; }
+    if (k === "recruit" && (ensureCity(u).bld.recruit || 0) > 0) { recruitOpen(); return; }
     var b = BUILDINGS.filter(function (x) { return x.k === k; })[0];
     if (!b) return;
     var c = ensureCity(u), lv = c.bld[k] || 0, max = lv >= 10;
@@ -10704,10 +10848,40 @@ var BOTS = [
     }).join(" · ");
     modal("<h3>" + b.icon + " " + bldName(b) + " · Lv." + lv + "</h3>" +
       '<div class="sg-note" style="margin-bottom:6px">' + bldDesc(b) + (incTxt ? "　·　" + gt("incomeT") + " " + incTxt : "") + "</div>" +
+      (k === "camp" ? campExtraHTML(u) : "") +
       '<div class="sg-rankline"><span>' + (max ? gt("bldMax") : costTxt) + '</span><span class="sp"></span>' +
-      '<button class="sgbtn sm primary" data-bat="build-up" data-k="' + k + '"' + (can ? "" : " disabled") + ">" + (max ? gt("bldMax") : gt("bldOptT")) + "</button>" +
+      '<button class="sgbtn sm primary" data-bat="build-up" data-k="' + k + '"' + (can ? "" : " disabled") + ">" + (max ? gt("bldMax") : (lv <= 0 ? gt("bldNew") : gt("bldOptT"))) + "</button>" +
+      (k === "recruit" && lv > 0 ? '<button class="sgbtn sm ghost" data-bat="recruit-go">' + gt("recruitGo") + "</button>" : "") +
       '<button class="sgbtn sm ghost" data-bat="demolish" data-k="' + k + '">' + gt("demT") + "</button></div>" +
       '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+  }
+  /* V34：兵营（参考率土式营房）——显示编队与带兵加成 */
+  function campExtraHTML(u) {
+    var c = ensureCity(u), lv = c.bld.camp || 1;
+    var tsum = (c.teams || []).map(function (t, i) {
+      var n = TEAM_POS.filter(function (p) { return !!t.slots[p.k]; }).length;
+      return "<b>T" + (i + 1) + "</b> " + n + "/5";
+    }).join("　");
+    return '<div class="sg-note" style="border:1px dashed var(--line-2,#3a3f4a);border-radius:8px;padding:7px 10px;margin-bottom:8px">🏕 ' +
+      gt("campCap", { n: lv * 2 }) + "　·　" + (tsum || "—") + "</div>";
+  }
+  /* V34：武将招募处 */
+  function recruitOpen() {
+    var u = me(); if (!u) return;
+    ensureCity(u);
+    var lv = u.bat.city.bld.recruit || 0;
+    if (lv <= 0) { bldOpen("recruit"); return; }
+    var quota = u.draws || 0;
+    modal("<h3>🎖 " + gt("recruitT") + " · Lv." + lv + "</h3>" +
+      '<div class="sg-note" style="margin-bottom:8px">' + gt("recruitDesc") + "</div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">募</span>' +
+      "<span><b>" + gt("recruitQuota") + "：" + quota + "</b> <small style='color:var(--ink-3)'>" + gt("recruitQuotaHint") + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#8a6d3b;color:#f5e6c4">🪙</span>' +
+      "<span><b>" + gt("incomeT") + "</b> <small style='color:var(--ink-3)'>🪙 +" + fmt(15 * lv) + "/月</small></span></div>" +
+      '<div style="display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap">' +
+      '<button class="sgbtn primary" data-bat="recruit-draw">🎖 ' + gt("recruitGo") + "</button>" +
+      '<button class="sgbtn" data-bat="gslink">' + gt("gsT") + " ›</button></div>" +
+      '<div class="sg-note" style="margin-top:10px;text-align:center;font-size:11px">' + gt("recruitSynth") + "</div>");
   }
   function cellOpen(x, y) {
     var u = me(); if (!u) return;
@@ -10795,6 +10969,41 @@ var BOTS = [
         '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>"));
   }
   /* ---------- V27 主页：编队 / 城市列表 / 商队 ---------- */
+  /* V34：城池缩略图（俯瞰示意：护城河/城墙/宫城/街区，规制随等级） */
+  function cityThumbSVG(name, dim) {
+    var AX = window.__SGAtlas || {};
+    var cd = (AX.cityData || []).filter(function (x) { return x.n === name; })[0];
+    var tier = 1;
+    try { tier = (cd && AX.tierOf) ? AX.tierOf(cd) : 1; } catch (e) {}
+    var w = 40 + tier * 12, h = 28 + tier * 9;
+    var cx = 50, cy = 40, x0 = cx - w / 2, y0 = cy - h / 2;
+    var s = '<svg viewBox="0 0 100 80" width="52" height="42" style="flex:0 0 auto;display:block;opacity:' + (dim ? ".45" : "1") + '" aria-hidden="true">';
+    s += '<rect width="100" height="80" rx="6" fill="#3a3826"/>';
+    s += '<rect x="' + (x0 - 5) + '" y="' + (y0 - 5) + '" width="' + (w + 10) + '" height="' + (h + 10) + '" rx="3" fill="#5b83a0"/>';
+    s += '<rect x="' + (x0 - 1.5) + '" y="' + (y0 - 1.5) + '" width="' + (w + 3) + '" height="' + (h + 3) + '" rx="2" fill="#cfc39d"/>';
+    s += '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '" rx="1.5" fill="#b8ab84" stroke="#6d5f3c" stroke-width="1.4"/>';
+    /* 马面 */
+    [[x0, y0], [x0 + w, y0], [x0, y0 + h], [x0 + w, y0 + h]].forEach(function (p) {
+      s += '<rect x="' + (p[0] - 2.4) + '" y="' + (p[1] - 2.4) + '" width="4.8" height="4.8" fill="#8f7f56" stroke="#5d5030" stroke-width=".8"/>';
+    });
+    /* 街区 */
+    var cols = 1 + tier, rows = tier;
+    for (var r2 = 0; r2 < rows; r2++) for (var c2 = 0; c2 < cols; c2++) {
+      var zw = (w - 14) / cols, zh = (h - 16) / rows;
+      if (c2 === Math.floor(cols / 2) && r2 === 0) continue;
+      var zx = x0 + 7 + c2 * zw + 1.2, zy = y0 + 9 + r2 * zh + 1.2;
+      s += '<rect x="' + zx.toFixed(1) + '" y="' + zy.toFixed(1) + '" width="' + (zw - 2.4).toFixed(1) + '" height="' + (zh - 2.4).toFixed(1) + '" fill="#a3936b"/>';
+    }
+    /* 宫城/衙署 */
+    var pw = w * 0.3, ph = h * 0.34, px = cx - pw / 2, py = y0 + 4;
+    s += '<rect x="' + px.toFixed(1) + '" y="' + py.toFixed(1) + '" width="' + pw.toFixed(1) + '" height="' + ph.toFixed(1) + '" fill="#c9a45c" stroke="#7a5f2b" stroke-width="1"/>';
+    s += '<rect x="' + (px + pw * 0.2).toFixed(1) + '" y="' + (py + ph * 0.3).toFixed(1) + '" width="' + (pw * 0.6).toFixed(1) + '" height="' + (ph * 0.45).toFixed(1) + '" fill="#8a6d3b"/>';
+    /* 南门 + 大街 */
+    s += '<rect x="' + (cx - 3) + '" y="' + (y0 + h - 1.5) + '" width="6" height="5" fill="#4a3a20"/>';
+    s += '<rect x="' + (cx - 1.4) + '" y="' + (y0 + h + 3.5) + '" width="2.8" height="' + (80 - (y0 + h) - 6) + '" fill="#bfa984"/>';
+    s += "</svg>";
+    return s;
+  }
   function cityListHTML(u) {
     ensureCity(u);
     var owned = u.bat.owned || [];
@@ -10805,9 +11014,9 @@ var BOTS = [
       var tcnt = 0;
       if (cc) (cc.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) tcnt++; }); });
       if (has) return '<button' + (on ? "" : ' data-bat="cityswitch" data-n="' + cn + '"') +
-        ' class="sg-cityrow' + (on ? " on" : "") + '"><span>🏰</span><b>' + cn + "</b>" +
+        ' class="sg-cityrow' + (on ? " on" : "") + '">' + cityThumbSVG(cn) + "<b>" + cn + "</b>" +
         '<span class="sp"></span><small>' + (on ? "● " : "") + tcnt + "/25</small></button>";
-      return '<button class="sg-cityrow lock" data-bat="unlock" data-n="' + cn + '"><span>🔒</span><b>' + cn + "</b>" +
+      return '<button class="sg-cityrow lock" data-bat="unlock" data-n="' + cn + '">' + cityThumbSVG(cn, true) + "<b>" + cn + "</b>" +
         '<span class="sp"></span><small>' + fmt(CITY_UNLOCK_PTS) + "★</small></button>";
     }).join("");
   }
@@ -11283,6 +11492,8 @@ var BOTS = [
       var fk = fightKeyCards(key);
       if (!fk) return renderBattle();
       BATUI.fight = fk; BATUI.fight.key = key; BATUI.res = null;
+      /* V34：进入战斗页自动关闭情报/提示弹窗，直达确认开战 */
+      closeModal();
     }
     var fk = BATUI.fight;
     var myUnits = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
@@ -11301,6 +11512,7 @@ var BOTS = [
       '<div style="text-align:center;font-size:11px;color:#7fd08a;letter-spacing:.2em">⚔ ' + T("sideAtk") + '</div>' +
       myUnits.map(function (un, i) { return bcardHTML(un, "A", i); }).join("") + "</div>" +
       '<div style="text-align:center;padding-top:10px"><div style="font-size:12px;color:var(--gold-2);font-weight:800;letter-spacing:.1em;writing-mode:vertical-rl;margin:0 auto">⚔ VS ⚔</div>' +
+      warStripSVG() +
       '<div id="sgRoundMid" style="margin-top:10px"><b style="font-size:20px;color:var(--gold-2)" id="sgRoundCur">' + (BATUI.res ? 1 : "–") + "</b><br>" +
       '<small style="font-size:10px;color:var(--ink-3)">' + T("roundMidT") + "</small>" +
       (BATUI.res ? '<br><small style="font-size:10px;color:var(--ink-3)">共 ' + BATUI.res.rounds + "</small>" : "") + "</div></div>" +
@@ -11316,7 +11528,7 @@ var BOTS = [
         '<button class="sgbtn primary" data-bat="go" data-key="' + esc(key) + '">' + (fk.kind === "sweep" ? T("sweep") : T("fight")) + "</button>" +
         '<button class="sgbtn ghost" data-bat="sneak" data-key="' + esc(key) + '">🥷 ' + T("sneakT") + "</button></div>" +
         '<div class="sg-note" style="margin-top:10px;font-size:11px">🥷 ' + T("sneakDesc") + "</div></div></div></div>" +
-        '<style>@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}</style></div>';
+        '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}</style></div>';
     }
     var res = BATUI.res, out = res.out;
     var logHTML = res.log.map(function (l) {
@@ -11353,7 +11565,25 @@ var BOTS = [
       '<div style="text-align:center;margin-top:12px">' +
       (fk.kind === "stage" && res.win ? '<button class="sgbtn primary" data-bat="fight" data-n="' + (fk.stage + 1) + '">' + T("againF") + "（" + T("stage", { n: fk.stage + 1 }) + "）</button> " : "") +
       '<button class="sgbtn ghost" data-bat="back">' + T("backBattle") + "</button></div></div></div></div>" +
-      '<style>@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}</style></div>';
+      '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}</style></div>';
+  }
+  /* V34：中列战争场面（两军矛兵阵列 + 旌旗） */
+  function warStripSVG() {
+    var s = '<svg viewBox="0 0 60 118" style="width:100%;max-height:120px;opacity:.9" aria-hidden="true">';
+    for (var r = 0; r < 6; r++) {
+      var y = 36 + r * 13;
+      for (var i = 0; i < 4; i++) {
+        s += '<line x1="' + (4 + i * 6) + '" y1="' + y + '" x2="' + (4 + i * 6) + '" y2="' + (y - 8) + '" stroke="#7fd08a" stroke-width="1.4" opacity=".8"/>' +
+             '<circle cx="' + (4 + i * 6) + '" cy="' + (y - 9.5) + '" r="1.6" fill="#a8e0b2" opacity=".85"/>' +
+             '<line x1="' + (32 + i * 6) + '" y1="' + y + '" x2="' + (32 + i * 6) + '" y2="' + (y - 8) + '" stroke="#e08a8a" stroke-width="1.4" opacity=".8"/>' +
+             '<circle cx="' + (32 + i * 6) + '" cy="' + (y - 9.5) + '" r="1.6" fill="#f0b5b5" opacity=".85"/>';
+      }
+    }
+    s += '<line x1="14" y1="32" x2="14" y2="10" stroke="#c9a45c" stroke-width="1.6"/><path d="M14 10 L27 14.5 L14 20 Z" fill="#a63a32"/>';
+    s += '<line x1="46" y1="32" x2="46" y2="10" stroke="#c9a45c" stroke-width="1.6"/><path d="M46 10 L59 14.5 L46 20 Z" fill="#3a6ea8"/>';
+    s += '<line x1="2" y1="30" x2="58" y2="30" stroke="rgba(0,0,0,.35)" stroke-width="1"/>';
+    s += "</svg>";
+    return s;
   }
   function bcardHTML(un, side, ix) {
     var tr = TIERS[un.ti], g = gById(un.gid);
@@ -11867,6 +12097,12 @@ var BOTS = [
       case "office": appointOpen(t.getAttribute("data-k")); return;
       /* ---------- V24 城池图 ---------- */
       case "bld": bldOpen(t.getAttribute("data-k")); return;
+      case "recruit-draw": {
+        if ((u.draws || 0) <= 0) return toast(T("noDraw"), "err");
+        closeModal(); doDraw(); return;
+      }
+      case "recruit-go": closeModal(); recruitOpen(); return;
+      case "gslink": closeModal(); location.hash = "#/gs"; return;
       case "cell": cellOpen(+t.getAttribute("data-x"), +t.getAttribute("data-y")); return;
       case "wall": wallOpen(); return;
       case "wall-up": {
@@ -11902,10 +12138,10 @@ var BOTS = [
       case "demolish": {
         ensureCity(u);
         var dk = t.getAttribute("data-k");
-        if (dk === "palace") return;
+        if (dk === "palace" || dk === "wall") return;
         var db = BUILDINGS.filter(function (x) { return x.k === dk; })[0];
         var dc = u.bat.city;
-        if (!db || !dc.plots.some(function (p) { return p.k === dk; })) return;
+        if (!db || !(dc.bld[dk] > 0)) return;
         dc.plots = dc.plots.filter(function (p) { return p.k !== dk; });
         addRes(u, { wood: Math.round(db.cost.wood * (dc.bld[dk] || 1) * 0.3), coin: Math.round(db.cost.coin * (dc.bld[dk] || 1) * 0.3) });
         dc.bld[dk] = 0;
