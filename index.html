@@ -9742,7 +9742,7 @@ var BOTS = [
       bldNew: "Build", bldNewOk: "{n} built (Lv.1)", bldOnce: "This building already exists in the city",
       wallUpT: "Reinforce", wallUpOk: "Wall reinforced: height +1, now faced with {m}", wallMax: "Wall already at maximum reinforcement",
       mobsT: "Outlaws Around the City", mobHint: "Click an outlaw camp outside the walls to scout it, then organize a squad to hunt it down",
-      mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month"
+      mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month", mobTeamT: "Deploy Formation", mobTeamRow: "Formation {n}", mobTeamOn: "selected", mobTeamSel: "Formation {n} deploys", mobCenterRule: "3+ generals incl. a Center; if the Center falls, the battle is lost", mobLackN: "need {n} more", mobLackCenter: "no Center", mobNoTeam: "No formation qualifies — at least 3 generals including a Center are required.", mobCenterDown: "Center routed — the whole army retreats"
     },
     zh: {
       homeT: "主页", lordT: "君主", cityT: "城池内政", officeT: "政治任命", buildT: "城内建设", polT: "政策调整",
@@ -9765,7 +9765,7 @@ var BOTS = [
       bldNew: "建造", bldNewOk: "{n} 建成（Lv.1）", bldOnce: "城内已有同类建筑",
       wallUpT: "加固", wallUpOk: "城墙加固完成：高度 +1，外观更新为{m}", wallMax: "城墙已达最高加固",
       mobsT: "周边野怪", mobHint: "点击城外的贼寇查看情报，组织麾下武将出征讨伐",
-      mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没"
+      mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没", mobTeamT: "出战编队", mobTeamRow: "编队 {n}", mobTeamOn: "已选", mobTeamSel: "编队 {n} 出战", mobCenterRule: "至少 3 将且须含中军；中军被击溃即判负", mobLackN: "缺 {n} 人", mobLackCenter: "缺中军", mobNoTeam: "没有可出战的编队：需至少 3 名武将且含中军。", mobCenterDown: "中军被击溃 · 全军败退"
     },
     ja: {
       homeT: "ホーム", lordT: "君主", cityT: "都市内政", officeT: "登用・任命", buildT: "都市建設", polT: "政策",
@@ -9788,7 +9788,7 @@ var BOTS = [
       bldNew: "建設", bldNewOk: "{n} を建設（Lv.1）", bldOnce: "同種の建物はすでにある",
       wallUpT: "増強", wallUpOk: "城壁を増強：高さ +1、外観は{m}に更新", wallMax: "城壁は最大増強済み",
       mobsT: "周辺の賊", mobHint: "城外の賊をクリックして情報を探り、配下の武将で部隊を組んで討伐せよ",
-      mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも"
+      mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも", mobTeamT: "出撃部隊", mobTeamRow: "部隊 {n}", mobTeamOn: "選択中", mobTeamSel: "部隊 {n} 出撃", mobCenterRule: "3将以上かつ中軍必須。中軍壊滅で敗北", mobLackN: "あと {n} 名", mobLackCenter: "中軍なし", mobNoTeam: "出撃可能な部隊がありません（3将以上・中軍必須）。", mobCenterDown: "中軍壊滅・全軍敗退"
     }
   };
   function gt(k, v) {
@@ -10145,8 +10145,10 @@ var BOTS = [
     return { side: side, cid: c.id || "", gid: g.id, name: g.name, ti: ti, lv: lv, atk: atk, def: def, spd: spd, arm: c.arm || "",
       troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g), alive: true, skn: skb.n, sp: spg ? spg.k : null, spT: spT };
   }
-  function simulate(A, B) {
+  function simulate(A, B, opt) {
     var log = [], round = 0;
+    /* V32：中军被击溃即全军败退 */
+    var centerIx = (opt && opt.centerIx != null) ? opt.centerIx : -1, centerDown = false;
     A.forEach(function (u, i) { u.ix = i; });
     B.forEach(function (u, i) { u.ix = i; });
     while (round < 30) {
@@ -10176,18 +10178,26 @@ var BOTS = [
           line.sd = (line.sd ? line.sd + " " : "") + gt("spAct", { n: u.name, s: line.spk, d: fmt(ex) }) + (skillHit ? " " + gt("spSyn") : "");
         }
         if (tgt.troop <= 0) { tgt.troop = 0; tgt.alive = false; line.dead = tgt.name; }
+        /* V32：己方中军（A 队 centerIx）兵力归零 → 立即判负并中止战斗 */
+        if (centerIx >= 0 && tgt.side === "A" && tgt.ix === centerIx && !tgt.alive) {
+          centerDown = true;
+          line.sd = (line.sd ? line.sd + " " : "") + gt("mobCenterDown");
+          line.centerDown = true;
+        }
         log.push(line);
+        if (centerDown) break;
         var aAlive = A.some(function (v) { return v.alive; }), bAlive = B.some(function (v) { return v.alive; });
         if (!(aAlive && bAlive)) break;
       }
+      if (centerDown) break;
       var aa = A.some(function (v) { return v.alive; }), bb = B.some(function (v) { return v.alive; });
       if (!(aa && bb)) break;
     }
     var pR = A.reduce(function (s, u) { return s + u.troop; }, 0), eR = B.reduce(function (s, u) { return s + u.troop; }, 0);
     var pM = A.reduce(function (s, u) { return s + u.troopMax; }, 0) || 1, eM = B.reduce(function (s, u) { return s + u.troopMax; }, 0) || 1;
-    var win = eR <= 0 ? true : (pR <= 0 ? false : (pR / pM >= eR / eM));
+    var win = centerDown ? false : (eR <= 0 ? true : (pR <= 0 ? false : (pR / pM >= eR / eM)));
     var stars = !win ? 0 : (pR / pM >= 0.6 ? 3 : pR / pM >= 0.3 ? 2 : 1);
-    return { win: win, stars: stars, log: log, rounds: round, pR: pR, pM: pM, eR: eR, eM: eM, units: { A: A, B: B } };
+    return { win: win, stars: stars, log: log, rounds: round, pR: pR, pM: pM, eR: eR, eM: eM, units: { A: A, B: B }, centerDown: centerDown };
   }
   /* ---------- 经验 / 掉落 / 结算 ---------- */
   function gainExp(c, exp, ups) {
@@ -10201,11 +10211,13 @@ var BOTS = [
     var r = Math.pow(Math.random(), 1.35);
     return Math.min(maxTi, Math.floor(r * (maxTi + 1)));
   }
-  function fightSettle(kind, stage, res, foeName, mob) {
+  function fightSettle(kind, stage, res, foeName, mob, squadCards) {
     var u = me(); if (!u) return null;
     ensureBat(u); ensureRes(u);
     var out = { exp: 0, pts: 0, ups: [], shards: [], eq: null, mt: null, sp: 0, loot: { rice: 0, copper: 0, iron: 0, coin: 0 } };
-    var squad = BATUI.squad.map(function (id) { return (u.cards || []).filter(function (c) { return c.id === id; })[0]; }).filter(Boolean);
+    /* V32：优先用实际出战卡（野怪以城市编队出战，不能沿用 pvp 小队） */
+    var squad = (squadCards && squadCards.length) ? squadCards.slice()
+      : BATUI.squad.map(function (id) { return (u.cards || []).filter(function (c) { return c.id === id; })[0]; }).filter(Boolean);
     var baseExp = 40 + stage * 18;
     /* 游戏时间：每打一仗推进 1 个月（184年1月 → 220年12月循环）；实时每 1 小时也 +1（gMonth） */
     u.bat.gmBase = (u.bat.gmBase || 0) + 1;
@@ -10404,6 +10416,27 @@ var BOTS = [
   function teamSize(u, ti) {
     var c = ensureCity(u), t = (c.teams || [])[ti]; if (!t) return 0;
     return TEAM_POS.filter(function (p) { return !!t.slots[p.k]; }).length;
+  }
+  /* ---------- V32 野怪讨伐：以城市编队（1-5）出战 ---------- */
+  var MOB_TEAM_MIN = 3;
+  function teamCards(u, ti) {
+    var t = (ensureCity(u).teams || [])[ti]; if (!t) return [];
+    return TEAM_POS.map(function (p) {
+      var id = t.slots[p.k]; if (!id) return null;
+      return (u.cards || []).filter(function (x) { return x.id === id; })[0] || null;
+    }).filter(Boolean);
+  }
+  function teamReady(u, ti) {
+    var t = (ensureCity(u).teams || [])[ti];
+    if (!t) return { ok: false, n: 0, hasCenter: false, centerId: null, lack: MOB_TEAM_MIN };
+    var n = 0, centerId = null;
+    TEAM_POS.forEach(function (p) { if (t.slots[p.k]) { n++; if (p.k === "center") centerId = t.slots[p.k]; } });
+    return { ok: n >= MOB_TEAM_MIN && !!centerId, n: n, hasCenter: !!centerId, centerId: centerId,
+      lack: Math.max(0, MOB_TEAM_MIN - n), why: !centerId ? "center" : (n < MOB_TEAM_MIN ? "n" : "") };
+  }
+  function firstReadyTeam(u) {
+    for (var i = 0; i < 5; i++) if (teamReady(u, i).ok) return i;
+    return -1;
   }
   /* ---------- V27 技能修炼：吞噬同名同阶卡牌 ---------- */
   var SK_COST = [1, 1, 1]; /* V28：每吞噬一张同名同阶卡即可解锁一个技能 */
@@ -10677,24 +10710,45 @@ var BOTS = [
     var ty = MOB_TYPES.filter(function (t) { return t.k === mob.t; })[0] || MOB_TYPES[0];
     var g = gById(mob.gid);
     var lootTxt = "🪙 " + fmt(220 + mob.lv * 80) + "± · 🌾 " + fmt(120 + mob.lv * 36) + " · 🪵 " + fmt(30 + mob.lv * 8) + " · ⛏🔩 " + fmt(18 + mob.lv * 8) + " · " + T("bagShard") + " ×1";
-    var cards = u.cards || [];
-    var chosen = BATUI.squad.filter(function (id) { return cards.some(function (c) { return c.id === id; }); });
-    BATUI.squad = chosen;
-    var sqHTML = cards.slice(0, 24).map(function (c) {
-      var gg = gById(c.gid); if (!gg) return "";
-      var on = chosen.indexOf(c.id) >= 0;
-      return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="mobsq" data-id="' + c.id + '">' + esc(gg.name) + " Lv." + cardLv(c) + (on ? " ✓" : "") + "</button>";
+    /* V32：野怪讨伐改为选择城市编队 1-5（≥3 人且必须含中军） */
+    ensureCity(u);
+    var selMap = BATUI.mobTi || (BATUI.mobTi = {});
+    if (selMap[idx] == null || !teamReady(u, selMap[idx]).ok) selMap[idx] = firstReadyTeam(u);
+    var pick = selMap[idx];
+    var teams = ensureCity(u).teams || [];
+    var teamsHTML = teams.map(function (t, ti) {
+      var rr = teamReady(u, ti), on = pick === ti;
+      var mem = TEAM_POS.map(function (p) {
+        var id = t.slots[p.k]; if (!id) return "";
+        var cc = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cc) return "";
+        var gg = gById(cc.gid) || {};
+        return '<span class="sgchip' + (p.k === "center" ? " ctr" : "") + '" style="font-size:10.5px">' +
+          (p.k === "center" ? "★" : "") + esc(gg.name || "") + " Lv." + cardLv(cc) + "</span>";
+      }).join("");
+      var why = rr.ok ? "" : (rr.lack > 0 ? gt("mobLackN", { n: rr.lack }) : gt("mobLackCenter"));
+      return '<button class="sg-teamrow' + (on ? " on" : "") + (rr.ok ? "" : " dis") + '" data-bat="mobteam" data-i="' + idx + '" data-t="' + ti + '"' + (rr.ok ? "" : " disabled") + ">" +
+        '<span class="no">' + (ti + 1) + "</span>" +
+        '<span class="tx"><b>' + gt("mobTeamRow", { n: ti + 1 }) + " · " + rr.n + "/5" + "</b>" +
+        (on ? ' <small style="color:#8ed6a5">✓ ' + gt("mobTeamOn") + "</small>" : "") +
+        (why ? ' <small style="color:#e07f7f">' + why + "</small>" : "") +
+        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">' + (mem || '<span class="sg-note" style="font-size:10px;margin:0">—</span>') + "</div></span></button>";
     }).join("");
     modal("<h3>" + ty.icon + " " + mobTypeName(ty) + " · Lv." + mob.lv + (mob.dead ? " ☠" : "") + "</h3>" +
+      '<style>.sg-teamrow{width:100%;display:flex;gap:8px;align-items:flex-start;text-align:left;padding:8px 9px;border:1px solid var(--line-2,#3a3f4a);border-radius:9px;background:transparent;color:var(--ink-2,#c8d0dc);font-size:12px;margin-bottom:6px;cursor:pointer}' +
+      ".sg-teamrow:hover{border-color:#c9a45c}.sg-teamrow.on{border-color:#c9a45c;background:rgba(201,164,92,.12);color:#e8c988}" +
+      ".sg-teamrow.dis{opacity:.45;cursor:not-allowed;border-style:dashed}.sg-teamrow .no{width:20px;height:20px;flex:0 0 auto;border-radius:5px;background:#5b4a2f;color:#f5e6c4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px}" +
+      ".sg-teamrow.on .no{background:#c9a45c;color:#10131a}.sg-teamrow .tx{min-width:0;flex:1}.sg-teamrow .sgchip.ctr{border-color:#c9a45c;color:#e8c988}</style>" +
       '<div class="sg-rankline"><span class="i" style="background:#7a3d3d;color:#ffd9d9">贼</span>' +
       "<span><b>" + gt("mobLead") + "：" + (g ? esc(g.name) : "贼首") + "</b> <small style='color:var(--ink-3)'>" + (g ? tierLabel(TIERS[tierOf(g)]) : "") + "</small></span></div>" +
       '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">⚔</span><span><b>' + gt("mobTroop") + "：" + fmt(mob.troop) + "</b></span></div>" +
       (mob.inCity && !mob.dead ? '<div class="sg-note" style="color:#ffb3b3">🚨 ' + T("mobCity") + "　·　" + T("raidLoot") + "</div>" : "") +
-      '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>' + T("squad") + "（" + chosen.length + "/3）</h3></div>" +
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">' + sqHTML + "</div>" +
+      '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>' + gt("mobTeamT") + "（" + gt("mobCenterRule") + "）</h3></div>" +
+      '<div style="margin:8px 0">' + teamsHTML + "</div>" +
+      (pick < 0 ? '<div class="sg-note" style="color:#e07f7f">' + gt("mobNoTeam") + "</div>" : "") +
       '<div class="sg-note" style="margin:6px 0">' + gt("mobLoot") + "：" + lootTxt + "</div>" +
       (mob.dead ? '<div class="sg-note" style="color:#e07f7f">' + gt("mobGone") + "</div>" :
-        '<div style="text-align:center;margin-top:12px"><button class="sgbtn primary" data-bat="mob-fight" data-i="' + idx + '">⚔ ' + gt("mobFight") + "</button> " +
+        '<div style="text-align:center;margin-top:12px">' +
+        (pick >= 0 ? '<button class="sgbtn primary" data-bat="mob-fight" data-i="' + idx + '">⚔ ' + gt("mobFight") + " · " + gt("mobTeamSel", { n: pick + 1 }) + "</button> " : "") +
         '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>"));
   }
   /* ---------- V27 主页：编队 / 城市列表 / 商队 ---------- */
@@ -11164,7 +11218,18 @@ var BOTS = [
       var mobs = ensureMobs(u), mob = mobs[+num] || mobs[0];
       if (!mob) return null;
       var mty = MOB_TYPES.filter(function (t) { return t.k === mob.t; })[0] || MOB_TYPES[0];
-      return { kind: "monster", stage: mob.lv, squad: squad, enemies: mobEnemies(u, mob), foe: mobTypeName(mty), mob: mob };
+      /* V32：野怪以城市编队（1-5）出战，需 ≥3 人且含中军 */
+      var selMap = BATUI.mobTi || (BATUI.mobTi = {});
+      var ti = selMap[+num];
+      if (ti == null || !teamReady(u, ti).ok) ti = firstReadyTeam(u);
+      if (ti < 0) return null;
+      selMap[+num] = ti;
+      var trm = teamReady(u, ti), tSquad = teamCards(u, ti);
+      if (tSquad.length < MOB_TEAM_MIN || !trm.centerId) return null;
+      var cIx = -1;
+      tSquad.forEach(function (c, i) { if (c.id === trm.centerId) cIx = i; });
+      return { kind: "monster", stage: mob.lv, squad: tSquad, enemies: mobEnemies(u, mob), foe: mobTypeName(mty), mob: mob,
+        teamTi: ti, centerId: trm.centerId, centerIx: cIx };
     }
     return null;
   }
@@ -11178,9 +11243,11 @@ var BOTS = [
     }
     var fk = BATUI.fight;
     var myUnits = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
+    /* V32：标出中军（被击溃即判负） */
+    if (fk.centerId) myUnits.forEach(function (un) { if (un.cid === fk.centerId) un.pos = "center"; });
     var foeUnits = fk.enemies.map(pseudoUnit).filter(Boolean);
     var head = '<div class="sg-page"><div class="sg-hero"><div class="sg-hero-row"><div class="grow"><h2>' + esc(fk.foe) + "</h2><p>" +
-      (fk.kind === "sweep" ? T("sweepDesc") : T("squadDesc")) + "</p></div>" +
+      (fk.kind === "sweep" ? T("sweepDesc") : fk.kind === "monster" && fk.teamTi != null ? gt("mobTeamSel", { n: fk.teamTi + 1 }) + " · " + gt("mobCenterRule") : T("squadDesc")) + "</p></div>" +
       '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button></div></div>";
     /* V28：左攻右守 · 中间回合 */
     var foeTip = foeUnits.map(function (un) { return un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(TIERS[un.ti]) + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + " · 兵力 " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + " · 攻" + un.atk + " 防" + un.def; }).join("\n");
@@ -11233,6 +11300,7 @@ var BOTS = [
       '<div class="sg-panel sg-vfx-host" id="sgVfxHost" style="position:relative"><div style="text-align:center;padding:8px 0"><b id="sgVicTxt" style="font-size:22px;color:' + (res.win ? "#e8c988" : "#c97070") + ';letter-spacing:.2em">' +
       (res.win ? ["", "★ 险胜", "★★ 大胜", "★★★ 完胜"][res.stars] : T("defeat")) + "</b>" +
       '<div class="sg-note" style="margin-top:4px">' + T("remain") + "：我军 " + fmt(res.pR) + " / " + fmt(res.pM) + " · 敌军 " + fmt(res.eR) + " / " + fmt(res.eM) + " · " + T("rounds") + " " + res.rounds + "</div>" +
+      (res.centerDown ? '<div class="sg-note" style="color:#e07f7f;margin-top:4px;font-weight:700">⚑ ' + gt("mobCenterDown") + "</div>" : "") +
       (rewards ? '<div style="margin-top:8px">' + rewards + "</div>" : "") + "</div>" +
       '<div class="sg-panel-hd"><h3><i>·</i>' + T("battleLog") + "</h3><span class=\"sp\"></span>" +
       '<button class="sgbtn sm ghost" data-bat="speed">×' + BATUI.speed + "</button>" +
@@ -11252,13 +11320,14 @@ var BOTS = [
     } catch (e) {}
     var pct = Math.max(0, Math.min(100, Math.round(un.troop / (un.troopMax || 1) * 100)));
     /* V28：战前侦察 hover */
-    var tip = un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + "\n" +
+    var tip = un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + (un.pos === "center" ? " · " + posName(TEAM_POS[1]) : "") + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + "\n" +
       T("troopShort", { n: troopTxt(un.troop) }) + (un.troop < un.troopMax ? " / " + troopTxt(un.troopMax) : "") + "\n" +
       "攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd;
     return '<div class="bcard" data-side="' + side + '" data-ix="' + ix + '" title="' + esc(tip).replace(/"/g, "&quot;") + '" style="border:1px solid ' + tr.c + '77;border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(0,0,0,.30));padding:10px;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.25)">' +
       '<div style="display:flex;gap:10px;align-items:center">' +
       '<div class="bavatar" style="width:64px;height:84px;border-radius:9px;overflow:hidden;flex:0 0 auto;border:1px solid ' + tr.c + '66;background:#0d1117">' + avatar + '</div>' +
       '<div style="min-width:0;flex:1"><b style="color:' + tr.c + ';font-size:14px;letter-spacing:.05em">' + esc(un.name) + "</b>" +
+      (un.pos === "center" ? ' <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:#8a6b2a;color:#ffe9b8;font-weight:800;vertical-align:2px">★' + posName(TEAM_POS[1]) + "</span>" : "") +
       '<div style="font-size:10.5px;color:var(--ink-3);margin-top:2px">' + T("lvShort", { n: un.lv }) + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) +
       (un.sp ? ' <span style="color:' + (SP_GROUPS.filter(function (x) { return x.k === un.sp; })[0] || {}).color + ';font-weight:800">' + spLabel(un.sp) + "</span>" : "") + "</div>" +
       '<div style="font-size:11px;color:#c8d4e0;margin-top:4px">' + T("troopShort", { n: troopTxt(un.troop) }) +
@@ -11675,7 +11744,24 @@ var BOTS = [
         save(); toast(gt("demOk", { n: bldName(db) }), "ok"); closeModal(); refreshBattle(); return;
       }
       case "mob": mobOpen(+t.getAttribute("data-i")); return;
-      case "mob-fight": location.hash = "#/battle/f/m" + (+t.getAttribute("data-i") || 0); return;
+      case "mob-fight": {
+        /* V32：开战前校验编队 ≥3 人 + 含中军 */
+        var mfi = +t.getAttribute("data-i") || 0;
+        var msel = (BATUI.mobTi || {})[mfi];
+        var mrr = msel == null ? { ok: false } : teamReady(u, msel);
+        if (!mrr.ok) return toast(gt("mobNoTeam"), "err", 5200);
+        BATUI.fight = null; BATUI.res = null;
+        closeModal();
+        location.hash = "#/battle/f/m" + mfi; return;
+      }
+      case "mobteam": {
+        /* V32：切换出战编队（仅可选 ≥3 人且含中军的编队） */
+        var mti = BATUI._mobOpen || 0, tiSel2 = +t.getAttribute("data-t");
+        var rr2 = teamReady(u, tiSel2);
+        if (!rr2.ok) return toast(rr2.lack > 0 ? gt("mobLackN", { n: rr2.lack }) : gt("mobLackCenter"), "err");
+        (BATUI.mobTi || (BATUI.mobTi = {}))[mti] = tiSel2;
+        mobOpen(mti); return;
+      }
       case "mobsq": {
         var midx = BATUI._mobOpen || 0;
         var sq2 = BATUI.squad.indexOf(id);
@@ -11833,8 +11919,8 @@ var BOTS = [
         var A = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
         if (!A.length) return toast(T("needCard"), "err");
         var B = fk.enemies.map(pseudoUnit).filter(Boolean);
-        var res = simulate(A, B);
-        res.out = fightSettle(fk.kind, fk.stage, res, fk.foe, fk.mob);
+        var res = simulate(A, B, (fk.kind === "monster" && fk.centerIx >= 0) ? { centerIx: fk.centerIx } : null);
+        res.out = fightSettle(fk.kind, fk.stage, res, fk.foe, fk.mob, fk.squad);
         if (fk.kind === "monster" && res.win && fk.mob) { fk.mob.dead = true; save(); }
         BATUI.res = res; setApp(renderFight(key)); playLog();
         if (res.win && fk.kind === "stage" && fk.stage <= 2 && u.bat.tut === 3 && !u._tut3Shown) {
@@ -11859,8 +11945,8 @@ var BOTS = [
         if (diff > 30) winS = true; else if (diff >= 20) winS = Math.random() < 0.5; else winS = false;
         var resS;
         if (winS) {
-          resS = simulate(As, Bs);
-          if (!resS.win) { resS.win = true; if (!resS.stars) resS.stars = 1; }
+          resS = simulate(As, Bs, (fkS.kind === "monster" && fkS.centerIx >= 0) ? { centerIx: fkS.centerIx } : null);
+          if (!resS.win && !resS.centerDown) { resS.win = true; if (!resS.stars) resS.stars = 1; }
           resS.log.unshift({ r: 1, s: "A", si: 0, n: As[0].name, t: Bs[0] ? Bs[0].name : "", d: 0, rem: As[0].troop,
             sd: "🥷 " + T("sneakT") + " · " + T("sneakDiff", { d: diff }) + " → " + T("sneakWin") });
         } else {
@@ -11871,7 +11957,7 @@ var BOTS = [
               dead: As.map(function (un) { return un.name; }).join("、"),
               sd: "🥷 " + T("sneakT") + " · " + T("sneakDiff", { d: diff }) + " → " + T("sneakFail") }] };
         }
-        resS.out = fightSettle(fkS.kind, fkS.stage, resS, fkS.foe, fkS.mob);
+        resS.out = fightSettle(fkS.kind, fkS.stage, resS, fkS.foe, fkS.mob, fkS.squad);
         if (fkS.kind === "monster" && resS.win && fkS.mob) { fkS.mob.dead = true; save(); }
         BATUI.res = resS; setApp(renderFight(key)); playLog();
         return;
