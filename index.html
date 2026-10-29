@@ -8340,10 +8340,12 @@ var BOTS = [
     if (!g) return "";
     var ti = tierOf(g), tr = TIERS[ti], sk = tierSkill(g);
     var skN = skUnlocked(c), skA = c.skabs || 0, skFull = skN >= 3; /* V28 标记 */
+    var spg = spGroupOf(g); /* V29 特殊武将标记 */
     var picking = !!UI.selR && !!withGift, on = !!(picking && UI.selR[c.id]);
     return '<div class="sg-card' + (on ? " sel" : "") + (skFull ? " sg-dragon" : "") + '" style="--fc:' + facColor(g.faction) + ';--tc:' + tr.c + '" data-sgact="' + (picking ? "card-sel" : "card-open") + '" data-id="' + (picking ? c.id : g.id) + '"' + (picking ? "" : ' data-cid="' + c.id + '"') + '>' +
       '<span class="sg-card-tier">' + tierLabel(tr) + "</span>" +
       ((skN || skA) ? '<span class="sg-card-sk">' + (skFull ? "🐉" : "✨") + skN + "/3" + (skA ? " · ☉" + skA : "") + "</span>" : "") +
+      (spg ? '<span class="sg-card-sp" style="color:' + spg.color + ';border-color:' + spg.color + '66">' + spg.icon + " " + spLabel(spg.k) + "</span>" : "") +
       (picking ? '<span class="sg-card-pick">✓</span>' : "") +
       (c.from ? '<span class="sg-card-new">赠</span>' : "") +
       '<div class="sg-card-art">' + styledArtSVG(g, c.style, false) + '<span class="sg-cd-rar">' + "★".repeat(tr.star || (ti + 1)) + "</span></div>" +
@@ -9728,7 +9730,7 @@ var BOTS = [
       st3: "Standard bearers press forward; neither side yields an inch.",
       st4: "Horses shriek and blades flash — the melee is at its fiercest.",
       st5: "The battle line wavers; a gap is about to be torn open!",
-      skAct: "{n} unleashes 【{s}】 — the ranks are thrown into chaos!",
+      skAct: "{n} unleashes 【{s}】 — the ranks are thrown into chaos!", spWuhuL: "Five Tiger Generals", spWuhuS: "Tiger Might", spWuziL: "Five Elite Generals", spWuziS: "Breakthrough Vanguard", spMouL: "Chief Strategists", spMouS: "Grand Strategy", spAct: "{n} triggers 【{s}】 — bonus damage {d}!", spSyn: "Skill synergy: damage \u00d71.3", spDesc: "Special skill: {p}% chance per strike for bonus damage; regular skill damage \u00d71.3 when both proc together",
       skCri: "{n} strikes a mortal opening — a devastating blow!",
       remT: "left {n}", storyT: "— Round {n} —",
       mapT: "City Map", popT: "Population", houseT: "Households", palaceT: "Palace", wallT: "City Wall",
@@ -9751,7 +9753,7 @@ var BOTS = [
       st3: "旌旗猎猎，双方各不相让，阵线犬牙交错。",
       st4: "人喊马嘶，刀光剑影，战况进入白热。",
       st5: "敌阵摇摇欲坠，破敌就在此刻！",
-      skAct: "{n} 挺枪跃马，发动【{s}】，千军辟易！",
+      skAct: "{n} 挺枪跃马，发动【{s}】，千军辟易！", spWuhuL: "五虎上将", spWuhuS: "五虎之威", spWuziL: "五子良将", spWuziS: "五子破阵", spMouL: "王佐谋主", spMouS: "运筹帷幄", spAct: "{n} 发动【{s}】，额外造成 {d} 伤害！", spSyn: "与常规技能共鸣，伤害 ×1.3", spDesc: "特殊技能：每次攻击 {p}% 概率触发额外伤害；与常规技能同回触发时，常规技能伤害 ×1.3",
       skCri: "{n} 招觑得真切，一击致命，威力倍增！",
       remT: "余 {n}", storyT: "— 第 {n} 回合 —",
       mapT: "城池图", popT: "人口", houseT: "户数", palaceT: "大殿", wallT: "城墙",
@@ -10136,9 +10138,10 @@ var BOTS = [
     var def = Math.round((g.st + (spa.st || 0) + (g.ch || 0) * 0.1 + Math.floor((lv - 1) * 0.6)) * (1 + 0.08 * stars) * (1 + skb.def)) + eq.def;
     var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd;
     var cap = troopOfCard(c, g), troop = (c.sold == null ? cap : Math.min(c.sold, cap));
+    var spg = spGroupOf(g), spT = spg ? spTrig(spg.k, g, skb.n) : 0; /* V29 特殊武将 */
     if (side === "A") { try { var cu = me(); if (cu && cu.bat && cu.bat.city && cu.bat.city.bld) { cap = Math.round(cap * (1 + 0.02 * (cu.bat.city.bld.camp || 0))); if (troop > cap) troop = cap; } } catch (e) {} }
     return { side: side, cid: c.id || "", gid: g.id, name: g.name, ti: ti, lv: lv, atk: atk, def: def, spd: spd, arm: c.arm || "",
-      troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g), alive: true, skn: skb.n };
+      troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g), alive: true, skn: skb.n, sp: spg ? spg.k : null, spT: spT };
   }
   function simulate(A, B) {
     var log = [], round = 0;
@@ -10155,12 +10158,21 @@ var BOTS = [
         var tgt = foes[Math.floor(Math.random() * foes.length)];
         var skillHit = Math.random() * 100 < u.trig, mult = 1, tag = "", crit = false;
         if (skillHit) { mult = 1.7 + 0.1 * (u.skn || 0); tag = u.sk.n; }
+        var spHit = !!u.sp && Math.random() * 100 < (u.spT || 0); /* V29 特殊技能独立判定 */
+        if (spHit && skillHit) mult *= 1.3; /* 与常规技能同回触发 → 常规技能伤害加成 */
         if (Math.random() < 0.08) { mult *= 1.5; crit = true; }
         var dmg = Math.max(10, Math.round((u.atk * 6 + u.troopMax * 0.12) * (0.85 + Math.random() * 0.3) * mult / (1 + tgt.def * 0.018)));
         tgt.troop -= dmg;
         var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: dmg, sk: tag, si: u.ix, ti: tgt.ix, rem: Math.max(0, tgt.troop) };
         if (skillHit) line.sd = gt("skAct", { n: u.name, s: u.sk.n }) + (u.skn ? " ✦" + u.skn : "");
         if (crit) line.sd = (line.sd ? line.sd + " " : "") + gt("skCri", { n: u.name });
+        if (spHit) {
+          var spgX = SP_GROUPS.filter(function (x) { return x.k === u.sp; })[0];
+          var ex = Math.max(10, Math.round(dmg * (spgX ? spgX.ex : 0.5)));
+          tgt.troop -= ex;
+          line.rem = Math.max(0, tgt.troop); line.ex = ex; line.spk = spSkillName(u.sp);
+          line.sd = (line.sd ? line.sd + " " : "") + gt("spAct", { n: u.name, s: line.spk, d: fmt(ex) }) + (skillHit ? " " + gt("spSyn") : "");
+        }
         if (tgt.troop <= 0) { tgt.troop = 0; tgt.alive = false; line.dead = tgt.name; }
         log.push(line);
         var aAlive = A.some(function (v) { return v.alive; }), bAlive = B.some(function (v) { return v.alive; });
@@ -10396,6 +10408,19 @@ var BOTS = [
   function skPts(c) { return c.skp || 0; }
   function skUnlocked(c) { var o = c.sku || {}, n = 0; Object.keys(o).forEach(function (k) { if (o[k]) n++; }); return n; }
   function skBonus(c) { var n = skUnlocked(c); return { n: n, atk: 0.05 * n, def: 0.04 * n, trig: 5 * n }; }
+  /* ---------- V29 特殊武将：五虎上将 / 五子良将 / 王佐谋主 ---------- */
+  var SP_GROUPS = [
+    { k: "wuhu", icon: "🐯", color: "#ffd76a", ex: 0.6, names: ["关羽", "张飞", "赵云", "马超", "黄忠"] },
+    { k: "wuzi", icon: "🦅", color: "#9ec9ff", ex: 0.6, names: ["张辽", "乐进", "于禁", "张郃", "徐晃"] },
+    { k: "mou", icon: "📜", color: "#e0aaff", ex: 0.5, names: ["诸葛亮", "司马懿", "郭嘉", "荀彧", "贾诩", "庞统", "法正", "鲁肃", "张昭", "程昱", "荀攸", "刘晔"] }
+  ];
+  var _spIdx = {};
+  SP_GROUPS.forEach(function (gp) { gp.names.forEach(function (n) { _spIdx[n] = gp; }); });
+  function spGroupOf(g) { return g ? _spIdx[g.name] || null : null; }
+  function spTrig(spk, g, skn) { return Math.min(40, Math.round(spk === "mou" ? 20 + (g["in"] || 0) * 0.1 : 24) + (skn || 0) * 3); }
+  function spCap(k) { return k.charAt(0).toUpperCase() + k.slice(1); }
+  function spLabel(k) { return gt("sp" + spCap(k) + "L"); }
+  function spSkillName(k) { return gt("sp" + spCap(k) + "S"); }
   function dupCards(u, c) {
     return (u.cards || []).filter(function (x) { return x.id !== c.id && x.gid === c.gid && cardLv(x) === cardLv(c); });
   }
@@ -11091,7 +11116,7 @@ var BOTS = [
       (fk.kind === "sweep" ? T("sweepDesc") : T("squadDesc")) + "</p></div>" +
       '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button></div></div>";
     /* V28：左攻右守 · 中间回合 */
-    var foeTip = foeUnits.map(function (un) { return un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(TIERS[un.ti]) + " · 兵力 " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + " · 攻" + un.atk + " 防" + un.def; }).join("\n");
+    var foeTip = foeUnits.map(function (un) { return un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(TIERS[un.ti]) + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + " · 兵力 " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + " · 攻" + un.atk + " 防" + un.def; }).join("\n");
     var foeTipQ = esc(foeTip).replace(/"/g, "&quot;");
     var roster = '<div style="display:grid;grid-template-columns:minmax(560px,1.5fr) minmax(360px,1fr);gap:16px;align-items:start" class="gs-grid fgrid">' +
       '<div class="sg-panel sg-arena" style="display:grid;grid-template-columns:1fr 74px 1fr;gap:10px;align-items:start">' +
@@ -11122,7 +11147,9 @@ var BOTS = [
       return '<div class="sg-logline" data-r="' + l.r + '"><span class="r">' + l.r + "</span>" +
         '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + "</span>" +
         (l.sd ? '<div class="sg-note" style="margin:2px 0 2px 34px;color:#e8c988;font-style:italic">' + esc(l.sd) + "</div>" : "") +
-        "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + '</b><small style="color:var(--ink-3)">（' + gt("remT", { n: troopTxt(l.rem) }) + "）</small>" +
+        "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + "</b>" +
+        (l.ex ? '<b style="color:#ffd76a">⚡-' + fmt(l.ex) + "</b>" : "") +
+        '<small style="color:var(--ink-3)">（' + gt("remT", { n: troopTxt(l.rem) }) + "）</small>" +
         (l.dead ? '<span class="dead">✝ ' + esc(l.dead) + "</span>" : "") + "</div>";
     }).join("");
     var rewards = "";
@@ -11158,14 +11185,15 @@ var BOTS = [
     } catch (e) {}
     var pct = Math.max(0, Math.min(100, Math.round(un.troop / (un.troopMax || 1) * 100)));
     /* V28：战前侦察 hover */
-    var tip = un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + "\n" +
+    var tip = un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + "\n" +
       T("troopShort", { n: troopTxt(un.troop) }) + (un.troop < un.troopMax ? " / " + troopTxt(un.troopMax) : "") + "\n" +
       "攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd;
     return '<div class="bcard" data-side="' + side + '" data-ix="' + ix + '" title="' + esc(tip).replace(/"/g, "&quot;") + '" style="border:1px solid ' + tr.c + '77;border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(0,0,0,.30));padding:10px;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.25)">' +
       '<div style="display:flex;gap:10px;align-items:center">' +
       '<div class="bavatar" style="width:64px;height:84px;border-radius:9px;overflow:hidden;flex:0 0 auto;border:1px solid ' + tr.c + '66;background:#0d1117">' + avatar + '</div>' +
       '<div style="min-width:0;flex:1"><b style="color:' + tr.c + ';font-size:14px;letter-spacing:.05em">' + esc(un.name) + "</b>" +
-      '<div style="font-size:10.5px;color:var(--ink-3);margin-top:2px">' + T("lvShort", { n: un.lv }) + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + "</div>" +
+      '<div style="font-size:10.5px;color:var(--ink-3);margin-top:2px">' + T("lvShort", { n: un.lv }) + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) +
+      (un.sp ? ' <span style="color:' + (SP_GROUPS.filter(function (x) { return x.k === un.sp; })[0] || {}).color + ';font-weight:800">' + spLabel(un.sp) + "</span>" : "") + "</div>" +
       '<div style="font-size:11px;color:#c8d4e0;margin-top:4px">' + T("troopShort", { n: troopTxt(un.troop) }) +
       (un.troop < un.troopMax ? ' <small style="color:var(--ink-3)">/ ' + troopTxt(un.troopMax) + "</small>" : "") + "</div>" +
       '<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.10);margin-top:5px;overflow:hidden"><i style="display:block;height:100%;width:' + pct + "%;background:linear-gradient(90deg," + (side === "A" ? "#5fbf8a,#7fd08a" : "#d07070,#e09a9a") + ')"></i></div>' +
@@ -11188,8 +11216,8 @@ var BOTS = [
       if (tgt) {
         tgt.classList.remove("shake"); void tgt.offsetWidth; tgt.classList.add("shake");
         var f = document.createElement("span");
-        f.className = "sg-dmgfloat" + (l.sk ? " sk" : "");
-        f.textContent = (l.sk ? "【" + l.sk + "】" : "") + "-" + fmt(l.d);
+        f.className = "sg-dmgfloat" + (l.sk || l.spk ? " sk" : "");
+        f.textContent = (l.spk ? "⚡【" + l.spk + "】" : "") + (l.sk ? "【" + l.sk + "】" : "") + "-" + fmt(l.d);
         tgt.appendChild(f);
         setTimeout(function () { f.remove(); }, 900);
       }
@@ -11355,6 +11383,9 @@ var BOTS = [
     var bnsTot = Math.round((1 + gint * 0.01) * lvM * 100);
     /* V27 技能修炼 */
     var skOwn = c.sku || {}, skp = skPts(c), dupN = dupCards(u, c).length;
+    var spgD = spGroupOf(g); /* V29 特殊武将 */
+    var spRow = spgD ? '<div class="sg-rankline" style="border:1px solid ' + spgD.color + '55;border-radius:9px;padding:6px 9px;background:rgba(232,201,136,.05)"><span class="i" style="background:' + spgD.color + ';color:#10131a">★</span>' +
+      "<span><b>" + spgD.icon + " " + spLabel(spgD.k) + " · " + spSkillName(spgD.k) + '</b> <small style="color:var(--ink-3)">' + T("spDesc", { p: spTrig(spgD.k, g, skUnlocked(c)) }) + "</small></span></div>" : "";
     var skHTML = tr.skills.map(function (sk2, si) {
       var own = !!skOwn[si], cost = SK_COST[si] || 2;
       return '<div class="sg-rankline"><span class="i" style="background:' + tr.c + ';color:#10131a">' + esc(sk2.t) + "</span>" +
@@ -11395,7 +11426,7 @@ var BOTS = [
       '<div class="sg-note" style="margin-bottom:8px">' + (spLeft > 0 ? T("spAlloc", { n: spLeft }) : T("gsNoSp")) + "</div>" + spHTML +
       '<div class="sg-note" style="margin-top:10px">' + T("gsCapNote") + "</div></div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>✨ ' + T("skillUpT") + " · " + T("skPointT") + ' <span style="color:#e8c988">' + skp + "</span></h3></div>" +
-      skHTML + dupRow +
+      spRow + skHTML + dupRow +
       '<div class="sg-note" style="margin-top:8px;font-size:11px">' + T("absorbOk", { n: T("dupsN", { n: dupN }) }) + "</div></div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("gsArm") + "</h3></div>" +
       '<div class="sgchips" style="margin-bottom:8px">' + armHTML + "</div>" +
@@ -11793,7 +11824,8 @@ var BOTS = [
     var _st = document.createElement("style");
     _st.textContent = ".sg-dragon{border-color:#e8c988!important;box-shadow:0 0 0 2px rgba(232,201,136,.4),0 0 16px 4px rgba(232,201,136,.4)!important;animation:sgDrag 2.4s ease-in-out infinite}" +
       "@keyframes sgDrag{0%,100%{box-shadow:0 0 0 2px rgba(232,201,136,.4),0 0 14px 3px rgba(232,201,136,.35)}50%{box-shadow:0 0 0 2px rgba(255,233,168,.65),0 0 26px 8px rgba(255,233,168,.55)}}" +
-      ".sg-card-sk{position:absolute;right:6px;bottom:76px;z-index:3;font-size:9.5px;font-weight:800;color:#ffe9a8;background:rgba(60,42,10,.78);border:1px solid #c9a45c;border-radius:999px;padding:2px 7px;letter-spacing:.04em;pointer-events:none}";
+      ".sg-card-sk{position:absolute;right:6px;bottom:76px;z-index:3;font-size:9.5px;font-weight:800;color:#ffe9a8;background:rgba(60,42,10,.78);border:1px solid #c9a45c;border-radius:999px;padding:2px 7px;letter-spacing:.04em;pointer-events:none}" +
+      ".sg-card-sp{position:absolute;left:6px;bottom:76px;z-index:3;font-size:9.5px;font-weight:800;background:rgba(16,20,30,.8);border:1px solid;border-radius:999px;padding:2px 7px;letter-spacing:.04em;pointer-events:none;box-shadow:0 0 8px rgba(232,201,136,.25)}";
     document.head.appendChild(_st);
   } catch (e) {}
   /* V24 实时时间：每分钟检查整点，进入新月份自动结算内政产出并刷新城池图 */
