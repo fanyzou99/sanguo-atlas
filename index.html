@@ -7094,7 +7094,13 @@ html[data-lang="en"]{letter-spacing:.01em}
   function lang() { try { return localStorage.getItem("sg_lang") || "en"; } catch (e) { return "en"; } }
   function T(k, v) {
     var d = L[lang()] || L.en;
-    var s = d[k] != null ? d[k] : (L.en[k] != null ? L.en[k] : k);
+    var s = d[k] != null ? d[k] : (L.en[k] != null ? L.en[k] : null);
+    /* V39：主字典缺键时回落到游戏字典 GT（避免两套词典重复维护） */
+    if (s == null && typeof GT !== "undefined" && GT) {
+      var g = GT[lang()] || {}, ge = GT.en || {};
+      s = g[k] != null ? g[k] : (ge[k] != null ? ge[k] : null);
+    }
+    if (s == null) s = k;
     if (v) s = s.replace(/\{(\w+)\}/g, function (m, p) { return v[p] != null ? v[p] : m; });
     return s;
   }
@@ -7445,6 +7451,59 @@ html[data-lang="en"]{letter-spacing:.01em}
     }
     return pool[pool.length - 1];
   }
+  /* ---------------- V39 抽卡概率与保底 ----------------
+     区间配额（近 N 抽内该品级数量上限）+ 连抽保底（连续 N 抽未见则必出）：
+       S：每 1000 抽 1~3 张（基础 0.28%，900 抽起软保底递增，1000 抽硬保底）
+       A：每  500 抽 2~6 张（基础 0.75%，210 抽起软保底，250 抽硬保底）
+       B：每  300 抽 3~9 张（基础 1.80%， 80 抽起软保底，100 抽硬保底）
+       C：每  100 抽约 5 张（基础 5.00%， 16 抽起软保底， 22 抽硬保底）
+     其余概率随机落在 D / E / F（35% / 35% / 30%） */
+  var GACHA = [
+    { k: "s", ti: 0, rate: 0.0028, pity: 1000, soft: 900, win: 1000, cap: 3 },
+    { k: "a", ti: 1, rate: 0.0075, pity: 250, soft: 210, win: 500, cap: 6 },
+    { k: "b", ti: 2, rate: 0.0180, pity: 100, soft: 80, win: 300, cap: 9 },
+    { k: "c", ti: 3, rate: 0.0420, pity: 24, soft: 18, win: 100, cap: 6 }
+  ];
+  function gachaHist(u) {
+    u.gh = u.gh || [];
+    if (u.gh.length > 1000) u.gh = u.gh.slice(u.gh.length - 1000);
+    return u.gh;
+  }
+  function gachaCnt(u, ti, win) {
+    var h = gachaHist(u), n = 0, st = Math.max(0, h.length - win);
+    for (var i = st; i < h.length; i++) if (h[i] === ti) n++;
+    return n;
+  }
+  function rollGacha(u) {
+    if (!u) return rollGeneral();
+    var p = (u.gp = u.gp || { s: 0, a: 0, b: 0, c: 0 }), i;
+    for (i = 0; i < GACHA.length; i++) p[GACHA[i].k] = (p[GACHA[i].k] || 0) + 1;
+    var pick = -1;
+    /* 硬保底：连续未出已达阈值且区间配额未满 → 直接给付 */
+    for (i = 0; i < GACHA.length; i++) {
+      var cfg = GACHA[i];
+      if (p[cfg.k] >= cfg.pity && gachaCnt(u, cfg.ti, cfg.win) < cfg.cap) { pick = cfg.ti; break; }
+    }
+    /* 常规抽取：软保底线性提升权重，配额已满则该品级权重归零 */
+    if (pick < 0) {
+      var r = Math.random(), acc = 0;
+      for (i = 0; i < GACHA.length; i++) {
+        var g2 = GACHA[i], w = g2.rate;
+        if (gachaCnt(u, g2.ti, g2.win) >= g2.cap) w = 0;
+        else if (p[g2.k] >= g2.soft) w *= 1 + (p[g2.k] - g2.soft) / Math.max(1, g2.pity - g2.soft) * 5;
+        acc += w;
+        if (r < acc) { pick = g2.ti; break; }
+      }
+    }
+    if (pick < 0) { var rr = Math.random(); pick = rr < 0.35 ? 4 : rr < 0.70 ? 5 : 6; }
+    var pool = GENS().filter(function (g) { return g.era !== "古代" && tierOf(g) === pick; });
+    if (!pool.length) pool = GENS().filter(function (g) { return g.era !== "古代"; });
+    if (!pool.length) return null;
+    if (pick <= 3) p[GACHA[pick].k] = 0;
+    var h = gachaHist(u); h.push(pick);
+    while (h.length > 1000) h.shift();
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   /* 引导送卡：保证武力可战（wu≥45），找不到就放宽 */
   function rollStarter() {
     var pool = GENS().filter(function (g) { return g.era !== "古代" && (g.wu || 0) >= 45; });
@@ -7453,11 +7512,12 @@ html[data-lang="en"]{letter-spacing:.01em}
   }
   function draw(u) {
     if ((u.draws || 0) <= 0) return { err: T("noDraw") };
-    var g = rollGeneral();
+    var g = rollGacha(u);
     if (!g) return { err: T("noDraw") };
     u.draws--;
-    /* V21：抽卡可出整卡或碎片（45% 出碎片，数量按品级：紫2 → 白8） */
-    if (Math.random() < 0.45) {
+    /* V21：抽卡可出整卡或碎片（45% 出碎片，数量按品级：紫2 → 白8）
+       V39：S/A/B 级必出整卡（保证区间配额兑现到卡牌上），碎片只在 C 及以下产生 */
+    if (tierOf(g) >= 3 && Math.random() < 0.45) {
       var ti = tierOf(g), n = 8 - ti;
       addShards(u, g.id, n);
       save();
@@ -8531,7 +8591,7 @@ var BOTS = [
     var tiers = TIERS.map(function (t, i) {
       var lock = i <= 2;
       return '<label style="display:inline-flex;align-items:center;gap:5px;margin:4px 14px 4px 0;' + (lock ? "opacity:.45" : "") + '">' +
-        '<input type="checkbox" data-bdt="' + i + '"' + (i >= 4 ? " checked" : "") + (lock ? " disabled" : "") + ">" +
+        '<input type="checkbox" data-bdt="' + i + '"' + (i >= 3 ? " checked" : "") + (lock ? " disabled" : "") + ">" +
         '<span class="dot" style="background:' + t.c + '"></span>' + tierLabel(t) + " +" + fmt(t.pts) +
         (lock ? ' <small>🔒</small>' : "") + "</label>";
     }).join("");
@@ -8552,11 +8612,11 @@ var BOTS = [
     var kept = [], rec = { cnt: 0, pts: 0 }, shards = 0;
     u.cards = u.cards || [];
     for (var i = 0; i < n; i++) {
-      var g = rollGeneral();
+      var g = rollGacha(u);
       if (!g) break;
       u.draws = (u.draws || 0) - 1;
-      /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8） */
-      if (Math.random() < 0.45) { var sn = 8 - tierOf(g); addShards(u, g.id, sn); shards += sn; continue; }
+      /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8）；V39 S/A/B 必出整卡 */
+      if (tierOf(g) >= 3 && Math.random() < 0.45) { var sn = 8 - tierOf(g); addShards(u, g.id, sn); shards += sn; continue; }
       var ti = tierOf(g), c = mkCard(g.id);
       if (auto[ti]) { rec.cnt++; rec.pts += TIERS[ti].pts; }
       else { u.cards.unshift(c); kept.push(c); }
@@ -8643,6 +8703,84 @@ var BOTS = [
     document.body.appendChild(d);
     return d;
   }
+  /* ---------------- V39 账号安全：密码哈希 / 邮箱验证码 / 浏览器记住密码 ----------------
+     邮件服务配置：填入 EmailJS 的 service / template / public key 即真实发信；
+     留空时走"站内兜底"——验证码直接显示在弹窗并写入后台流水（vcode 事件），管理员可人工转达。 */
+  var MAIL_CFG = { serviceId: "", templateId: "", publicKey: "" };
+  function pwHash(pw, salt) {
+    var s = "sg:" + String(salt || "").trim().toLowerCase() + "|" + String(pw || "");
+    try {
+      if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest && window.TextEncoder) {
+        return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function (buf) {
+          var b = new Uint8Array(buf), h = "";
+          for (var i = 0; i < b.length; i++) h += ("0" + b[i].toString(16)).slice(-2);
+          return "v1:" + h;
+        }, function () { return pwHashFallback(s); });
+      }
+    } catch (e) {}
+    return Promise.resolve(pwHashFallback(s));
+  }
+  function pwHashFallback(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = (((h << 5) + h) ^ s.charCodeAt(i)) >>> 0;
+    return "v0:" + h.toString(16) + s.length.toString(16);
+  }
+  function saveCred(email, pw, name) {
+    /* 触发浏览器"保存密码"（Chrome/Edge 支持 PasswordCredential） */
+    try {
+      if (window.PasswordCredential && navigator.credentials && navigator.credentials.store) {
+        navigator.credentials.store(new window.PasswordCredential({ id: email, password: pw, name: name || email }));
+      }
+    } catch (e) {}
+  }
+  function sendMailCode(email, code) {
+    try {
+      if (MAIL_CFG.serviceId && MAIL_CFG.templateId && MAIL_CFG.publicKey && window.fetch) {
+        return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            service_id: MAIL_CFG.serviceId, template_id: MAIL_CFG.templateId, user_id: MAIL_CFG.publicKey,
+            template_params: { to_email: email, email: email, code: code, site: SITE_ID === "cn" ? "国内站" : "Global site", ttl: "10" }
+          })
+        }).then(function (r) { return !!(r && r.ok); }, function () { return false; });
+      }
+    } catch (e) {}
+    return Promise.resolve(false);
+  }
+  function sendVerifyCode() {
+    var em = (($("#sgRegEmail") || {}).value || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(em)) { $("#sgAuthErr").textContent = T("errEmail"); return; }
+    var btn = $("#sgCodeSend"), hint = $("#sgCodeHint");
+    var code = String(Math.floor(100000 + Math.random() * 900000));
+    DB.verify = { email: em.toLowerCase(), code: code, exp: Date.now() + 10 * 60000, at: Date.now() };
+    save();
+    /* 写入后台流水：邮件发不出去时管理员可在"流水"里查到验证码人工转达 */
+    trackEv("vcode", { code: code, em: em.slice(0, 60) });
+    if (hint) hint.textContent = "…";
+    sendMailCode(em, code).then(function (ok) {
+      if (ok) { if (hint) hint.innerHTML = '<span style="color:#7fd08a">' + T("authCodeSent") + "</span>"; }
+      else if (hint) hint.innerHTML = '<span style="color:#e8c988">' + esc(T("authCodeLocal", { c: code })) + "</span>";
+      var left = 60;
+      if (btn) {
+        btn.disabled = true;
+        var tickCd = function () {
+          if (!document.getElementById("sgCodeSend")) { clearInterval(iv); return; }
+          left--;
+          btn.textContent = T("authResend", { s: Math.max(0, left) });
+          if (left <= 0) { clearInterval(iv); btn.disabled = false; btn.textContent = T("authCodeSend"); }
+        };
+        var iv = setInterval(tickCd, 1000);
+        btn.textContent = T("authResend", { s: 60 });
+      }
+    });
+  }
+  function verifyCheck(email, code) {
+    var v = DB.verify || {};
+    if (!v.code || v.email !== String(email || "").trim().toLowerCase()) return { err: T("authCodeNeed") };
+    if (Date.now() > (v.exp || 0)) return { err: T("authCodeExp") };
+    if (String(code || "").trim() !== String(v.code)) return { err: T("authCodeBad") };
+    return { ok: true };
+  }
   function openAuth(tab) {
     UI.authTab = tab || "login";
     var isReg = UI.authTab === "register";
@@ -8651,17 +8789,28 @@ var BOTS = [
       '<div class="sg-tabbar"><button class="' + (!isReg ? "on" : "") + '" data-sgact="auth-tab" data-tab="login">' + T("authIn") + "</button>" +
       '<button class="' + (isReg ? "on" : "") + '" data-sgact="auth-tab" data-tab="register">' + T("authUp") + "</button></div>" +
       (isReg ?
-        '<div class="sgfield"><label>' + T("authName") + "</label><input class=\"sginput\" id=\"sgRegName\" maxlength=\"16\" placeholder=\"\"></div>" +
-        '<div class="sgfield"><label>' + T("authEmail") + "</label><input class=\"sginput\" id=\"sgRegEmail\" type=\"email\" placeholder=\"name@example.com\"></div>" +
-        '<div class="sgfield"><label>' + T("authPhone") + "</label><input class=\"sginput\" id=\"sgRegPhone\" placeholder=\"13800138000\"></div>" +
+        '<form id="sgAuthForm" autocomplete="on" onsubmit="return false">' +
+        '<div class="sgfield"><label>' + T("authName") + '</label><input class="sginput" id="sgRegName" maxlength="16" autocomplete="nickname" placeholder=""></div>' +
+        '<div class="sgfield"><label>' + T("authEmail") + '</label><input class="sginput" id="sgRegEmail" type="email" autocomplete="username" placeholder="name@example.com"></div>' +
+        '<div class="sgfield"><label>' + T("authPhone") + '</label><input class="sginput" id="sgRegPhone" autocomplete="tel" placeholder="13800138000"></div>' +
+        '<div class="sgfield"><label>' + T("authPwd") + '</label><input class="sginput" id="sgRegPwd" type="password" maxlength="32" autocomplete="new-password" placeholder="' + T("authPwdPh") + '"></div>' +
+        '<div class="sgfield"><label>' + T("authPwd2") + '</label><input class="sginput" id="sgRegPwd2" type="password" maxlength="32" autocomplete="new-password"></div>' +
+        '<div class="sgfield"><label>' + T("authCode") + '</label><div style="display:flex;gap:8px;align-items:center">' +
+        '<input class="sginput" id="sgRegCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="flex:1" placeholder="6 位数字">' +
+        '<button class="sgbtn" id="sgCodeSend" data-sgact="auth-code" style="white-space:nowrap">' + T("authCodeSend") + "</button></div>" +
+        '<div class="sg-note" id="sgCodeHint" style="margin-top:6px;line-height:1.5"></div></div>' +
         '<label class="sgcheck"><input type="checkbox" id="sgRegAgree">' + T("authAgree") + "</label>" +
         '<div class="sgerr" id="sgAuthErr"></div>' +
         '<button class="sgbtn primary" style="width:100%" id="sgAuthSubmit" data-sgact="auth-submit" data-mode="reg">' + T("authSubmitUp") + "</button>" +
+        "</form>" +
         '<div style="text-align:center;margin-top:10px"><button class="sgbtn sm ghost" data-sgact="auth-tab" data-tab="login">' + T("hasAccount") + "</button></div>"
         :
-        '<div class="sgfield"><label>' + T("authAcc") + '</label><input class="sginput" id="sgLoginAcc" placeholder="name@example.com / 13800138000"></div>' +
+        '<form id="sgAuthForm" autocomplete="on" onsubmit="return false">' +
+        '<div class="sgfield"><label>' + T("authAcc") + '</label><input class="sginput" id="sgLoginAcc" autocomplete="username" placeholder="name@example.com / 13800138000"></div>' +
+        '<div class="sgfield"><label>' + T("authPwdOptional") + '</label><input class="sginput" id="sgLoginPwd" type="password" maxlength="32" autocomplete="current-password"></div>' +
         '<div class="sgerr" id="sgAuthErr"></div>' +
         '<button class="sgbtn primary" style="width:100%" id="sgAuthSubmit" data-sgact="auth-submit" data-mode="login">' + T("authSubmitIn") + "</button>" +
+        "</form>" +
         '<div style="text-align:center;margin-top:10px"><button class="sgbtn sm ghost" data-sgact="auth-tab" data-tab="register">' + T("noAccount") + "</button></div>"));
     setTimeout(function () {
       var f = $("#sgRegName") || $("#sgLoginAcc");
@@ -8683,44 +8832,101 @@ var BOTS = [
     errEl.textContent = "";
     if (mode === "reg") {
       var nm = $("#sgRegName").value, em = $("#sgRegEmail").value, ph = $("#sgRegPhone").value, ag = $("#sgRegAgree").checked;
+      var pw = ($("#sgRegPwd") || {}).value || "", pw2 = ($("#sgRegPwd2") || {}).value || "", code = ($("#sgRegCode") || {}).value || "";
       var bad = validateReg(nm, em, ph, ag);
       if (bad) { errEl.textContent = bad; return; }
+      /* V39：密码校验 */
+      if (pw.length < 6 || pw.length > 32) { errEl.textContent = T("authPwdWeak"); return; }
+      if (pw !== pw2) { errEl.textContent = T("authPwdMis"); return; }
+      /* V39：邮箱验证码校验 */
+      var cv = verifyCheck(em, code);
+      if (cv.err) { errEl.textContent = cv.err; return; }
       var btn = $("#sgAuthSubmit");
       if (btn) { btn.disabled = true; btn.textContent = T("regBusy"); }
-      /* V13：注册前查云端——邮箱已在任一站点注册则引导直接登录（账号两边通用） */
-      SGCloud.lookup(em, 15000).then(function (ex) {
-        if (ex) { if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); } errEl.textContent = T("dupSite"); return; }
-        /* 先确认云端落库，再建本地账号：避免"注册成功但换设备/换站点登录不上"的幽灵账号 */
-        SGCloud.registerAccount({ email: em, phone: ph, name: nm }).then(function (cr) {
-          if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); }
-          if (!cr || !cr.ok) {
-            var why = cr && cr.err === "phone_taken" ? T("phoneTaken")
-              : cr && cr.err === "invalid_email" ? T("errEmail")
-                : T("regNet");
-            errEl.textContent = why;
-            trackEv(cr && cr.net ? "regfail_net" : "regfail");
-            return;
-          }
-          var r = register(nm, em, ph, ag, true);
-          if (r.err) { errEl.textContent = r.err; return; }
-          closeModal(); paintAcct(); rerender();
-          toast(T("registered", { n: r.user.name }), "ok");
-          showTick(r.tick);
+      var done = function () { if (btn) { btn.disabled = false; btn.textContent = T("authSubmitUp"); } };
+      pwHash(pw, em).then(function (h) {
+        /* V13：注册前查云端——邮箱已在任一站点注册则引导直接登录（账号两边通用） */
+        return SGCloud.lookup(em, 15000).then(function (ex) {
+          if (ex) { done(); errEl.textContent = T("dupSite"); return; }
+          /* 先确认云端落库，再建本地账号：避免"注册成功但换设备/换站点登录不上"的幽灵账号 */
+          return SGCloud.registerAccount({ email: em, phone: ph, name: nm }).then(function (cr) {
+            done();
+            if (!cr || !cr.ok) {
+              var why = cr && cr.err === "phone_taken" ? T("phoneTaken")
+                : cr && cr.err === "invalid_email" ? T("errEmail")
+                  : T("regNet");
+              errEl.textContent = why;
+              trackEv(cr && cr.net ? "regfail_net" : "regfail");
+              return;
+            }
+            var r = register(nm, em, ph, ag, true, h);
+            if (r.err) { errEl.textContent = r.err; return; }
+            r.user.pw = h;
+            r.user.vmail = String(em).trim().toLowerCase();
+            r.user.vat = Date.now();
+            DB.verify = null;
+            saveCred(String(em).trim(), pw, nm);
+            trackEv("reg_verify_ok");
+            closeModal(); paintAcct(); rerender();
+            toast(T("registered", { n: r.user.name }), "ok");
+            showTick(r.tick);
+          });
         });
       });
     } else {
-      var acc = $("#sgLoginAcc").value;
+      var acc = $("#sgLoginAcc").value, pwL = ($("#sgLoginPwd") || {}).value || "";
+      var u0 = findAccount(acc);
+      if (u0 && u0.pw) {
+        /* V39：本机账号已设密码 → 校验后再登录 */
+        pwHash(pwL, u0.email).then(function (h) {
+          if (h !== u0.pw) { errEl.textContent = T("authPwdBad"); return; }
+          var l = login(acc);
+          if (l.err) { errEl.textContent = l.err; return; }
+          saveCred(u0.email, pwL, u0.name);
+          closeModal(); paintAcct(); rerender();
+          toast(T("loggedIn", { n: l.user.name }), "ok");
+          showTick(l.tick);
+        });
+        return;
+      }
       var l = login(acc);
       if (l.err) {
         /* V13：本机无记录 → 查云端通用账号，跨站登录 */
         SGCloud.lookup(acc).then(function (info) {
           if (!info) { errEl.textContent = l.err; return; }
-          var r2 = registerRemote(info, acc);
-          closeModal(); paintAcct(); rerender();
-          toast(T("loggedIn", { n: r2.user.name }), "ok");
-          showTick(r2.tick);
+          /* V39：云端账号若已设密码，需校验（取任一站点的档案） */
+          var chk = function (obj) {
+            if (obj && obj.pw) {
+              pwHash(pwL, info.email).then(function (h) {
+                if (h !== obj.pw) { errEl.textContent = T("authPwdBad"); return; }
+                afterRemote();
+              });
+            } else afterRemote();
+          };
+          var afterRemote = function () {
+            var r2 = registerRemote(info, acc);
+            SGCloud.stateGet(info.email, "intl").then(function (o1) {
+              SGCloud.stateGet(info.email, "cn").then(function (o2) {
+                var pwH = (o1 && o1.pw) || (o2 && o2.pw) || "";
+                if (pwH) r2.user.pw = pwH;
+                save();
+              });
+            });
+            closeModal(); paintAcct(); rerender();
+            toast(T("loggedIn", { n: r2.user.name }), "ok");
+            showTick(r2.tick);
+          };
+          SGCloud.stateGet(info.email, "intl").then(function (o1) {
+            if (o1 && o1.pw) { chk(o1); return; }
+            SGCloud.stateGet(info.email, "cn").then(function (o2) { chk(o2); });
+          });
         });
         return;
+      }
+      /* 历史账号（未设密码）：本次输入的密码即作为新密码写入，便于下次校验 */
+      if (pwL.length >= 6) {
+        pwHash(pwL, l.user.email).then(function (h) { l.user.pw = h; save(); toast(T("pwdSetOk"), "ok", 3200); });
+        saveCred(l.user.email, pwL, l.user.name);
       }
       closeModal(); paintAcct(); rerender();
       toast(T("loggedIn", { n: l.user.name }), "ok");
@@ -8903,8 +9109,11 @@ var BOTS = [
     }
     return o;
   }
-  function roll3Distinct() {
+  function roll3Distinct(u) {
     var picks = [], used = {}, guard = 0;
+    /* V39：三张候选中的第一张由保底/配额系统产出，另外两张随机衬托 */
+    var hero = rollGacha(u);
+    if (hero) { used[hero.id] = 1; picks.push(hero); }
     while (picks.length < 3 && guard++ < 80) {
       var g = rollGeneral();
       if (g && !used[g.id]) { used[g.id] = 1; picks.push(g); }
@@ -8914,7 +9123,7 @@ var BOTS = [
   function doDraw() {
     var u = me(); if (!u) return openAuth("login");
     if ((u.draws || 0) <= 0) { toast(T("noDraw"), "err"); return; }
-    var picks = roll3Distinct();
+    var picks = roll3Distinct(u);
     if (picks.length < 3) { toast(T("noDraw"), "err"); return; }
     UI.draw3 = { picks: picks, done: false };
     var cards = picks.map(function (g, i) {
@@ -8936,8 +9145,8 @@ var BOTS = [
     st.done = true;
     var g = st.picks[i] || st.picks[0];
     u.draws--;
-    /* V21：45% 抽出同名碎片（数量按品级 紫2 → 白8），否则整卡 */
-    var shardHit = Math.random() < 0.45, shardN = 8 - tierOf(g), c = null;
+    /* V21：45% 抽出同名碎片（数量按品级 紫2 → 白8），否则整卡；V39 S/A/B 必出整卡 */
+    var shardHit = tierOf(g) >= 3 && Math.random() < 0.45, shardN = 8 - tierOf(g), c = null;
     if (shardHit) { addShards(u, g.id, shardN); }
     else { c = mkCard(g.id); u.cards = u.cards || []; u.cards.unshift(c); }
     var nb = shardHit ? [] : checkBadges(u);
@@ -9248,6 +9457,8 @@ var BOTS = [
         ledger: (u.ledger || []).slice(0, 120), streak: u.streak || 0, bestStreak: u.bestStreak || 0,
         loginDays: (u.loginDays || []).slice(-60), notifs: (u.notifs || []).slice(0, 50),
         d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0,
+        /* V39：账号密码哈希 / 邮箱验证标记 / 抽卡保底计数随档同步（后台可改密，跨设备一致） */
+        pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (u.gh || []).slice(-1000),
         bat: u.bat || null, shards: u.shards || {}, eqs: u.eqs || [], mts: u.mts || [], res: u.res || null };
     }
     function pushSoon(delay) {
@@ -9329,6 +9540,17 @@ var BOTS = [
         return !!(r && r.ok && r.exists);
       }, function () { return false; });
     }
+    /* V39：读取/写回指定站点档案（用于跨站校验与同步密码哈希） */
+    function stateGet(email, site) {
+      return rpcP("sg_state_get", { p_email: String(email || "").slice(0, 120), p_site: site || SITE_ID }, 12000).then(function (r) {
+        if (!(r && r.ok && r.data)) return null;
+        try { return typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { return null; }
+      }, function () { return null; });
+    }
+    function statePut(email, site, obj) {
+      return rpcP("sg_state_put", { p_email: String(email || "").slice(0, 120), p_site: site || SITE_ID, p_data: JSON.stringify(obj || {}) }, 15000)
+        .then(function (r) { return !!(r && r.ok); }, function () { return false; });
+    }
     function registerAccount(u, retry) {
       /* 返回 {ok,err,net}：net=true 表示确实没连上云端（此时绝不能只在本地建号） */
       try {
@@ -9401,7 +9623,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
-             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, site: function () { return SITE_ID; },
+             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, stateGet: stateGet, statePut: statePut, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
   try { window.SGCloud = SGCloud; } catch (e) {}
@@ -9513,6 +9735,7 @@ var BOTS = [
         case "auth-open": e.preventDefault(); openAuth(t.getAttribute("data-tab") || "login"); return;
         case "auth-tab": e.preventDefault(); openAuth(t.getAttribute("data-tab")); return;
         case "auth-submit": e.preventDefault(); doAuth(t.getAttribute("data-mode")); return;
+        case "auth-code": e.preventDefault(); sendVerifyCode(); return;
         case "close": e.preventDefault(); closeModal(); return;
         case "menu": e.preventDefault(); UI.menu = !UI.menu; paintAcct(); return;
         case "go-me": e.preventDefault(); UI.menu = false; if (t.getAttribute("data-wall")) UI.wall = t.getAttribute("data-wall"); location.hash = "#/me"; return;
@@ -9835,7 +10058,13 @@ var BOTS = [
       defLogT: "Auto Defense Log", defLogNone: "No auto battles yet — assigned formations defend the city automatically",
       autoDefT: "Auto Defense", autoDefOn: "Auto defense engaged: formations strike raiders outside the walls without orders",
       defLine: "T{t} engaged {f}(Lv.{l}) — {w} · EXP +{e}", defRes: "{n} auto defense battle(s) this month",
-      poolT: "Trained Troops", woundT: "Wounded", infT: "Infirmary", woundIn: "{n} wounded sent to the infirmary — back as trained troops in 1 month", woundHeal: "{n} wounded have recovered (trained troops +{n})", recFreeT: "from trained troops (free)", recNewT: "recruit {n} (🌾{a} · 🪙{b})", recLackT: "Not enough trained troops — recruit needs more resources", upNoteT: "Upkeep: trained troops 0.5 grain/mo each · wounded 1 of each resource/mo each (recover after 1 month)", sqRecallT: "Replenish Squad",
+      poolT: "Reserve Troops", woundT: "Wounded", infT: "Infirmary", woundIn: "{n} wounded sent to the infirmary — back as reserve troops in 1 month", woundHeal: "{n} wounded have recovered (reserve troops +{n})", recFreeT: "from reserve troops (free)", recNewT: "recruit {n} (🌾{a} · 🪙{b})", recLackT: "Not enough reserve troops — recruit needs more resources", upNoteT: "Upkeep: reserve troops 0.5 grain/mo each · wounded 1 of each resource/mo each (recover after 1 month)", sqRecallT: "Replenish Squad", spAddT: "Add", spBadT: "Enter an integer between 1 and {n}", spOkT: "{s} +{n} ({l} left)",
+      authPwd: "Password", authPwd2: "Confirm password", authPwdPh: "6–32 characters, letters + digits",
+      authPwdWeak: "Password must be 6–32 characters", authPwdMis: "Passwords do not match", authPwdBad: "Incorrect password",
+      authCode: "Email code", authCodeSend: "Send code", authCodeSent: "Code sent — valid for 10 minutes (check spam folder too)",
+      authCodeLocal: "Email service not configured — your code: {c} (also logged for the admin)",
+      authCodeNeed: "Tap “Send code” to get your email code first", authCodeBad: "Incorrect code", authCodeExp: "Code expired, please request a new one",
+      authResend: "Resend ({s}s)", authPwdOptional: "Password (leave blank for legacy account)", pwdSetOk: "Password saved — your browser can remember it",
       calJu: "Round {n}", calEnd: "The era is settled — the calendar has run its course (Dec 244 AD)", casLine: "[{n}] troops after battle: {a}, wounded: {b}", expLine: "[{n}] gains {e} EXP",
       teamNmT: "Rename formation", teamNmOk: "Formation renamed", teamPow: "Power {n} (troops + troops × command/100)", armProfT: "Arm proficiency", profGain: "Proficiency up: {n}", armNow: "Current arm", skCostT: "Skill drain: {n} own troops",
       replayT: "Replay", statT: "Statistics", placeT: "Battlefield", placeBody: "At {c}, {d}, against {f}", dmgStat: "{n}: {d} damage in {c} strike(s)", killStat: "routed {n}", repWin: "胜", repLose: "败"
@@ -9872,7 +10101,13 @@ var BOTS = [
       defLogT: "自动御敌记录", defLogNone: "暂无自动作战——已编排的队伍会自动讨伐城外贼寇",
       autoDefT: "自动御敌", autoDefOn: "自动御敌已开启：已编排队伍将自动讨伐城外来袭贼寇",
       defLine: "T{t} 队讨伐 {f}(Lv.{l})——{w} · 经验 +{e}", defRes: "本月自动御敌 {n} 战",
-      poolT: "正常兵", woundT: "伤兵", infT: "伤兵疗养院", woundIn: "大捷！{n} 名伤兵送入疗养院，1 个月后归队为正常兵", woundHeal: "{n} 名伤兵痊愈归队（正常兵 +{n}）", recFreeT: "正常兵直接补充（免费）", recNewT: "新募 {n}（🌾{a} · 🪙{b}）", recLackT: "正常兵不足，新募需更多资源", upNoteT: "兵耗：正常兵 0.5 粮/月·人 · 伤兵各资源 1/月·人（1 个月后痊愈归队）", sqRecallT: "出战补兵",
+      poolT: "备兵", woundT: "伤兵", infT: "伤兵疗养院", woundIn: "大捷！{n} 名伤兵送入疗养院，1 个月后归队为备兵", woundHeal: "{n} 名伤兵痊愈归队（备兵 +{n}）", recFreeT: "备兵直接补充（免费）", recNewT: "新募 {n}（🌾{a} · 🪙{b}）", recLackT: "备兵不足，新募需更多资源", upNoteT: "兵耗：备兵 0.5 粮/月·人 · 伤兵各资源 1/月·人（1 个月后痊愈归队）", sqRecallT: "出战补兵", spAddT: "加点", spBadT: "请输入 1~{n} 之间的整数", spOkT: "{s} +{n}（剩余 {l} 点）",
+      authPwd: "密码", authPwd2: "确认密码", authPwdPh: "6~32 位，建议字母 + 数字",
+      authPwdWeak: "密码需为 6~32 位字符", authPwdMis: "两次输入的密码不一致", authPwdBad: "密码不正确",
+      authCode: "邮箱验证码", authCodeSend: "发送验证码", authCodeSent: "验证码已发送，10 分钟内有效（请查收邮箱与垃圾箱）",
+      authCodeLocal: "邮件服务尚未配置——本次验证码：{c}（已记入后台流水，可联系管理员）",
+      authCodeNeed: "请先点击“发送验证码”获取邮箱验证码", authCodeBad: "验证码不正确", authCodeExp: "验证码已过期，请重新获取",
+      authResend: "重新发送（{s}s）", authPwdOptional: "密码（历史账号可留空）", pwdSetOk: "密码已设置，浏览器可自动记住",
       calJu: "第 {n} 局", calEnd: "大势已定——日历已走完 244年12月", casLine: "【{n}】战斗后兵力为 {a}，产生伤兵 {b}", expLine: "【{n}】获得 {e} 经验",
       teamNmT: "队伍命名", teamNmOk: "队伍已命名", teamPow: "战力 {n}（士兵数 + 士兵数×统率/100）", armProfT: "兵种熟悉度", profGain: "熟悉度提升：{n}", armNow: "当前兵种", skCostT: "技能发动兵耗 {n}",
       replayT: "战况回放", statT: "统计", placeT: "战斗地点", placeBody: "{d} · 于 {c} 迎战 {f}", dmgStat: "{n}：造成 {d} 伤害（{c} 次出手）", killStat: "击溃 {n}", repWin: "胜", repLose: "败"
@@ -9909,7 +10144,13 @@ var BOTS = [
       defLogT: "自動防衛記録", defLogNone: "自動戦闘はまだありません——編成済み部隊が城外の賊を自動討伐します",
       autoDefT: "自動防衛", autoDefOn: "自動防衛有効：編成済み部隊が命令なく城外の賊を討伐します",
       defLine: "T{t} 部隊が {f}(Lv.{l}) を討伐——{w} · 経験 +{e}", defRes: "今月の自動防衛 {n} 戦",
-      poolT: "常備兵", woundT: "負傷兵", infT: "負傷兵療養所", woundIn: "大勝！負傷兵 {n} を療養所へ送り、1ヶ月後に常備兵として復帰", woundHeal: "負傷兵 {n} が回復（常備兵 +{n}）", recFreeT: "常備兵から補充（無料）", recNewT: "新規募集 {n}（🌾{a} · 🪙{b}）", recLackT: "常備兵不足——新規募集には追加リソースが必要", upNoteT: "兵消費：常備兵 0.5 糧/月·人 · 負傷兵 各リソース 1/月·人（1ヶ月後に回復）", sqRecallT: "出陣補兵",
+      poolT: "予備兵", woundT: "負傷兵", infT: "負傷兵療養所", woundIn: "大勝！負傷兵 {n} を療養所へ送り、1ヶ月後に予備兵として復帰", woundHeal: "負傷兵 {n} が回復（予備兵 +{n}）", recFreeT: "予備兵から補充（無料）", recNewT: "新規募集 {n}（🌾{a} · 🪙{b}）", recLackT: "予備兵不足——新規募集には追加リソースが必要", upNoteT: "兵消費：予備兵 0.5 糧/月·人 · 負傷兵 各リソース 1/月·人（1ヶ月後に回復）", sqRecallT: "出陣補兵", spAddT: "加振", spBadT: "1〜{n} の整数を入力してください", spOkT: "{s} +{n}（残り {l}）",
+      authPwd: "パスワード", authPwd2: "パスワード（確認）", authPwdPh: "6〜32文字（英数字推奨）",
+      authPwdWeak: "パスワードは6〜32文字で入力してください", authPwdMis: "パスワードが一致しません", authPwdBad: "パスワードが違います",
+      authCode: "メール認証コード", authCodeSend: "コード送信", authCodeSent: "認証コードを送信しました（10分間有効・迷惑メールもご確認ください）",
+      authCodeLocal: "メールサービス未設定——今回のコード：{c}（管理画面にも記録されます）",
+      authCodeNeed: "先に「コード送信」で認証コードを取得してください", authCodeBad: "コードが違います", authCodeExp: "コードの有効期限が切れました",
+      authResend: "再送信（{s}s）", authPwdOptional: "パスワード（旧アカウントは空欄可）", pwdSetOk: "パスワードを保存しました",
       calJu: "第 {n} 局", calEnd: "大勢は定まった——暦は 244年12月 を歩み終えた", casLine: "【{n}】戦闘後の兵力 {a}、負傷兵 {b}", expLine: "【{n}】が {e} 経験を獲得",
       teamNmT: "部隊名変更", teamNmOk: "部隊名を変更しました", teamPow: "戦力 {n}（兵数＋兵数×統率/100）", armProfT: "兵種熟練度", profGain: "熟練度上昇：{n}", armNow: "現在の兵種", skCostT: "技能発動の兵耗 {n}",
       replayT: "戦況再生", statT: "統計", placeT: "戦場", placeBody: "{d} · {c} にて {f} と交戦", dmgStat: "{n}：{d} ダメージ（{c} 回）", killStat: "{n} を撃破", repWin: "勝", repLose: "敗"
@@ -10278,6 +10519,31 @@ var BOTS = [
     return { hp: 0.08 * (1 + 0.15 * (m.st || 0)) * (m.ti + 1) * 0.5, spd: 0.10 + 0.02 * ((m.lv || 1) - 1) + 0.03 * (m.st || 0), m: m };
   }
   function cardLv(c) { return c.lv || 1; }
+  /* V39 成长加点：支持一次输入 N 点，校验 1 ≤ N ≤ 剩余点数 */
+  function spInputOf(st) {
+    var el = document.querySelector('input.sg-spin[data-st="' + st + '"]');
+    return el ? el.value : "";
+  }
+  function allocSp(u, c, st, raw) {
+    var left = u.bat.sp || 0;
+    if (left <= 0) return { err: "none" };
+    var n = parseInt(String(raw == null ? "" : raw).replace(/[^0-9]/g, ""), 10);
+    if (!isFinite(n) || n <= 0) return { err: "bad" };
+    if (n > left) return { err: "bad" };
+    u.bat.sp = left - n;
+    c.spa = c.spa || {};
+    c.spa[st] = (c.spa[st] || 0) + n;
+    return { ok: true, n: n };
+  }
+  function stName(st) {
+    var m = { wu: ["武力", "War", "武力"], st: ["统率", "Command", "統率"], "in": ["智力", "Intellect", "知力"], ch: ["魅力", "Charisma", "魅力"], po: ["政治", "Politics", "政治"] };
+    var l = lang(), a = m[st] || [st, st, st];
+    return (l === "zh" ? a[0] : l === "ja" ? a[2] : a[1]) || st;
+  }
+  function spInputHTML(cid, st, spLeft) {
+    return '<input class="sg-spin" type="number" inputmode="numeric" min="1" max="' + Math.max(1, spLeft) + '" step="1" value="1" data-st="' + st + '" data-cid="' + cid + '"' +
+      (spLeft > 0 ? "" : " disabled") + ' style="width:58px;padding:3px 6px;border-radius:7px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit;text-align:center;font-size:12px">';
+  }
   function expNeed(lv) { return 60 + lv * 30; }
   function troopOfCard(c, g) {
     var ti = tierOf(g), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
@@ -12379,8 +12645,9 @@ var BOTS = [
     var spa = c.spa || {}; var spLeft = u.bat.sp || 0;
     var statDefs = [["wu", "武"], ["st", "统"], ["in", "智"], ["ch", "魅"], ["po", "政"]];
     var spHTML = statDefs.map(function (sd) {
-      return '<span class="sgchip">' + sd[1] + " " + (g[sd[0]] || 0) + (spa[sd[0]] ? '<b style="color:#e8c988"> +' + spa[sd[0]] + "</b>" : "") +
-        ' <button class="sgbtn sm ghost" data-bat="sp-add" data-st="' + sd[0] + '" data-id="' + c.id + '"' + (spLeft > 0 ? "" : " disabled") + ">+1</button></span>";
+      return '<span class="sgchip">' + sd[1] + " " + (g[sd[0]] || 0) + (spa[sd[0]] ? '<b style="color:#e8c988"> +' + spa[sd[0]] + "</b>" : "") + " " +
+        spInputHTML(c.id, sd[0], spLeft) +
+        ' <button class="sgbtn sm ghost" data-bat="sp-add" data-st="' + sd[0] + '" data-id="' + c.id + '"' + (spLeft > 0 ? "" : " disabled") + ">" + T("spAddT") + "</button></span>";
     }).join(" ");
     var eq = c.eq || {};
     var eqHTML = SLOT_KEYS.map(function (sl) {
@@ -12521,7 +12788,8 @@ var BOTS = [
       return '<div class="sg-rankline"><span class="i" style="background:' + tr.c + ';color:#10131a">' + sd[1] + "</span>" +
         "<span><b>" + (g[sd[0]] || 0) + "</b>" + (spa[sd[0]] ? ' <b style="color:#e8c988">+' + spa[sd[0]] + "</b>" : "") +
         ' <small style="color:var(--ink-3)">' + sd[1] + "力</small></span><span class=\"sp\"></span>" +
-        '<button class="sgbtn sm ghost" data-gs="sp" data-st="' + sd[0] + '" data-id="' + c.id + '"' + (spLeft > 0 ? "" : " disabled") + ">+1</button></div>";
+        spInputHTML(c.id, sd[0], spLeft) +
+        '<button class="sgbtn sm primary" data-gs="sp" data-st="' + sd[0] + '" data-id="' + c.id + '"' + (spLeft > 0 ? "" : " disabled") + ">" + T("spAddT") + "</button></div>";
     }).join("");
     var armHTML = GS_ARMS.map(function (a) {
       var gr = armApt(g, a.k), on = c.arm === a.k;
@@ -12694,11 +12962,14 @@ var BOTS = [
         eqShopOpen(cid); return;
       }
       case "sp": {
-        if ((u.bat.sp || 0) <= 0) return toast(T("gsNoSp"), "err");
-        u.bat.sp--; c.spa = c.spa || {};
-        var st = t.getAttribute("data-st");
-        c.spa[st] = (c.spa[st] || 0) + 1;
-        save(); toast(T("gsSpOk", { n: st === "wu" ? "武力" : st === "st" ? "统率" : st === "in" ? "智力" : st === "ch" ? "魅力" : "政治" }), "ok");
+        /* V39：按输入数量加点，校验剩余点数 */
+        var leftS = u.bat.sp || 0;
+        if (leftS <= 0) return toast(T("gsNoSp"), "err");
+        var stS = t.getAttribute("data-st");
+        var rS = allocSp(u, c, stS, spInputOf(stS));
+        if (rS.err === "bad") return toast(T("spBadT", { n: leftS }), "err");
+        if (!rS.ok) return;
+        save(); toast(T("spOkT", { s: stName(stS), n: rS.n, l: u.bat.sp || 0 }), "ok");
         rg(); return;
       }
       case "arm": {
@@ -13273,7 +13544,18 @@ var BOTS = [
       case "synth": { var g3 = gById(id); if (!g3) return; var ti3 = tierOf(g3), need3 = SYNTH[ti3]; if ((u.shards[id] || 0) < need3) return toast(T("synthNot"), "err"); u.shards[id] -= need3; var nc = mkCard(id); u.cards.unshift(nc); checkBadges(u); save(); toast(T("synthOk", { n: g3.name }), "ok"); refreshBattle(); return; }
       case "grow-open": growOpen(id); return;
       case "starup": { var c4 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c4) return; var g4 = gById(c4.gid), st4 = c4.stars || 0; if (st4 >= 5) return; var cost4 = STAR_COST[st4]; if (cardLv(c4) < (st4 + 1) * 10) return toast(T("starLvNeed", { n: (st4 + 1) * 10 }), "err"); if ((u.shards[g4.id] || 0) < cost4) return toast(T("synthNot"), "err"); u.shards[g4.id] -= cost4; c4.stars = st4 + 1; save(); toast(T("starUpOk"), "ok"); growOpen(id); return; }
-      case "sp-add": { var c5 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c5) return; if ((u.bat.sp || 0) <= 0) return; u.bat.sp--; c5.spa = c5.spa || {}; var st5 = t.getAttribute("data-st"); c5.spa[st5] = (c5.spa[st5] || 0) + 1; save(); growOpen(id); return; }
+      case "sp-add": {
+        /* V39：按输入数量加点，校验剩余点数 */
+        var c5 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c5) return;
+        var st5 = t.getAttribute("data-st");
+        var left5 = u.bat.sp || 0;
+        if (left5 <= 0) return toast(T("gsNoSp"), "err");
+        var r5 = allocSp(u, c5, st5, spInputOf(st5));
+        if (r5.err === "bad") return toast(T("spBadT", { n: left5 }), "err");
+        if (!r5.ok) return;
+        save(); toast(T("spOkT", { s: stName(st5), n: r5.n, l: u.bat.sp || 0 }), "ok");
+        growOpen(id); return;
+      }
       case "eq-pick": eqPicker(id, t.getAttribute("data-slot")); return;
       case "eq-wear": { var c6 = (u.cards || []).filter(function (x) { return x.id === t.getAttribute("data-cid"); })[0]; var e6 = (u.eqs || []).filter(function (x) { return x.id === id; })[0]; if (!c6 || !e6) return; var g6 = gById(c6.gid); if (e6.slot === "wpn") { if (!e6.wt) e6.wt = wtypeOf(g6); else if (g6 && wtypeOf(g6) !== e6.wt) return toast(T("wpnLock", { n: e6.wt }), "err"); } c6.eq = c6.eq || {}; c6.eq[e6.slot] = e6.id; save(); growOpen(c6.id); return; }
       case "eq-off": { var e7 = (u.eqs || []).filter(function (x) { return x.id === id; })[0]; if (!e7) return; (u.cards || []).forEach(function (cc) { if (cc.eq && cc.eq[e7.slot] === e7.id) delete cc.eq[e7.slot]; }); var c7 = (u.cards || []).filter(function (x) { return x.eq && x.eq[e7.slot] === e7.id; })[0]; save(); if (c7) growOpen(c7.id); else refreshBattle(); return; }
@@ -13359,6 +13641,9 @@ var BOTS = [
       switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard }; },
     tierOf: tierOf,
     tierSkill: tierSkill,
+    _gt: function (k, v) { return gt(k, v); },
+    _gacha: function () { return { cfg: GACHA, roll: rollGacha, cnt: gachaCnt, batch: openBatchDraw, run: doBatchDraw }; },
+    _sp: function () { return { alloc: allocSp, hash: pwHash }; },
     _claimCards: claimCardGrants,
     _tick: tick,
     _test: {
