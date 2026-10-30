@@ -7128,8 +7128,10 @@ html[data-lang="en"]{letter-spacing:.01em}
     } catch (e) { return null; }
   }
   function save() {
-    /* V35：本地状态版本号——只要有未推送的本地变更，就不允许云端旧档覆盖（防战果/升级丢失） */
-    try { var _cu = me(); if (_cu) _cu._sv = (_cu._sv || 0) + 1; } catch (e) {}
+    /* V44：本地只作离线缓存。_ready=true（已完成首次云端拉取）后的任何改动都标记 _dirty，
+       由云端同步器在 1.5s 内推送到账号档案；_ready 之前的启动期改动不标脏，
+       以免本地旧档抢在云端档案之前把服务器覆盖掉（两台电脑进度分叉的根因）。 */
+    try { var _cu = me(); if (_cu) { _cu._sv = (_cu._sv || 0) + 1; if (_cu._ready) _cu._dirty = true; } } catch (e) {}
     try { localStorage.setItem(KEY, JSON.stringify(DB)); }
     catch (e) { toast(T("saveFail"), "err", 6000); }
     try { if (SGCloud && SGCloud.pushSoon) SGCloud.pushSoon(); } catch (e) {}
@@ -7454,19 +7456,44 @@ html[data-lang="en"]{letter-spacing:.01em}
     }
     return pool[pool.length - 1];
   }
-  /* ---------------- V39 抽卡概率与保底 ----------------
-     区间配额（近 N 抽内该品级数量上限）+ 连抽保底（连续 N 抽未见则必出）：
-       S：每 1000 抽 1~3 张（基础 0.28%，900 抽起软保底递增，1000 抽硬保底）
-       A：每  500 抽 2~6 张（基础 0.75%，210 抽起软保底，250 抽硬保底）
-       B：每  300 抽 3~9 张（基础 1.80%， 80 抽起软保底，100 抽硬保底）
-       C：每  100 抽约 5 张（基础 5.00%， 16 抽起软保底， 22 抽硬保底）
-     其余概率随机落在 D / E / F（35% / 35% / 30%） */
-  var GACHA = [
-    { k: "s", ti: 0, rate: 0.0028, pity: 1000, soft: 900, win: 1000, cap: 3 },
-    { k: "a", ti: 1, rate: 0.0075, pity: 250, soft: 210, win: 500, cap: 6 },
-    { k: "b", ti: 2, rate: 0.0180, pity: 100, soft: 80, win: 300, cap: 9 },
-    { k: "c", ti: 3, rate: 0.0420, pity: 24, soft: 18, win: 100, cap: 6 }
-  ];
+  /* ---------------- V44 抽卡配额（每 100 张卡片，后台可配） ----------------
+     后台「卡牌配置 → 抽卡概率」可远程调整（云端 sg_cfg_get('gacha')，格式 [{k:'s',p:1},…]）：
+       p = 每 100 张卡片中该等级的目标张数（等价于百分比），仅 S/A/B/C 可设；
+       剩余 100 - Σp 张按 D/E/F = 35% / 35% / 30% 随机。
+     实现为「配额袋」：每 100 张为一个周期，袋内位置随机排布（数量确定、顺序随机），
+     单抽与批量抽共用同一个袋且随账号持久化在 u.gb；小数配额进位累积，长期均值精确。 */
+  var GRATE_DEF = { s: 1, a: 2, b: 3, c: 5 };
+  var GRATE = { s: GRATE_DEF.s, a: GRATE_DEF.a, b: GRATE_DEF.b, c: GRATE_DEF.c };
+  var GRATE_KEYS = ["s", "a", "b", "c"];
+  /* 配额口径：0 = 按「掉落档次」（S/A/B 档从强将并集出，延续 V42/V43，卡面颜色由武将五维决定）
+                1 = 按「卡面等级」（S 档只出紫卡，池 = 该等级全量，会显著收窄池子） */
+  var GMODE = 0;
+  function applyGachaCfg(arr) {
+    try {
+      if (!arr) return false;
+      var o = {}, any = false;
+      if (Object.prototype.toString.call(arr).indexOf("Array") >= 0) {
+        arr.forEach(function (r) {
+          if (!r) return;
+          var k = String(r.k || "").toLowerCase();
+          if (k === "mode") { var mv = +r.p; if (isFinite(mv)) { GMODE = mv ? 1 : 0; any = true; } return; }
+          if (GRATE_KEYS.indexOf(k) < 0) return;
+          var v = +r.p;
+          if (!isFinite(v)) return;
+          o[k] = Math.max(0, Math.min(100, v));
+          any = true;
+        });
+      } else {
+        if (arr.mode != null && isFinite(+arr.mode)) { GMODE = (+arr.mode) ? 1 : 0; any = true; }
+        GRATE_KEYS.forEach(function (k) { var v = +arr[k]; if (isFinite(v)) { o[k] = Math.max(0, Math.min(100, v)); any = true; } });
+      }
+      if (!any) return false;
+      var sum = 0;
+      GRATE_KEYS.forEach(function (k) { GRATE[k] = (o[k] != null ? o[k] : GRATE_DEF[k]); sum += GRATE[k]; });
+      if (sum > 100) { var sc = 100 / sum; GRATE_KEYS.forEach(function (k) { GRATE[k] = +(GRATE[k] * sc).toFixed(2); }); }
+      return true;
+    } catch (e) { return false; }
+  }
   function gachaHist(u) {
     u.gh = u.gh || [];
     if (u.gh.length > 1000) u.gh = u.gh.slice(u.gh.length - 1000);
@@ -7538,65 +7565,59 @@ html[data-lang="en"]{letter-spacing:.01em}
     if (fresh.length) return pickWeighted(fresh, seen, own);
     return pickWeighted(pool, seen, own);
   }
-  /* V42 批量保底上下文：doBatchDraw(100) 前设置，循环结束后清空。
-     规则：整批 S/A 合计 1~2 张、B 级 2 张；达标前可自然出现，达标后对应品级权重归零；
-     批末不足则强制补足，保证 100 抽必有 */
-  var _bdCtx = null;
+  /* V44 配额袋：每 100 张卡片为一个周期，袋内等级分布 = 后台配额（数量确定、顺序随机）。
+     -1 = 其余随机（D/E/F 按 35% / 35% / 30%）；小数配额（如 1.5）用进位累积到下一袋 */
+  function gachaBagBuild(u) {
+    var carry = (u.gb && u.gb.c) || {}, q = [], i, j, sum = 0;
+    for (i = 0; i < GRATE_KEYS.length; i++) {
+      var k = GRATE_KEYS[i];
+      var exp = Math.max(0, +GRATE[k] || 0) + Math.max(0, +carry[k] || 0);
+      var want = Math.floor(exp + 1e-9);
+      carry[k] = +(exp - want).toFixed(4);
+      for (j = 0; j < want && sum < 100; j++) { q.push(i); sum++; }
+    }
+    while (q.length < 100) q.push(-1);
+    for (i = q.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      var t = q[i]; q[i] = q[j]; q[j] = t;
+    }
+    u.gb = { q: q, c: carry, t: Date.now() };
+    return u.gb;
+  }
+  function gachaTake(u) {
+    var b = (u.gb && u.gb.q && u.gb.q.length) ? u.gb : gachaBagBuild(u);
+    return b.q.shift();
+  }
+  function gachaBagLeft(u) { return (u.gb && u.gb.q) ? u.gb.q.length : 0; }
+  /* 批量抽卡弹窗上的配额说明（跟随后台配置实时变化） */
+  function gachaQuotaTxt() {
+    var s = GRATE.s, a = GRATE.a, b = GRATE.b, c = GRATE.c;
+    var rest = Math.max(0, +(100 - s - a - b - c).toFixed(2));
+    var L = lang() === "zh" ? "zh" : lang() === "ja" ? "ja" : "en";
+    if (L === "zh") return "每 100 张卡片配额：S " + s + " 张 · A " + a + " 张 · B " + b + " 张 · C " + c + " 张，其余 " + rest + "% 随机（D/E/F）";
+    if (L === "ja") return "100 枚あたりの配额：S " + s + " · A " + a + " · B " + b + " · C " + c + "、残り " + rest + "% はランダム（D/E/F）";
+    return "Per 100 cards: S " + s + " · A " + a + " · B " + b + " · C " + c + ", remaining " + rest + "% random (D/E/F)";
+  }
   var _lastPick = 6;   /* 最近一次掉落品级（drop tier）：S/A/B 掉落必出整卡，碎片判定按掉落品级而非卡面品级 */
   function rollGacha(u) {
     if (!u) return rollGeneral();
-    var p = (u.gp = u.gp || { s: 0, a: 0, b: 0, c: 0 }), i;
-    for (i = 0; i < GACHA.length; i++) p[GACHA[i].k] = (p[GACHA[i].k] || 0) + 1;
-    var pick = -1;
-    /* V42 批量 100 抽保底：S/A 合计 1~2、B 2 张——批末不足强制补足，达标后对应品级不再出 */
-    if (_bdCtx) {
-      _bdCtx.done++;
-      var left = _bdCtx.total - _bdCtx.done;                    /* 本抽之后还剩几抽 */
-      var needSab = _bdCtx.sabNeed - _bdCtx.sab, needB = _bdCtx.bNeed - _bdCtx.b;
-      if (left < needSab + needB) {
-        pick = needSab > 0 ? (Math.random() < 0.27 ? 0 : 1) : 2; /* 强制：S/A 按 27%/73% 加权，之后补 B */
-      } else {
-        needSab = 0; needB = 0;
-      }
-    }
-    /* 硬保底：连续未出已达阈值且区间配额未满 → 直接给付（批量保底上下文中让位于强制补足） */
-    if (pick < 0) for (i = 0; i < GACHA.length; i++) {
-      var cfg = GACHA[i];
-      if (p[cfg.k] >= cfg.pity && gachaCnt(u, cfg.ti, cfg.win) < cfg.cap) { pick = cfg.ti; break; }
-    }
-    /* 常规抽取：软保底线性提升权重，配额已满则该品级权重归零 */
-    if (pick < 0) {
-      var r = Math.random(), acc = 0;
-      for (i = 0; i < GACHA.length; i++) {
-        var g2 = GACHA[i], w = g2.rate;
-        if (gachaCnt(u, g2.ti, g2.win) >= g2.cap) w = 0;
-        else if (_bdCtx && g2.ti <= 2) {
-          if (g2.ti <= 1 && _bdCtx.sab >= 2) w = 0;             /* S/A 已达上限 */
-          else if (g2.ti === 2 && _bdCtx.b >= _bdCtx.bNeed) w = 0; /* B 已达上限 */
-        }
-        else if (p[g2.k] >= g2.soft) w *= 1 + (p[g2.k] - g2.soft) / Math.max(1, g2.pity - g2.soft) * 5;
-        acc += w;
-        if (r < acc) { pick = g2.ti; break; }
-      }
-    }
+    var pick = gachaTake(u);
     if (pick < 0) { var rr = Math.random(); pick = rr < 0.35 ? 4 : rr < 0.70 ? 5 : 6; }
     _lastPick = pick;
-    if (_bdCtx) { if (pick <= 1) _bdCtx.sab++; else if (pick === 2) _bdCtx.b++; }
     var pool;
-    if (pick <= 2) {
+    if (pick <= 2 && !GMODE) {
       /* V42：S/A/B 从每项属性前 100 的并集中随机（不按品级再筛，兼顾单项特长） */
       pool = top100Pool().slice();
     } else {
-      /* C 级及以下按品级全量随机 */
+      /* C 级及以下按品级全量随机；GMODE=1（卡面口径）时 S/A/B 也只取该等级的卡面武将 */
       pool = GENS().filter(function (g) { return g.era !== "古代" && tierOf(g) === pick; });
     }
     if (!pool.length) pool = GENS().filter(function (g) { return g.era !== "古代"; });
     if (!pool.length) return null;
-    if (pick <= 3) p[GACHA[pick].k] = 0;
     var h = gachaHist(u); h.push(pick);
     while (h.length > 1000) h.shift();
     var g = pickSpread(pool, u);
-    if (g) { u.gd.push(g.id); while (u.gd.length > GD_WIN) u.gd.shift(); }
+    if (g) { u.gd = u.gd || []; u.gd.push(g.id); while (u.gd.length > GD_WIN) u.gd.shift(); }
     return g;
   }
   /* 引导送卡：保证武力可战（wu≥45），找不到就放宽 */
@@ -8690,11 +8711,14 @@ var BOTS = [
         '<span class="dot" style="background:' + t.c + '"></span>' + tierLabel(t) + " +" + fmt(t.pts) +
         (lock ? ' <small>🔒</small>' : "") + "</label>";
     }).join("");
+    /* V44：显示当前周期配额与袋内剩余张数，配额由后台管控台配置 */
+    var bagLeft = gachaBagLeft(u), total = 100;
+    var progTxt = lang() === "zh" ? ("本周期剩余 " + bagLeft + " / 100 张") : lang() === "ja" ? ("現在の周期 残り " + bagLeft + " / 100") : ("Cycle remaining " + bagLeft + " / 100");
     modal("<h3>" + T("batchDraw") + '</h3><div class="sub">' + T("draws") + " " + (u.draws || 0) + "</div>" +
       '<div style="display:flex;gap:8px;margin:12px 0">' + opts + "</div>" +
       '<div class="sg-note" style="margin:12px 0 4px"><b>' + T("bdAuto") + "</b></div>" +
       "<div>" + tiers + "</div>" +
-      '<div class="sg-note" style="margin-top:8px">' + T("bdAutoHint") + "　·　" + T("bdSab") + "　·　" + T("bdGuar") + "　·　" + T("bdAntiDup") + "</div>" +
+      '<div class="sg-note" style="margin-top:8px;line-height:1.7"><b style="color:#f0d97a">' + gachaQuotaTxt() + "</b><br>" + progTxt + "　·　" + T("bdAutoHint") + "　·　" + T("bdSab") + "　·　" + T("bdAntiDup") + "</div>" +
       '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">' +
       '<button class="sgbtn" data-sgact="close">' + T("no") + "</button></div>");
   }
@@ -8706,20 +8730,17 @@ var BOTS = [
     var auto = checkedTiers("data-bdt", false);
     var kept = [], rec = { cnt: 0, pts: 0 }, shards = 0;
     u.cards = u.cards || [];
-    /* V42：100 连抽保底——S/A 合计 1~2 张、B 级 2 张，其余随机 */
-    _bdCtx = n === 100 ? { total: 100, done: 0, sabNeed: Math.random() < 0.4 ? 2 : 1, bNeed: 2, sab: 0, b: 0 } : null;
-    try {
+    /* V44：等级配额由同一只「每 100 张卡片配额袋」统一发放，批量抽卡不再单独设置保底 */
     for (var i = 0; i < n; i++) {
       var g = rollGacha(u);
       if (!g) break;
       u.draws = (u.draws || 0) - 1;
-      /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8）；V39 S/A/B 必出整卡 */
+      /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8）；S/A/B 掉落必出整卡 */
       if (_lastPick >= 3 && Math.random() < 0.45) { var sn = 8 - tierOf(g); addShards(u, g.id, sn); shards += sn; continue; }
       var ti = tierOf(g), c = mkCard(g.id);
       if (auto[ti]) { rec.cnt++; rec.pts += TIERS[ti].pts; }
       else { u.cards.unshift(c); kept.push(c); }
     }
-    } finally { _bdCtx = null; }
     if (rec.pts > 0) addPoints(u, rec.pts, T("bdLedger", { n: rec.cnt, p: fmt(rec.pts) }));
     checkBadges(u);
     trackEv("draw_batch", { n: n, rec: rec.cnt, kept: kept.length, shards: shards });
@@ -9210,24 +9231,28 @@ var BOTS = [
   }
   function roll3Distinct(u) {
     var picks = [], used = {}, guard = 0, g;
-    /* V39：第一张由保底/配额系统产出；V43：另两张优先取「未拥有且近 40 抽未出」的武将，
-       避免三张候选里反复出现同一批老面孔（纯随机衬托是"总是这几个人"的主要观感来源） */
-    var hero = rollGacha(u);
-    if (hero) { used[hero.id] = 1; picks.push(hero); }
+    /* V44：单抽的三张候选统一取「本张配额袋槽位」的等级——保证无论挑哪张，等级配额都精确兑现；
+       V43 延续：候选优先取近 100 抽未出现、持有量少的武将，避免"总是这几张面孔" */
+    var pick = u ? gachaTake(u) : -1;
+    if (pick < 0) { var rr = Math.random(); pick = rr < 0.35 ? 4 : rr < 0.70 ? 5 : 6; }
+    _lastPick = pick;
+    var pool = (pick <= 2 && !GMODE) ? top100Pool().slice()
+      : GENS().filter(function (x) { return x.era !== "古代" && tierOf(x) === pick; });
+    if (!pool.length) pool = GENS().filter(function (x) { return x.era !== "古代"; });
     if (u) {
       var seen = gdSeen(u), own = ownedCnt(u);
-      var all = GENS().filter(function (x) { return x.era !== "古代"; });
-      var pref = all.filter(function (x) { return !seen[x.id]; });
-      if (pref.length < 20) pref = all;
-      while (picks.length < 3 && guard++ < 80) {
-        var gp = pickWeighted(pref, seen, own);
+      var fresh = pool.filter(function (x) { return !seen[x.id]; });
+      if (fresh.length >= 3) pool = fresh;
+      while (picks.length < 3 && guard++ < 120) {
+        var gp = pickWeighted(pool.filter(function (x) { return !used[x.id]; }), seen, own);
         if (gp && !used[gp.id]) { used[gp.id] = 1; picks.push(gp); }
       }
     }
-    while (picks.length < 3 && guard++ < 160) {
-      g = rollGeneral();
+    while (picks.length < 3 && guard++ < 200) {
+      g = pool[Math.floor(Math.random() * pool.length)] || rollGeneral();
       if (g && !used[g.id]) { used[g.id] = 1; picks.push(g); }
     }
+    if (u && picks.length) { u.gd = u.gd || []; u.gd.push(picks[0].id); while (u.gd.length > GD_WIN) u.gd.shift(); }
     return picks;
   }
   function doDraw() {
@@ -9235,7 +9260,7 @@ var BOTS = [
     if ((u.draws || 0) <= 0) { toast(T("noDraw"), "err"); return; }
     var picks = roll3Distinct(u);
     if (picks.length < 3) { toast(T("noDraw"), "err"); return; }
-    UI.draw3 = { picks: picks, done: false, dropTiers: [_lastPick, tierOf(picks[1]), tierOf(picks[2])] };
+    UI.draw3 = { picks: picks, done: false, dropTiers: [_lastPick, _lastPick, _lastPick], tier: _lastPick };
     var cards = picks.map(function (g, i) {
       return '<div class="sg-pick" id="sgPick' + i + '" style="--tc:' + TIERS[tierOf(g)].c + '" data-sgact="pick-card" data-id="' + i + '">' +
         '<div class="sg-pick-inner"><div class="sg-pick-back">' + dragonSeal() + "</div>" +
@@ -9371,6 +9396,7 @@ var BOTS = [
     /* 应用域名由平台分配、可能变更：跑在任一 *.workbuddy.host 下时以当前 origin 为准 */
     try { if (/\.workbuddy\.host$/i.test(location.hostname)) HOST = location.origin; } catch (e) {}
     var KEY = "wbpk_CuEbv9EAEwwQYI92Z1RcYH_mwa0b6O1sk6njj7GmgTpz45jl7qncG2M";
+    var DBKEY = "sg_social_v2";   /* 外层 localStorage 存档键（此处 KEY 已被云端发布键占用，勿混用） */
     var same = false;
     try { same = (location.origin === HOST); } catch (e) {}
     var cli = null, loading = false, seq = 0, waits = {}, frame = null, fready = false, fq = [];
@@ -9428,17 +9454,30 @@ var BOTS = [
     }
     function cfgPull() {
       /* 后台卡牌配置表：启动拉取，覆盖本地七阶数值（积分/属性/触发率/带兵/职位/每10级），失败自动重试一次 */
+      var okT = false, okG = false;
+      function retry() { if (!okT || !okG) setTimeout(cfgPull, 6000); }
       try {
-        return rpcP("sg_cfg_get", { p_key: "tiers" }).then(function (r) {
+        var p1 = rpcP("sg_cfg_get", { p_key: "tiers" }).then(function (r) {
           if (r && r.ok && r.data) {
             var arr = r.data;
             if (typeof arr === "string") { try { arr = JSON.parse(arr); } catch (e) { arr = null; } }
             if (applyTierCfg(arr) && me()) { save(); rerender(); }
+            okT = true;
             return true;
           }
-          setTimeout(cfgPull, 6000);
           return false;
-        })["catch"](function () { setTimeout(cfgPull, 6000); return false; });
+        })["catch"](function () { return false; });
+        /* V44：抽卡配额（每 100 张卡片的 S/A/B/C 张数）同样走云端配置，保存后全站即时生效 */
+        var p2 = rpcP("sg_cfg_get", { p_key: "gacha" }).then(function (r) {
+          if (r && r.ok && r.data) {
+            var arr = r.data;
+            if (typeof arr === "string") { try { arr = JSON.parse(arr); } catch (e) { arr = null; } }
+            if (applyGachaCfg(arr)) okG = true;
+            return true;
+          }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2]).then(function () { retry(); return okT || okG; });
       } catch (e) { return Promise.resolve(false); }
     }
 
@@ -9563,89 +9602,140 @@ var BOTS = [
           ["catch"](function () { return null; });
       } catch (e) { return Promise.resolve(null); }
     }
+    /* ---------- V44 账号档案云端持久化（以账号为维度，云端为唯一真源） ----------
+       设计要点：
+       ① 档案按 email + 站点存放在云数据库 sg_state，换电脑/换浏览器登录同一账号即同一份档；
+       ② 本机 localStorage 只作离线缓存；启动、登录、切回前台、每 60s 主动拉取；
+       ③ 冲突判定只看「本机是否有尚未推送的改动」(_dirty)，不再用 _sv/_svp 版本号——
+          旧逻辑里任何一次本地 save（签到、徽章、通知）都会让云端档案永远无法覆盖本机，
+          这正是两台电脑进度越走越远的根因；
+       ④ 等级/关卡/点数台账等只增不减的字段取两侧较大值，积分与卡牌等可增可减字段以云端为准。 */
     function stateSnap(u) {
-      return { points: u.points || 0, draws: u.draws || 0, cards: u.cards || [], badges: u.badges || {},
+      return { v: 44, at: Date.now(),
+        name: u.name || "", phone: u.phone || "", email: u.email || "", role: u.role || "user",
+        points: u.points || 0, draws: u.draws || 0, cards: u.cards || [], badges: u.badges || {},
         ledger: (u.ledger || []).slice(0, 120), streak: u.streak || 0, bestStreak: u.bestStreak || 0,
-        loginDays: (u.loginDays || []).slice(-60), notifs: (u.notifs || []).slice(0, 50),
+        lastLogin: u.lastLogin || null,
+        loginDays: (u.loginDays || []).slice(-150), notifs: (u.notifs || []).slice(0, 50),
         d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0,
-        /* V39：账号密码哈希 / 邮箱验证标记 / 抽卡保底计数随档同步（后台可改密，跨设备一致） */
+        /* 账号密码哈希 / 邮箱验证标记 / 抽卡计数随档同步（后台可改密，跨设备一致） */
         pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (u.gh || []).slice(-1000), gd: (u.gd || []).slice(-100),
+        gb: u.gb || null,                       /* V44 抽卡配额袋：换设备续抽，100 张配额不断档 */
+        skn: u.skn || null,
         bat: u.bat || null, shards: u.shards || {}, eqs: u.eqs || [], mts: u.mts || [], res: u.res || null };
     }
     function pushSoon(delay) {
       clearTimeout(pushT);
-      pushT = setTimeout(pushNow, delay == null ? 2500 : delay);
+      pushT = setTimeout(function () { pushNow(); }, delay == null ? 1500 : delay);
     }
     /* V38：关页/切后台前尽力冲刷未推送状态——升级、战果不因立即关闭而丢失 */
     try {
       var _flushOnce = false;
       window.addEventListener("beforeunload", function () { if (!_flushOnce) { _flushOnce = true; try { pushNow(); } catch (e) {} } });
       document.addEventListener("visibilitychange", function () {
-        if (document.visibilityState === "hidden" && (me() || {}) ._sv > ((me() || {})._svp || 0)) { try { pushNow(); } catch (e) {} }
+        var cu = me();
+        if (document.visibilityState === "hidden" && cu && cu._dirty) { try { pushNow(); } catch (e) {} }
       });
     } catch (e) {}
-    function pushNow() {
+    function pushNow(force) {
       var u = me();
-      if (!u || !u.email) return;
-      if (pulling) { pushSoon(3000); return; }                 /* 拉取中：排队重试而非直接丢弃 */
-      if (u.remote && !u._pulled) { pushSoon(5000); return; }  /* 等首次拉取完成，避免覆盖云端；拉取失败也会置 _pulled */
+      if (!u || !u.email) return Promise.resolve(false);
+      if (!u._ready && !force) { pushSoon(2000); return Promise.resolve(false); }   /* 首次拉取完成前绝不写云端 */
+      if (u._pushing) return u._pushing;
+      if (!u._dirty && !force) return Promise.resolve(false);                       /* 无改动不空推，避免两台设备互踢 updated_at */
+      var done = rpcP("sg_state_put", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID,
+        p_data: JSON.stringify(stateSnap(u)) }, 15000).then(function (r) {
+        if (r && r.ok) {
+          u._dirty = false; u._sync = Date.now();
+          try { localStorage.setItem(DBKEY, JSON.stringify(DB)); } catch (e) {}
+          paintSync();
+          return true;
+        }
+        pushSoon(8000);
+        return false;
+      }, function () { pushSoon(12000); return false; });
+      u._pushing = done;
+      done.then(function () { if (u._pushing === done) u._pushing = null; }, function () { if (u._pushing === done) u._pushing = null; });
+      return done;
+    }
+    /* 只增不减字段合并：关卡进度 / 建筑等级 / 研究历史 / 点数台账（spG·spU） */
+    function mergeMono(src, dst) {
       try {
-        rpcP("sg_state_put", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID,
-          p_data: JSON.stringify(stateSnap(u)) }).then(function (r) {
-          if (r && r.ok) { u._sync = Date.now(); u._svp = u._sv || 0; try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) {} }
-          else pushSoon(15000);
-        })["catch"](function () { pushSoon(20000); });
+        var lb = src && src.bat, rb = dst && dst.bat;
+        if (!lb || !rb) return;
+        if ((lb.stage || 0) > (rb.stage || 0)) rb.stage = lb.stage;
+        if ((lb.spG || 0) > (rb.spG || 0)) rb.spG = lb.spG;
+        if ((lb.spU || 0) > (rb.spU || 0)) rb.spU = lb.spU;
+        rb.sp = Math.max(0, (rb.spG || 0) - (rb.spU || 0));   /* V41：点数由台账派生，勿对 sp 取 max（会把已分配的点数复活） */
+        if (lb.hist) { var hh = rb.hist = rb.hist || {}; Object.keys(lb.hist).forEach(function (k) { if ((lb.hist[k] || 0) > (hh[k] || 0)) hh[k] = lb.hist[k]; }); }
+        function mb(a, b) { if (!a || !b) return; if (a.bld) { var bb = b.bld = b.bld || {}; Object.keys(a.bld).forEach(function (k) { if ((a.bld[k] || 0) > (bb[k] || 0)) bb[k] = a.bld[k]; }); } }
+        mb(lb, rb);
+        if (lb.city) mb({ bld: lb.city.bld }, { bld: (rb.city = rb.city || {}).bld || (rb.city.bld = {}) });
+        if (lb.cities) {
+          rb.cities = rb.cities || {};
+          Object.keys(lb.cities).forEach(function (cn) {
+            if (!rb.cities[cn]) rb.cities[cn] = lb.cities[cn];
+            else mb(lb.cities[cn], rb.cities[cn]);
+          });
+        }
       } catch (e) {}
     }
-    function statePull() {
+    /* 用云端档覆盖本机（本机只增字段先并入云端档，避免刚升的级被旧档打回） */
+    function applyRemoteState(u, d) {
+      var uid = u.uid;
+      mergeMono(u, d);
+      for (var k in d) { if (d.hasOwnProperty(k)) u[k] = d[k]; }
+      u.uid = uid; u._ready = true; u._pulled = true;
+      if (!u.cards) u.cards = [];
+      if (!u.badges) u.badges = {};
+      return u;
+    }
+    function saveQuiet() { try { localStorage.setItem(DBKEY, JSON.stringify(DB)); } catch (e) {} }
+    function statePull(opts) {
+      opts = opts || {};
       var u = me();
-      try {
-        if (!u || !u.email) return Promise.resolve(false);
-        return rpcP("sg_state_get", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID })
-          .then(function (r) {
-            if (!(r && r.ok && r.data)) { u._pulled = true; return false; }
-            var d = null;
-            try { d = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { return false; }
-            if (!d) return false;
-            var fresh = 0;
-            try { fresh = r.updated_at ? Date.parse(r.updated_at) : 0; } catch (e) {}
-            u._pulled = true;
-            /* V35：本地存在未推送的变更（版本领先于上次成功推送）→ 保留本地并立即回推，绝不覆盖 */
-            if ((u._sv || 0) > (u._svp || 0)) { pushSoon(300); return true; }
-            if (u._sync && fresh && fresh <= u._sync - 1500) { pushSoon(800); return true; }   /* 本地较新：不覆盖，并回推云端 */
-            pulling = true;
-            /* V38：云端档应用前快照本地——建筑等级/关卡进度/星级等单调字段取两侧较大值，防止云端旧档把升级打回原状 */
-            var _snapBat = u.bat ? JSON.parse(JSON.stringify({ bld: (u.bat.city || {}).bld, cities: u.bat.cities, stage: u.bat.stage, hist: u.bat.hist, sp: u.bat.sp, spG: u.bat.spG, spU: u.bat.spU })) : null;
-            for (var k in d) { if (d.hasOwnProperty(k)) u[k] = d[k]; }
-            try {
-              if (_snapBat && u.bat) {
-                var rb = u.bat;
-                if (_snapBat.stage > (rb.stage || 0)) rb.stage = _snapBat.stage;
-                if ((_snapBat.spG || 0) > (rb.spG || 0)) rb.spG = _snapBat.spG;
-                if ((_snapBat.spU || 0) > (rb.spU || 0)) rb.spU = _snapBat.spU;
-                /* V41：待分配点数由台账派生（sp = spG - spU）——分配是减法，若仍对 sp 取 max 会把已分配的点数复活 */
-                rb.sp = Math.max(0, (rb.spG || 0) - (rb.spU || 0));
-                if (_snapBat.hist) { var hh = rb.hist = rb.hist || {}; Object.keys(_snapBat.hist).forEach(function (sk2) { if ((_snapBat.hist[sk2] || 0) > (hh[sk2] || 0)) hh[sk2] = _snapBat.hist[sk2]; }); }
-                function _mergeBld(loc, rem) {
-                  if (!loc || !rem) return;
-                  if (loc.bld) { var bb = rem.bld = rem.bld || {}; Object.keys(loc.bld).forEach(function (bk2) { if ((loc.bld[bk2] || 0) > (bb[bk2] || 0)) bb[bk2] = loc.bld[bk2]; }); }
-                }
-                _mergeBld(_snapBat, rb);
-                if (_snapBat.cities) {
-                  rb.cities = rb.cities || {};
-                  Object.keys(_snapBat.cities).forEach(function (cn2) {
-                    if (!rb.cities[cn2]) rb.cities[cn2] = _snapBat.cities[cn2];
-                    else _mergeBld(_snapBat.cities[cn2], rb.cities[cn2]);
-                  });
-                }
-              }
-            } catch (e) {}
-            save();
-            pulling = false;
-            paintAcct(); rerender();
+      if (!u || !u.email) return Promise.resolve(false);
+      if (u._pulling) return u._pulling;
+      var p = rpcP("sg_state_get", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }, 12000)
+        .then(function (r) {
+          u._ready = true; u._pulled = true;
+          var d = null;
+          if (r && r.ok && r.data) {
+            try { d = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { d = null; }
+          }
+          if (!d) {
+            /* 云端尚无该账号档案（首次登录/新注册）：把本机数据作为初始档推上去 */
+            u._dirty = true; pushSoon(300); paintSync();
+            return false;
+          }
+          var fresh = 0;
+          try { fresh = r.updated_at ? Date.parse(r.updated_at) : 0; } catch (e) {}
+          u._cloudAt = fresh;
+          if (u._dirty) {
+            /* 本机有未推送改动：保本机，并把云端更高的只增进度并进来后立即回推 */
+            mergeMono(d, u);
+            pushSoon(200); paintSync();
             return true;
-          })["catch"](function () { u._pulled = true; pushSoon(1500); return false; });   /* 拉取失败：仍允许本会话推送，否则进度永不落库 */
-      } catch (e) { return Promise.resolve(false); }
+          }
+          if (fresh && u._lastApply && fresh === u._lastApply) { paintSync(); return false; }  /* 云端未变化，省一次重绘 */
+          pulling = true;
+          applyRemoteState(u, d);
+          u._lastApply = fresh;
+          u._dirty = false;
+          saveQuiet();
+          pulling = false;
+          try { paintAcct(); paintSync(); rerender(); } catch (e) {}
+          return true;
+        }, function () { u._ready = true; paintSync(); return false; });
+      u._pulling = p;
+      p.then(function () { if (u._pulling === p) u._pulling = null; }, function () { if (u._pulling === p) u._pulling = null; });
+      return p;
+    }
+    /* 手动同步：先推本机未同步改动，再拉云端最新（不一致时以云端为准，除非本机又产生了新改动） */
+    function syncNow() {
+      var u = me();
+      if (!u || !u.email) return Promise.resolve(false);
+      return pushNow(true).then(function () { return statePull({ manual: true }); });
     }
 
     function confirmExists(em) {
@@ -9696,7 +9786,22 @@ var BOTS = [
     function account(u, kind) {
       try {
         if (!u) return;
-        setTimeout(function () { cfgPull(); statePull().then(function () { grantsPoll(me()); }); }, 3000);
+        /* V44：登录/注册后立即以云端档案为准——先拉取再放行推送，避免本机缓存把云端覆盖 */
+        u._ready = false;
+        setTimeout(function () {
+          cfgPull();
+          statePull().then(function () {
+            /* 云端档应用后再结算签到：lastLogin 以云端为准，换设备当天不会重复领取 */
+            try {
+              var cu = me();
+              if (cu && cu.email === u.email) {
+                var tr = tick(cu);
+                if (!tr.already) { checkBadges(cu); save(); paintAcct(); }
+              }
+            } catch (e) {}
+            grantsPoll(me());
+          });
+        }, 600);
         if (kind === "reg") {
           rpc("sg_register", {
             p_email: u.email || "", p_phone: u.phone || "", p_nick: u.name || "",
@@ -9712,15 +9817,25 @@ var BOTS = [
       fetchIP();
       setTimeout(warm, 900);
       trackEv("visit");
-      try { var bu = me(); if (bu && bu.email) setTimeout(function () { cfgPull(); statePull().then(function () { grantsPoll(me()); }); }, 3000); } catch (e) {}
-      /* V26 持久化兜底：定期 + 页面隐藏/关闭前强制推送，防关页丢档 */
+      try { var bu = me(); if (bu && bu.email) { bu._ready = false; setTimeout(function () { cfgPull(); statePull().then(function () { grantsPoll(me()); }); }, 500); } } catch (e) {}
+      /* V44：云端为账号唯一真源——每 60s 主动拉一次（多设备同时在线也能收敛），离开页面时冲刷未推送改动 */
       try {
-        setInterval(function () { var fu = me(); if (fu && fu.email && fu._pulled) pushSoon(0); }, 90000);
-        document.addEventListener("visibilitychange", function () { var fu = me(); if (document.hidden && fu && fu.email) pushSoon(0); });
-        window.addEventListener("beforeunload", function () { var fu = me(); if (fu && fu.email) pushSoon(0); });
-        window.addEventListener("pagehide", function () { var fu = me(); if (fu && fu.email) pushSoon(0); });
+        setInterval(function () {
+          var fu = me();
+          if (!fu || !fu.email) return;
+          if (document.hidden) return;
+          if (fu._dirty) pushSoon(0); else statePull();
+        }, 60000);
+        document.addEventListener("visibilitychange", function () {
+          var fu = me();
+          if (!fu || !fu.email) return;
+          if (document.hidden) { if (fu._dirty) pushSoon(0); }
+          else { setTimeout(function () { if (fu._dirty) pushSoon(0); else statePull(); }, 400); }
+        });
+        window.addEventListener("beforeunload", function () { var fu = me(); if (fu && fu.email && fu._dirty) pushSoon(0); });
+        window.addEventListener("pagehide", function () { var fu = me(); if (fu && fu.email && fu._dirty) pushSoon(0); });
       } catch (e) {}
-      try { setTimeout(function () { if (!(bu && bu.email)) cfgPull(); }, 3200); } catch (e) {}
+      try { setTimeout(function () { if (!(bu && bu.email)) cfgPull(); }, 1200); } catch (e) {}
       var lastT = "", lastAt = 0;
       document.addEventListener("click", function (e) {
         var t = e.target && e.target.closest ? e.target.closest("button,a,[data-view]") : null;
@@ -9737,7 +9852,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
-             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, stateGet: stateGet, statePut: statePut, site: function () { return SITE_ID; },
+             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, syncNow: syncNow, stateGet: stateGet, statePut: statePut, snap: stateSnap, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
   try { window.SGCloud = SGCloud; } catch (e) {}
@@ -9754,6 +9869,26 @@ var BOTS = [
   }
 
   /* ---------------- 顶部账号位 ---------------- */
+  /* ---------------- V44 账号档案云端同步状态（账号菜单内展示 + 手动同步） ---------------- */
+  function syncStateTxt(u) {
+    if (!u || !u.email) return "";
+    var zh = lang() === "zh", ja = lang() === "ja";
+    if (!u._ready) return zh ? "同步中…" : ja ? "同期中…" : "syncing…";
+    if (u._dirty) return zh ? "待同步" : ja ? "未同期" : "pending";
+    var t = u._sync || u._lastApply;
+    if (t) {
+      var d = new Date(t), hh = ("0" + d.getHours()).slice(-2), mm = ("0" + d.getMinutes()).slice(-2);
+      return (zh ? "已同步 " : ja ? "同期済 " : "synced ") + hh + ":" + mm;
+    }
+    return zh ? "云端档案" : ja ? "クラウド" : "cloud";
+  }
+  function paintSync() {
+    var el = document.getElementById("sgSyncTxt");
+    if (!el) return;
+    var u = me();
+    el.textContent = syncStateTxt(u);
+    el.style.color = (u && u._dirty) ? "#e8c988" : "";
+  }
   function paintAcct() {
     var el = $("#sgAcct");
     if (!el) return;
@@ -9774,7 +9909,10 @@ var BOTS = [
         ((u.notifs || []).length ? '<div class="sg-drop-sep"></div>' + (u.notifs || []).slice(0, 3).map(function (n) {
           return '<button data-sgact="read-notif" data-id="' + n.id + '" style="font-size:11px;color:var(--ink-3)">' + esc(n.text.slice(0, 34)) + "</button>";
         }).join("") : "") +
-        '<div class="sg-drop-sep"></div><button data-sgact="logout" style="color:#e88c82">' + T("logout") + "</button></div>" : "");
+        '<div class="sg-drop-sep"></div>' +
+        '<button data-sgact="sync-now"><span>' + (lang() === "zh" ? "同步云端档案" : lang() === "ja" ? "クラウド同期" : "Sync cloud save") +
+        '</span><span class="k" id="sgSyncTxt" style="font-size:11px">' + esc(syncStateTxt(u)) + "</span></button>" +
+        '<button data-sgact="logout" style="color:#e88c82">' + T("logout") + "</button></div>" : "");
   }
   function paintNav() {
     var b = $('.nav button[data-view="forum"]');
@@ -9854,6 +9992,18 @@ var BOTS = [
         case "menu": e.preventDefault(); UI.menu = !UI.menu; paintAcct(); return;
         case "go-me": e.preventDefault(); UI.menu = false; if (t.getAttribute("data-wall")) UI.wall = t.getAttribute("data-wall"); location.hash = "#/me"; return;
         case "logout": e.preventDefault(); UI.menu = false; logout(); return;
+        case "sync-now": {
+          e.preventDefault();
+          var us = me();
+          if (!us || !us.email) return;
+          toast(lang() === "zh" ? "正在同步云端档案…" : lang() === "ja" ? "クラウド同期中…" : "Syncing cloud save…", "", 1600);
+          SGCloud.syncNow().then(function (ok) {
+            paintAcct();
+            toast(ok ? (lang() === "zh" ? "已与云端档案同步" : lang() === "ja" ? "クラウドと同期しました" : "Cloud save synced")
+                     : (lang() === "zh" ? "同步未完成，请稍后重试" : lang() === "ja" ? "同期に失敗しました" : "Sync failed, try again"), ok ? "ok" : "err");
+          });
+          return;
+        }
         case "read-notif": {
           e.preventDefault();
           var u0 = me(); if (u0) { (u0.notifs || []).forEach(function (n) { if (n.id === id) n.read = true; }); save(); paintAcct(); }
@@ -13785,7 +13935,7 @@ var BOTS = [
     tierOf: tierOf,
     tierSkill: tierSkill,
     _gt: function (k, v) { return gt(k, v); },
-    _gacha: function () { return { cfg: GACHA, roll: rollGacha, cnt: gachaCnt, batch: openBatchDraw, run: doBatchDraw, pool: top100Pool, roll3: roll3Distinct, ps: pickSpread, own: ownedCnt, seen: gdSeen, win: GD_WIN }; },
+    _gacha: function () { return { cfg: GRATE, def: GRATE_DEF, apply: applyGachaCfg, roll: rollGacha, cnt: gachaCnt, batch: openBatchDraw, run: doBatchDraw, pool: top100Pool, roll3: roll3Distinct, ps: pickSpread, own: ownedCnt, seen: gdSeen, win: GD_WIN, bag: gachaBagBuild, take: gachaTake, left: gachaBagLeft, quota: gachaQuotaTxt, last: function () { return _lastPick; }, mode: function () { return GMODE; } }; },
     _sp: function () { return { alloc: allocSp, hash: pwHash, grant: spGrant,
       auditOf: function (u) { ensureBat(u); return { sp: u.bat.sp || 0, spG: u.bat.spG || 0, spU: u.bat.spU || 0, consistent: (u.bat.sp || 0) === Math.max(0, (u.bat.spG || 0) - (u.bat.spU || 0)) }; } }; },
     _claimCards: claimCardGrants,
@@ -13824,7 +13974,19 @@ var BOTS = [
     }
     paintNav(); paintAcct();
     var u = me();
-    if (u) { healAccount(u); var r = tick(u); if (!r.already) { checkBadges(u); save(); paintAcct(); setTimeout(function () { showTick(r); }, 700); } }
+    if (u) {
+      healAccount(u);
+      var afterSync = function () {
+        var r = tick(u);
+        if (!r.already) { checkBadges(u); save(); paintAcct(); setTimeout(function () { showTick(r); }, 700); }
+        else { paintAcct(); try { rerender(); } catch (e) {} }
+      };
+      /* V44：先与云端账号档案对齐（换电脑登录即恢复同一份进度），再结算签到与日常 */
+      if (u.email && SGCloud && SGCloud.statePull) {
+        u._ready = false;
+        SGCloud.statePull().then(function () { afterSync(); }, function () { afterSync(); });
+      } else { afterSync(); }
+    }
     if (window.__SGAtlas && window.__SGAtlas.render) window.__SGAtlas.render();
   })();
 
