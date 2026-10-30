@@ -9691,6 +9691,24 @@ var BOTS = [
       return u;
     }
     function saveQuiet() { try { localStorage.setItem(DBKEY, JSON.stringify(DB)); } catch (e) {} }
+    /* 云端快照落地：本机有未推送改动则保留本机并回推，否则以云端为准整档覆盖（并保留本机只增进度） */
+    function applyCloudSnapshot(u, d, fresh) {
+      if (!u || !d) return false;
+      if (u._dirty) {
+        mergeMono(d, u);
+        pushSoon(200); paintSync();
+        return true;
+      }
+      if (fresh && u._lastApply && fresh === u._lastApply) { paintSync(); return false; }  /* 云端未变化，省一次重绘 */
+      pulling = true;
+      applyRemoteState(u, d);
+      u._lastApply = fresh;
+      u._dirty = false;
+      saveQuiet();
+      pulling = false;
+      try { paintAcct(); paintSync(); rerender(); } catch (e) {}
+      return true;
+    }
     function statePull(opts) {
       opts = opts || {};
       var u = me();
@@ -9711,21 +9729,7 @@ var BOTS = [
           var fresh = 0;
           try { fresh = r.updated_at ? Date.parse(r.updated_at) : 0; } catch (e) {}
           u._cloudAt = fresh;
-          if (u._dirty) {
-            /* 本机有未推送改动：保本机，并把云端更高的只增进度并进来后立即回推 */
-            mergeMono(d, u);
-            pushSoon(200); paintSync();
-            return true;
-          }
-          if (fresh && u._lastApply && fresh === u._lastApply) { paintSync(); return false; }  /* 云端未变化，省一次重绘 */
-          pulling = true;
-          applyRemoteState(u, d);
-          u._lastApply = fresh;
-          u._dirty = false;
-          saveQuiet();
-          pulling = false;
-          try { paintAcct(); paintSync(); rerender(); } catch (e) {}
-          return true;
+          return applyCloudSnapshot(u, d, fresh);
         }, function () { u._ready = true; paintSync(); return false; });
       u._pulling = p;
       p.then(function () { if (u._pulling === p) u._pulling = null; }, function () { if (u._pulling === p) u._pulling = null; });
@@ -9852,7 +9856,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
-             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, syncNow: syncNow, stateGet: stateGet, statePut: statePut, snap: stateSnap, site: function () { return SITE_ID; },
+             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, syncNow: syncNow, applyCloud: applyCloudSnapshot, stateGet: stateGet, statePut: statePut, snap: stateSnap, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
   try { window.SGCloud = SGCloud; } catch (e) {}
