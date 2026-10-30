@@ -8367,6 +8367,13 @@ var BOTS = [
       '<div class="sg-card-tags">' +
       (spg ? '<span class="sg-tag t-sp" style="--spc:' + spg.color + '">' + spg.icon + " " + spLabel(spg.k) + "</span>" : "") +
       ((skN || skA) ? '<span class="sg-tag t-sk">' + (skFull ? "🐉" : "✨") + skN + "/3" + (skA ? " ☉" + skA : "") + "</span>" : "") +
+      (function () { /* V36 卡片墙展示熟悉兵种：熟悉度最高的兵种 + 当前兵种 */
+        var tops = armProfTop(c, 3); if (!tops.length) return "";
+        var cur = c.arm ? tops.filter(function (x) { return x.k === c.arm; })[0] : null;
+        var best = tops[0];
+        var show = cur || best;
+        return '<span class="sg-tag" style="border-color:#5b8dd066;color:#9ec9ff" title="' + esc(gt("armProfT") + " " + show.v + " · " + (show.apt || "")) + '">⚔ ' + armName(show.k) + " " + show.v + (cur ? "" : " ◆") + "</span>";
+      })() +
       "</div>" +
       '<div class="sg-card-stats">' +
       '<div><b>' + g.st + "</b><span>统</span></div><div><b>" + g.wu + "</b><span>武</span></div>" +
@@ -9791,6 +9798,7 @@ var BOTS = [
       wmCityT: "City", wmWorldT: "World Map", wmHint: "Click an outlaw camp to scout it · click a pass to view or campaign · click a neighboring city to travel", passT: "Pass", passGuard: "Garrison strength", passGo: "Go to Campaign", passNear: "Guards the road out of {c}",
       recAllT: "Replenish All", recAllOk: "Formation fully replenished", recNone: "Troops already at full strength", sqRecT: "Replenish", sqAbsorbT: "Devour & Upgrade", sqNoDup: "No same-name same-grade card available to devour", sqAbsOk: "Devoured {n} card(s), {s} skill(s) unlocked",
       calJu: "Round {n}", calEnd: "The era is settled — the calendar has run its course (Dec 244 AD)", casLine: "[{n}] troops after battle: {a}, wounded: {b}", expLine: "[{n}] gains {e} EXP",
+      teamNmT: "Rename formation", teamNmOk: "Formation renamed", teamPow: "Power {n} (troops + troops × command/100)", armProfT: "Arm proficiency", profGain: "Proficiency up: {n}", armNow: "Current arm", skCostT: "Skill drain: {n} own troops",
       replayT: "Replay", statT: "Statistics", placeT: "Battlefield", placeBody: "At {c}, {d}, against {f}", dmgStat: "{n}: {d} damage in {c} strike(s)", killStat: "routed {n}", repWin: "胜", repLose: "败"
     },
     zh: {
@@ -9818,6 +9826,7 @@ var BOTS = [
       wmCityT: "城内", wmWorldT: "城外地图", wmHint: "点击贼寇营地查看情报 · 点击关卡查看与出征 · 点击邻近城池前往", passT: "关卡", passGuard: "守军兵力", passGo: "前往出征", passNear: "扼守 {c} 出境要道",
       recAllT: "一键补兵", recAllOk: "编队补兵完成", recNone: "兵力已满", sqRecT: "补满兵力", sqAbsorbT: "吞噬升级", sqNoDup: "没有同名同阶的卡牌可吞噬", sqAbsOk: "已吞噬 {n} 张，解锁技能 {s} 个",
       calJu: "第 {n} 局", calEnd: "大势已定——日历已走完 244年12月", casLine: "【{n}】战斗后兵力为 {a}，产生伤兵 {b}", expLine: "【{n}】获得 {e} 经验",
+      teamNmT: "队伍命名", teamNmOk: "队伍已命名", teamPow: "战力 {n}（士兵数 + 士兵数×统率/100）", armProfT: "兵种熟悉度", profGain: "熟悉度提升：{n}", armNow: "当前兵种", skCostT: "技能发动兵耗 {n}",
       replayT: "战况回放", statT: "统计", placeT: "战斗地点", placeBody: "{d} · 于 {c} 迎战 {f}", dmgStat: "{n}：造成 {d} 伤害（{c} 次出手）", killStat: "击溃 {n}", repWin: "胜", repLose: "败"
     },
     ja: {
@@ -9845,6 +9854,7 @@ var BOTS = [
       wmCityT: "城内", wmWorldT: "城外マップ", wmHint: "賊の砦をクリックで偵察・関所で出陣・隣接都市へ移動", passT: "関所", passGuard: "守備兵力", passGo: "出陣へ", passNear: "{c} の出口を抑える要衝",
       recAllT: "一括補兵", recAllOk: "部隊の補兵が完了", recNone: "兵力は満員", sqRecT: "補兵", sqAbsorbT: "吸収強化", sqNoDup: "吸収できる同名同階のカードがありません", sqAbsOk: "{n} 枚を吸収、技能 {s} 個解放",
       calJu: "第 {n} 局", calEnd: "大勢は定まった——暦は 244年12月 を歩み終えた", casLine: "【{n}】戦闘後の兵力 {a}、負傷兵 {b}", expLine: "【{n}】が {e} 経験を獲得",
+      teamNmT: "部隊名変更", teamNmOk: "部隊名を変更しました", teamPow: "戦力 {n}（兵数＋兵数×統率/100）", armProfT: "兵種熟練度", profGain: "熟練度上昇：{n}", armNow: "現在の兵種", skCostT: "技能発動の兵耗 {n}",
       replayT: "戦況再生", statT: "統計", placeT: "戦場", placeBody: "{d} · {c} にて {f} と交戦", dmgStat: "{n}：{d} ダメージ（{c} 回）", killStat: "{n} を撃破", repWin: "勝", repLose: "敗"
     }
   };
@@ -9899,7 +9909,7 @@ var BOTS = [
   function defaultTeams(prev) {
     var arr = [];
     for (var i = 0; i < 5; i++) {
-      var t = { n: i + 1, slots: { front: null, center: null, left: null, right: null, cav: null } };
+      var t = { n: i + 1, nm: (prev && prev[i] && prev[i].nm) || "", slots: { front: null, center: null, left: null, right: null, cav: null } };
       if (prev && prev[i] && prev[i].slots) TEAM_POS.forEach(function (p) { t.slots[p.k] = prev[i].slots[p.k] || null; });
       arr.push(t);
     }
@@ -10124,6 +10134,22 @@ var BOTS = [
   function armName(k) { var a = GS_ARMS.filter(function (x) { return x.k === k; })[0]; return a ? a.n : (k || ""); }
   function armApt(g, k) { if (!g || !g.ad) return "C"; if (g.ad[k]) return g.ad[k]; if (k === "dao") return g.ad.ji || g.ad.qiang || "C"; return "C"; }
   function armBonus(g, k) { if (!k || !g.ad) return 0; var v = armApt(g, k); return v === "S" ? 0.06 : v === "A" ? 0.03 : v === "B" ? 0.01 : 0; }
+  /* V36 兵种熟悉度：每武将每兵种 100-999，初始按武将+兵种哈希生成（惰性初始化）；
+     作战选该兵种出战后按战果累积：胜 +50 / 险胜 +20 / 负 +5，上限 999；熟悉度为伤害小额加成（+0~3%） */
+  function armProf(c, k) {
+    if (!c || !k) return 100;
+    if (!c.prof) c.prof = {};
+    if (c.prof[k] == null) { var g = gById(c.gid) || {}; c.prof[k] = 100 + (hashNum((g.id || "") + "|" + k) % 900); }
+    return c.prof[k];
+  }
+  function armProfGain(res) { return !res.win ? 5 : (res.stars >= 2 ? 50 : 20); }
+  function armProfTop(c, n) {
+    var g = c ? gById(c.gid) : null;
+    if (!g || !g.ad) return [];
+    var ks = GS_ARMS.filter(function (a) { return g.ad[a.k] || a.k === "dao"; }).map(function (a) { return a.k; });
+    return ks.map(function (k) { return { k: k, v: armProf(c, k), apt: armApt(g, k) }; }).sort(function (x, y) { return y.v - x.v; }).slice(0, n || 2);
+  }
+  function armProfBonus(c, k) { return k ? ((armProf(c, k) - 100) / 899) * 0.03 : 0; }
   function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
   function eqOf(c) {
     var out = { atk: 0, def: 0, hp: 0, spd: 0 }, u = me(), list = (u && u.eqs) || [];
@@ -10197,7 +10223,7 @@ var BOTS = [
   function unitOf(c, side) {
     var g = gById(c.gid); if (!g) return null;
     var lv = cardLv(c), ti = tierOf(g), tr = TIERS[ti], spa = c.spa || {}, eq = eqOf(c), mt = mountOf(c), stars = c.stars || 0;
-    var ab = armBonus(g, c.arm), skb = skBonus(c);
+    var ab = armBonus(g, c.arm) + armProfBonus(c, c.arm), skb = skBonus(c); /* V36：兵种适性 + 熟悉度加成 */
     var atk = Math.round((g.wu + (spa.wu || 0) + (g["in"] || 0) * 0.3 + Math.floor((lv - 1) * 0.8)) * (1 + 0.08 * stars) * (1 + ab) * (1 + skb.atk)) + eq.atk;
     var def = Math.round((g.st + (spa.st || 0) + (g.ch || 0) * 0.1 + Math.floor((lv - 1) * 0.6)) * (1 + 0.08 * stars) * (1 + skb.def)) + eq.def;
     var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd;
@@ -10205,7 +10231,20 @@ var BOTS = [
     var spg = spGroupOf(g), spT = spg ? spTrig(spg.k, g, skb.n) : 0; /* V29 特殊武将 */
     if (side === "A") { try { var cu = me(); if (cu && cu.bat && cu.bat.city && cu.bat.city.bld) { cap = Math.round(cap * (1 + 0.02 * (cu.bat.city.bld.camp || 0))); if (troop > cap) troop = cap; } } catch (e) {} }
     return { side: side, cid: c.id || "", gid: g.id, name: g.name, ti: ti, lv: lv, atk: atk, def: def, spd: spd, arm: c.arm || "",
+      st: g.st + (spa.st || 0), wu: g.wu + (spa.wu || 0), "in": g["in"] + (spa["in"] || 0), prof: c.arm ? armProf(c, c.arm) : 0,
       troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g), alive: true, skn: skb.n, sp: spg ? spg.k : null, spT: spT };
+  }
+  /* V36 队伍战力评估：总战力 = Σ(士兵数 + 士兵数 × 统率力/100) */
+  function teamPowerOf(u, ti) {
+    var t = (ensureCity(u).teams || [])[ti]; if (!t) return 0;
+    var p = 0;
+    TEAM_POS.forEach(function (pp) {
+      var id = t.slots[pp.k]; if (!id) return;
+      var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cd) return;
+      var un = unitOf(cd, "A"); if (!un) return;
+      p += un.troop + Math.round(un.troop * (un.st || 0) / 100);
+    });
+    return p;
   }
   function simulate(A, B, opt) {
     var log = [], round = 0;
@@ -10222,14 +10261,22 @@ var BOTS = [
         var foes = (u.side === "A" ? B : A).filter(function (v) { return v.alive; });
         if (!foes.length) break;
         var tgt = foes[Math.floor(Math.random() * foes.length)];
-        var skillHit = Math.random() * 100 < u.trig, mult = 1, tag = "", crit = false;
-        if (skillHit) { mult = 1.7 + 0.1 * (u.skn || 0); tag = u.sk.n; }
+        var skillHit = Math.random() * 100 < u.trig, mult = 1, tag = "", crit = false, skCost = 0;
+        if (skillHit) {
+          mult = 1.7 + 0.1 * (u.skn || 0); tag = u.sk.n;
+          /* V36：技能伤害按相关属性加成（武力系→武力 / 谋略系→智力）并随技能等级提升；发动消耗少量自身兵力 */
+          var relStat = u.sp === "mou" ? (u["in"] || 0) : (u.wu || 0);
+          mult *= 1 + relStat / 100 * 0.25 + 0.04 * (u.skn || 0);
+          skCost = Math.max(10, Math.round(u.troopMax * 0.02));
+          u.troop = Math.max(1, u.troop - skCost);
+        }
         var spHit = !!u.sp && Math.random() * 100 < (u.spT || 0); /* V29 特殊技能独立判定 */
         if (spHit && skillHit) mult *= 1.3; /* 与常规技能同回触发 → 常规技能伤害加成 */
         if (Math.random() < 0.08) { mult *= 1.5; crit = true; }
         var dmg = Math.max(10, Math.round((u.atk * 6 + u.troopMax * 0.12) * (0.85 + Math.random() * 0.3) * mult / (1 + tgt.def * 0.018)));
         tgt.troop -= dmg;
         var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: dmg, sk: tag, si: u.ix, ti: tgt.ix, rem: Math.max(0, tgt.troop) };
+        if (skCost) line.lc = skCost; /* V36：技能发动兵耗 */
         if (crit) line.cri = true; /* V35：暴击标记，供战斗动画使用 */
         if (skillHit) line.sd = gt("skAct", { n: u.name, s: u.sk.n }) + (u.skn ? " ✦" + u.skn : "");
         if (crit) line.sd = (line.sd ? line.sd + " " : "") + gt("skCri", { n: u.name });
@@ -10379,6 +10426,16 @@ var BOTS = [
     out.inc = monthInc;
     addRes(u, out.loot);
     squad.forEach(function (c) { gainExp(c, out.exp, out.ups); });
+    /* V36 兵种熟悉度：出战武将（有当前兵种者）按战果累积——胜 +50 / 险胜 +20 / 负 +5 */
+    var pGain = armProfGain(res);
+    out.profGain = [];
+    squad.forEach(function (cd) {
+      if (!cd.arm) return;
+      var g9 = gById(cd.gid); if (!g9) return;
+      var before = armProf(cd, cd.arm);
+      cd.prof[cd.arm] = Math.min(999, before + pGain);
+      if (cd.prof[cd.arm] > before) out.profGain.push(g9.name + "·" + armName(cd.arm) + " +" + (cd.prof[cd.arm] - before));
+    });
     if (out.pts) addPoints(u, out.pts, T("bTitle") + " · " + (foeName || ""));
     save();
     /* V35：战果（升级/缴获/兵力回写）立即推送云端，不等 2.5s 去抖——防止打完就关页面丢进度 */
@@ -11118,7 +11175,7 @@ var BOTS = [
       var why = rr.ok ? "" : (rr.lack > 0 ? gt("mobLackN", { n: rr.lack }) : gt("mobLackCenter"));
       return '<button class="sg-teamrow' + (on ? " on" : "") + (rr.ok ? "" : " dis") + '" data-bat="mobteam" data-i="' + idx + '" data-t="' + ti + '"' + (rr.ok ? "" : " disabled") + ">" +
         '<span class="no">' + (ti + 1) + "</span>" +
-        '<span class="tx"><b>' + gt("mobTeamRow", { n: ti + 1 }) + " · " + rr.n + "/5" + "</b>" +
+        '<span class="tx"><b>' + esc(t.nm || gt("mobTeamRow", { n: ti + 1 })) + " · " + rr.n + "/5" + ' <small style="color:#ffd76a">⚡' + fmt(teamPowerOf(u, ti)) + "</small></b>" +
         (on ? ' <small style="color:#8ed6a5">✓ ' + gt("mobTeamOn") + "</small>" : "") +
         (why ? ' <small style="color:#e07f7f">' + why + "</small>" : "") +
         '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">' + (mem || '<span class="sg-note" style="font-size:10px;margin:0">—</span>') + "</div></span></button>";
@@ -11209,22 +11266,43 @@ var BOTS = [
       var slots = TEAM_POS.map(function (p) {
         var cid = t.slots[p.k], card = cid ? (u.cards || []).filter(function (x) { return x.id === cid; })[0] : null;
         var g = card ? gById(card.gid) : null;
+        var un = card ? unitOf(card, "A") : null;
+        var capP = un ? un.troopMax : 0, curP = un ? un.troop : 0;
+        var pct = capP ? Math.max(3, Math.round(curP / capP * 100)) : 0;
+        var barC = !capP ? "#666" : pct >= 60 ? "#7fce9f" : pct >= 30 ? "#e8c988" : "#e07f7f";
+        var armTxt = card ? (card.arm ? armName(card.arm) + " " + armProf(card, card.arm) : (armProfTop(card, 1)[0] || {}).k ? "适" + armName(armProfTop(card, 1)[0].k) + " " + armProfTop(card, 1)[0].v : "") : "";
         return '<button class="sg-slot' + (card ? " on" : "") + '" data-bat="slot" data-t="' + ti + '" data-p="' + p.k + '" title="' + esc(posDesc(p)) + '">' +
-          "<b>" + posName(p) + "</b>" + (card ? "<span>" + esc(g ? g.name : "?") + "</span><i>Lv." + cardLv(card) + "</i>" : '<span style="opacity:.45">' + T("slotEmpty") + "</span>") + "</button>";
+          (card ? '<span class="sg-slot-av">' + styledArtSVG(g, null, true) + "</span>" : '<span class="sg-slot-av sg-slot-av-e">＋</span>') +
+          "<b>" + posName(p) + "</b>" + (card ? "<span>" + esc(g ? g.name : "?") + " <i>Lv." + cardLv(card) + "</i></span>" : '<span style="opacity:.45">' + T("slotEmpty") + "</span>") +
+          (card ? '<span class="sg-slot-arm">' + esc(armTxt) + "</span>" : "") +
+          (card ? '<span class="sg-slot-bar"><i style="width:' + pct + "%;background:" + barC + '"></i></span><span class="sg-slot-cap">' + troopTxt(curP) + "/" + troopTxt(capP) + "</span>" : "") +
+          "</button>";
       }).join("");
-      return '<div class="sg-team"><div class="sg-team-hd"><b>' + T("teamT") + " " + (ti + 1) + "</b><small>" + teamSize(u, ti) + "/5</small>" +
+      var pw = teamPowerOf(u, ti);
+      var tn = t.nm ? esc(t.nm) : (T("teamT") + " " + (ti + 1));
+      return '<div class="sg-team"><div class="sg-team-hd"><b class="sg-team-nm" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚔ ' + tn + "</b>" +
+        '<small class="sg-team-pw" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚡' + fmt(pw) + "</small><small>" + teamSize(u, ti) + "/5</small>" +
+        '<button class="sgbtn sm ghost" data-bat="team-name" data-t="' + ti + '" title="' + esc(gt("teamNmT")) + '">✏</button>' +
         '<button class="sgbtn sm ghost" data-bat="rec-all" data-t="' + ti + '" title="' + esc(gt("recAllT")) + '"' + (teamSize(u, ti) ? "" : " disabled") + ">🩹 " + gt("recAllT") + "</button></div><div class=\"sg-slots\">" + slots + "</div></div>";
     }).join("");
     return '<div class="sg-panel-hd"><h3><i>·</i>⚔ ' + T("teamT") + "</h3><span class=\"sp\"></span>" +
       '<small style="color:var(--ink-3)">' + T("rosterT") + " " + roster.length + "/40</small>" +
       '<button class="sgbtn sm ghost" data-bat="roster" style="margin-left:8px">' + T("addRoster") + "</button></div>" +
       (roster.length ? rows : '<div class="sg-note" style="padding:10px 0">' + T("noRoster") + "</div>") +
-      '<div class="sg-note" style="margin-top:6px;font-size:11px">' + posName(TEAM_POS[4]) + "：" + posDesc(TEAM_POS[4]) + "　·　" + posName(TEAM_POS[0]) + "：" + posDesc(TEAM_POS[0]) + "</div>" +
+      '<div class="sg-note" style="margin-top:6px;font-size:11px">' + posName(TEAM_POS[4]) + "：" + posDesc(TEAM_POS[4]) + "　·　" + posName(TEAM_POS[0]) + "：" + posDesc(TEAM_POS[0]) +
+      "　·　" + gt("armProfT") + "：胜 +50 / 险胜 +20 / 负 +5（上限 999）</div>" +
       '<style>.sg-team{border:1px solid var(--line-2,#333a46);border-radius:10px;padding:7px 9px;margin-bottom:7px;background:rgba(255,255,255,.02)}' +
       ".sg-team-hd{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#e8c988;margin-bottom:5px}.sg-team-hd small{color:var(--ink-3);margin-left:auto}" +
+      ".sg-team-nm{cursor:help}.sg-team-pw{color:#ffd76a!important;font-weight:700}" +
       ".sg-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}" +
-      ".sg-slot{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px dashed var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.14);color:var(--ink-3,#8b93a3);padding:5px 2px;cursor:pointer;font-size:10px;transition:.15s;min-height:44px;justify-content:center}" +
+      ".sg-slot{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px dashed var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.14);color:var(--ink-3,#8b93a3);padding:5px 3px 6px;cursor:pointer;font-size:10px;transition:.15s;min-height:96px;justify-content:flex-start}" +
       ".sg-slot b{font-size:9.5px;color:#c9a45c;font-weight:600;letter-spacing:.04em}.sg-slot span{font-size:11px;color:var(--ink-1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sg-slot i{font-style:normal;font-size:9px;color:#e8c988}" +
+      ".sg-slot-av{width:40px;height:40px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;flex:none;border:1px solid rgba(201,164,92,.35)}" +
+      ".sg-slot-av img{width:100%;height:100%;object-fit:cover;object-position:top}.sg-slot-av svg{width:100%;height:100%}.sg-slot-av-e{font-size:18px;color:#5a6172}" +
+      ".sg-slot-arm{font-size:9px;color:#9ec9ff!important}" +
+      ".sg-slot-bar{width:100%;height:5px;border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden;display:block}" +
+      ".sg-slot-bar i{display:block;height:100%;border-radius:3px;transition:width .3s}" +
+      ".sg-slot-cap{font-size:8.5px!important;color:var(--ink-3)!important}" +
       ".sg-slot.on{border-style:solid;border-color:#c9a45c;background:rgba(201,164,92,.12)}" +
       ".sg-slot:hover{border-color:var(--gold);transform:translateY(-1px)}" +
       "@media(max-width:640px){.sg-slots{grid-template-columns:repeat(3,1fr)}}</style>";
@@ -11342,7 +11420,7 @@ var BOTS = [
     var un = unitOf(card, "A");
     var g = gById(card.gid) || {};
     var spg = spGroupOf(g);
-    var stats = un ? '<div class="sg-note">⚔ ' + T("lbAttr") + "：攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + "　·　" + T("lbTroop") + " " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "</div>" : "";
+    var stats = un ? '<div class="sg-note">⚔ ' + T("lbAttr") + "：攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + "　·　" + T("lbTroop") + " " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "　·　⚡ " + gt("teamPow", { n: fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) }).replace(/^战力 /, "").replace(/^Power /, "").replace(/^戦力 /, "") + "（统 " + (un.st || 0) + "）</div>" : "";
     /* V35：编队内快捷操作——补兵 / 吞噬升级（无需回卡牌墙） */
     var capQ = troopOfCard(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
     var rfQ = (1 - offEff(u, "dw")) * (ensureCity(u).pol === "war" ? 0.85 : 1);
@@ -11362,10 +11440,19 @@ var BOTS = [
         }).join("") + (dupsQ.length > 4 ? '<div class="sg-note">… +' + (dupsQ.length - 4) + "</div>" : "")
       : '<div class="sg-note" style="margin-top:10px">' + gt("sqNoDup") + "</div>";
     var spRow = spg ? '<div class="sg-note" style="color:' + spg.color + '">' + spg.icon + " " + spLabel(spg.k) + "【" + spSkillName(spg.k) + "】 · " + gt("spDesc", { p: spTrig(spg.k, g, skUnlocked(card)) }) + "</div>" : "";
+    /* V36 兵种选择：编队武将卡处直接切换当前兵种，展示熟悉度与适性 */
+    var armRow = '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>⚔ ' + esc(gt("armNow")) + " <small style='color:var(--ink-3)'>（" + esc(gt("armProfT")) + "）</small></h3></div>" +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px">' +
+      GS_ARMS.map(function (a) {
+        var pf = armProf(card, a.k), apt = armApt(g, a.k);
+        var on = card.arm === a.k;
+        return '<button class="sgbtn sm ' + (on ? "primary" : "ghost") + '" data-bat="arm-set" data-k="' + a.k + '" data-t="' + ti + '" data-p="' + pos + '" title="' + esc(gt("gsArmNote")) + '">' +
+          armName(a.k) + " <b style='color:" + (on ? "#10131a" : "#ffd76a") + "'>" + pf + "</b> <small style='color:" + (on ? "#10131a" : "#9ec9ff") + "'>" + apt + "</small></button>";
+      }).join("") + "</div>";
     modal("<h3>⚔ " + T("teamT") + " " + (ti + 1) + " · " + posName(p) + "</h3>" +
       '<div style="display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start" class="bigcard-grid">' +
       '<div style="width:300px;max-width:100%;margin:0 auto">' + cardHTML(card, false) + "</div>" +
-      "<div>" + stats + spRow +
+      "<div>" + stats + spRow + armRow +
       '<div class="sg-note">' + posDesc(p) + "</div>" +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' + recBtn +
       '<button class="sgbtn sm ghost" data-bat="pk-open" data-mode="slot" data-t="' + ti + '" data-p="' + pos + '">⇄ ' + T("pkSwap") + "</button>" +
@@ -11734,6 +11821,7 @@ var BOTS = [
         (l.sd ? '<div class="sg-note" style="margin:2px 0 2px 34px;color:#e8c988;font-style:italic">' + esc(l.sd) + "</div>" : "") +
         "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + "</b>" +
         (l.ex ? '<b style="color:#ffd76a">⚡-' + fmt(l.ex) + "</b>" : "") +
+        (l.lc ? '<b style="color:#c77fd0" title="' + esc(gt("skCostT", { n: fmt(l.lc) })) + '">▼' + fmt(l.lc) + "</b>" : "") +
         '<small style="color:var(--ink-3)">（' + gt("remT", { n: troopTxt(l.rem) }) + "）</small>" +
         (l.dead ? '<span class="dead">✝ ' + esc(l.dead) + "</span>" : "") + "</div>";
     }).join("");
@@ -11762,6 +11850,7 @@ var BOTS = [
         (out.eq ? T("dropEquip", { n: eqName(out.eq) }) + "　·　" : "") +
         (out.mt ? T("dropMount", { n: MT_NAMES[out.mt.ti] }) + "　·　" : "") +
         (out.eqWornOut && out.eqWornOut.length ? '<b style="color:#e8a05c">⚠ ' + T("eqWornOut", { n: out.eqWornOut.join("、") }) + "</b>　·　" : "") +
+        (out.profGain && out.profGain.length ? '<span style="color:#9ec9ff">🎯 ' + gt("profGain", { n: out.profGain.join("、") }) + "</span>　·　" : "") +
         (out.ups || []).join("　·　") + "</div>";
     }
     var resChar = '<div style="position:relative;text-align:center;padding:2px 0 6px">' +
@@ -12456,6 +12545,34 @@ var BOTS = [
         save(); closeModal();
         toast(gt("recAllOk") + "（" + adds.length + " 将 · 🌾-" + fmt(tR) + " · 🪙-" + fmt(tCn) + "）", "ok", 5200);
         refreshBattle(); return;
+      }
+      case "team-name": {
+        /* V36 队伍命名 */
+        var tnT = +t.getAttribute("data-t"), tc2 = (ensureCity(u).teams || [])[tnT]; if (!tc2) return;
+        modal("<h3>✏ " + gt("teamNmT") + "</h3>" +
+          '<div style="display:flex;gap:8px;align-items:center">' +
+          '<input id="sgTeamNm" maxlength="12" value="' + esc(tc2.nm || "") + '" style="flex:1;padding:7px 10px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit">' +
+          '<button class="sgbtn primary" data-bat="team-name-go" data-t="' + tnT + '">' + T("bulkOk") + "</button></div>");
+        return;
+      }
+      case "team-name-go": {
+        var tgT = (ensureCity(u).teams || [])[+t.getAttribute("data-t")]; if (!tgT) return;
+        var inp2 = document.getElementById("sgTeamNm");
+        tgT.nm = (inp2 ? inp2.value : "").trim().slice(0, 12);
+        save(); closeModal(); refreshBattle(); toast(gt("teamNmOk"), "ok");
+        return;
+      }
+      case "arm-set": {
+        /* V36 编队武将卡处切换当前兵种 */
+        var asK = t.getAttribute("data-k"), asC = (u.cards || []).filter(function (x) { return x.id === (t.getAttribute("data-id") || ""); })[0];
+        var asT = +t.getAttribute("data-t"), asP = t.getAttribute("data-p");
+        if (!asC) { var atT = (ensureCity(u).teams || [])[asT]; asC = atT ? (u.cards || []).filter(function (x) { return x.id === atT.slots[asP]; })[0] : null; }
+        if (!asC || !asK) return;
+        asC.arm = asK;
+        save(); toast(T("gsArmOk", { n: armName(asK) }) + " · " + gt("armProfT") + " " + armProf(asC, asK), "ok");
+        refreshBattle();
+        if (asT != null && asP) slotBigCard(u, asC, asT, asP);
+        return;
       }
       case "pass-open": passOpen(u, t.getAttribute("data-n") || ""); return;
       case "pass-go": BATUI.tab = "stage"; BATUI.homeMap = "city"; closeModal(); refreshBattle(); toast(gt("passGo"), "ok"); return;
