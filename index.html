@@ -7474,6 +7474,39 @@ html[data-lang="en"]{letter-spacing:.01em}
     for (var i = st; i < h.length; i++) if (h[i] === ti) n++;
     return n;
   }
+  /* ---------------- V40 抽卡武将池分布 ----------------
+     ① S / A / B 级：从「综合前 100 名」（五维均值排序，与卡牌品级同源）中随机产生；
+     ② C 级及以下：该品级全量随机；
+     ③ 防扎堆：任意近 10 抽内最多允许 1 个重复武将（优先抽近 10 抽未出过的武将）；
+     ④ V39 区间配额与硬/软保底机制保持不变 */
+  var _top100Cache = null;
+  function top100Pool() {
+    var all = GENS().filter(function (g) { return g.era !== "古代"; });
+    if (_top100Cache && _top100Cache.n === all.length) return _top100Cache.list;
+    var scored = all.map(function (g) {
+      return { g: g, s: (g.wu || 0) + (g.st || 0) + (g.in || 0) + (g.po || 0) + (g.ch || 0) };
+    });
+    scored.sort(function (a, b) { return b.s - a.s; });
+    var list = scored.slice(0, 100).map(function (x) { return x.g; });
+    _top100Cache = { n: all.length, list: list };
+    return list;
+  }
+  /* 近 10 抽防重复：优先未出过的；若池内全出过且窗口内尚无重复对，允许新增 1 对 */
+  function pickSpread(pool, u) {
+    if (!pool.length) return null;
+    if (pool.length === 1) return pool[0];
+    var win = (u.gd = u.gd || []).slice(-10);
+    var cnt = {}, dups = 0, i;
+    for (i = 0; i < win.length; i++) cnt[win[i]] = (cnt[win[i]] || 0) + 1;
+    for (var k in cnt) if (cnt[k] > 1) dups++;
+    var fresh = pool.filter(function (g) { return !cnt[g.id]; });
+    if (fresh.length) return fresh[Math.floor(Math.random() * fresh.length)];
+    if (!dups) {
+      var once = pool.filter(function (g) { return cnt[g.id] === 1; });
+      if (once.length) return once[Math.floor(Math.random() * once.length)];
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
   function rollGacha(u) {
     if (!u) return rollGeneral();
     var p = (u.gp = u.gp || { s: 0, a: 0, b: 0, c: 0 }), i;
@@ -7496,13 +7529,22 @@ html[data-lang="en"]{letter-spacing:.01em}
       }
     }
     if (pick < 0) { var rr = Math.random(); pick = rr < 0.35 ? 4 : rr < 0.70 ? 5 : 6; }
-    var pool = GENS().filter(function (g) { return g.era !== "古代" && tierOf(g) === pick; });
+    var pool;
+    if (pick <= 2) {
+      /* V40：S/A/B 从综合前 100 全体中随机（不按品级再筛，避免高品级池过小反而扎堆） */
+      pool = top100Pool().slice();
+    } else {
+      /* V40：C 级及以下按品级全量随机 */
+      pool = GENS().filter(function (g) { return g.era !== "古代" && tierOf(g) === pick; });
+    }
     if (!pool.length) pool = GENS().filter(function (g) { return g.era !== "古代"; });
     if (!pool.length) return null;
     if (pick <= 3) p[GACHA[pick].k] = 0;
     var h = gachaHist(u); h.push(pick);
     while (h.length > 1000) h.shift();
-    return pool[Math.floor(Math.random() * pool.length)];
+    var g = pickSpread(pool, u);
+    if (g) { u.gd.push(g.id); while (u.gd.length > 10) u.gd.shift(); }
+    return g;
   }
   /* 引导送卡：保证武力可战（wu≥45），找不到就放宽 */
   function rollStarter() {
@@ -9458,7 +9500,7 @@ var BOTS = [
         loginDays: (u.loginDays || []).slice(-60), notifs: (u.notifs || []).slice(0, 50),
         d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0,
         /* V39：账号密码哈希 / 邮箱验证标记 / 抽卡保底计数随档同步（后台可改密，跨设备一致） */
-        pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (u.gh || []).slice(-1000),
+        pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (u.gh || []).slice(-1000), gd: (u.gd || []).slice(-10),
         bat: u.bat || null, shards: u.shards || {}, eqs: u.eqs || [], mts: u.mts || [], res: u.res || null };
     }
     function pushSoon(delay) {
