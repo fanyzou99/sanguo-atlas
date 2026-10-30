@@ -9254,6 +9254,14 @@ var BOTS = [
       clearTimeout(pushT);
       pushT = setTimeout(pushNow, delay == null ? 2500 : delay);
     }
+    /* V38：关页/切后台前尽力冲刷未推送状态——升级、战果不因立即关闭而丢失 */
+    try {
+      var _flushOnce = false;
+      window.addEventListener("beforeunload", function () { if (!_flushOnce) { _flushOnce = true; try { pushNow(); } catch (e) {} } });
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden" && (me() || {}) ._sv > ((me() || {})._svp || 0)) { try { pushNow(); } catch (e) {} }
+      });
+    } catch (e) {}
     function pushNow() {
       var u = me();
       if (!u || !u.email) return;
@@ -9284,7 +9292,29 @@ var BOTS = [
             if ((u._sv || 0) > (u._svp || 0)) { pushSoon(300); return true; }
             if (u._sync && fresh && fresh <= u._sync - 1500) { pushSoon(800); return true; }   /* 本地较新：不覆盖，并回推云端 */
             pulling = true;
+            /* V38：云端档应用前快照本地——建筑等级/关卡进度/星级等单调字段取两侧较大值，防止云端旧档把升级打回原状 */
+            var _snapBat = u.bat ? JSON.parse(JSON.stringify({ bld: (u.bat.city || {}).bld, cities: u.bat.cities, stage: u.bat.stage, hist: u.bat.hist, sp: u.bat.sp })) : null;
             for (var k in d) { if (d.hasOwnProperty(k)) u[k] = d[k]; }
+            try {
+              if (_snapBat && u.bat) {
+                var rb = u.bat;
+                if (_snapBat.stage > (rb.stage || 0)) rb.stage = _snapBat.stage;
+                if ((_snapBat.sp || 0) > (rb.sp || 0)) rb.sp = _snapBat.sp;
+                if (_snapBat.hist) { var hh = rb.hist = rb.hist || {}; Object.keys(_snapBat.hist).forEach(function (sk2) { if ((_snapBat.hist[sk2] || 0) > (hh[sk2] || 0)) hh[sk2] = _snapBat.hist[sk2]; }); }
+                function _mergeBld(loc, rem) {
+                  if (!loc || !rem) return;
+                  if (loc.bld) { var bb = rem.bld = rem.bld || {}; Object.keys(loc.bld).forEach(function (bk2) { if ((loc.bld[bk2] || 0) > (bb[bk2] || 0)) bb[bk2] = loc.bld[bk2]; }); }
+                }
+                _mergeBld(_snapBat, rb);
+                if (_snapBat.cities) {
+                  rb.cities = rb.cities || {};
+                  Object.keys(_snapBat.cities).forEach(function (cn2) {
+                    if (!rb.cities[cn2]) rb.cities[cn2] = _snapBat.cities[cn2];
+                    else _mergeBld(_snapBat.cities[cn2], rb.cities[cn2]);
+                  });
+                }
+              }
+            } catch (e) {}
             save();
             pulling = false;
             paintAcct(); rerender();
@@ -9797,6 +9827,14 @@ var BOTS = [
       mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month", recruitT: "Recruit Hall", recruitDesc: "Recruit heroes here: each draw picks one of three generals; duplicate shards can be synthesized into cards.", recruitHint: "Heroes can be recruited", recruitGo: "Recruit Now", recruitQuota: "Recruit quotas", recruitQuotaHint: "earned via check-ins and points", recruitSynth: "Duplicate generals turn into shards — synthesize them in the card wall.", campCap: "Troop cap +{n}%", mobTeamT: "Deploy Formation", mobTeamRow: "Formation {n}", mobTeamOn: "selected", mobTeamSel: "Formation {n} deploys", mobCenterRule: "3+ generals incl. a Center; if the Center falls, the battle is lost", mobLackN: "need {n} more", mobLackCenter: "no Center", mobNoTeam: "No formation qualifies — at least 3 generals including a Center are required.", mobCenterDown: "Center routed — the whole army retreats",
       wmCityT: "City", wmWorldT: "World Map", wmHint: "Click an outlaw camp to scout it · click a pass to view or campaign · click a neighboring city to travel", passT: "Pass", passGuard: "Garrison strength", passGo: "Go to Campaign", passNear: "Guards the road out of {c}",
       recAllT: "Replenish All", recAllOk: "Formation fully replenished", recNone: "Troops already at full strength", sqRecT: "Replenish", sqAbsorbT: "Devour & Upgrade", sqNoDup: "No same-name same-grade card available to devour", sqAbsOk: "Devoured {n} card(s), {s} skill(s) unlocked",
+      autoT: "Auto Farm", autoTarget: "Target general level", autoStart: "Start", autoStop: "Stop", autoStopT: "Stop auto farming",
+      autoDone: "Auto farm finished — average level {n} reached target {m} in {r} battles", autoFail: "Auto farm halted — {r} consecutive defeats, train up and retry",
+      autoTroop: "Auto farm halted — cannot replenish troops (pool and resources exhausted)", autoMax: "Auto farm halted — battle cap reached",
+      autoBox: "Auto Farm · {m}", autoRun: "Battle {r}", autoAvg: "Avg Lv. {n} → target {m}", autoWins: "{w}W / {l}L · EXP +{e}",
+      autoInput: "Enter target level (current avg {n}) — the squad will fight, auto-replenish and keep grinding until reached",
+      defLogT: "Auto Defense Log", defLogNone: "No auto battles yet — assigned formations defend the city automatically",
+      autoDefT: "Auto Defense", autoDefOn: "Auto defense engaged: formations strike raiders outside the walls without orders",
+      defLine: "T{t} engaged {f}(Lv.{l}) — {w} · EXP +{e}", defRes: "{n} auto defense battle(s) this month",
       poolT: "Trained Troops", woundT: "Wounded", infT: "Infirmary", woundIn: "{n} wounded sent to the infirmary — back as trained troops in 1 month", woundHeal: "{n} wounded have recovered (trained troops +{n})", recFreeT: "from trained troops (free)", recNewT: "recruit {n} (🌾{a} · 🪙{b})", recLackT: "Not enough trained troops — recruit needs more resources", upNoteT: "Upkeep: trained troops 0.5 grain/mo each · wounded 1 of each resource/mo each (recover after 1 month)", sqRecallT: "Replenish Squad",
       calJu: "Round {n}", calEnd: "The era is settled — the calendar has run its course (Dec 244 AD)", casLine: "[{n}] troops after battle: {a}, wounded: {b}", expLine: "[{n}] gains {e} EXP",
       teamNmT: "Rename formation", teamNmOk: "Formation renamed", teamPow: "Power {n} (troops + troops × command/100)", armProfT: "Arm proficiency", profGain: "Proficiency up: {n}", armNow: "Current arm", skCostT: "Skill drain: {n} own troops",
@@ -9826,6 +9864,14 @@ var BOTS = [
       mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没", recruitT: "招募处", recruitDesc: "在此招募天下英杰：每次招募从三位武将中择一收入麾下，亦可用碎片合成武将。", recruitHint: "可招募武将", recruitGo: "前往招募", recruitQuota: "招募次数", recruitQuotaHint: "签到与积分兑换可获取", recruitSynth: "重复武将自动转为碎片，可在卡牌墙合成。", campCap: "带兵上限 +{n}%", mobTeamT: "出战编队", mobTeamRow: "编队 {n}", mobTeamOn: "已选", mobTeamSel: "编队 {n} 出战", mobCenterRule: "至少 3 将且须含中军；中军被击溃即判负", mobLackN: "缺 {n} 人", mobLackCenter: "缺中军", mobNoTeam: "没有可出战的编队：需至少 3 名武将且含中军。", mobCenterDown: "中军被击溃 · 全军败退",
       wmCityT: "城内", wmWorldT: "城外地图", wmHint: "点击贼寇营地查看情报 · 点击关卡查看与出征 · 点击邻近城池前往", passT: "关卡", passGuard: "守军兵力", passGo: "前往出征", passNear: "扼守 {c} 出境要道",
       recAllT: "一键补兵", recAllOk: "编队补兵完成", recNone: "兵力已满", sqRecT: "补满兵力", sqAbsorbT: "吞噬升级", sqNoDup: "没有同名同阶的卡牌可吞噬", sqAbsOk: "已吞噬 {n} 张，解锁技能 {s} 个",
+      autoT: "自动刷本", autoTarget: "目标武将等级", autoStart: "开始", autoStop: "停止", autoStopT: "停止自动刷本",
+      autoDone: "自动刷本完成——平均等级 {n} 已达目标 {m}，共 {r} 战", autoFail: "自动刷本中止——连续 {r} 战失败，请提升实力后再试",
+      autoTroop: "自动刷本中止——兵员无法补充（兵池与资源已耗尽）", autoMax: "自动刷本中止——已达单次战斗上限",
+      autoBox: "自动刷本 · {m}", autoRun: "第 {r} 战", autoAvg: "平均 Lv.{n} → 目标 {m}", autoWins: "胜 {w} / 负 {l} · 经验 +{e}",
+      autoInput: "输入目标等级（当前平均 {n}）——队伍将自动出战、自动补兵，直到达成目标",
+      defLogT: "自动御敌记录", defLogNone: "暂无自动作战——已编排的队伍会自动讨伐城外贼寇",
+      autoDefT: "自动御敌", autoDefOn: "自动御敌已开启：已编排队伍将自动讨伐城外来袭贼寇",
+      defLine: "T{t} 队讨伐 {f}(Lv.{l})——{w} · 经验 +{e}", defRes: "本月自动御敌 {n} 战",
       poolT: "正常兵", woundT: "伤兵", infT: "伤兵疗养院", woundIn: "大捷！{n} 名伤兵送入疗养院，1 个月后归队为正常兵", woundHeal: "{n} 名伤兵痊愈归队（正常兵 +{n}）", recFreeT: "正常兵直接补充（免费）", recNewT: "新募 {n}（🌾{a} · 🪙{b}）", recLackT: "正常兵不足，新募需更多资源", upNoteT: "兵耗：正常兵 0.5 粮/月·人 · 伤兵各资源 1/月·人（1 个月后痊愈归队）", sqRecallT: "出战补兵",
       calJu: "第 {n} 局", calEnd: "大势已定——日历已走完 244年12月", casLine: "【{n}】战斗后兵力为 {a}，产生伤兵 {b}", expLine: "【{n}】获得 {e} 经验",
       teamNmT: "队伍命名", teamNmOk: "队伍已命名", teamPow: "战力 {n}（士兵数 + 士兵数×统率/100）", armProfT: "兵种熟悉度", profGain: "熟悉度提升：{n}", armNow: "当前兵种", skCostT: "技能发动兵耗 {n}",
@@ -9855,6 +9901,14 @@ var BOTS = [
       mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも", recruitT: "招募所", recruitDesc: "ここで武将を招募：抽選ごとに三人の武将から一人を選び、欠片からの合成にも対応。", recruitHint: "武将を招募可", recruitGo: "招募へ", recruitQuota: "招募回数", recruitQuotaHint: "署名とポイント交換で獲得", recruitSynth: "重複武将は自動で欠片に変換、カードウォールで合成できます。", campCap: "率兵上限 +{n}%", mobTeamT: "出撃部隊", mobTeamRow: "部隊 {n}", mobTeamOn: "選択中", mobTeamSel: "部隊 {n} 出撃", mobCenterRule: "3将以上かつ中軍必須。中軍壊滅で敗北", mobLackN: "あと {n} 名", mobLackCenter: "中軍なし", mobNoTeam: "出撃可能な部隊がありません（3将以上・中軍必須）。", mobCenterDown: "中軍壊滅・全軍敗退",
       wmCityT: "城内", wmWorldT: "城外マップ", wmHint: "賊の砦をクリックで偵察・関所で出陣・隣接都市へ移動", passT: "関所", passGuard: "守備兵力", passGo: "出陣へ", passNear: "{c} の出口を抑える要衝",
       recAllT: "一括補兵", recAllOk: "部隊の補兵が完了", recNone: "兵力は満員", sqRecT: "補兵", sqAbsorbT: "吸収強化", sqNoDup: "吸収できる同名同階のカードがありません", sqAbsOk: "{n} 枚を吸収、技能 {s} 個解放",
+      autoT: "自動周回", autoTarget: "目標武将レベル", autoStart: "開始", autoStop: "停止", autoStopT: "自動周回を停止",
+      autoDone: "自動周回完了——平均レベル {n} が目標 {m} に到達（{r} 戦）", autoFail: "自動周回中断——{r} 連敗、育成してから再挑戦を",
+      autoTroop: "自動周回中断——兵員補充不可（兵池と資源が枯渇）", autoMax: "自動周回中断——戦闘回数上限に到達",
+      autoBox: "自動周回 · {m}", autoRun: "第 {r} 戦", autoAvg: "平均 Lv.{n} → 目標 {m}", autoWins: "{w}勝 / {l}敗 · 経験 +{e}",
+      autoInput: "目標レベルを入力（現在平均 {n}）——部隊は自動出撃・自動補兵で目標達成まで周回します",
+      defLogT: "自動防衛記録", defLogNone: "自動戦闘はまだありません——編成済み部隊が城外の賊を自動討伐します",
+      autoDefT: "自動防衛", autoDefOn: "自動防衛有効：編成済み部隊が命令なく城外の賊を討伐します",
+      defLine: "T{t} 部隊が {f}(Lv.{l}) を討伐——{w} · 経験 +{e}", defRes: "今月の自動防衛 {n} 戦",
       poolT: "常備兵", woundT: "負傷兵", infT: "負傷兵療養所", woundIn: "大勝！負傷兵 {n} を療養所へ送り、1ヶ月後に常備兵として復帰", woundHeal: "負傷兵 {n} が回復（常備兵 +{n}）", recFreeT: "常備兵から補充（無料）", recNewT: "新規募集 {n}（🌾{a} · 🪙{b}）", recLackT: "常備兵不足——新規募集には追加リソースが必要", upNoteT: "兵消費：常備兵 0.5 糧/月·人 · 負傷兵 各リソース 1/月·人（1ヶ月後に回復）", sqRecallT: "出陣補兵",
       calJu: "第 {n} 局", calEnd: "大勢は定まった——暦は 244年12月 を歩み終えた", casLine: "【{n}】戦闘後の兵力 {a}、負傷兵 {b}", expLine: "【{n}】が {e} 経験を獲得",
       teamNmT: "部隊名変更", teamNmOk: "部隊名を変更しました", teamPow: "戦力 {n}（兵数＋兵数×統率/100）", armProfT: "兵種熟練度", profGain: "熟練度上昇：{n}", armNow: "現在の兵種", skCostT: "技能発動の兵耗 {n}",
@@ -10658,6 +10712,135 @@ var BOTS = [
   function firstReadyTeam(u) {
     for (var i = 0; i < 5; i++) if (teamReady(u, i).ok) return i;
     return -1;
+  }
+  /* ---------- V38-1 城池自动御敌：已编排队伍自动讨伐城外贼寇，战果全部持久化 ---------- */
+  function autoDefendLog(u) { var b = ensureBat(u); if (!b.autolog) b.autolog = []; return b.autolog; }
+  /* V38：主页自动御敌记录（最近 6 条） */
+  function defLogHTML(u) {
+    var log = autoDefendLog(u);
+    if (!log.length) return '<div class="sg-panel" style="margin-top:12px"><div class="sg-panel-hd"><h3><i>·</i>🛡 ' + gt("defLogT") + "</h3></div>" +
+      '<div class="sg-note">' + gt("defLogNone") + "</div></div>";
+    var rows = log.slice(0, 6).map(function (e) {
+      var dt = new Date(e.t), p2 = function (x) { return (x < 10 ? "0" : "") + x; };
+      return '<div class="sg-rankline" style="cursor:default"><span class="i" style="background:' + (e.win ? "#3f6b46" : "#6b3f3f") + ';color:#f5e6c4">' + (e.win ? "胜" : "负") + "</span>" +
+        "<span><b>T" + (e.ti || "?") + "</b> vs " + esc(e.foe || "?") + " Lv." + (e.lv || 1) + (e.inCity ? " · 🏚" : "") +
+        "<br><small style='color:var(--ink-3)'>" + (dt.getMonth() + 1) + "-" + p2(dt.getDate()) + " " + p2(dt.getHours()) + ":" + p2(dt.getMinutes()) + " · " + e.rounds + " 回合 · 经验 +" + e.exp + "</small></span>" +
+        '<span class="sp"></span><small style="color:#ffd76a">' + "★".repeat(Math.min(3, e.stars || 0)) + "</small></div>";
+    }).join("");
+    return '<div class="sg-panel" style="margin-top:12px"><div class="sg-panel-hd"><h3><i>·</i>🛡 ' + gt("defLogT") + "</h3><span class=\"sp\"></span>" +
+      '<small style="color:var(--ink-3)">' + gt("autoDefT") + " ON · " + log.length + "</small></div>" + rows + "</div>";
+  }
+  function poolRefillSquad(u, squad) {
+    /* V38：自动作战前补兵——先兵池免费补满，不足部分新募（耗资源）；返回是否兵力可用（每卡 ≥40%） */
+    var c = ensureCity(u); c.pool = c.pool || 0; var okAll = true;
+    squad.forEach(function (cd) {
+      var g = gById(cd.gid); if (!g) return;
+      var cap = troopOfCard(cd, g), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
+      var add = cap - cur; if (add <= 0) return;
+      var fromPool = Math.min(add, c.pool || 0);
+      if (fromPool > 0) { c.pool -= fromPool; cur += fromPool; add -= fromPool; }
+      if (add > 0) {
+        var rf = (1 - offEff(u, "dw")) * (c.pol === "war" ? 0.85 : 1);
+        var needR = Math.ceil(add * 0.5 * rf), needC = Math.round(add * 2 * rf);
+        if ((u.res.rice || 0) >= needR && (u.res.coin || 0) >= needC) { u.res.rice -= needR; u.res.coin -= needC; cur = cap; }
+      }
+      cd.sold = cur;
+      if (cap && cur < cap * 0.4) okAll = false;
+    });
+    return okAll;
+  }
+  function autoDefend(u) {
+    ensureCity(u); ensureBat(u);
+    var mobs = ensureMobs(u).filter(function (m) { return !m.dead && !m.autoTried; });
+    if (!mobs.length) return 0;
+    var ti = firstReadyTeam(u);
+    if (ti < 0) return 0;
+    var log = autoDefendLog(u), done = 0, wins = 0, lines = [];
+    mobs.forEach(function (mob) {
+      mob.autoTried = true;
+      var trm = teamReady(u, ti), tSquad = teamCards(u, ti);
+      if (tSquad.length < MOB_TEAM_MIN || !trm.centerId) return;
+      if (!poolRefillSquad(u, tSquad)) return;
+      var cIx = -1;
+      tSquad.forEach(function (cc, i2) { if (cc.id === trm.centerId) cIx = i2; });
+      var A = tSquad.map(function (cc) { return unitOf(cc, "A"); }).filter(Boolean);
+      var B = mobEnemies(u, mob).map(pseudoUnit).filter(Boolean);
+      if (!A.length || !B.length) return;
+      var res = simulate(A, B, cIx >= 0 ? { centerIx: cIx } : null);
+      var mty = MOB_TYPES.filter(function (t2) { return t2.k === mob.t; })[0] || MOB_TYPES[0];
+      res.out = fightSettle("monster", mob.lv, res, mobTypeName(mty), mob, tSquad);
+      if (res.win) { mob.dead = true; wins++; }
+      done++;
+      log.unshift({ t: Date.now(), gm: gMonth(u), ti: ti + 1, foe: mobTypeName(mty), lv: mob.lv, win: !!res.win,
+        stars: res.stars || 0, exp: (res.out && res.out.exp) || 0, rounds: res.rounds || 0, inCity: !!mob.inCity });
+      lines.push(gt("defLine", { t: ti + 1, f: mobTypeName(mty), l: mob.lv, w: res.win ? "✔" : "✘", e: (res.out && res.out.exp) || 0 }));
+    });
+    if (done) {
+      log.splice(40);
+      save(); try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}
+      toast("🛡 " + gt("defRes", { n: done }) + "：\n" + lines.slice(0, 3).join("\n"), wins === done ? "ok" : "err", 6000);
+      if (/^#\/battle/.test(location.hash || "")) refreshBattle();
+    }
+    return done;
+  }
+  /* ---------- V38-2 关卡/演武自动刷本：目标等级可输入，自动补兵直到达标 ---------- */
+  function squadAvgLv(u) {
+    var ids = BATUI.squad || [];
+    var cs = ids.map(function (id) { return (u.cards || []).filter(function (x) { return x.id === id; })[0]; }).filter(Boolean);
+    return cs.length ? Math.round(cs.reduce(function (s, c) { return s + cardLv(c); }, 0) / cs.length) : 0;
+  }
+  function autoFarmStep() {
+    var u = me(), a = BATUI.auto;
+    if (!u || !a) return;
+    if (!/^#\/battle/.test(location.hash || "")) { BATUI.auto = null; return; }   /* 用户切走页面即停 */
+    var avg = squadAvgLv(u);
+    if (avg >= a.target) return autoFarmStop("done");
+    if (a.runs >= 200) return autoFarmStop("max");
+    var key = a.mode === "pvp" ? ("p" + (a.pi % Math.max(1, pvpFoes(u).length))) : ("s" + Math.min(30, u.bat.stage || 1));
+    var fk = fightKeyCards(key);
+    if (!fk) return autoFarmStop("max");
+    if (!poolRefillSquad(u, fk.squad)) { save(); return autoFarmStop("troop"); }
+    var A = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
+    var B = fk.enemies.map(pseudoUnit).filter(Boolean);
+    if (!A.length) return autoFarmStop("troop");
+    var res = simulate(A, B, (fk.kind === "monster" && fk.centerIx >= 0) ? { centerIx: fk.centerIx } : null);
+    res.out = fightSettle(fk.kind, fk.stage, res, fk.foe, fk.mob, fk.squad);
+    if (fk.kind === "monster" && res.win && fk.mob) fk.mob.dead = true;
+    a.runs++; a.pi++;
+    if (res.win) { a.wins++; a.fails = 0; a.exp += (res.out && res.out.exp) || 0; }
+    else if (++a.fails >= 3) { save(); return autoFarmStop("fail"); }
+    autoFarmBox(u);
+    setTimeout(autoFarmStep, 650);
+  }
+  function autoFarmBox(u) {
+    var a = BATUI.auto; if (!a) return;
+    var box = document.getElementById("sgAutoBox");
+    var txt = gt("autoRun", { r: a.runs + 1 }) + "　·　" + gt("autoAvg", { n: squadAvgLv(u), m: a.target }) + "<br>" +
+      gt("autoWins", { w: a.wins, l: a.runs - a.wins, e: fmt(a.exp) }) +
+      '　<button class="sgbtn sm ghost" data-bat="auto-stop" style="margin-left:8px">⏹ ' + gt("autoStop") + "</button>";
+    if (box) box.innerHTML = txt;
+    else modal('<h3>🤖 ' + gt("autoBox", { m: a.mode === "pvp" ? T("pvp") : T("stageTitle") }) + '</h3><div id="sgAutoBox" class="sg-note" style="font-size:13px;line-height:1.9">' + txt + "</div>");
+  }
+  function autoFarmStop(reason) {
+    var u = me(), a = BATUI.auto; BATUI.auto = null;
+    if (!a) return;
+    if (reason === "done") toast("🤖 " + gt("autoDone", { n: a.target, m: a.target, r: a.runs }), "ok", 6000);
+    else if (reason === "fail") toast("🤖 " + gt("autoFail", { r: a.fails }), "err", 6000);
+    else if (reason === "troop") toast("🤖 " + gt("autoTroop"), "err", 6000);
+    else toast("🤖 " + gt("autoMax") + "（" + a.runs + "）", "err", 5000);
+    closeModal();
+    if (/^#\/battle/.test(location.hash || "")) refreshBattle();
+  }
+  function autoFarmOpen(mode) {
+    var u = me(); if (!u) return;
+    var avg = squadAvgLv(u) || Math.round((u.cards || []).reduce(function (s, c) { return s + cardLv(c); }, 0) / Math.max(1, (u.cards || []).length));
+    modal("<h3>🤖 " + gt("autoT") + " · " + (mode === "pvp" ? T("pvp") : T("stageTitle")) + "</h3>" +
+      '<div class="sg-note" style="margin-bottom:10px">' + gt("autoInput", { n: avg }) + "</div>" +
+      '<div style="display:flex;align-items:center;gap:10px;justify-content:center">' +
+      '<label style="font-size:13px;color:var(--ink-2)">' + gt("autoTarget") + "：</label>" +
+      '<input id="sgAutoTarget" type="number" min="2" max="70" value="' + Math.min(70, avg + 5) + '" style="width:90px;padding:8px 10px;border:1px solid var(--line-2,#3a3f4a);border-radius:8px;background:rgba(0,0,0,.25);color:var(--ink-1);font-size:15px;text-align:center">' +
+      '<button class="sgbtn primary" data-bat="auto-start" data-mode="' + mode + '">▶ ' + gt("autoStart") + "</button></div>" +
+      '<div class="sg-note" style="margin-top:10px;text-align:center">🩹 ' + gt("recFreeT") + "　·　⏹ " + gt("autoStopT") + "</div>", "narrow");
   }
   /* ---------- V27 技能修炼：吞噬同名同阶卡牌 ---------- */
   var SK_COST = [1, 1, 1]; /* V28：每吞噬一张同名同阶卡即可解锁一个技能 */
@@ -11616,6 +11799,7 @@ var BOTS = [
       '<div class="sg-note" style="margin:6px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b></div>" +
       raidBar + mapTog + mapBlock +
       teamPanelHTML(u) +
+      defLogHTML(u) +
       '<div style="margin-top:16px">' + merchantPanelHTML(u) + "</div>";
     return '<div style="display:grid;grid-template-columns:1fr 216px;gap:16px;align-items:start" class="bat-grid"><div>' + main +
       "</div><div><div class=\"sg-panel-hd\" style=\"margin-bottom:8px\"><h3><i>·</i>🗺 " + T("myCities") + "</h3></div>" + cityRows +
@@ -11721,22 +11905,64 @@ var BOTS = [
       '<div class="sg-note" style="margin-bottom:8px">' + offDesc(o) + " · " + (lang() === "en" ? "Best stat" : "宜") + " " + o.stN + " " + (lang() === "en" ? "high" : "高者") + "</div>" + rows +
       '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
   }
+  /* ---------- V38-3 S 型剧情路径（蛇形节点布局，关卡/演武共用） ---------- */
+  function sPathHTML(items, cols) {
+    cols = cols || 5;
+    var rows = Math.max(1, Math.ceil(items.length / cols));
+    var stepX = 128, stepY = 116, pad = 66, R = 30;
+    var W = pad * 2 + stepX * (cols - 1), H = pad * 2 + stepY * (rows - 1);
+    var pts = items.map(function (_, i) {
+      var row = Math.floor(i / cols), cIn = i % cols;
+      var col = (row % 2) ? (cols - 1 - cIn) : cIn;
+      return { x: pad + col * stepX, y: pad + row * stepY, row: row };
+    });
+    var d = "";
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p1 = pts[i], p2 = pts[i + 1];
+      if (p1.row === p2.row) d += (i ? " L" : "M") + p1.x + " " + p1.y + " L" + p2.x + " " + p2.y;
+      else d += " L" + p1.x + " " + p1.y + " C" + p1.x + " " + (p1.y + stepY * 0.55) + " " + p2.x + " " + (p2.y - stepY * 0.55) + " " + p2.x + " " + p2.y;
+    }
+    var nodes = items.map(function (it, i) {
+      var p = pts[i];
+      var cls = "sg-spn sg-spn-" + (it.st || "open");
+      return '<button class="' + cls + '"' + (it.bat ? ' data-bat="' + it.bat + '" data-n="' + it.n + '"' : " disabled") +
+        ' style="left:' + (p.x - R) + "px;top:" + (p.y - R) + 'px"' + (it.title ? ' title="' + esc(it.title) + '"' : "") + ">" +
+        "<b>" + it.n + "</b>" + (it.stars ? '<i class="sg-spn-st">' + "★".repeat(Math.min(3, it.stars)) + "</i>" : "") + "</button>" +
+        '<span class="sg-spn-nm" style="left:' + (p.x - 56) + "px;top:" + (p.y + R + 4) + 'px">' + esc(it.name || "") + "</span>" +
+        (it.sweep ? '<button class="sg-spn-sw" data-bat="sweep" data-n="' + it.n + '" title="' + esc(T("sweepDesc")) + '" style="left:' + (p.x + R - 8) + "px;top:" + (p.y - R - 8) + 'px">⚡</button>' : "");
+    }).join("");
+    return '<div style="overflow-x:auto;margin:10px 0"><div style="position:relative;min-width:' + W + "px;height:" + (H + 30) + "px;margin:0 auto;width:" + W + 'px">' +
+      '<svg width="' + W + '" height="' + H + '" style="position:absolute;left:0;top:0;pointer-events:none">' +
+      '<path d="' + d + '" fill="none" stroke="rgba(201,164,92,.4)" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round"/>' +
+      '<path d="' + d + '" fill="none" stroke="rgba(201,164,92,.12)" stroke-width="8" stroke-linecap="round"/></svg>' + nodes +
+      '<style>.sg-spn{position:absolute;width:60px;height:60px;border-radius:50%;border:2px solid #c9a45c;background:linear-gradient(180deg,#2a2417,#1b1710);color:#f5e6c4;font-size:15px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.18s;box-shadow:0 3px 10px rgba(0,0,0,.5);z-index:2}' +
+      ".sg-spn b{line-height:1}.sg-spn-st{font-style:normal;font-size:8px;color:#ffd76a;letter-spacing:1px}" +
+      ".sg-spn-done{background:linear-gradient(180deg,#8a6a24,#5c4718);border-color:#ffd76a;color:#fff}" +
+      ".sg-spn-cur{border-color:#ffe9a8;box-shadow:0 0 0 4px rgba(255,215,106,.22),0 0 18px rgba(255,215,106,.45);animation:sgPulse 1.6s ease-in-out infinite}" +
+      ".sg-spn-lock{border-color:#3a4252;background:#20242c;color:#5a6172;cursor:default;box-shadow:none}" +
+      ".sg-spn:not(:disabled):hover{transform:scale(1.12);z-index:3}" +
+      ".sg-spn-nm{position:absolute;width:112px;text-align:center;font-size:10px;color:var(--ink-3,#8b93a3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:1}" +
+      ".sg-spn-sw{position:absolute;width:20px;height:20px;border-radius:50%;border:1px solid #c9a45c;background:#2a2417;color:#e8c988;font-size:10px;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center;padding:0}" +
+      ".sg-spn-sw:hover{background:#8a6a24;color:#fff};" +
+      "@keyframes sgPulse{0%,100%{box-shadow:0 0 0 4px rgba(255,215,106,.22),0 0 18px rgba(255,215,106,.45)}50%{box-shadow:0 0 0 7px rgba(255,215,106,.1),0 0 26px rgba(255,215,106,.6)}}</style>" +
+      "</div></div>";
+  }
   function batStageTab(u) {
     var squadHTML = squadPicker(u);
-    var rows = "";
+    var autoBtn = '<div style="display:flex;align-items:center;gap:8px;margin:6px 0 2px">' +
+      '<button class="sgbtn sm primary" data-bat="auto-open" data-mode="stage">🤖 ' + gt("autoT") + "</button>" +
+      '<small style="color:var(--ink-3)">' + gt("autoDefT") + "：" + gt("autoDefOn") + "</small></div>";
+    var items = [];
     for (var n = 1; n <= 30; n++) {
       var boss = stageBoss(n), tr = TIERS[tierOf(boss)];
       var st = u.bat.hist[n], locked = n > u.bat.stage;
-      rows += '<div class="sg-rankline" style="cursor:default"><span class="i" style="background:' + (locked ? "#3a4252" : tr.c) + ';color:#10131a">' + n + "</span>" +
-        '<span><b>' + esc(STAGE_NAMES[n - 1]) + "</b> <small style='color:var(--ink-3)'>" + esc(boss.name) + " · " + tierLabel(tr) + " · Lv." + Math.max(1, Math.round(n * 2.2)) + "</small></span>" +
-        '<span class="sp"></span>' + (st ? "<small style='color:#e8c988'>" + "★".repeat(st) + "</small>　" : "") +
-        (locked ? '<small style="color:var(--ink-3)">' + T("stageLock") + "</small>" :
-          '<button class="sgbtn sm primary" data-bat="fight" data-n="' + n + '">' + (st ? T("againF") : T("fight")) + "</button>" +
-          (st ? ' <button class="sgbtn sm ghost" data-bat="sweep" data-n="' + n + '" title="' + T("sweepDesc") + '">' + T("sweep") + "</button>" : "")) +
-        "</div>";
+      items.push({ n: n, name: STAGE_NAMES[n - 1], stars: st || 0, bat: locked ? "" : "fight", sweep: !!st,
+        st: locked ? "lock" : (n === u.bat.stage ? "cur" : st ? "done" : "open"),
+        title: esc(STAGE_NAMES[n - 1]) + " · " + esc(boss.name) + " · " + tierLabel(tr) + " · Lv." + Math.max(1, Math.round(n * 2.2)) });
     }
-    return '<div class="sg-note" style="margin-bottom:8px">' + T("firstReward") + "：" + T("spGain", { n: 5 }) + " + " + T("squadDesc") + "</div>" + squadHTML +
-      '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("stageTitle") + "（1-1 → 1-30）</h3></div>" + rows;
+    return '<div class="sg-note" style="margin-bottom:8px">' + T("firstReward") + "：" + T("spGain", { n: 5 }) + " + " + T("squadDesc") + "</div>" + squadHTML + autoBtn +
+      '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("stageTitle") + "（1-1 → 1-30）</h3><span class=\"sp\"></span><small style='color:var(--ink-3)'>章节剧情 · S 型进军路线</small></div>" +
+      sPathHTML(items, 5);
   }
   function squadPicker(u) {
     var cards = u.cards || [];
@@ -11791,13 +12017,14 @@ var BOTS = [
   }
   function batPvpTab(u) {
     var foes = pvpFoes(u);
-    var rows = foes.map(function (f, i) {
+    var autoBtn = '<div style="margin:6px 0 2px"><button class="sgbtn sm primary" data-bat="auto-open" data-mode="pvp">🤖 ' + gt("autoT") + "</button></div>";
+    var items = foes.map(function (f, i) {
       var sq = f.cards.map(function (c) { var g = gById(c.gid); return g ? esc(g.name) + " Lv." + c.lv : ""; }).filter(Boolean).join(" · ");
-      return '<div class="sg-rankline"><span class="i">' + esc(f.name.slice(0, 1)) + "</span><span><b>" + esc(f.name) + "</b> <small style='color:var(--ink-3)'>" + sq + "</small></span>" +
-        '<span class="sp"></span><button class="sgbtn sm primary" data-bat="pvp" data-i="' + i + '">' + T("fight") + "</button></div>";
-    }).join("");
-    return '<div class="sg-note" style="margin-bottom:8px">' + T("pvpDesc") + "</div>" + squadPicker(u) +
-      '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("pvp") + "</h3></div>" + rows;
+      return { n: i + 1, name: f.name, bat: "pvp", st: "open", title: esc(f.name) + " · " + sq };
+    });
+    return '<div class="sg-note" style="margin-bottom:8px">' + T("pvpDesc") + "</div>" + squadPicker(u) + autoBtn +
+      '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("pvp") + "</h3><span class=\"sp\"></span><small style='color:var(--ink-3)'>群雄逐鹿 · S 型巡演</small></div>" +
+      sPathHTML(items, 4);
   }
   function batShopTab(u) {
     var eqRow = TIERS.map(function (t, i) {
@@ -12609,6 +12836,18 @@ var BOTS = [
         save(); toast(gt("demOk", { n: bldName(db) }), "ok"); closeModal(); refreshBattle(); return;
       }
       case "homemap": BATUI.homeMap = t.getAttribute("data-v") === "world" ? "world" : "city"; refreshBattle(); return;
+      /* V38 自动刷本 / 自动御敌 */
+      case "auto-open": autoFarmOpen(t.getAttribute("data-mode") === "pvp" ? "pvp" : "stage"); return;
+      case "auto-start": {
+        var au = document.getElementById("sgAutoTarget"), tv = au ? Math.max(2, Math.min(70, +au.value || 0)) : 0;
+        if (!tv) return toast(gt("autoTarget"), "err");
+        if (!BATUI.squad.length) return toast(T("needCard"), "err");
+        closeModal();
+        BATUI.auto = { mode: t.getAttribute("data-mode") === "pvp" ? "pvp" : "stage", target: tv, runs: 0, wins: 0, exp: 0, fails: 0, pi: 0 };
+        toast("🤖 " + gt("autoT") + " → Lv." + tv, "ok");
+        autoFarmBox(u); autoFarmStep(); return;
+      }
+      case "auto-stop": autoFarmStop("max"); return;
       /* V35 编队快捷操作：单将补兵 / 吞噬升级 / 全队一键补兵 */
       case "sq-rec": {
         var cid6 = t.getAttribute("data-id");
@@ -12817,7 +13056,8 @@ var BOTS = [
         if (lack.length) return toast(gt("bldNoRes"), "err");
         Object.keys(cost0).forEach(function (rk) { u.res[rk] -= cost0[rk]; });
         u.bat.city.bld[bk] = lv0 + 1;
-        save(); toast(gt("bldUpOk", { n: bldName(b0), m: lv0 + 1 }), "ok"); refreshBattle(); return;
+        save(); try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}   /* V38：升级关键操作立即推送，防关页丢档 */
+        toast(gt("bldUpOk", { n: bldName(b0), m: lv0 + 1 }), "ok"); refreshBattle(); return;
       }
       case "pol-set": {
         ensureCity(u);
@@ -12965,6 +13205,7 @@ var BOTS = [
         var B = fk.enemies.map(pseudoUnit).filter(Boolean);
         var res = simulate(A, B, (fk.kind === "monster" && fk.centerIx >= 0) ? { centerIx: fk.centerIx } : null);
         res.out = fightSettle(fk.kind, fk.stage, res, fk.foe, fk.mob, fk.squad);
+        if (fk.kind === "monster" && fk.mob) fk.mob.autoTried = true;   /* V38：手动讨伐后心跳不再重复自动出手 */
         if (fk.kind === "monster" && res.win && fk.mob) { fk.mob.dead = true; save(); }
         BATUI.res = res; setApp(renderFight(key)); playLog();
         if (res.win && fk.kind === "stage" && fk.stage <= 2 && u.bat.tut === 3 && !u._tut3Shown) {
@@ -13002,6 +13243,7 @@ var BOTS = [
               sd: "🥷 " + T("sneakT") + " · " + T("sneakDiff", { d: diff }) + " → " + T("sneakFail") }] };
         }
         resS.out = fightSettle(fkS.kind, fkS.stage, resS, fkS.foe, fkS.mob, fkS.squad);
+        if (fkS.kind === "monster" && fkS.mob) fkS.mob.autoTried = true;
         if (fkS.kind === "monster" && resS.win && fkS.mob) { fkS.mob.dead = true; save(); }
         BATUI.res = resS; setApp(renderFight(key)); playLog();
         return;
@@ -13081,7 +13323,17 @@ var BOTS = [
       if (nm !== BATUI._lastGm || _ic !== nm) {
         try { tickMonth(u); save(); } catch (e) {}
         BATUI._lastGm = nm;
-        refreshBattle();
+        /* V38：用户开着弹窗或在战斗页时只结算不强制重渲染（refreshBattle 会 closeModal，跨月不应吞掉弹窗） */
+        if (!document.getElementById("sgMask") && !BATUI.fight) refreshBattle();
+      }
+      /* V38 自动御敌：城外出现未处理的贼寇且已编排可用队伍时，自动讨伐（每野怪仅自动出手一次，间隔限流 12s；
+         用户正开着弹窗或在战斗页时不抢跑，避免干扰操作） */
+      if (!BATUI.auto && !BATUI.fight && !BATUI._adOff && !document.getElementById("sgMask") && Date.now() - (BATUI._adAt || 0) > 12000) {
+        var _mobs = (u.bat.city && u.bat.city.mobs) || [];
+        if (_mobs.some(function (m2) { return !m2.dead && !m2.autoTried; })) {
+          BATUI._adAt = Date.now();
+          try { autoDefend(u); } catch (e) {}
+        }
       }
     }
   }, 1000);
