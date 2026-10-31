@@ -7655,8 +7655,9 @@ html[data-lang="en"]{letter-spacing:.01em}
     if (!g) return { err: T("noDraw") };
     u.draws--;
     /* V21：抽卡可出整卡或碎片（45% 出碎片，数量按品级：紫2 → 白8）
-       V39：S/A/B 级必出整卡（保证区间配额兑现到卡牌上），碎片只在 C 及以下产生 */
-    if (_lastPick >= 3 && Math.random() < 0.45) {      /* V42：碎片判定按掉落品级，S/A/B 掉落必出整卡 */
+       V39：S/A/B 级必出整卡；V47：C 级也必出整卡——配额袋口径是「每 100 张卡片」，
+       配额内等级（S/A/B/C）必须兑现为整卡，碎片只在 D/E/F（60% 随机部分）产生 */
+    if (_lastPick >= 4 && Math.random() < 0.45) {      /* 碎片判定按掉落品级，S/A/B/C 掉落必出整卡 */
       var ti = tierOf(g), n = 8 - ti;
       addShards(u, g.id, n);
       save();
@@ -8751,11 +8752,11 @@ var BOTS = [
     var progTxt = lang() === "zh" ? ("本周期剩余 " + bagLeft + " / 100 张 · 50 连与 100 连共用同一只配额袋，比例跨批次精确兑现")
       : lang() === "ja" ? ("現在の周期 残り " + bagLeft + " / 100 枚・50連/100連は同じ配額袋を共有")
       : ("Cycle remaining " + bagLeft + " / 100 · 50- and 100-pulls share one quota bag; ratios carry over across batches");
-    /* ③ 自动回收 */
+    /* ③ 自动回收（V47：仅 D/E/F 默认勾选——C 级是配额内等级，整卡应保留可见，避免用户误以为配额没兑现） */
     var tiers = TIERS.map(function (t, i) {
       var lock = i <= 2;
       return '<label style="display:inline-flex;align-items:center;gap:5px;margin:4px 14px 4px 0;' + (lock ? "opacity:.45" : "") + '">' +
-        '<input type="checkbox" data-bdt="' + i + '"' + (st.auto[i] || i >= 3 ? " checked" : "") + (lock ? " disabled" : "") + ">" +
+        '<input type="checkbox" data-bdt="' + i + '"' + (st.auto[i] || i >= 4 ? " checked" : "") + (lock ? " disabled" : "") + ">" +
         '<span class="dot" style="background:' + t.c + '"></span>' + tierLabel(t) + " +" + fmt(t.pts) +
         (lock ? " <small>🔒</small>" : "") + "</label>";
     }).join("");
@@ -8798,8 +8799,8 @@ var BOTS = [
       var g = rollGacha(u);
       if (!g) break;
       u.draws = (u.draws || 0) - 1;
-      /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8）；S/A/B 掉落必出整卡 */
-      if (_lastPick >= 3 && Math.random() < 0.45) { var sn = 8 - tierOf(g); addShards(u, g.id, sn); shards += sn; continue; }
+      /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8）；V47：S/A/B/C 掉落必出整卡，碎片只在 D/E/F 产生 */
+      if (_lastPick >= 4 && Math.random() < 0.45) { var sn = 8 - tierOf(g); addShards(u, g.id, sn); shards += sn; continue; }
       var c = mkCard(g.id, GMODE ? { t: _lastPick } : null);
       var ti = cardTier(c);
       if (auto[ti]) { rec.cnt++; rec.pts += TIERS[ti].pts; }
