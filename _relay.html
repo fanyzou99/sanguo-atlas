@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>relay</title>
+</head>
+<body>
+<script>
+/* 同源中继：把来自 GitHub Pages 图鉴 / 后台的调用转发给本域云数据库。
+   仅接受白名单来源；数据表本身对匿名不可读，写操作只走受控函数。
+
+   V50.2 修复：原先用 <script src="./sdk.js"> 静态引入，在 iframe 内实测不执行
+   （scripts=0 / WorkBuddyCloud undefined）→ cli 永远为 null → 每条请求立刻回 null
+   → 海外站的后台卡牌配置、抽卡配额等全部拿不到。改为动态注入 + 排队等 SDK 就绪，
+   就绪后才向父窗发 ready 信号。 */
+(function () {
+  var ALLOW = [
+    "https://sanguo-atlas.app.workbuddy.host",
+    "https://fanyzou99.github.io",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080"
+  ];
+  /* 应用发布域名由平台分配，可能变更：*.app.workbuddy.host 一律信任（中继只在本域内转发，
+     数据表对匿名不可读，写操作仅走受控函数）。 */
+  function allowed(origin) {
+    if (ALLOW.indexOf(origin) >= 0) return true;
+    return /^https:\/\/[a-z0-9-]+\.app\.workbuddy\.host$/i.test(origin || "")
+      || /^https:\/\/([a-z0-9-]+\.)?fanyzou99\.github\.io$/i.test(origin || "");
+  }
+  var KEY = "wbpk_CuEbv9EAEwwQYI92Z1RcYH_mwa0b6O1sk6njj7GmgTpz45jl7qncG2M";
+  var cli = null, loading = false, tries = 0, queue = [], draining = false;
+
+  function makeCli() {
+    if (cli) return cli;
+    try {
+      if (window.WorkBuddyCloud && window.WorkBuddyCloud.createWorkBuddyCloud) {
+        cli = window.WorkBuddyCloud.createWorkBuddyCloud({
+          endpoint: location.origin,   /* 本页即运行在应用发布域名上，与 publicConfig.endpoint 一致 */
+          publishableKey: KEY
+        }) || null;
+      }
+    } catch (e) { cli = null; }
+    return cli;
+  }
+
+  function loadSdk() {
+    if (loading || cli || tries >= 6) return;
+    tries++;
+    loading = true;
+    var s = document.createElement("script");
+    s.src = "./sdk.js?r=" + tries;
+    s.async = true;
+    s.onload = function () { loading = false; makeCli(); };
+    s.onerror = function () { loading = false; };
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  /* 轮询等待 SDK 可用，最多 waitMs 毫秒；期间若未加载则重试注入 */
+  function whenSdk(waitMs, cb) {
+    var t0 = Date.now();
+    (function chk() {
+      if (makeCli()) return cb(true);
+      if (Date.now() - t0 > (waitMs || 20000)) return cb(false);
+      if (!loading) loadSdk();
+      setTimeout(chk, 300);
+    })();
+  }
+
+  function reply(origin, id, data) {
+    try { parent.postMessage({ __sgrelay: 1, id: id, data: data === undefined ? null : data }, origin); } catch (e) {}
+  }
+
+  function exec(origin, d) {
+    var c = makeCli();
+    if (!c) return reply(origin, d.id, null);
+    try {
+      Promise.resolve(c.database.rpc(d.name, d.args || {})).then(function (r) {
+        reply(origin, d.id, r && r.data !== undefined ? r.data : null);
+      }, function () { reply(origin, d.id, null); });
+    } catch (err) { reply(origin, d.id, null); }
+  }
+
+  function drain() {
+    if (draining) return;
+    draining = true;
+    whenSdk(20000, function () {
+      draining = false;
+      var list = queue; queue = [];
+      for (var i = 0; i < list.length; i++) {
+        try { exec(list[i].origin, list[i].d); } catch (e) {}
+      }
+      /* SDK 始终不可用：把排队请求全部明确失败，别让父窗干等 */
+      if (!makeCli() && list.length) { /* exec 已各自回 null */ }
+    });
+  }
+
+  window.addEventListener("message", function (e) {
+    if (!allowed(e.origin)) return;
+    var d = e.data || {};
+    if (!d.__sg || !d.id) return;
+    if (makeCli()) return exec(e.origin, d);
+    queue.push({ origin: e.origin, d: d });
+    drain();
+  });
+
+  /* SDK 就绪后再通知父窗，父窗据此 flush 队列；未就绪也发一次（父窗会让 relayP 重发） */
+  whenSdk(20000, function () {
+    try { parent.postMessage({ __sgrelay: 1, ready: 1, sdk: !!makeCli() }, "*"); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

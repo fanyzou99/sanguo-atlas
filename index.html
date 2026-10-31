@@ -9523,6 +9523,7 @@ var BOTS = [
     var same = false;
     try { same = (location.origin === HOST); } catch (e) {}
     var cli = null, loading = false, seq = 0, waits = {}, frame = null, fready = false, fq = [];
+    var relayReady = false;
     var cip = null;
     try { cip = localStorage.getItem("sg_ip"); } catch (e) {}
     function fetchIP() {
@@ -9669,6 +9670,11 @@ var BOTS = [
       window.addEventListener("message", function (e) {
         if (e.origin !== HOST) return;
         var d = e.data || {};
+        /* V50.2：中继页 SDK 就绪信号。此前只认 frame.onload，而 _relay.html 的 sdk.js
+           在 iframe 内实际未执行（探针实测 scripts=0 / WorkBuddyCloud=undefined），
+           导致海外站所有中继调用都拿 null——后台卡牌配置、抽卡配额等从未真正下发。
+           现在：中继页就绪后主动发 ready，调用方被清空重发；超时也不再单方面丢弃。 */
+        if (d && d.__sgrelay && d.ready) { relayReady = true; fready = true; flush(); return; }
         if (d && d.__sgrelay && d.id && waits[d.id]) { var fn = waits[d.id]; delete waits[d.id]; fn(d.data); }
       });
       return frame;
@@ -9689,12 +9695,22 @@ var BOTS = [
       setTimeout(function () { delete waits[id]; }, 6000);
     }
     function relayP(name, args, to) {
+      /* V50.2 修复：中继就绪前超时不再直接吞掉结果。
+         首次调用时中继 iframe 往往还在加载 sdk.js，旧逻辑 12s 一到就 resolve(null)，
+         配置因此永远拿不到。现在超时后只"挂起等待"——中继 ready 后 flush 会重发；
+         另设一个硬上限（默认 45s）兜底，避免永久挂起内存泄漏。 */
       return new Promise(function (resolve) {
-        var id = ++seq;
-        waits[id] = function (data) { resolve(data); };
-        fq.push({ id: id, name: name, args: args });
+        var id = ++seq, done = false, env = { id: id, name: name, args: args, resent: 0 };
+        waits[id] = function (data) { if (done) return; done = true; delete waits[id]; resolve(data); };
+        fq.push(env);
         ensureFrame(); flush();
-        setTimeout(function () { if (waits[id]) { delete waits[id]; resolve(null); } }, to || 12000);
+        var soft = function () {
+          if (done) return;
+          if (relayReady) { flush(); }          /* 中继已就绪但本次丢包 → 重发一次 */
+          else if (!env.resent) { env.resent = 1; fq.push(env); flush(); }
+        };
+        setTimeout(soft, to || 12000);
+        setTimeout(function () { if (!done) { delete waits[id]; done = true; resolve(null); } }, Math.max(45000, (to || 12000) * 3));
       });
     }
     function rpcP(name, args, to) {
@@ -9993,6 +10009,14 @@ var BOTS = [
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
   try { window.SGCloud = SGCloud; } catch (e) {}
+  /* V50.2：只读调试句柄（供验收探针读取生效配置，不暴露任何写能力） */
+  try {
+    window.SGDbg = {
+      tiers: function () { return TIERS.map(function (t) { return { grade: t.grade, trig: t.trig, troop: t.troop, pts: t.pts, kp: t.kp }; }); },
+      troopGrow: function () { return typeof TROOP_GROWTH !== "undefined" ? TROOP_GROWTH : null; },
+      cfgPull: function () { return cfgPull(); }
+    };
+  } catch (e) {}
 
   /* ---------------- Toast ---------------- */
   function toast(msg, type, ms) {
