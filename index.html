@@ -10869,6 +10869,11 @@ var BOTS = [
       remT: "left {n}", storyT: "— Round {n} —",
       mapT: "City Map", popT: "Population", houseT: "Households", palaceT: "Palace", wallT: "City Wall",
       governT: "Hall Governance", governHint: "Appointments, policy and tax are all handled in the Palace",
+      cityUpSecT: "City Upgrade", cityLvT: "City Lv.{n} · facility cap Lv.{m}", cityUpHintT: "Each city level raises every facility cap by 10. Advisor INT & Minister POL above 50 cut cost 50%, -10% more per 10 pts (cap 90%), works shorten too", cityDiscT: "Savings -{d}%",
+      cityUpBtnT: "Upgrade City", cityUpGoT: "City works started — {s}s to finish", cityUpBusyT: "Works in progress — {s}s left", cityUpOkT: "City upgraded to Lv.{n}! Facility cap now Lv.{m}", cityTimeT: "{s}s works",
+      cityAutoT: "Steward Upgrade", cityAutoStopT: "Stop Steward", cityAutoOnT: "Steward on — upgrades continue until resources run out", cityAutoOffT: "Steward stopped", cityAutoNeedT: "All six offices must be filled to engage the Steward", cityAutoDoneT: "Steward done: resources exhausted. City stays Lv.{n}", cityAutoHintT: "The Steward keeps upgrading the city until resources run dry",
+      campLandT: "Bandit Camp", campWaterT: "Pirate Fleet",
+      marchStartT: "The host marches — arrival in {s}s", marchWayT: "A punitive force is already on the march", marchArrT: "Vanguard arrived at the enemy (Lv.{n}) — battle!", marchSendT: "March out",
       bldOptT: "Upgrade", demT: "Demolish", demOk: "{n} demolished — some materials refunded",
       vacT: "Vacant Lot", pickBld: "Build on this lot (mind the footprint)", noFit: "Not enough room at this spot — try another",
       bldNew: "Build", bldNewOk: "{n} built (Lv.1)", bldOnce: "This building already exists in the city",
@@ -10942,6 +10947,11 @@ var BOTS = [
       remT: "余 {n}", storyT: "— 第 {n} 回合 —",
       mapT: "城池图", popT: "人口", houseT: "户数", palaceT: "大殿", wallT: "城墙",
       governT: "大殿理政", governHint: "政治任命、政策调整与收税均在点开大殿后办理",
+      cityUpSecT: "城市升级", cityLvT: "城市等级 Lv.{n} · 设施上限 Lv.{m}", cityUpHintT: "城市每升 1 级，城内所有设施上限 +10。军师智力、大司农政治高于 50 时，升级资源 -50% 起，每高 10 点再 -10%（合计上限 90%），工期同步缩短", cityDiscT: "能臣减耗 -{d}%",
+      cityUpBtnT: "升级城市", cityUpGoT: "城池开工，工期 {s} 秒", cityUpBusyT: "城池施工中，剩余 {s} 秒", cityUpOkT: "城市升到 Lv.{n}！设施上限提升至 Lv.{m}", cityTimeT: "工期 {s} 秒",
+      cityAutoT: "托管升级", cityAutoStopT: "停止托管", cityAutoOnT: "托管已开启：自动升级城市，直至资源耗尽", cityAutoOffT: "托管已停止", cityAutoNeedT: "需六职政治任命全部有人方可托管", cityAutoDoneT: "托管结束：资源耗尽，城市停留在 Lv.{n}", cityAutoHintT: "托管将自动持续升级城市，直至资源耗尽",
+      campLandT: "山贼驻扎地", campWaterT: "水贼船队",
+      marchStartT: "大军已开拔，{s} 秒后抵达战场", marchWayT: "该目标的讨伐大军已在途中", marchArrT: "先头部队已抵达战场（敌 Lv.{n}），开战！", marchSendT: "出兵",
       bldOptT: "升级", demT: "铲除", demOk: "{n} 已铲除，返还部分材料",
       vacT: "空地", pickBld: "在此空地建造（注意占地格数）", noFit: "此处空地不够，换一块试试",
       bldNew: "建造", bldNewOk: "{n} 建成（Lv.1）", bldOnce: "城内已有同类建筑",
@@ -11003,6 +11013,11 @@ var BOTS = [
       guildTechDef: "防御 +1%/lv",
       guildTechMarch: "行軍 +2%/lv",
       guildMaxLv: "最大レベル",
+      cityUpSecT: "都市昇格", cityLvT: "都市 Lv.{n} · 施設上限 Lv.{m}", cityUpHintT: "都市が 1 レベル上がると全施設の上限が +10。軍師の知力・大司農の政治が 50 超で費用 -50%、10 点ごとに -10%（上限 90%）、工期も短縮", cityDiscT: "能臣削減 -{d}%",
+      cityUpBtnT: "都市を昇格", cityUpGoT: "工事開始、{s} 秒で完成", cityUpBusyT: "工事中、残り {s} 秒", cityUpOkT: "都市が Lv.{n} に！施設上限は Lv.{m}", cityTimeT: "工期 {s} 秒",
+      cityAutoT: "委任昇格", cityAutoStopT: "委任解除", cityAutoOnT: "委任開始：資源が尽きるまで自動昇格", cityAutoOffT: "委任を停止", cityAutoNeedT: "六官すべて任命済みが必要", cityAutoDoneT: "委任終了：資源枯渇、都市は Lv.{n}", cityAutoHintT: "資源が尽きるまで自動で昇格を続けます",
+      campLandT: "賊の駐屯地", campWaterT: "水賊の船団",
+      marchStartT: "出陣！{s} 秒後に戦場へ到着", marchWayT: "その討伐軍はすでに行軍中", marchArrT: "先鋒が戦場に到着（敵 Lv.{n}）——開戦！", marchSendT: "出陣",
     }
   };
   function gt(k, v) {
@@ -11292,6 +11307,32 @@ var BOTS = [
         while (usedSpots[si]) si = (si + 1) % MOB_SPOTS.length;
         usedSpots[si] = 1;
         mobs.push({ i: i, t: ty.k, ti: mobTierOf(lv), lv: lv, gid: boss.id, troop: 400 + lv * 260, spot: MOB_SPOTS[si], dead: false });
+      }
+      /* V56：城外山贼驻扎地（陆地帐篷 / 水上船只），只出现在城外 */
+      var geoC = (typeof CITY_GEO !== "undefined" && CITY_GEO[cn0]) || { river: "", mts: 1 };
+      var nC = 2 + hashNum(cn0 + "cp" + gm) % 2;
+      for (var ci = 0; ci < nC; ci++) {
+        var wtr = !!geoC.river && hashNum("cwt" + gm + "_" + ci) % 3 === 0;
+        var cspot = null, tries = 0;
+        while (tries++ < 24) {
+          var sx = 8 + hashNum("csx" + gm + "_" + ci + "_" + tries) % 84;
+          var sy = 10 + hashNum("csy" + gm + "_" + ci + "_" + tries) % 78;
+          if (wtr) {
+            if (geoC.river === "n") { sy = 9 + hashNum("cwn" + gm + ci) % 8; sx = 14 + hashNum("cwx" + gm + ci + tries) % 72; }
+            else if (geoC.river === "s") { sy = 84 + hashNum("cws" + gm + ci) % 8; sx = 14 + hashNum("cwx" + gm + ci + tries) % 72; }
+            else { sx = 10 + hashNum("cww" + gm + ci) % 5; sy = 14 + hashNum("cwy" + gm + ci + tries) % 70; }
+            cspot = [sx, sy]; break;
+          }
+          var dC = Math.sqrt(Math.pow(sx - 50, 2) + Math.pow(sy - 47, 2) * 0.41);
+          var nearN = [[8, 10], [91, 9], [7, 88], [92, 90]].some(function (p3) { return Math.abs(p3[0] - sx) < 9 && Math.abs(p3[1] - sy) < 9; });
+          var nearP = [[17, 21], [84, 23]].some(function (p3) { return Math.abs(p3[0] - sx) < 7 && Math.abs(p3[1] - sy) < 7; });
+          var nearM = mobs.some(function (m4) { return !m4.camp && m4.spot && Math.abs(m4.spot[0] - sx) < 8 && Math.abs(m4.spot[1] - sy) < 8; });
+          if (dC > 26 && !nearN && !nearP && !nearM) { cspot = [sx, sy]; break; }
+        }
+        if (!cspot) continue;
+        var cty = MOB_TYPES.filter(function (x3) { return x3.k === (wtr ? "pirate" : "bandit"); })[0] || MOB_TYPES[0];
+        var clv = Math.max(2, Math.min(35, 3 + Math.floor(gm / 2) + hashNum("clv" + gm + "_" + ci) % 5));
+        mobs.push({ i: mobs.length, t: cty.k, ti: mobTierOf(clv), lv: clv, gid: pool[Math.min(pool.length - 1, Math.floor(clv * 2.4) + 3)], troop: 700 + clv * 340, spot: cspot, dead: false, camp: 1, water: wtr ? 1 : 0 });
       }
       c.mobs = mobs; c.mobsGm = gm;
       /* V26：每月按种子判定一股野怪破城而入（月产出 -40%，缴获 ×1.5，剿灭即恢复） */
@@ -12301,7 +12342,7 @@ var BOTS = [
     s += '<rect width="' + W + '" height="' + H + '" fill="url(#wmVig)" pointer-events="none"/>';
     s += "</svg>";
     /* 交互层：贼寇 / 关卡 / 邻城 */
-    var badges = mobs.map(function (m) {
+    var badges = mobs.filter(function (m) { return !m.camp; }).map(function (m) {
       var ty = MOB_TYPES.filter(function (t2) { return t2.k === m.t; })[0] || MOB_TYPES[0];
       var g2 = gById(m.gid);
       var mtr2 = TIERS[(m.ti != null) ? m.ti : mobTierOf(m.lv)];
@@ -12310,6 +12351,16 @@ var BOTS = [
       return '<span class="sg-mob' + (m.dead ? " dead" : "") + '" data-bat="mob" data-i="' + m.i + '" style="left:' + (px / W * 100).toFixed(1) + "%;top:" + (py / H * 100).toFixed(1) + '%">' +
         '<i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + mtr2.c + ';margin-right:4px;vertical-align:1px"></i>' + ty.icon + " " + mobTypeName(ty) + " Lv." + m.lv + '<i style="font-style:normal;opacity:.7">（' + (g2 ? esc(g2.name) : "贼首") + "）</i>" + (m.dead ? " ☠" : "") + "</span>";
     }).join("");
+    /* V56：山贼驻扎地标记（陆地帐篷 / 水上船只，约占地图 1/100，只出现在城外） */
+    mobs.filter(function (m) { return m.camp; }).forEach(function (m) {
+      var imgC = m.water ? SG_IMG_CAMP_BOAT : SG_IMG_CAMP_TENT;
+      var nmC = m.water ? gt("campWaterT") : gt("campLandT");
+      badges += '<span class="sg-campm' + (m.dead ? " dead" : "") + '" data-bat="mob" data-i="' + m.i + '" style="left:' + m.spot[0] + "%;top:" + m.spot[1] + '%">' +
+        '<img src="' + imgC + '" alt="" draggable="false"><b>' + nmC + " Lv." + m.lv + "</b></span>";
+    });
+    /* V56：行军轨迹 + 队伍标记 */
+    var c56 = ensureCity(u);
+    (c56.marches || []).filter(function (m3) { return !m3.done; }).forEach(function (m3) { badges += marchTroopHTML(m3); });
     var passPos = [[17, 21], [84, 23]];
     badges += passes.map(function (pn, pi) {
       var pp = passPos[pi % 2];
@@ -12347,6 +12398,16 @@ var BOTS = [
       ".sg-mob{position:absolute;transform:translate(-50%,-50%);border:1px solid #b05555;border-radius:999px;background:rgba(110,32,32,.72);color:#ffd9d9;font-size:11px;padding:3px 10px;cursor:pointer;white-space:nowrap;z-index:7;transition:.15s;box-shadow:0 3px 8px rgba(0,0,0,.5)}" +
       ".sg-mob:hover{background:rgba(150,50,50,.85);border-color:#e07f7f;transform:translate(-50%,-50%) scale(1.05)}" +
       ".sg-mob.dead{opacity:.35;filter:grayscale(1)}" +
+      ".sg-campm{position:absolute;width:9%;transform:translate(-50%,-88%);z-index:7;cursor:pointer;text-align:center;transition:.15s}" +
+      ".sg-campm img{width:100%;height:auto;display:block;border-radius:6px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}" +
+      ".sg-campm b{display:inline-block;margin-top:-5px;font-size:9px;font-weight:700;color:#ffd9d9;background:rgba(60,16,16,.85);border:1px solid #b05555;border-radius:99px;padding:1px 8px;white-space:nowrap;position:relative;z-index:2}" +
+      ".sg-campm:hover img{transform:scale(1.05)}.sg-campm.dead{opacity:.35;filter:grayscale(1)}" +
+      ".sg-mroute{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}" +
+      ".sg-marchtroop{position:absolute;transform:translate(-50%,-80%);z-index:8;display:flex;align-items:flex-end;gap:2px;pointer-events:none}" +
+      ".sg-marchtroop .mt-flag{width:19px;height:35px;display:block}" +
+      ".sg-marchtroop .mt-rows .r{display:flex;gap:1px}" +
+      ".sg-marchtroop .mt-rows i{width:12px;height:14px;display:block;background-size:cover;background-position:center;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}" +
+      ".sg-marchtroop b{font-size:8.5px;font-weight:800;color:#ffe9b8;background:rgba(20,14,4,.85);border:1px solid rgba(232,201,136,.5);border-radius:99px;padding:0 5px;margin-left:2px}" +
       "@media(max-width:640px){.sg-pass{font-size:9.5px;padding:2px 7px}.sg-nbcity{font-size:9px;padding:2px 6px}.sg-mob{font-size:9px;padding:2px 7px}}</style></div>";
   }
   function passOpen(u, name) {
@@ -12467,7 +12528,7 @@ var BOTS = [
     wallPos = [Math.round(wallPos[0] / M.W * 1000) / 10, Math.round(wallPos[1] / M.H * 1000) / 10];
     chips += '<span class="sg-zchip wall" style="left:' + wallPos[0] + "%;top:" + wallPos[1] + '%">' +
       '<button class="sg-zbld wallb" data-bat="wall"><b>🏯 ' + gt("wallT") + " Lv." + wl + "</b><i>" + wallMatName(wl) + "</i></button></span>";
-    var mobBadges = mobs.map(function (m) {
+    var mobBadges = mobs.filter(function (m) { return !m.camp; }).map(function (m) {
       var ty = MOB_TYPES.filter(function (t) { return t.k === m.t; })[0] || MOB_TYPES[0];
       var g = gById(m.gid);
       var mtr = TIERS[(m.ti != null) ? m.ti : mobTierOf(m.lv)];
@@ -12526,7 +12587,7 @@ var BOTS = [
     var wl = Math.min(10, c.bld.wall || 1), col = wallColor(wl), col2 = shadeHex(col, -0.42);
     var wt = 9 + Math.round(wl * 1.1);
     var mobs = ensureMobs(u);
-    var mobBadges = mobs.map(function (m) {
+    var mobBadges = mobs.filter(function (m) { return !m.camp; }).map(function (m) {
       var ty = MOB_TYPES.filter(function (t) { return t.k === m.t; })[0] || MOB_TYPES[0];
       var g = gById(m.gid);
       var pos = m.inCity && !m.dead ? [[38, 46], [58, 56], [46, 68]][m.i % 3] : m.spot;
@@ -12613,6 +12674,7 @@ var BOTS = [
       '.sg-palacemodal h3{text-shadow:0 2px 8px rgba(0,0,0,.9)}</style>' +
       '<div style="margin:-4px 0 10px"><button class="sgbtn sm ghost" data-sgact="guild-open">🏳 ' + gt("guildT") + "</button></div>" +
       '<div class="sg-panel-hd"><h3><i>·</i>🎖 ' + gt("officeT") + "</h3></div>" + offRows +
+      cityUpHTML(u) +
       '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>📜 ' + gt("polT") + "</h3></div>" + polRow +
       '<div class="sg-panel-hd" style="margin-top:8px"><h3><i>·</i>🪙 ' + gt("taxBtn") + "</h3></div>" + taxHTML +
       '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide sg-palacemodal");
@@ -12623,7 +12685,7 @@ var BOTS = [
     if (k === "recruit" && (ensureCity(u).bld.recruit || 0) > 0) { recruitOpen(); return; }
     var b = BUILDINGS.filter(function (x) { return x.k === k; })[0];
     if (!b) return;
-    var c = ensureCity(u), lv = c.bld[k] || 0, max = lv >= BLD_MAX_LV;
+    var c = ensureCity(u), lv = c.bld[k] || 0, max = lv >= bldMaxLv(u);
     var cost = bldCost(u, k);
     var costTxt = Object.keys(cost).map(function (rk) {
       return (rk === "wood" ? "🪵" : rk === "coin" ? "🪙" : rk === "rice" ? "🌾" : "🔩") + fmt(cost[rk]);
@@ -12744,6 +12806,8 @@ var BOTS = [
     var u = me(); if (!u) return;
     var mob = ensureMobs(u)[idx]; if (!mob) return;
     BATUI._mobOpen = idx;
+    var _mp = (ensureCity(u).marches || []).filter(function (m3) { return m3.mi === idx && !m3.done; })[0];
+    var marchNote = _mp ? '<div class="sg-note" style="color:#e8c988">🐎 ' + gt("marchWayT") + " · " + Math.max(0, Math.ceil((_mp.t0 + _mp.dur * 1000 - Date.now()) / 1000)) + "s</div>" : "";
     var ty = MOB_TYPES.filter(function (t) { return t.k === mob.t; })[0] || MOB_TYPES[0];
     var g = gById(mob.gid);
     var lootTxt = "🪙 " + fmt(220 + mob.lv * 80) + "± · 🌾 " + fmt(120 + mob.lv * 36) + " · 🪵 " + fmt(30 + mob.lv * 8) + " · ⛏🔩 " + fmt(18 + mob.lv * 8) + " · " + T("bagShard") + " ×1";
@@ -12779,6 +12843,7 @@ var BOTS = [
       "<span><b>" + gt("mobLead") + "：" + (g ? esc(g.name) : "贼首") + "</b> <small style='color:var(--ink-3)'>" + (g ? tierLabel(TIERS[tierOf(g)]) : "") + "</small></span></div>" +
       '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">⚔</span><span><b>' + gt("mobTroop") + "：" + fmt(mob.troop) + "</b></span></div>" +
       (mob.inCity && !mob.dead ? '<div class="sg-note" style="color:#ffb3b3">🚨 ' + T("mobCity") + "　·　" + T("raidLoot") + "</div>" : "") +
+      marchNote +
       '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>' + gt("mobTeamT") + "（" + gt("mobCenterRule") + "）</h3></div>" +
       '<div style="margin:8px 0">' + teamsHTML + "</div>" +
       (pick < 0 ? '<div class="sg-note" style="color:#e07f7f">' + gt("mobNoTeam") + "</div>" : "") +
@@ -13218,7 +13283,7 @@ var BOTS = [
       '<a class="sgbtn" href="#/me" style="text-decoration:none">👑 ' + gt("gotoGs") + "</a></div>";
     /* 城内建设 */
     var bldRows = BUILDINGS.map(function (b) {
-      var lv = c.bld[b.k] || 0, max = lv >= 10;
+      var lv = c.bld[b.k] || 0, max = lv >= bldMaxLv(u);
       var cost = bldCost(u, b.k);
       var costTxt = Object.keys(cost).map(function (rk) {
         var ic = rk === "wood" ? "🪵" : rk === "coin" ? "🪙" : rk === "rice" ? "🌾" : "🔩";
@@ -13653,6 +13718,145 @@ var BOTS = [
   };
 
   /* ---------- V52：出征行军画面（竖幅三国风插画 + 战鼓 + 行军条） ---------- */
+  /* ---------- V56：山贼驻扎地素材（帐篷 / 船只） ---------- */
+  var SG_IMG_CAMP_TENT = "data:image/webp;base64,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";
+  var SG_IMG_CAMP_BOAT = "data:image/webp;base64,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";
+  /* ---------- V56：城市升级（大殿） ----------
+     城市每升 1 级，城内所有设施上限 +10（城市 N 级 → 设施最高 N*10 级）。
+     军师智力 / 大司农政治 > 50：升级资源 -50% 起，每高 10 点再 -10%（合计上限 90%），
+     工期按同比例缩短（上限 80%）。六职任命齐全可托管升级，直至资源耗尽。 */
+  function cityLvOf(u) { u = u || me(); return (ensureCity(u).lv) || 1; }
+  function bldMaxLv(u) { u = u || me(); return 10 * cityLvOf(u); }
+  function offStatOf(u, key, st) {
+    u = u || me();
+    var cid = u.bat.off && u.bat.off[key];
+    if (!cid) return 0;
+    var cc = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    if (!cc) return 0;
+    var g = gById(cc.gid) || {};
+    return (Number(g[st]) || 0) + ((cc.spa && cc.spa[st]) || 0);
+  }
+  function cityUpDisc(u) {
+    u = u || me();
+    function one(v) { if (v <= 50) return 0; return 0.5 + 0.1 * Math.floor((v - 50) / 10); }
+    var dIn = one(offStatOf(u, "juns", "in")), dPo = one(offStatOf(u, "sin", "po"));
+    var res = Math.min(0.9, dIn + dPo);
+    return { res: res, time: Math.min(0.8, res), din: dIn, dpo: dPo };
+  }
+  function cityUpCost(u) {
+    u = u || me();
+    var lv = cityLvOf(u), d = cityUpDisc(u).res, k = Math.pow(lv, 1.7);
+    return { rice: Math.round(1500 * k * (1 - d)), wood: Math.round(1100 * k * (1 - d)), iron: Math.round(500 * k * (1 - d)), coin: Math.round(1800 * k * (1 - d)) };
+  }
+  function cityUpTime(u) { u = u || me(); return Math.max(20, Math.round((60 + 30 * cityLvOf(u)) * (1 - cityUpDisc(u).time))); }
+  function officesAllFilled(u) { u = u || me(); return OFFICES.every(function (o) { return u.bat.off && u.bat.off[o.k]; }); }
+  function cityUpStart(u, silent) {
+    u = u || me();
+    var c = ensureCity(u);
+    if (c.upEnd != null) return false;
+    var cost = cityUpCost(u), ok = true;
+    Object.keys(cost).forEach(function (rk) { if ((u.res[rk] || 0) < cost[rk]) ok = false; });
+    if (!ok) return false;
+    Object.keys(cost).forEach(function (rk) { u.res[rk] -= cost[rk]; });
+    c.upTot = cityUpTime(u); c.upEnd = Date.now() + c.upTot * 1000;
+    save(); try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}
+    if (!silent) toast(gt("cityUpGoT", { s: c.upTot }), "ok");
+    return true;
+  }
+  function tickCityUp(u) {
+    u = u || me();
+    var c = ensureCity(u);
+    if (c.upEnd != null) {
+      if (Date.now() >= c.upEnd) {
+        c.lv = (c.lv || 1) + 1; c.upEnd = null; save();
+        toast(gt("cityUpOkT", { n: c.lv, m: bldMaxLv(u) }), "ok");
+      }
+    } else if (c.autoUp) {
+      if (!officesAllFilled(u)) { c.autoUp = 0; save(); return; }
+      if (!cityUpStart(u, true)) { c.autoUp = 0; save(); toast(gt("cityAutoDoneT", { n: c.lv || 1 }), "ok"); }
+    }
+  }
+  function cityUpHTML(u) {
+    var c = ensureCity(u);
+    var lv = c.lv || 1, max = bldMaxLv(u);
+    var d = cityUpDisc(u), cost = cityUpCost(u), tm = cityUpTime(u);
+    var ic = { rice: "🌾", wood: "🪵", iron: "🔩", coin: "🪙" };
+    var costTxt = Object.keys(cost).map(function (rk) { return ic[rk] + fmt(cost[rk]); }).join(" ");
+    var can = Object.keys(cost).every(function (rk) { return (u.res[rk] || 0) >= cost[rk]; });
+    var busy = c.upEnd != null;
+    var left = busy ? Math.max(0, Math.ceil((c.upEnd - Date.now()) / 1000)) : 0;
+    var pw = busy ? Math.max(2, Math.min(98, Math.round((1 - left / Math.max(1, c.upTot || tm)) * 100))) : 0;
+    var dTxt = d.res > 0 ? ' <span style="color:#8fd694">' + gt("cityDiscT", { d: Math.round(d.res * 100) }) + "（智 " + Math.round(d.din * 100) + "% + 政 " + Math.round(d.dpo * 100) + "%）</span>" : "";
+    var allOff = officesAllFilled(u);
+    return '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🏰 ' + gt("cityUpSecT") + "</h3></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#c9a45c;color:#10131a">城</span>' +
+      "<span><b>" + gt("cityLvT", { n: lv, m: max }) + "</b><br><small style='color:var(--ink-3)'>" + gt("cityUpHintT") + "</small>" + dTxt + "</span></div>" +
+      (busy
+        ? '<div class="sg-note">⏳ ' + gt("cityUpBusyT", { s: left }) + '<div style="height:7px;border-radius:99px;background:rgba(255,255,255,.12);margin-top:6px;overflow:hidden"><b style="display:block;height:100%;width:' + pw + '%;background:linear-gradient(90deg,#e8c988,#c9a45c)"></b></div></div>'
+        : '<div class="sg-rankline"><span><small>' + costTxt + " · ⏳ " + gt("cityTimeT", { s: tm }) + "</small></span><span class=\"sp\"></span>" +
+          '<button class="sgbtn sm primary" data-bat="city-up"' + (can ? "" : " disabled") + ">" + gt("cityUpBtnT") + "</button></div>") +
+      '<div class="sg-rankline"><span><small style="color:var(--ink-3)">' + (allOff ? gt("cityAutoHintT") : gt("cityAutoNeedT")) + "</small></span><span class=\"sp\"></span>" +
+      '<button class="sgbtn sm' + (c.autoUp ? " ghost" : " primary") + '" data-bat="city-auto"' + (!allOff && !c.autoUp ? " disabled" : "") + ">" + (c.autoUp ? gt("cityAutoStopT") : gt("cityAutoT")) + "</button></div>";
+  }
+  /* ---------- V56：对外行军（轨迹 + 队伍标记，1-3 分钟抵达） ---------- */
+  function mobSpotWorld(mob) {
+    if (mob.camp && mob.spot) return [mob.spot[0], mob.spot[1]];
+    var sp = mob.spot || [50, 50];
+    return [(60 + sp[0] / 100 * 880) / 10, (56 + sp[1] / 100 * 500) / 6.4];
+  }
+  function startMobMarch(u, mi, ti) {
+    u = u || me();
+    var c = ensureCity(u);
+    var mobs = ensureMobs(u), mob = mobs[mi];
+    if (!mob || mob.dead) return toast(gt("mobGone"), "err");
+    c.marches = (c.marches || []).filter(function (m3) { return !m3.done; });
+    if (c.marches.some(function (m3) { return m3.mi === mi; })) return toast(gt("marchWayT"), "err");
+    if (ti == null || !teamReady(u, ti).ok) { ti = firstReadyTeam(u); if (ti < 0) return toast(gt("mobNoTeam"), "err"); }
+    var to = mobSpotWorld(mob), x0 = 50, y0 = 47;
+    var d = Math.sqrt(Math.pow(to[0] - x0, 2) + Math.pow(to[1] - y0, 2) * 0.41);
+    var dur = Math.round(Math.max(60, Math.min(180, 60 + d * 1.6)));
+    var trm = teamReady(u, ti);
+    var ctr = trm.centerId ? (u.cards || []).filter(function (x) { return x.id === trm.centerId; })[0] : null;
+    var gg = ctr ? (gById(ctr.gid) || {}) : {};
+    c.marches.push({ id: "M" + Date.now(), mi: mi, ti: ti, t0: Date.now(), dur: dur, x0: x0, y0: y0, x1: to[0], y1: to[1], done: 0,
+      name: String(gg.name || "军").charAt(0), f: gg.f || "" });
+    save(); try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}
+    BATUI.homeMap = "world"; closeModal(); refreshBattle();
+    toast(gt("marchStartT", { s: dur }), "ok");
+  }
+  function tickMarches(u) {
+    u = u || me();
+    var c = ensureCity(u);
+    if (!(c.marches || []).length) return;
+    var changed = false;
+    c.marches.forEach(function (m3) {
+      if (m3.done) return;
+      if (Date.now() < m3.t0 + m3.dur * 1000) return;
+      m3.done = 1; changed = true;
+      var mob = (c.mobs || [])[m3.mi];
+      if (!mob || mob.dead) { toast(gt("mobGone"), "err"); return; }
+      toast(gt("marchArrT", { n: mob.lv }), "ok");
+      if (!BATUI.fight && !document.getElementById("sgMask")) location.hash = "#/battle/f/m" + m3.mi;
+    });
+    var keep = c.marches.filter(function (m3) { return !(m3.done && Date.now() - m3.t0 - m3.dur * 1000 > 600000); });
+    if (changed || keep.length !== c.marches.length) { c.marches = keep; save(); }
+  }
+  function marchTroopHTML(m3) {
+    var dx = m3.x1 - m3.x0, dy = m3.y1 - m3.y0;
+    var qx = m3.x0 + dx / 2 - dy * 0.16, qy = m3.y0 + dy / 2 + dx * 0.16;
+    var t3 = Math.max(0, Math.min(1, (Date.now() - m3.t0) / (m3.dur * 1000)));
+    var a3 = (1 - t3) * (1 - t3), b3 = 2 * (1 - t3) * t3, c3 = t3 * t3;
+    var px = a3 * m3.x0 + b3 * qx + c3 * m3.x1, py = a3 * m3.y0 + b3 * qy + c3 * m3.y1;
+    var FC = { "魏": "#5b8dd6", "蜀": "#d65b5b", "吴": "#5bd68d", "群": "#b9a44c" };
+    var fc = FC[m3.f] || "#e8c988";
+    function row(srck, n) { var src2 = spriteOf(srck), h = ""; for (var i3 = 0; i3 < n; i3++) h += '<i style="background-image:url(' + src2 + ')"></i>'; return h; }
+    var left = Math.max(0, Math.ceil((m3.t0 + m3.dur * 1000 - Date.now()) / 1000));
+    return '<svg class="sg-mroute" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M' + m3.x0 + " " + m3.y0 + " Q" + qx + " " + qy + " " + m3.x1 + " " + m3.y1 + '" fill="none" stroke="rgba(232,201,136,.5)" stroke-width="0.45" stroke-dasharray="1.5 1.2"/></svg>' +
+      '<span class="sg-marchtroop" data-t0="' + m3.t0 + '" data-dur="' + m3.dur + '" data-x0="' + m3.x0 + '" data-y0="' + m3.y0 + '" data-qx="' + qx + '" data-qy="' + qy + '" data-x1="' + m3.x1 + '" data-y1="' + m3.y1 + '" style="left:' + px.toFixed(2) + "%;top:" + py.toFixed(2) + '%">' +
+      '<svg class="mt-flag" viewBox="0 0 14 26"><circle cx="6.8" cy="2" r="1.3" fill="#e8c988"/><rect x="6" y="2.6" width="1.6" height="23" fill="#8a6b45"/><path d="M7.6 3.4 L13.6 5.9 L7.6 8.4 Z" fill="' + fc + '"/><text x="10" y="7.4" text-anchor="middle" font-size="4.4" font-weight="800" fill="#fff">' + esc(m3.name || "军") + '</text></svg>' +
+      '<span class="mt-rows"><span class="r">' + row("qi", 3) + '</span><span class="r">' + row("gong", 4) + '</span><span class="r">' + row("dao", 4) + "</span></span>" +
+      "<b>" + left + "s</b></span>";
+  }
   var SG_MARCH_ART = [SG_IMG_MARCH1, SG_IMG_MARCH2, SG_IMG_MARCH3];
   var SG_MARCH_TITLE = {
     monster: { en: "Marching to Hunt", zh: "出城讨伐", ja: "討伐に出陣" },
@@ -13668,7 +13872,7 @@ var BOTS = [
     for (var i = 0; i < str.length; i++) seed = (seed * 31 + str.charCodeAt(i)) % 9973;
     return SG_MARCH_ART[seed % SG_MARCH_ART.length];
   }
-  function marchOpen(kind, foe, then) {
+  function marchOpen(kind, foe, then, btnTxt) {
     kind = kind || "monster";
     var t = SG_MARCH_TITLE[kind] || SG_MARCH_TITLE.monster;
     var sub = SG_MARCH_SUB[kind] || SG_MARCH_SUB.monster;
@@ -13686,7 +13890,7 @@ var BOTS = [
       '<div class="sg-march-roads"><i></i><i></i><i></i></div>' +
       '<div class="sg-march-bar"><b></b></div>' +
       '<div class="sg-march-foot"><small>' + esc(pick({ en: "Toward the battlefield", zh: "前军已出，正奔战场", ja: "先陣、戦場へ向かう" })) + "</small>" +
-      '<button class="sgbtn primary sm" data-bat="march-go">' + esc(pick({ en: "Go", zh: "立即前往", ja: "直ちに向かう" })) + "</button></div>" +
+      '<button class="sgbtn primary sm" data-bat="march-go">' + esc(btnTxt || pick({ en: "Go", zh: "立即前往", ja: "直ちに向かう" })) + "</button></div>" +
       "</div>",
       "march"
     );
@@ -15167,10 +15371,12 @@ var BOTS = [
         closeModal();
         /* V52：出城打野怪 → 先播出行军画面（竖幅插画 + 战鼓），再进战斗页 */
         (function (mi) {
+          var cmf = ensureCity(u);
+          if ((cmf.marches || []).some(function (m3) { return m3.mi === mi && !m3.done; })) return toast(gt("marchWayT"), "err");
           var mobs = ensureMobs(u), mb = mobs[mi] || {};
           var mty = (typeof MOB_TYPES !== "undefined" ? MOB_TYPES : []).filter(function (x) { return x.k === mb.t; })[0];
           var nm = mty ? mobTypeName(mty) : "";
-          marchOpen("monster", nm, function () { location.hash = "#/battle/f/m" + mi; });
+          marchOpen("monster", nm, function () { startMobMarch(u, mi, msel); }, gt("marchSendT"));
         })(mfi);
         return;
       }
@@ -15224,13 +15430,34 @@ var BOTS = [
         var bk = t.getAttribute("data-k"), b0 = BUILDINGS.filter(function (x) { return x.k === bk; })[0];
         if (!b0) return;
         var lv0 = u.bat.city.bld[bk] || 0;
-        if (lv0 >= 10) return toast(gt("bldMax"), "err");
+        if (lv0 >= bldMaxLv(u)) return toast(gt("bldMax"), "err");
         var cost0 = bldCost(u, bk), lack = Object.keys(cost0).filter(function (rk) { return (u.res[rk] || 0) < cost0[rk]; });
         if (lack.length) return toast(gt("bldNoRes"), "err");
         Object.keys(cost0).forEach(function (rk) { u.res[rk] -= cost0[rk]; });
         u.bat.city.bld[bk] = lv0 + 1;
         save(); try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}   /* V38：升级关键操作立即推送，防关页丢档 */
         toast(gt("bldUpOk", { n: bldName(b0), m: lv0 + 1 }), "ok"); refreshBattle(); return;
+      }
+      case "city-up": {
+        ensureCity(u);
+        var cu0 = u.bat.city;
+        if (cu0.upEnd != null) return toast(gt("cityUpBusyT", { s: Math.max(0, Math.ceil((cu0.upEnd - Date.now()) / 1000)) }), "err");
+        if (!cityUpStart(u, false)) return toast(gt("bldNoRes"), "err");
+        refreshBattle(); palaceOpen();
+        return;
+      }
+      case "city-auto": {
+        ensureCity(u);
+        var ca0 = u.bat.city;
+        if (ca0.autoUp) { ca0.autoUp = 0; save(); toast(gt("cityAutoOffT"), "ok"); }
+        else {
+          if (!officesAllFilled(u)) return toast(gt("cityAutoNeedT"), "err");
+          ca0.autoUp = 1; save();
+          if (ca0.upEnd == null) cityUpStart(u, true);
+          toast(gt("cityAutoOnT"), "ok");
+        }
+        refreshBattle(); palaceOpen();
+        return;
       }
       case "pol-set": {
         ensureCity(u);
@@ -15527,8 +15754,30 @@ var BOTS = [
           try { autoDefend(u); } catch (e) {}
         }
       }
+      /* V56：城市升级结算 / 托管链 + 行军到达 */
+      try { tickCityUp(u); } catch (e56a) {}
+      try { tickMarches(u); } catch (e56b) {}
     }
   }, 1000);
+  /* V56：行军队伍标记沿贝塞尔轨迹行走（200ms 步进） */
+  setInterval(function () {
+    try {
+      var els = document.querySelectorAll(".sg-marchtroop[data-t0]");
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        var t0 = +el.getAttribute("data-t0"), dur = +el.getAttribute("data-dur") || 120;
+        var t = Math.max(0, Math.min(1, (Date.now() - t0) / (dur * 1000)));
+        var x0 = +el.getAttribute("data-x0"), y0 = +el.getAttribute("data-y0");
+        var qx = +el.getAttribute("data-qx"), qy = +el.getAttribute("data-qy");
+        var x1 = +el.getAttribute("data-x1"), y1 = +el.getAttribute("data-y1");
+        var a = (1 - t) * (1 - t), b = 2 * (1 - t) * t, c = t * t;
+        el.style.left = (a * x0 + b * qx + c * x1).toFixed(2) + "%";
+        el.style.top = (a * y0 + b * qy + c * y1).toFixed(2) + "%";
+        var tb = el.querySelector("b");
+        if (tb) tb.textContent = Math.max(0, Math.ceil((t0 + dur * 1000 - Date.now()) / 1000)) + "s";
+      }
+    } catch (e) {}
+  }, 200);
   /* 先暴露公共句柄：init 里的 render() 依赖 window.SGSocial.handleRoute 拦截社区路由 */
   window.SGSocial = {
     handleRoute: handleRoute,
@@ -15559,7 +15808,7 @@ var BOTS = [
       recycleLvOk: recycleLvOk, recycleLvMax: function () { return RECYCLE_LV_MAX; }, selCalc: selCalc,
       bldYield: bldYieldAt, officeBonusPct: officeBonusPct, cityPreview: cityPreview, palaceOpen: palaceOpen,
       guildOpen: function () { return guildOpen(); }, gt: gt, lang: lang, cityList: cityListHTML, modal: modal,
-      marchOpen: marchOpen, marchArt: marchArt, sfx: SG_SFX, armFx: armFx, sprite: function () { return SG_SPRITE || SG_IMG_SOLDIER; }, spriteOf: spriteOf, bcard: function (un, side, ix) { return bcardHTML(un, side, ix); }, spriteSet: function (k, d) { if (!k) return false; if (d) { SG_SPRITES[k] = d; } else { delete SG_SPRITES[k]; } return true; }, spriteInfo: function () { var o = {}; Object.keys(SG_SPRITES).forEach(function (k) { o[k] = SG_SPRITES[k].length; }); return { arms: GS_ARMS.map(function (a) { return a.k; }), names: GS_ARMS.map(function (a) { return a.n; }), have: o, def: (SG_SPRITE || SG_IMG_SOLDIER).slice(0, 32), defLen: (SG_SPRITE || SG_IMG_SOLDIER).length }; }, res: function () { return BATUI.res; }, layoutSoldiers: layoutSoldiers, syncSoldiers: syncSoldiers, blastSoldiers: blastSoldiers, soldierN: soldierN, fightGo: function (k) { var b = document.querySelector('[data-bat="go"][data-key="' + k + '"]'); if (b) { b.click(); return true; } return false; }, marchCss: function () { return [SG_IMG_MARCH1.length, SG_IMG_MARCH2.length, SG_IMG_MARCH3.length, SG_IMG_FIRE.length, SG_IMG_BATTLEFIELD.length]; },
+      marchOpen: marchOpen, marchArt: marchArt, sfx: SG_SFX, armFx: armFx, sprite: function () { return SG_SPRITE || SG_IMG_SOLDIER; }, spriteOf: spriteOf, bcard: function (un, side, ix) { return bcardHTML(un, side, ix); }, spriteSet: function (k, d) { if (!k) return false; if (d) { SG_SPRITES[k] = d; } else { delete SG_SPRITES[k]; } return true; }, spriteInfo: function () { var o = {}; Object.keys(SG_SPRITES).forEach(function (k) { o[k] = SG_SPRITES[k].length; }); return { arms: GS_ARMS.map(function (a) { return a.k; }), names: GS_ARMS.map(function (a) { return a.n; }), have: o, def: (SG_SPRITE || SG_IMG_SOLDIER).slice(0, 32), defLen: (SG_SPRITE || SG_IMG_SOLDIER).length }; }, res: function () { return BATUI.res; }, meGet: function () { return me(); }, fightClear: function () { BATUI.fight = null; BATUI.res = null; }, cityGet: function () { return ensureCity(me()); }, startMobMarch: startMobMarch, tickMarchesF: tickMarches, tickCityUpF: tickCityUp, cityUpStartF: cityUpStart, ensureM: ensureMobs, teamReadyF: teamReady, firstReadyF: firstReadyTeam, v56: function () { var u = me(); var c = ensureCity(u); return { lv: c.lv || 1, max: bldMaxLv(u), disc: cityUpDisc(u), cost: cityUpCost(u), time: cityUpTime(u), allOff: officesAllFilled(u), auto: !!c.autoUp, busy: c.upEnd != null, marches: (c.marches || []).map(function (m) { return { mi: m.mi, done: m.done, left: Math.max(0, Math.round((m.t0 + m.dur * 1000 - Date.now()) / 1000)), name: m.name, f: m.f, dur: m.dur }; }), camps: (c.mobs || []).filter(function (m) { return m.camp; }).map(function (m) { return { i: m.i, t: m.t, lv: m.lv, water: !!m.water, spot: m.spot.slice() }; }), tentLen: SG_IMG_CAMP_TENT.length, boatLen: SG_IMG_CAMP_BOAT.length }; }, layoutSoldiers: layoutSoldiers, syncSoldiers: syncSoldiers, blastSoldiers: blastSoldiers, soldierN: soldierN, fightGo: function (k) { var b = document.querySelector('[data-bat="go"][data-key="' + k + '"]'); if (b) { b.click(); return true; } return false; }, marchCss: function () { return [SG_IMG_MARCH1.length, SG_IMG_MARCH2.length, SG_IMG_MARCH3.length, SG_IMG_FIRE.length, SG_IMG_BATTLEFIELD.length]; },
       renderBattle: renderBattle, renderFight: renderFight, setApp: setApp, rerender: rerender, teamPanel: teamPanelHTML,
       sortCards: function (list, key) {
         /* 复刻 renderProfile 的排序分支，供验收探针断言排序口径（避免探针复制业务逻辑而产生假绿） */
