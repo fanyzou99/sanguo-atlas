@@ -13756,12 +13756,9 @@ var BOTS = [
       '<div style="display:flex;flex-direction:column;gap:9px;position:relative;z-index:5" data-team="A">' +
       '<div style="text-align:center;font-size:11px;color:#7fd08a;letter-spacing:.2em">⚔ ' + T("sideAtk") + '</div>' +
       myUnits.map(function (un, i) { return bcardHTML(un, "A", i); }).join("") + "</div>" +
-      '<div style="display:flex;flex-direction:column;gap:6px;min-width:0;position:relative;z-index:5;text-align:center;padding-top:6px">' +
+      '<div style="display:flex;flex-direction:column;gap:8px;min-width:0;position:relative;z-index:5;text-align:center;padding-top:6px">' +
       '<div style="font-size:11px;color:var(--gold-2);letter-spacing:.3em">⚔ ⚔ ⚔</div><div class="sg-vsbig">VS</div>' +
-      warStripSVG() +
-      '<div id="sgRoundMid" style="margin:4px 0 2px"><b style="font-size:20px;color:var(--gold-2)" id="sgRoundCur">' + (res ? 1 : "–") + "</b><br>" +
-      '<small style="font-size:10px;color:var(--ink-3)">' + T("roundMidT") + "</small>" +
-      (res ? '<br><small style="font-size:10px;color:var(--ink-3)">共 ' + res.rounds + "</small>" : "") + "</div>" +
+      /* V53.1：去掉小旗子与回合块，作战记录直接接在 VS 下方 */
       midLog + "</div>" +
       '<div style="display:flex;flex-direction:column;gap:9px" data-team="B" title="' + foeTipQ + '">' +
       '<div style="text-align:center;font-size:11px;color:#e07f7f;letter-spacing:.2em" title="' + foeTipQ + '">🛡 ' + T("sideDef") + ' · ' + esc(fk.foe) + '</div>' +
@@ -14032,24 +14029,6 @@ var BOTS = [
       "@keyframes sgQuake{0%,100%{transform:translate(0,0)}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,-2px)}80%{transform:translate(4px,2px)}}</style></div>";
   }
   /* V34：中列战争场面（两军矛兵阵列 + 旌旗） */
-  function warStripSVG() {
-    var s = '<svg viewBox="0 0 60 118" style="width:100%;max-height:120px;opacity:.9" aria-hidden="true">';
-    for (var r = 0; r < 6; r++) {
-      var y = 36 + r * 13;
-      for (var i = 0; i < 4; i++) {
-        s += '<line x1="' + (4 + i * 6) + '" y1="' + y + '" x2="' + (4 + i * 6) + '" y2="' + (y - 8) + '" stroke="#7fd08a" stroke-width="1.4" opacity=".8"/>' +
-             '<circle cx="' + (4 + i * 6) + '" cy="' + (y - 9.5) + '" r="1.6" fill="#a8e0b2" opacity=".85"/>' +
-             '<line x1="' + (32 + i * 6) + '" y1="' + y + '" x2="' + (32 + i * 6) + '" y2="' + (y - 8) + '" stroke="#e08a8a" stroke-width="1.4" opacity=".8"/>' +
-             '<circle cx="' + (32 + i * 6) + '" cy="' + (y - 9.5) + '" r="1.6" fill="#f0b5b5" opacity=".85"/>';
-      }
-    }
-    s += '<line x1="14" y1="32" x2="14" y2="10" stroke="#c9a45c" stroke-width="1.6"/><path d="M14 10 L27 14.5 L14 20 Z" fill="#a63a32"/>';
-    s += '<line x1="46" y1="32" x2="46" y2="10" stroke="#c9a45c" stroke-width="1.6"/><path d="M46 10 L59 14.5 L46 20 Z" fill="#3a6ea8"/>';
-    s += '<line x1="2" y1="30" x2="58" y2="30" stroke="rgba(0,0,0,.35)" stroke-width="1"/>';
-    s += "</svg>";
-    return s;
-  }
-
   /* ---------- V52：兵种弹道（投石 / 箭矢 / 骑兵突击），按武将兵种路由 ---------- */
   function armFx(l, un) {
     var a = (un && un.arm) || "";
