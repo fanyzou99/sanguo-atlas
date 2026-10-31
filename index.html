@@ -10769,6 +10769,38 @@ var BOTS = [
   /* ================= V23 城池内政（君主主页） ================= */
   var GT = {
     en: {
+      guildT: "Guild",
+      guildCreate: "Found guild",
+      guildNamePh: "Guild name (2-12 chars)",
+      guildJoin: "Join",
+      guildLeave: "Leave guild",
+      guildLeaveAsk: "Leave this guild?",
+      guildNotice: "Notice",
+      guildNoticePh: "Write a guild notice…",
+      guildDonate: "Donate",
+      guildTech: "Guild tech",
+      guildTechHint: "Leaders & officers upgrade with guild EXP",
+      guildExp: "Guild EXP",
+      guildMembers: "Members",
+      guildLeader: "Leader",
+      guildOfficer: "Officer",
+      guildMember: "Member",
+      guildRoleT: "Rank",
+      guildKick: "Kick",
+      guildNone: "Not in a guild yet",
+      guildList: "Guilds on this site",
+      guildNeedLogin: "Register & sign in to use guilds",
+      guildErr: "Failed",
+      guildOk: "Done",
+      guildBadName: "Name must be 2-12 characters",
+      guildDonateLedger: "Guild donation -{n} pts",
+      guildTechRice: "Grain +3%/lv",
+      guildTechCoin: "Tax +3%/lv",
+      guildTechCap: "Troop cap +500/lv",
+      guildTechAtk: "ATK +1%/lv",
+      guildTechDef: "DEF +1%/lv",
+      guildTechMarch: "March +2%/lv",
+      guildMaxLv: "Max level",
       rosterIdle: "{n} off duty",
       homeT: "Home", lordT: "Lord", cityT: "City Affairs", officeT: "Court Appointments", buildT: "City Works", polT: "Policy",
       taxBtn: "Collect Tax", taxCd: "Tax already collected this month — come back next month", taxGain: "Treasury +{n} coins",
@@ -10822,6 +10854,25 @@ var BOTS = [
       replayT: "Replay", statT: "Statistics", placeT: "Battlefield", placeBody: "At {c}, {d}, against {f}", dmgStat: "{n}: {d} damage in {c} strike(s)", killStat: "routed {n}", repWin: "胜", repLose: "败"
     },
     zh: {
+      guildT: "同盟",
+      guildCreate: "创建同盟",
+      guildNamePh: "输入同盟名称（2-12 字）",
+      guildJoin: "加入",
+      guildLeave: "退出同盟",
+      guildLeaveAsk: "确定退出同盟？",
+      guildNotice: "公告",
+      guildNoticePh: "写入同盟公告…",
+      guildDonate: "捐献",
+      guildTech: "同盟科技",
+      guildTechHint: "盟主 / 官吏消耗同盟经验升级",
+      guildExp: "同盟经验",
+      guildMembers: "成员",
+      guildLeader: "盟主",
+      guildOfficer: "官吏",
+      guildMember: "成员",
+      guildRoleT: "职位",
+      guildKick: "移出",
+      guildNone: "尚未加入同盟",
       rosterIdle: "未出战 {n} 人",
       homeT: "主页", lordT: "君主", cityT: "城池内政", officeT: "政治任命", buildT: "城内建设", polT: "政策调整",
       taxBtn: "收税", taxCd: "本月已征税，下月再来", taxGain: "入库 铜钱 +{n}",
@@ -10875,55 +10926,38 @@ var BOTS = [
       replayT: "战况回放", statT: "统计", placeT: "战斗地点", placeBody: "{d} · 于 {c} 迎战 {f}", dmgStat: "{n}：造成 {d} 伤害（{c} 次出手）", killStat: "击溃 {n}", repWin: "胜", repLose: "败"
     },
     ja: {
-      homeT: "ホーム", lordT: "君主", cityT: "都市内政", officeT: "登用・任命", buildT: "都市建設", polT: "政策",
-      taxBtn: "徴税", taxCd: "今月は徴税済み。来月またどうぞ", taxGain: "銅銭 +{n} 入庫",
-      offEmpty: "空席", appointT: "{n} を任命", resigned: "罷免しました", underling: "配下の武将 {n} 名", reassign: "転任", curOffice: "現任 {n}", sortBy: "並べ替え",
-  apoInSquad: "出陣編成に含まれています——先に編成から外してください",
-  apoNow: "在任",
-  apoRule: "一人一職 · 出陣中の武将は任命不可 · チェックを外すと罷免",
-  apoVacate: "罷免",
-  apoLocked: "選択不可",
-  apoState: "状態",
-  apoPickN: "選択可 {n} / {m}",
-  multiOfficeNote: "一人一職のみ——転任すると旧職は自動的に解かれます",
-      gotoStage: "出陣", gotoGs: "武将育成", bldNoRes: "資源不足", bldMax: "最大レベル", bldUpOk: "{n} が Lv.{m} に昇格",
-      polOk: "政策を変更：{n}", polNow: "現在の政策", incomeT: "月間収入", resBalT: "都市の産出 / 消耗", officeYield: "役職による産出加成", campNote: "兵営：全武将の率兵上限が1レベルごとに+2%",
-      st1: "両軍対峙、戦鼓が響き、殺声が天を衝く。",
-      st2: "矢雨が空を覆い、先鋒が激突する。",
-      st3: "旌旗はためき、一歩も引かぬ攻防が続く。",
-      st4: "馬いななき、刃が交差し、戦況は白熱。",
-      st5: "敵陣揺らめく、勝機は今！",
-      skAct: "{n} が【{s}】を発動、千軍も退く！",
-      skCri: "{n} の一撃、急所を突き威力倍増！",
-      remT: "残り {n}", storyT: "— 第 {n} 回合 —",
-      mapT: "城池図", popT: "人口", houseT: "戸数", palaceT: "大殿", wallT: "城壁",
-      governT: "大殿執務", governHint: "任命・政策・徴税はいずれも大殿で行う",
-      bldOptT: "昇級", demT: "取り壊し", demOk: "{n} を取り壊し、資材を一部返還",
-      vacT: "空き地", pickBld: "ここに建設（占地マスに注意）", noFit: "ここは空きが足りない、別の場所へ",
-      bldNew: "建設", bldNewOk: "{n} を建設（Lv.1）", bldOnce: "同種の建物はすでにある",
-      wallUpT: "増強", wallUpOk: "城壁を増強：高さ +1、外観は{m}に更新", wallMax: "城壁は最大増強済み", cityBldT: "城内建物", viewPhoto: "実景", viewSvg: "図式",
-      mobsT: "周辺の賊", mobHint: "城外の賊をクリックして情報を探り、配下の武将で部隊を組んで討伐せよ",
-      mobLead: "頭領", mobTroop: "兵力", mobLoot: "勝利すれば戦利品", mobFight: "部隊を組んで討伐", mobGone: "この賊は討伐済み。来月は新たな賊が現れるかも", recruitT: "招募所", recruitDesc: "ここで武将を招募：抽選ごとに三人の武将から一人を選び、欠片からの合成にも対応。", recruitHint: "武将を招募可", recruitGo: "招募へ", recruitQuota: "招募回数", recruitQuotaHint: "署名とポイント交換で獲得", recruitSynth: "重複武将は自動で欠片に変換、カードウォールで合成できます。", campCap: "率兵上限 +{n}%", mobTeamT: "出撃部隊", mobTeamRow: "部隊 {n}", mobTeamOn: "選択中", mobTeamSel: "部隊 {n} 出撃", mobCenterRule: "3将以上かつ中軍必須。中軍壊滅で敗北", mobLackN: "あと {n} 名", mobLackCenter: "中軍なし", mobNoTeam: "出撃可能な部隊がありません（3将以上・中軍必須）。", mobCenterDown: "中軍壊滅・全軍敗退",
-      wmCityT: "城内", wmWorldT: "城外マップ", wmHint: "賊の砦をクリックで偵察・関所で出陣・隣接都市へ移動", passT: "関所", passGuard: "守備兵力", passGo: "出陣へ", passNear: "{c} の出口を抑える要衝",
-      recAllT: "一括補兵", recAllOk: "部隊の補兵が完了", recNone: "兵力は満員", sqRecT: "補兵", sqAbsorbT: "吸収強化", sqNoDup: "吸収できる同名同階のカードがありません", sqAbsOk: "{n} 枚を吸収、技能 {s} 個解放",
-      autoT: "自動周回", autoTarget: "目標武将レベル", autoStart: "開始", autoStop: "停止", autoStopT: "自動周回を停止",
-      autoDone: "自動周回完了——平均レベル {n} が目標 {m} に到達（{r} 戦）", autoFail: "自動周回中断——{r} 連敗、育成してから再挑戦を",
-      autoTroop: "自動周回中断——兵員補充不可（兵池と資源が枯渇）", autoMax: "自動周回中断——戦闘回数上限に到達",
-      autoBox: "自動周回 · {m}", autoRun: "第 {r} 戦", autoAvg: "平均 Lv.{n} → 目標 {m}", autoWins: "{w}勝 / {l}敗 · 経験 +{e}",
-      autoInput: "目標レベルを入力（現在平均 {n}）——部隊は自動出撃・自動補兵で目標達成まで周回します",
-      defLogT: "自動防衛記録", defLogNone: "自動戦闘はまだありません——編成済み部隊が城外の賊を自動討伐します",
-      autoDefT: "自動防衛", autoDefOn: "自動防衛有効：編成済み部隊が命令なく城外の賊を討伐します",
-      defLine: "T{t} 部隊が {f}(Lv.{l}) を討伐——{w} · 経験 +{e}", defRes: "今月の自動防衛 {n} 戦",
-      poolT: "予備兵", woundT: "負傷兵", infT: "負傷兵療養所", woundIn: "大勝！負傷兵 {n} を療養所へ送り、1ヶ月後に予備兵として復帰", woundHeal: "負傷兵 {n} が回復（予備兵 +{n}）", recFreeT: "予備兵から補充（無料）", recNewT: "新規募集 {n}（🌾{a} · 🪙{b}）", recLackT: "予備兵不足——新規募集には追加リソースが必要", upNoteT: "兵消費：予備兵 0.5 糧/月·人 · 負傷兵 各リソース 1/月·人（1ヶ月後に回復）", sqRecallT: "出陣補兵", spAddT: "加振", spBadT: "1〜{n} の整数を入力してください", spOkT: "{s} +{n}（残り {l}）",
-      authPwd: "パスワード", authPwd2: "パスワード（確認）", authPwdPh: "6〜32文字（英数字推奨）",
-      authPwdWeak: "パスワードは6〜32文字で入力してください", authPwdMis: "パスワードが一致しません", authPwdBad: "パスワードが違います",
-      authCode: "メール認証コード", authCodeSend: "コード送信", authCodeSent: "認証コードを送信しました（10分間有効・迷惑メールもご確認ください）",
-      authCodeLocal: "メールサービス未設定——今回のコード：{c}（管理画面にも記録されます）",
-      authCodeNeed: "先に「コード送信」で認証コードを取得してください", authCodeBad: "コードが違います", authCodeExp: "コードの有効期限が切れました",
-      authResend: "再送信（{s}s）", authPwdOptional: "パスワード（旧アカウントは空欄可）", pwdSetOk: "パスワードを保存しました",
-      calJu: "第 {n} 局", calEnd: "大勢は定まった——暦は 244年12月 を歩み終えた", casLine: "【{n}】戦闘後の兵力 {a}、負傷兵 {b}", expLine: "【{n}】が {e} 経験を獲得",
-      teamNmT: "部隊名変更", teamNmOk: "部隊名を変更しました", teamPow: "戦力 {n}（兵数＋兵数×統率/100）", armProfT: "兵種熟練度", profGain: "熟練度上昇：{n}", armNow: "現在の兵種", skCostT: "技能発動の兵耗 {n}",
-      replayT: "戦況再生", statT: "統計", placeT: "戦場", placeBody: "{d} · {c} にて {f} と交戦", dmgStat: "{n}：{d} ダメージ（{c} 回）", killStat: "{n} を撃破", repWin: "勝", repLose: "敗"
+      guildT: "同盟",
+      guildCreate: "同盟を作る",
+      guildNamePh: "同盟名（2〜12 文字）",
+      guildJoin: "加入",
+      guildLeave: "脱退",
+      guildLeaveAsk: "同盟を脱退しますか？",
+      guildNotice: "公告",
+      guildNoticePh: "同盟公告を入力…",
+      guildDonate: "寄付",
+      guildTech: "同盟科技",
+      guildTechHint: "盟主・官吏が同盟経験で強化",
+      guildExp: "同盟経験",
+      guildMembers: "メンバー",
+      guildLeader: "盟主",
+      guildOfficer: "役職",
+      guildMember: "メンバー",
+      guildRoleT: "役割",
+      guildKick: "追放",
+      guildNone: "未加入",
+      guildList: "同盟一覧",
+      guildNeedLogin: "利用には登録・ログインが必要です",
+      guildErr: "失敗",
+      guildOk: "成功",
+      guildBadName: "名称は 2〜12 文字で入力",
+      guildDonateLedger: "同盟寄付 -{n} pt",
+      guildTechRice: "糧産 +3%/lv",
+      guildTechCoin: "税収 +3%/lv",
+      guildTechCap: "帯兵上限 +500/lv",
+      guildTechAtk: "攻撃 +1%/lv",
+      guildTechDef: "防御 +1%/lv",
+      guildTechMarch: "行軍 +2%/lv",
+      guildMaxLv: "最大レベル",
     }
   };
   function gt(k, v) {
@@ -12241,6 +12275,11 @@ var BOTS = [
       '<div class="sg-wmnight" style="opacity:' + night + '"></div>' +
       '<i class="sg-wmcloud c1"></i><i class="sg-wmcloud c2"></i>' +
       badges +
+      /* V51.1：同盟入口前置到天下地图——用户不必先点开大殿才能找到 */
+      '<button class="sg-guildbtn" data-sgact="guild-open" title="' + esc(gt("guildT")) + '">🏳 ' + esc(gt("guildT")) + "</button>" +
+      '<style>.sg-guildbtn{position:absolute;left:14px;top:14px;z-index:9;display:flex;align-items:center;gap:5px;border:1px solid rgba(232,201,136,.55);border-radius:999px;background:rgba(20,16,8,.82);color:#f5e6c4;font-size:12.5px;font-weight:700;letter-spacing:.06em;padding:6px 14px;cursor:pointer;backdrop-filter:blur(4px);box-shadow:0 4px 14px rgba(0,0,0,.5);transition:.15s}' +
+      ".sg-guildbtn:hover{border-color:#ffe9b8;background:rgba(48,36,14,.92);transform:translateY(-1px)}" +
+      '@media(max-width:640px){.sg-guildbtn{font-size:11px;padding:4px 10px;left:8px;top:8px}}' +
       '<style>.sg-wmfield{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(232,201,136,.25);box-shadow:0 14px 36px rgba(0,0,0,.5);background:#7ca251}' +
       ".sg-wmnight{position:absolute;inset:0;background:linear-gradient(180deg,#0a1430,#0a1430);pointer-events:none;transition:opacity 1s;mix-blend-mode:multiply}" +
       ".sg-wmcloud{position:absolute;height:70px;border-radius:999px;background:radial-gradient(ellipse,rgba(255,255,255,.34),rgba(255,255,255,0) 70%);pointer-events:none;animation:sgCloud 46s linear infinite}" +
@@ -13063,7 +13102,9 @@ var BOTS = [
     var mapTog = '<div style="display:flex;gap:8px;margin:8px 0 2px;flex-wrap:wrap">' +
       '<button class="sgbtn sm' + (BATUI.homeMap !== "world" ? " primary" : " ghost") + '" data-bat="homemap" data-v="city">🏙 ' + gt("wmCityT") + "</button>" +
       '<button class="sgbtn sm' + (BATUI.homeMap === "world" ? " primary" : " ghost") + '" data-bat="homemap" data-v="world">🗺 ' + gt("wmWorldT") + "</button>" +
-      '<button class="sgbtn sm ghost" data-bat="mapstyle" title="' + gt("viewPhoto") + ' / ' + gt("viewSvg") + '">🎨 ' + (BATUI.mapStyle === "svg" ? gt("viewSvg") : gt("viewPhoto")) + "</button></div>";
+      '<button class="sgbtn sm ghost" data-bat="mapstyle" title="' + gt("viewPhoto") + ' / ' + gt("viewSvg") + '">🎨 ' + (BATUI.mapStyle === "svg" ? gt("viewSvg") : gt("viewPhoto")) + "</button>" +
+      /* V51.1：同盟入口常驻在视图切换栏——城市视图与天下视图都能一眼看到 */
+      '<button class="sgbtn sm" data-sgact="guild-open" style="border-color:rgba(232,201,136,.6);color:#f5e6c4;background:linear-gradient(180deg,rgba(90,70,30,.55),rgba(30,24,12,.65))">🏳 ' + gt("guildT") + "</button></div>";
     var mapBlock = BATUI.homeMap === "world"
       ? worldMapHTML(u) + '<div class="sg-note" style="margin:8px 0 2px">' + gt("wmHint") + "</div>"
       : cityMapHTML(u) + '<div class="sg-note" style="margin:8px 0 2px">' + gt("mobsT") + "：" + gt("mobHint") + "</div>";
@@ -14764,7 +14805,7 @@ var BOTS = [
       /* V51 探针导出 */
       recycleLvOk: recycleLvOk, recycleLvMax: function () { return RECYCLE_LV_MAX; }, selCalc: selCalc,
       bldYield: bldYieldAt, officeBonusPct: officeBonusPct, cityPreview: cityPreview, palaceOpen: palaceOpen,
-      guildOpen: function () { return guildOpen(); }, cityList: cityListHTML, modal: modal,
+      guildOpen: function () { return guildOpen(); }, gt: gt, lang: lang, cityList: cityListHTML, modal: modal,
       renderBattle: renderBattle, renderFight: renderFight, setApp: setApp, rerender: rerender, teamPanel: teamPanelHTML,
       sortCards: function (list, key) {
         /* 复刻 renderProfile 的排序分支，供验收探针断言排序口径（避免探针复制业务逻辑而产生假绿） */
