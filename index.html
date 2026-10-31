@@ -7658,7 +7658,7 @@ html[data-lang="en"]{letter-spacing:.01em}
        V39：S/A/B 级必出整卡；V47：C 级也必出整卡——配额袋口径是「每 100 张卡片」，
        配额内等级（S/A/B/C）必须兑现为整卡，碎片只在 D/E/F（60% 随机部分）产生 */
     if (_lastPick >= 4 && Math.random() < 0.45) {      /* 碎片判定按掉落品级，S/A/B/C 掉落必出整卡 */
-      var ti = tierOf(g), n = 8 - ti;
+      var n = 8 - _lastPick;   /* V48：碎片数量按掉落品阶（与卡面口径一致），原用 tierOf 五维阶会错配 */
       addShards(u, g.id, n);
       save();
       return { ok: true, shard: true, gen: g, n: n };
@@ -8667,7 +8667,8 @@ var BOTS = [
     var counts = {};
     (u.cards || []).forEach(function (c) {
       var g = gById(c.gid); if (!g) return;
-      var ti = tierOf(g); counts[ti] = (counts[ti] || 0) + 1;
+      var ti = cardTier(c);   /* V48：按卡面品阶统计（原用 tierOf 五维阶，颜色解耦后完全对不上） */
+      counts[ti] = (counts[ti] || 0) + 1;
     });
     return counts;
   }
@@ -8709,7 +8710,7 @@ var BOTS = [
     var rm = [], total = 0;
     u.cards = (u.cards || []).filter(function (c) {
       var g = gById(c.gid); if (!g) return true;
-      var ti = tierOf(g);
+      var ti = cardTier(c);   /* V48 关键修复：必须按「卡面品阶」匹配——原按 tierOf（五维阶）会把五维弱但卡面 S/A/B 的卡当 F/D/E 删掉 */
       if (sel[ti]) { rm.push(c); total += TIERS[ti].pts; return false; }
       return true;
     });
@@ -8800,7 +8801,7 @@ var BOTS = [
       if (!g) break;
       u.draws = (u.draws || 0) - 1;
       /* 与单抽一致：45% 出碎片（数量按品级 紫2 → 白8）；V47：S/A/B/C 掉落必出整卡，碎片只在 D/E/F 产生 */
-      if (_lastPick >= 4 && Math.random() < 0.45) { var sn = 8 - tierOf(g); addShards(u, g.id, sn); shards += sn; continue; }
+      if (_lastPick >= 4 && Math.random() < 0.45) { var sn = 8 - _lastPick; addShards(u, g.id, sn); shards += sn; continue; }
       var c = mkCard(g.id, GMODE ? { t: _lastPick } : null);
       var ti = cardTier(c);
       if (auto[ti]) { rec.cnt++; rec.pts += TIERS[ti].pts; }
@@ -9327,6 +9328,7 @@ var BOTS = [
     var picks = roll3Distinct(u);
     if (picks.length < 3) { toast(T("noDraw"), "err"); return; }
     UI.draw3 = { picks: picks, done: false, dropTiers: [_lastPick, _lastPick, _lastPick], tier: _lastPick };
+    var st = UI.draw3;   /* V48 修复：原先漏声明，map 里引用 st 直接抛 ReferenceError → 单抽三选一弹窗打不开 */
     var cards = picks.map(function (g, i) {
       var pti = (st.dropTiers && st.dropTiers[i] != null && GMODE) ? st.dropTiers[i] : tierOf(g);
       return '<div class="sg-pick" id="sgPick' + i + '" style="--tc:' + TIERS[pti].c + '" data-sgact="pick-card" data-id="' + i + '">' +
@@ -9349,7 +9351,7 @@ var BOTS = [
     u.draws--;
     /* V21：45% 抽出同名碎片（数量按品级 紫2 → 白8），否则整卡；V42 碎片判定按掉落品级（首张为真实掉落），S/A/B 必出整卡 */
     var dropT = (st.dropTiers && st.dropTiers[i] != null) ? st.dropTiers[i] : tierOf(g);
-    var shardHit = dropT >= 3 && Math.random() < 0.45, c = null;
+    var shardHit = dropT >= 4 && Math.random() < 0.45, c = null;   /* V48：C 及配额内等级必出整卡，碎片只在 D/E/F */
     if (shardHit) { addShards(u, g.id, 8 - (GMODE ? dropT : tierOf(g))); }
     else { c = mkCard(g.id, GMODE ? { t: dropT } : null); u.cards = u.cards || []; u.cards.unshift(c); }
     var nb = shardHit ? [] : checkBadges(u);
@@ -12251,7 +12253,7 @@ var BOTS = [
   function pickSort(cards, sort) {
     var k = (sort && sort.k) || "tier", dir = (sort && sort.dir) || (k === "tier" ? 1 : -1);
     function val(c, g) {
-      if (k === "tier") return tierOf(g);
+      if (k === "tier") return cardTier(c);   /* V48：按卡面品阶排序，原用五维阶会让 S/A/B 卡排到列表末尾找不到 */
       if (k === "lv") return cardLv(c);
       if (k === "troop") return troopOfCard(c, g);
       return Number(g[k]) || 0;
@@ -12378,8 +12380,8 @@ var BOTS = [
         '<button class="sgbtn sm primary" data-bat="sq-absorb-all" data-id="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">×' + dupsQ.length + "</button></div>" +
         dupsQ.slice(0, 4).map(function (d2) {
           var dg = gById(d2.gid) || {};
-          return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[tierOf(g)].c + ';color:#10131a">' + esc((dg.name || "?").slice(0, 1)) + "</span>" +
-            "<span><b>" + esc(dg.name || "?") + "</b> <small>Lv." + cardLv(d2) + " · " + tierLabel(TIERS[tierOf(g)]) + "</small></span><span class=\"sp\"></span>" +
+          return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[cardTier(d2)].c + ';color:#10131a">' + esc((dg.name || "?").slice(0, 1)) + "</span>" +
+            "<span><b>" + esc(dg.name || "?") + "</b> <small>Lv." + cardLv(d2) + " · " + tierLabel(TIERS[cardTier(d2)]) + "</small></span><span class=\"sp\"></span>" +
             '<button class="sgbtn sm ghost" data-bat="sq-absorb" data-id="' + card.id + '" data-dup="' + d2.id + '" data-t="' + ti + '" data-p="' + pos + '">' + gt("sqAbsorbT") + "</button></div>";
         }).join("") + (dupsQ.length > 4 ? '<div class="sg-note">… +' + (dupsQ.length - 4) + "</div>" : "")
       : '<div class="sg-note" style="margin-top:10px">' + gt("sqNoDup") + "</div>";
@@ -13034,7 +13036,7 @@ var BOTS = [
     if (!c) return;
     var g = gById(c.gid); if (!g) return;
     ensureBat(u);
-    var ti = tierOf(g), tr = TIERS[ti], lv = cardLv(c), need = expNeed(lv);
+    var ti = cardTier(c), tr = TIERS[ti], lv = cardLv(c), need = expNeed(lv);   /* V48：培养弹窗按卡面品阶 */
     var have = u.shards[g.id] || 0;
     var stTarget = (c.stars || 0);
     var starCost = stTarget < 5 ? STAR_COST[stTarget] : 0;
@@ -14039,7 +14041,7 @@ var BOTS = [
     _bots: BOTS,
     _tiers: TIERS,
     _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes, gMonth: gMonth, ensureCity: ensureCity, ensureMobs: ensureMobs, mobEnemies: mobEnemies, cityPop: cityPop, wallCost: wallCost,
-      switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard }; },
+      switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard, growOpen: growOpen, catCounts: cardTierCounts, catOpen: openCatRecycle, catRun: doCatRecycle }; },
     tierOf: tierOf,
     cardTier: cardTier,
     mobTierOf: mobTierOf,
