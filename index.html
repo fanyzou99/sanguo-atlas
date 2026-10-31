@@ -10317,6 +10317,8 @@ var BOTS = [
   function setApp(html) {
     var a = document.getElementById("app");
     if (a) a.innerHTML = html;
+    /* V54：士兵环形布点（需要 DOM 真实尺寸） */
+    try { setTimeout(function () { layoutSoldiers(document); }, 0); } catch (e) {}
   }
   function navActive(v) {
     $$(".nav button[data-view]").forEach(function (b) {
@@ -10791,7 +10793,7 @@ var BOTS = [
   var GT = {
     en: {
       guildT: "Guild",
-      repDetailT: "Report detail", guildMarchT: "Alliance War", guildMarchHint: "Rally the banner and ride out — the whole host marches for you.", guildMarchHunt: "Hunt Beasts", guildMarchWar: "Guild Assault", sfxT: "Sound", sfxOn: "Sound on",
+      repDetailT: "Report detail", guildMarchT: "Alliance War", guildMarchHint: "Rally the banner and ride out — the whole host marches for you.", resLossT: "Total losses", resDeadT: "Killed", resWoundT: "Wounded", resRemT: "left", resExpT: "General EXP", resLootT: "Spoils", resUnitT: "Per-unit losses", resNoneT: "None", guildMarchHunt: "Hunt Beasts", guildMarchWar: "Guild Assault", sfxT: "Sound", sfxOn: "Sound on",
       guildCreate: "Found guild",
       guildNamePh: "Guild name (2-12 chars)",
       guildJoin: "Join",
@@ -10877,7 +10879,7 @@ var BOTS = [
     },
     zh: {
       guildT: "同盟",
-      repDetailT: "战报详情", guildMarchT: "同盟出征", guildMarchHint: "竖旗会师，同盟同赴一战。", guildMarchHunt: "出城讨伐", guildMarchWar: "同盟攻城", sfxT: "音效", sfxOn: "音效已开",
+      repDetailT: "战报详情", guildMarchT: "同盟出征", guildMarchHint: "竖旗会师，同盟同赴一战。", resLossT: "总损失", resDeadT: "阵亡", resWoundT: "负伤", resRemT: "余", resExpT: "武将经验", resLootT: "资源得失", resUnitT: "各部队损失", resNoneT: "无", guildMarchHunt: "出城讨伐", guildMarchWar: "同盟攻城", sfxT: "音效", sfxOn: "音效已开",
       guildCreate: "创建同盟",
       guildNamePh: "输入同盟名称（2-12 字）",
       guildJoin: "加入",
@@ -10950,7 +10952,7 @@ var BOTS = [
     },
     ja: {
       guildT: "同盟",
-      repDetailT: "戦報詳細", guildMarchT: "同盟出征", guildMarchHint: "旗を掲げ、同盟と共に戦地へ赴く。", guildMarchHunt: "討伐に出る", guildMarchWar: "同盟攻城", sfxT: "効果音", sfxOn: "効果音オン",
+      repDetailT: "戦報詳細", guildMarchT: "同盟出征", guildMarchHint: "旗を掲げ、同盟と共に戦地へ赴く。", resLossT: "総損失", resDeadT: "戦死", resWoundT: "負傷", resRemT: "残", resExpT: "武将経験", resLootT: "資源収支", resUnitT: "各部隊の損失", resNoneT: "なし", guildMarchHunt: "討伐に出る", guildMarchWar: "同盟攻城", sfxT: "効果音", sfxOn: "効果音オン",
       guildCreate: "同盟を作る",
       guildNamePh: "同盟名（2〜12 文字）",
       guildJoin: "加入",
@@ -13727,9 +13729,14 @@ var BOTS = [
     if (!fk.terr) fk.terr = ["plain", "valley", "river"][Math.floor(Math.random() * 3)];
     var res = BATUI.res, out = res ? res.out : null;
     /* V53：右上角操作区——「再战（第 N 关）」提前到页头，右侧汇总框默认收敛到底部 */
+    /* V54：开战 / 偷袭 / 再战 全部收到页头右上角，下方只留对战结果 */
+    var headBtns = res
+      ? (fk.kind === "stage" && res.win ? '<button class="sgbtn primary" data-bat="fight" data-n="' + (fk.stage + 1) + '">' + T("againF") + "（" + T("stage", { n: fk.stage + 1 }) + "）</button> " : "")
+      : '<button class="sgbtn primary" data-bat="go" data-key="' + esc(key) + '">' + (fk.kind === "sweep" ? T("sweep") : T("fight")) + "</button> " +
+        '<button class="sgbtn ghost" data-bat="sneak" data-key="' + esc(key) + '" title="' + esc(gt("sneakDesc")) + '">🥷 ' + T("sneakT") + "</button> ";
     head = head.replace("__V53HEAD__",
-      (res && fk.kind === "stage" && res.win ? '<button class="sgbtn primary" data-bat="fight" data-n="' + (fk.stage + 1) + '">' + T("againF") + "（" + T("stage", { n: fk.stage + 1 }) + "）</button> " : "") +
-      '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button></div></div>");
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">' + headBtns +
+      '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button></div></div></div>");
     var logHTML = res ? res.log.map(function (l) {
       if (l.story) return '<div class="sg-logline sg-story" data-r="' + l.r + '">' + esc(l.txt) + "</div>";
       return '<div class="sg-logline" data-r="' + l.r + '"><span class="r">' + l.r + "</span>" +
@@ -13765,13 +13772,8 @@ var BOTS = [
       foeUnits.map(function (un, i) { return bcardHTML(un, "B", i); }).join("") + "</div></div>" +
       '<div style="min-width:0;display:flex;flex-direction:column;gap:16px" id="sgFightRight">';
     if (!BATUI.res) {
-      return head + roster +
-        '<div class="sg-panel" style="text-align:center;padding:22px">' +
-        '<div class="sg-note" style="margin-bottom:10px">' + (fk.kind === "sweep" ? T("sweepDesc") : T("squadDesc")) + "</div>" +
-        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
-        '<button class="sgbtn primary" data-bat="go" data-key="' + esc(key) + '">' + (fk.kind === "sweep" ? T("sweep") : T("fight")) + "</button>" +
-        '<button class="sgbtn ghost" data-bat="sneak" data-key="' + esc(key) + '">🥷 ' + T("sneakT") + "</button></div>" +
-        '<div class="sg-note" style="margin-top:10px;font-size:11px">🥷 ' + T("sneakDesc") + "</div></div></div></div>" +
+      /* V54：开战/偷袭已上移右上角，下方不再放按钮面板 */
+      return head + roster + "</div></div>" +
         '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}' +
       /* V51：夜城墙中缝背景 + 右侧战报半透明悬浮 */
       '.sg-warbg{position:relative;border-radius:14px;padding:12px;background-image:linear-gradient(180deg,rgba(10,14,20,.30),rgba(10,14,20,.55)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center;box-shadow:inset 0 0 90px rgba(0,0,0,.62)}' +
@@ -13860,11 +13862,39 @@ var BOTS = [
       '.sg-march-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}' +
       '.sg-march-foot small{color:var(--ink-3);font-size:11.5px}' +
       /* V53 士兵方阵 + 武将卡行 + VS 大字 */
-      '.brow{display:flex;gap:8px;align-items:stretch}' +
+      /* V54 士兵环绕卡片：外圈→内圈沿矩形周界布点，随战况减员、被震飞 */
+      '.brow{position:relative;display:flex;gap:8px;align-items:stretch;padding:17px 19px}' +
       '.brow.br{flex-direction:row-reverse}' +
-      '.sg-soldiers{flex:0 0 auto;display:grid;grid-template-columns:repeat(10,13px);gap:2px 1px;align-content:center;padding:5px 4px;border-radius:9px;background:rgba(6,9,14,.38);border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 0 14px rgba(0,0,0,.5)}' +
-      '.sg-soldiers i{width:13px;height:18px;background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.75));opacity:.92}' +
-      '.brow.br .sg-soldiers i{transform:scaleX(-1)}' +
+      '.brow>.bcard{position:relative;z-index:2}' +
+      '.sg-bown{position:absolute;inset:0;z-index:0;pointer-events:none}' +
+      '.sg-bown i{position:absolute;width:12px;height:16px;transform:translate(-50%,-50%);background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));transition:opacity .4s ease}' +
+      '.brow.br .sg-bown i{scale:-1 1}' +
+      '.sg-bown i.dying{opacity:0!important;transform:translate(-50%,-50%) translateY(12px) rotate(22deg) scale(.72);transition:all .45s ease-in}' +
+      '.sg-bown.fly i{animation:sgFly .78s ease-out forwards}' +
+      '@keyframes sgFly{0%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--fx,0px)),calc(-50% + var(--fy,-46px))) rotate(var(--fr,120deg)) scale(.72)}}' +
+      /* V54 技能大火球 + 命中爆炸 */
+      '.fx-fireball{position:absolute;z-index:39;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:radial-gradient(circle at 40% 38%,#fff8d6,#ffb03c 46%,rgba(214,64,18,.9) 72%,rgba(120,20,0,0));box-shadow:0 0 26px 10px rgba(255,120,40,.55),0 0 64px 28px rgba(255,70,0,.26);opacity:0}' +
+      '.fx-fireball.run{animation:fxFireball .72s cubic-bezier(.35,.05,.7,.6) forwards}' +
+      '@keyframes fxFireball{0%{opacity:0;transform:translate(0,0) scale(.45)}10%{opacity:1;transform:translate(calc(var(--ex)*.14),calc(var(--ey)*.14 - 46px)) scale(.8)}55%{opacity:1;transform:translate(calc(var(--ex)*.6),calc(var(--ey)*.6 - 66px)) scale(1.15)}92%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.2)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.9)}}' +
+      '.fx-boom{position:absolute;z-index:40;pointer-events:none;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50%;background:radial-gradient(circle,rgba(255,248,214,.98) 0%,rgba(255,176,60,.9) 20%,rgba(226,74,20,.52) 44%,transparent 70%);opacity:0}' +
+      '.fx-boom.run{animation:fxBoom .72s ease-out forwards}' +
+      '@keyframes fxBoom{0%{opacity:1;transform:scale(.22)}55%{opacity:.92;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}' +
+      /* V54 战果左右栏（左打方 / 右守方） */
+      '.sg-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}' +
+      '@media(max-width:860px){.sg-results{grid-template-columns:1fr}}' +
+      '.sg-rescol{border:1px solid rgba(232,201,136,.22);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.5),rgba(12,15,21,.66));padding:10px 12px}' +
+      '.sg-rescol.a{border-color:rgba(127,208,138,.4)}.sg-rescol.b{border-color:rgba(224,127,127,.4)}' +
+      '.sg-rescol .rh{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;letter-spacing:.05em;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.14);margin-bottom:8px}' +
+      '.sg-rescol.a .rh{color:#9be0a8}.sg-rescol.b .rh{color:#f0a0a0}' +
+      '.sg-rescol .rh small{color:var(--ink-3);font-weight:700;font-size:11px}' +
+      '.sg-rescol .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden;margin:2px 0 8px}' +
+      '.sg-rescol .bar i{display:block;height:100%;background:linear-gradient(90deg,#5fbf8a,#9be0a8)}' +
+      '.sg-rescol.b .bar i{background:linear-gradient(90deg,#d07070,#f0a0a0)}' +
+      '.sg-rescol .kv{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#cfd8e2;padding:2px 0}' +
+      '.sg-rescol .kv b{font-weight:800;color:#fff}.sg-rescol .kv b.neg{color:#f09a9a}.sg-rescol .kv b.pos{color:#9be0a8}' +
+      '.sg-rescol .sec{font-size:10.5px;color:var(--gold-2,#e8c988);letter-spacing:.1em;margin:9px 0 3px;opacity:.95}' +
+      '.sg-rescol .u{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9c4d0;padding:2.5px 0;border-bottom:1px dotted rgba(255,255,255,.08)}' +
+      '.sg-rescol .u b{color:#e07f7f;font-weight:800}' +
       '.sg-vsbig{font-size:46px;font-weight:900;letter-spacing:.1em;line-height:1.05;background:linear-gradient(180deg,#fff3d0,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,200,110,.45))}' +
       '</style></div>';
     }
@@ -13897,6 +13927,54 @@ var BOTS = [
         (out.wounded ? '<span style="color:#ffb3b3">⚕ ' + gt("woundIn", { n: fmt(out.wounded) }) + "</span>　·　" : "") +
         (out.ups || []).join("　·　") + "</div>";
     }
+    /* V54：最下方版块分左右——左左打方战果 / 右守方战果 */
+    var cnt54 = function (n) { return fmt(Math.max(0, Math.round(n || 0))); };
+    var aU54 = (res.units && res.units.A) || [], bU54 = (res.units && res.units.B) || [];
+    var lossOf = function (arr) { return arr.reduce(function (s2, un) { return s2 + Math.max(0, (un.troopMax || 0) - (un.troop || 0)); }, 0); };
+    var aLost54 = lossOf(aU54), bLost54 = lossOf(bU54);
+    var aWound54 = (out && out.wounded) ? out.wounded : 0;
+    var aDead54 = Math.max(0, aLost54 - aWound54);
+    function uRows54(arr, side) {
+      if (!arr.length) return '<div class="u"><span>\u2014</span><span></span></div>';
+      return arr.map(function (un, i) {
+        var lost = Math.max(0, (un.troopMax || 0) - (un.troop || 0));
+        var nm = un.name || "";
+        if (!nm && side === "A") { var cc = fk.squad[i], gg = cc ? gById(cc.gid) : null; nm = gg ? gg.name : ""; }
+        return '<div class="u"><span>' + esc(nm) + (un.alive === false ? ' <span style="color:#e07f7f">\u2020</span>' : "") + "</span>" +
+          "<span>" + gt("resRemT") + " " + cnt54(un.troop) + ' <b>-' + cnt54(lost) + "</b></span></div>";
+      }).join("");
+    }
+    var loot54 = (out && out.loot) || {}, lootChips = [];
+    [["🌾", loot54.rice], ["🪵", loot54.wood], ["🪙", loot54.copper], ["\u26CF", loot54.iron], ["💰", loot54.coin]].forEach(function (x) {
+      if (x[1]) lootChips.push('<span class="sgchip" style="font-size:10.5px">' + x[0] + " +" + cnt54(x[1]) + "</span>");
+    });
+    if (out && out.pts) lootChips.push('<span class="sgchip" style="font-size:10.5px">🏅 +' + fmt(out.pts) + "</span>");
+    if (out && out.sp) lootChips.push('<span class="sgchip" style="font-size:10.5px">\u2726 +' + fmt(out.sp) + "</span>");
+    if (out && out.shards && out.shards.length) lootChips.push('<span class="sgchip" style="font-size:10.5px">🧩 ' + esc(out.shards.join("\u3001")) + "</span>");
+    if (out && out.eq) lootChips.push('<span class="sgchip" style="font-size:10.5px">\u2694 ' + esc(eqName(out.eq)) + "</span>");
+    if (out && out.mt) lootChips.push('<span class="sgchip" style="font-size:10.5px">🐎 ' + esc(MT_NAMES[out.mt.ti]) + "</span>");
+    var colA54 = '<div class="sg-rescol a">' +
+      '<div class="rh"><span>\u2694 ' + T("sideAtk") + "</span><small>" + cnt54(res.pR) + " / " + cnt54(res.pM) + "</small></div>" +
+      '<div class="bar"><i style="width:' + myPct + '%"></i></div>' +
+      '<div class="kv"><span>' + gt("resLossT") + '</span><b class="neg">-' + cnt54(aLost54) + "</b></div>" +
+      '<div class="kv"><span>' + gt("resDeadT") + "</span><b>" + cnt54(aDead54) + "</b></div>" +
+      '<div class="kv"><span>' + gt("resWoundT") + "</span><b>" + cnt54(aWound54) + "</b></div>" +
+      '<div class="sec">' + gt("resUnitT") + "</div>" + uRows54(aU54, "A") +
+      '<div class="sec">' + gt("resExpT") + "</div>" +
+      (out ? '<div class="kv"><span>EXP</span><b class="pos">+' + fmt(out.exp) + "</b></div>" : "") +
+      (out && out.ups && out.ups.length ? out.ups.map(function (x) { return '<div class="kv"><span>' + esc(x) + '</span><b class="pos">\u2B06</b></div>'; }).join("") : "") +
+      '<div class="sec">' + gt("resLootT") + "</div>" +
+      '<div style="display:flex;flex-wrap:wrap;gap:4px">' + (lootChips.length ? lootChips.join("") : '<span class="sg-note">' + gt("resNoneT") + "</span>") + "</div>" +
+      "</div>";
+    var colB54 = '<div class="sg-rescol b">' +
+      '<div class="rh"><span>🛡 ' + T("sideDef") + " \u00B7 " + esc(fk.foe) + "</span><small>" + cnt54(res.eR) + " / " + cnt54(res.eM) + "</small></div>" +
+      '<div class="bar"><i style="width:' + foePct + '%"></i></div>' +
+      '<div class="kv"><span>' + gt("resLossT") + '</span><b class="neg">-' + cnt54(bLost54) + "</b></div>" +
+      '<div class="kv"><span>' + gt("resDeadT") + "</span><b>" + cnt54(bLost54) + "</b></div>" +
+      '<div class="kv"><span>' + gt("resWoundT") + "</span><b>\u2014</b></div>" +
+      '<div class="sec">' + gt("resUnitT") + "</div>" + uRows54(bU54, "B") +
+      "</div>";
+    var resCols54 = '<div class="sg-results">' + colA54 + colB54 + "</div>";
     var resChar = '<div style="position:relative;text-align:center;padding:2px 0 6px">' +
       '<div class="sg-reschar ' + (res.win ? "win" : "lose") + '">' + (res.win ? gt("repWin") : gt("repLose")) + "</div>" +
       '<b id="sgVicTxt" style="font-size:15px;color:' + (res.win ? "#e8c988" : "#c97070") + ';letter-spacing:.2em">' +
@@ -13914,7 +13992,8 @@ var BOTS = [
       '<button class="sgbtn sm ghost" data-bat="speed">×' + BATUI.speed + "</button>" +
       '<button class="sgbtn sm ghost" data-bat="mute" title="' + gt("sfxT") + '">' + (BATUI.mute ? "🔇" : "🔊") + "</button>" +
       '<button class="sgbtn sm ghost" data-bat="skip">' + T("skip") + "</button></div>" +
-      '<div id="sgRepDetail" style="display:none;max-height:260px;overflow:auto;margin-top:8px">' + expLines + casLines + "</div></div></div></div>" +
+      '<div id="sgRepDetail" style="display:none;max-height:260px;overflow:auto;margin-top:8px">' + expLines + casLines + "</div></div>" +
+      resCols54 + "</div></div>" +
       '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}' +
       '.sg-warbg{position:relative;border-radius:14px;padding:12px;background-image:linear-gradient(180deg,rgba(10,14,20,.30),rgba(10,14,20,.55)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center;box-shadow:inset 0 0 90px rgba(0,0,0,.62)}' +
       /* V52 地形：山谷 / 河两岸 / 平原（叠在战场图上） */
@@ -14002,11 +14081,39 @@ var BOTS = [
       '.sg-march-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}' +
       '.sg-march-foot small{color:var(--ink-3);font-size:11.5px}' +
       /* V53 士兵方阵 + 武将卡行 + VS 大字 */
-      '.brow{display:flex;gap:8px;align-items:stretch}' +
+      /* V54 士兵环绕卡片：外圈→内圈沿矩形周界布点，随战况减员、被震飞 */
+      '.brow{position:relative;display:flex;gap:8px;align-items:stretch;padding:17px 19px}' +
       '.brow.br{flex-direction:row-reverse}' +
-      '.sg-soldiers{flex:0 0 auto;display:grid;grid-template-columns:repeat(10,13px);gap:2px 1px;align-content:center;padding:5px 4px;border-radius:9px;background:rgba(6,9,14,.38);border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 0 14px rgba(0,0,0,.5)}' +
-      '.sg-soldiers i{width:13px;height:18px;background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.75));opacity:.92}' +
-      '.brow.br .sg-soldiers i{transform:scaleX(-1)}' +
+      '.brow>.bcard{position:relative;z-index:2}' +
+      '.sg-bown{position:absolute;inset:0;z-index:0;pointer-events:none}' +
+      '.sg-bown i{position:absolute;width:12px;height:16px;transform:translate(-50%,-50%);background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));transition:opacity .4s ease}' +
+      '.brow.br .sg-bown i{scale:-1 1}' +
+      '.sg-bown i.dying{opacity:0!important;transform:translate(-50%,-50%) translateY(12px) rotate(22deg) scale(.72);transition:all .45s ease-in}' +
+      '.sg-bown.fly i{animation:sgFly .78s ease-out forwards}' +
+      '@keyframes sgFly{0%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--fx,0px)),calc(-50% + var(--fy,-46px))) rotate(var(--fr,120deg)) scale(.72)}}' +
+      /* V54 技能大火球 + 命中爆炸 */
+      '.fx-fireball{position:absolute;z-index:39;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:radial-gradient(circle at 40% 38%,#fff8d6,#ffb03c 46%,rgba(214,64,18,.9) 72%,rgba(120,20,0,0));box-shadow:0 0 26px 10px rgba(255,120,40,.55),0 0 64px 28px rgba(255,70,0,.26);opacity:0}' +
+      '.fx-fireball.run{animation:fxFireball .72s cubic-bezier(.35,.05,.7,.6) forwards}' +
+      '@keyframes fxFireball{0%{opacity:0;transform:translate(0,0) scale(.45)}10%{opacity:1;transform:translate(calc(var(--ex)*.14),calc(var(--ey)*.14 - 46px)) scale(.8)}55%{opacity:1;transform:translate(calc(var(--ex)*.6),calc(var(--ey)*.6 - 66px)) scale(1.15)}92%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.2)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.9)}}' +
+      '.fx-boom{position:absolute;z-index:40;pointer-events:none;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50%;background:radial-gradient(circle,rgba(255,248,214,.98) 0%,rgba(255,176,60,.9) 20%,rgba(226,74,20,.52) 44%,transparent 70%);opacity:0}' +
+      '.fx-boom.run{animation:fxBoom .72s ease-out forwards}' +
+      '@keyframes fxBoom{0%{opacity:1;transform:scale(.22)}55%{opacity:.92;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}' +
+      /* V54 战果左右栏（左打方 / 右守方） */
+      '.sg-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}' +
+      '@media(max-width:860px){.sg-results{grid-template-columns:1fr}}' +
+      '.sg-rescol{border:1px solid rgba(232,201,136,.22);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.5),rgba(12,15,21,.66));padding:10px 12px}' +
+      '.sg-rescol.a{border-color:rgba(127,208,138,.4)}.sg-rescol.b{border-color:rgba(224,127,127,.4)}' +
+      '.sg-rescol .rh{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;letter-spacing:.05em;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.14);margin-bottom:8px}' +
+      '.sg-rescol.a .rh{color:#9be0a8}.sg-rescol.b .rh{color:#f0a0a0}' +
+      '.sg-rescol .rh small{color:var(--ink-3);font-weight:700;font-size:11px}' +
+      '.sg-rescol .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden;margin:2px 0 8px}' +
+      '.sg-rescol .bar i{display:block;height:100%;background:linear-gradient(90deg,#5fbf8a,#9be0a8)}' +
+      '.sg-rescol.b .bar i{background:linear-gradient(90deg,#d07070,#f0a0a0)}' +
+      '.sg-rescol .kv{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#cfd8e2;padding:2px 0}' +
+      '.sg-rescol .kv b{font-weight:800;color:#fff}.sg-rescol .kv b.neg{color:#f09a9a}.sg-rescol .kv b.pos{color:#9be0a8}' +
+      '.sg-rescol .sec{font-size:10.5px;color:var(--gold-2,#e8c988);letter-spacing:.1em;margin:9px 0 3px;opacity:.95}' +
+      '.sg-rescol .u{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9c4d0;padding:2.5px 0;border-bottom:1px dotted rgba(255,255,255,.08)}' +
+      '.sg-rescol .u b{color:#e07f7f;font-weight:800}' +
       '.sg-vsbig{font-size:46px;font-weight:900;letter-spacing:.1em;line-height:1.05;background:linear-gradient(180deg,#fff3d0,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,200,110,.45))}' +
       ".sg-rephp{display:grid;grid-template-columns:1fr 56px 1fr;gap:8px;align-items:center;margin:0 0 10px;padding:10px 14px;border:1px solid rgba(232,201,136,.25);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.55),rgba(16,18,24,.55))}" +
       ".sg-rephp .ph{display:flex;align-items:center;gap:9px;font-size:12px;color:#e8dfc8}.sg-rephp .ph.r{flex-direction:row-reverse;text-align:right}" +
@@ -14037,12 +14144,90 @@ var BOTS = [
     if (a.indexOf("器") >= 0 || a.indexOf("械") >= 0 || a.indexOf("炮") >= 0) return "stone";
     return "";
   }
-  /* V53：士兵方阵——每 1000 兵 = 1 个小人，上限 200（后台可上传替换图片，key = sprite） */
+  /* V54：士兵环绕卡片——每 1000 兵 = 1 个小人（上限 200），由 layoutSoldiers 沿卡片外围环形布点 */
+  function soldierN(troop) { return Math.min(200, Math.max(0, Math.ceil((troop || 0) / 1000))); }
   function soldiersHTML(un, side) {
-    var n = Math.min(200, Math.max(1, Math.ceil((un.troop || 0) / 1000)));
-    var src = SG_SPRITE || SG_IMG_SOLDIER, s = "";
-    for (var i = 0; i < n; i++) s += "<i></i>";
-    return '<div class="sg-soldiers" style="--simg:url(' + src + ')" title="' + T("troopShort", { n: troopTxt(un.troop) }) + '">' + s + "</div>";
+    var n = Math.max(1, soldierN(un.troop));
+    return '<div class="sg-bown" data-n="' + n + '" title="' + T("troopShort", { n: troopTxt(un.troop) }) + '"></div>';
+  }
+  /* 环形布点：从最外圈向内，沿矩形周界均匀分布（矩形尺寸实测，不依赖写死布局） */
+  function layoutSoldiers(root) {
+    var host = root || document;
+    var boxes = host.querySelectorAll ? host.querySelectorAll(".sg-bown") : [];
+    for (var bi = 0; bi < boxes.length; bi++) {
+      var b = boxes[bi];
+      var n = parseInt(b.getAttribute("data-n"), 10) || 0;
+      var w = b.clientWidth, h = b.clientHeight;
+      if (!w || !h) continue;
+      if (b._n === n && b._w === w && b._h === h) continue;
+      b._n = n; b._w = w; b._h = h;
+      if (!n) { b.innerHTML = ""; continue; }
+      var gap = 15, step = 9, ring = 0, placed = 0, out = "";
+      while (placed < n && ring < 4) {
+        var ins = step + ring * 17;
+        var x0 = ins, y0 = ins, x1 = w - ins, y1 = h - ins;
+        if (x1 - x0 < 70 || y1 - y0 < 38) break;
+        var cw = x1 - x0, ch = y1 - y0, per = 2 * (cw + ch);
+        var cap = Math.max(6, Math.floor(per / gap));
+        var take = Math.min(n - placed, cap);
+        for (var i = 0; i < take; i++) {
+          var t = (i + 0.5) / take * per, x, y;
+          if (t < cw) { x = x0 + t; y = y0; }
+          else if (t < cw + ch) { x = x1; y = y0 + (t - cw); }
+          else if (t < 2 * cw + ch) { x = x1 - (t - cw - ch); y = y1; }
+          else { x = x0; y = y1 - (t - 2 * cw - ch); }
+          out += '<i style="left:' + Math.round(x) + "px;top:" + Math.round(y) + "px" + (ring ? ";opacity:.7" : "") + '"></i>';
+        }
+        placed += take; ring++;
+      }
+      b.innerHTML = out;
+    }
+  }
+  /* 随战况减员：每减 1000 兵少 1 个小人（多余的淡出） */
+  function syncSoldiers(cardEl, troop) {
+    if (!cardEl || !cardEl.closest) return;
+    var row = cardEl.closest(".brow");
+    if (!row) return;
+    var box = row.querySelector(".sg-bown");
+    if (!box) return;
+    var n = soldierN(troop);
+    var cur = box.querySelectorAll("i").length;
+    if (n === cur) return;
+    box.setAttribute("data-n", n);
+    if (n < cur) {
+      var dots = box.querySelectorAll("i");
+      for (var i = n; i < dots.length; i++) {
+        var d = dots[i];
+        d.classList.add("dying");
+        (function (el) { setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 480); })(d);
+      }
+      box._n = n; box._w = box.clientWidth; box._h = box.clientHeight;
+    } else {
+      box._n = -1;
+      layoutSoldiers(row);
+    }
+  }
+  /* 技能命中：小兵被震飞 */
+  function blastSoldiers(cardEl) {
+    if (!cardEl || !cardEl.closest) return;
+    var row = cardEl.closest(".brow");
+    if (!row) return;
+    var box = row.querySelector(".sg-bown");
+    if (!box) return;
+    var dots = box.querySelectorAll("i");
+    for (var i = 0; i < dots.length; i++) {
+      var d = dots[i];
+      d.style.setProperty("--fx", (Math.random() * 150 - 75).toFixed(0) + "px");
+      d.style.setProperty("--fy", (-(34 + Math.random() * 66)).toFixed(0) + "px");
+      d.style.setProperty("--fr", (Math.random() * 320 - 160).toFixed(0) + "deg");
+      d.style.animationDelay = (Math.random() * 0.18).toFixed(2) + "s";
+    }
+    box.classList.add("fly");
+    setTimeout(function () {
+      box.classList.remove("fly");
+      var ds = box.querySelectorAll("i");
+      for (var k = 0; k < ds.length; k++) ds[k].style.animationDelay = "";
+    }, 1000);
   }
   function bcardHTML(un, side, ix) {
     var tr = TIERS[un.ti], g = gById(un.gid);
@@ -14064,7 +14249,8 @@ var BOTS = [
     var statLine = "攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + ' <small style="color:var(--ink-3)">（武' + un.wu + " 统" + un.st + " 智" + un["in"] + "）</small>";
     var skLine = un.sk ? '<div style="font-size:10.5px;margin-top:3px"><span style="color:#e8c988">【' + esc(un.sk) + "】</span>" +
       (un.sp ? ' <span style="color:' + (SP_GROUPS.filter(function (x) { return x.k === un.sp; })[0] || {}).color + ';font-weight:800">' + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】</span>" : "") + "</div>" : "";
-    return '<div class="brow' + (side === "B" ? " br" : "") + '">' +
+    return '<div class="brow' + (side === "B" ? " br" : "") + '" style="--simg:url(' + (SG_SPRITE || SG_IMG_SOLDIER) + ')">' +
+      soldiersHTML(un, side) +
       '<div class="bcard" data-side="' + side + '" data-ix="' + ix + '" title="' + esc(tip).replace(/"/g, "&quot;") + '" style="border:1px solid ' + tr.c + '77;border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(0,0,0,.30));padding:9px 10px;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.25);flex:1;min-width:0">' +
       '<div style="display:flex;gap:9px;align-items:center">' +
       '<div class="bavatar" style="width:56px;height:74px;border-radius:9px;overflow:hidden;flex:0 0 auto;border:1px solid ' + tr.c + '66;background:#0d1117">' + avatar + '</div>' +
@@ -14074,7 +14260,7 @@ var BOTS = [
       '<div style="font-size:11px;color:#c8d4e0;margin-top:4px">' + T("troopShort", { n: troopTxt(un.troop) }) +
       (un.troop < un.troopMax ? ' <small style="color:var(--ink-3)">/ ' + troopTxt(un.troopMax) + "</small>" : "") + "</div>" +
       '<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.10);margin-top:4px;overflow:hidden"><i style="display:block;height:100%;width:' + pct + "%;background:linear-gradient(90deg," + (side === "A" ? "#5fbf8a,#7fd08a" : "#d07070,#e09a9a") + ')"></i></div>' +
-      "</div></div></div>" + soldiersHTML(un, side) + "</div>";
+      "</div></div></div></div>";
   }
   function playLog() {
     var box = document.getElementById("sgBatLog");
@@ -14118,11 +14304,42 @@ var BOTS = [
       if (l.cri && !(l.sk || l.spk)) SG_SFX.crit();
       /* V52 真实弹道：按攻击方兵种播放投石弧线 / 箭矢抛物线 / 骑兵突击；命中爆点在目标卡上 */
       try { shotFx(l, src, tgt); } catch (e) {}
+      /* V54：技能大火球轰到对方武将与士兵 → 小兵被震飞 */
+      if ((l.sk || l.spk) && tgt) { try { fireballFx(src, tgt); } catch (e) {} }
+      /* V54：目标小兵随剩余兵力减少（技能先震飞再减） */
+      if (tgt && typeof l.rem === "number") {
+        if (l.sk || l.spk) setTimeout(function () { try { syncSoldiers(tgt, l.rem); } catch (e) {} }, 900);
+        else { try { syncSoldiers(tgt, l.rem); } catch (e) {} }
+      }
     }
     /* V52：从攻击卡到目标卡的弹道飞行（返回目标卡中心相对 arena 的坐标） */
     function cardCenter(el) {
       var a = arena.getBoundingClientRect(), r = el.getBoundingClientRect();
       return { x: r.left - a.left + r.width / 2, y: r.top - a.top + r.height / 2, w: r.width, h: r.height };
+    }
+    /* V54：大火球——从施法方飞向目标，命中爆炸 + 小兵震飞 + 屏震 */
+    function fireballFx(src, tgt) {
+      if (!arena || !tgt) return;
+      var p0 = src ? cardCenter(src) : cardCenter(tgt);
+      var p1 = cardCenter(tgt);
+      var fb = document.createElement("i");
+      fb.className = "fx-fireball";
+      fb.style.left = p0.x + "px"; fb.style.top = p0.y + "px";
+      fb.style.setProperty("--ex", (p1.x - p0.x) + "px");
+      fb.style.setProperty("--ey", (p1.y - p0.y) + "px");
+      arena.appendChild(fb); void fb.offsetWidth; fb.classList.add("run");
+      setTimeout(function () { if (fb.parentNode) fb.parentNode.removeChild(fb); }, 760);
+      setTimeout(function () {
+        var bm = document.createElement("i");
+        bm.className = "fx-boom";
+        bm.style.left = p1.x + "px"; bm.style.top = p1.y + "px";
+        arena.appendChild(bm); void bm.offsetWidth; bm.classList.add("run");
+        setTimeout(function () { if (bm.parentNode) bm.parentNode.removeChild(bm); }, 820);
+        try { blastSoldiers(tgt); } catch (e) {}
+        arena.classList.remove("quake"); void arena.offsetWidth; arena.classList.add("quake");
+        setTimeout(function () { arena.classList.remove("quake"); }, 460);
+        SG_SFX.skill();
+      }, Math.round(460 / (BATUI.speed || 1)));
     }
     function shotFx(l, src, tgt) {
       if (!arena || !tgt) return;
@@ -14145,23 +14362,28 @@ var BOTS = [
         SG_SFX.stone();
         setTimeout(function () { hitBurst(p1, "#e8b96a"); }, 740 / BATUI.speed);
       } else if (kind === "arrow") {
-        for (var i = 0; i < 5; i++) {
+        /* V54：箭矢数量随小人数量（每个小兵 3~5 支，上限 36） */
+        var dnA = 0;
+        try { var rowA = src ? src.closest(".brow") : null; dnA = rowA ? rowA.querySelectorAll(".sg-bown i").length : 0; } catch (eA) {}
+        var nArrow = dnA ? Math.max(3, Math.min(36, dnA * 4)) : 5;
+        for (var i = 0; i < nArrow; i++) {
           (function (k) {
             setTimeout(function () {
               var sp = document.createElement("i");
               sp.className = "fx-spark";
-              sp.style.left = (p0.x + (ltr ? 10 : -10)) + "px"; sp.style.top = (p0.y - 4 + (k - 2) * 7) + "px";
+              var wob = ((k % 5) - 2) * 6;
+              sp.style.left = (p0.x + (ltr ? 10 : -10)) + "px"; sp.style.top = (p0.y - 4 + wob) + "px";
               sp.style.setProperty("--mx", ((p1.x - p0.x) * 0.5) + "px");
-              sp.style.setProperty("--my", "-96px");
+              sp.style.setProperty("--my", (-96 - Math.abs(wob) * 2) + "px");
               sp.style.setProperty("--ex", (p1.x - p0.x) + "px");
-              sp.style.setProperty("--ey", (p1.y - p0.y - (k - 2) * 7) + "px");
+              sp.style.setProperty("--ey", (p1.y - p0.y - wob) + "px");
               arena.appendChild(sp); void sp.offsetWidth; sp.classList.add("run");
-              setTimeout(function () { sp.remove(); }, 700);
-            }, k * 55 / BATUI.speed);
+              setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 700);
+            }, k * (300 / nArrow) / (BATUI.speed || 1));
           })(i);
         }
         SG_SFX.arrow();
-        setTimeout(function () { hitBurst(p1, "#ff9a7a"); }, 520 / BATUI.speed);
+        setTimeout(function () { hitBurst(p1, "#ff9a7a"); }, 560 / (BATUI.speed || 1));
       } else if (kind === "cav") {
         var cv = document.createElement("i");
         cv.className = "fx-tramp";
@@ -15304,7 +15526,7 @@ var BOTS = [
       recycleLvOk: recycleLvOk, recycleLvMax: function () { return RECYCLE_LV_MAX; }, selCalc: selCalc,
       bldYield: bldYieldAt, officeBonusPct: officeBonusPct, cityPreview: cityPreview, palaceOpen: palaceOpen,
       guildOpen: function () { return guildOpen(); }, gt: gt, lang: lang, cityList: cityListHTML, modal: modal,
-      marchOpen: marchOpen, marchArt: marchArt, sfx: SG_SFX, armFx: armFx, sprite: function () { return SG_SPRITE || SG_IMG_SOLDIER; }, res: function () { return BATUI.res; }, fightGo: function (k) { var b = document.querySelector('[data-bat="go"][data-key="' + k + '"]'); if (b) { b.click(); return true; } return false; }, marchCss: function () { return [SG_IMG_MARCH1.length, SG_IMG_MARCH2.length, SG_IMG_MARCH3.length, SG_IMG_FIRE.length, SG_IMG_BATTLEFIELD.length]; },
+      marchOpen: marchOpen, marchArt: marchArt, sfx: SG_SFX, armFx: armFx, sprite: function () { return SG_SPRITE || SG_IMG_SOLDIER; }, res: function () { return BATUI.res; }, layoutSoldiers: layoutSoldiers, syncSoldiers: syncSoldiers, blastSoldiers: blastSoldiers, soldierN: soldierN, fightGo: function (k) { var b = document.querySelector('[data-bat="go"][data-key="' + k + '"]'); if (b) { b.click(); return true; } return false; }, marchCss: function () { return [SG_IMG_MARCH1.length, SG_IMG_MARCH2.length, SG_IMG_MARCH3.length, SG_IMG_FIRE.length, SG_IMG_BATTLEFIELD.length]; },
       renderBattle: renderBattle, renderFight: renderFight, setApp: setApp, rerender: rerender, teamPanel: teamPanelHTML,
       sortCards: function (list, key) {
         /* 复刻 renderProfile 的排序分支，供验收探针断言排序口径（避免探针复制业务逻辑而产生假绿） */
