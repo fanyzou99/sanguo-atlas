@@ -6947,8 +6947,21 @@ html[data-lang="en"]{letter-spacing:.01em}
       gsBuy: "Buy", gsSell: "Sell", gsPrice: "Price (coins)", gsHave: "Stock", gsCoinHave: "Coins",
       gsSeasonNote: "Market prices follow game time (each battle advances 1 month; Jan 184 → Dec 220, looping): autumn harvest (Jul-Sep) grain cheap & metals dear; winter (Oct-Dec) grain dear & metals cheap. Buy low, sell high.",
       gsArm: "Troop type", gsArmOk: "Now leading {n}", gsArmNote: "Fit bonus to ATK: S +6% / A +3% / B +1% · changeable anytime",
-      gsSold: "Soldiers", gsSoldOf: "Troops {a} / cap {b}", gsRecruit: "Recruit soldiers", gsRecCost: "Each soldier costs 0.5 grain + 2 coins; troops lost in battle must be replenished here", gsRecOk: "+{n} recruited", gsResLack: "Not enough resources", gsFull: "Troop cap reached",
-      gsRes: "Resources", gsPoints: "Point allocation ({n} pts left, from first-clears & level-ups)", gsCardData: "General data", gsCapNote: "Troop cap = 1000 × level × star bonus, capped by grade",
+      gsSold: "Soldiers", gsSoldOf: "Troops {a} / cap {b}", gsSoldAdd: "After level-up troop cap +{n} (now {b})", gsSoldCapMax: "Grade maximum {b} reached — level-ups no longer raise the cap", gsRecruit: "Recruit soldiers", gsRecCost: "Each soldier costs 0.5 grain + 2 coins; troops lost in battle must be replenished here", gsRecOk: "+{n} recruited", gsResLack: "Not enough resources", gsFull: "Troop cap reached", gsSoldNext: "Next level +{n} troops (cap {b})", lvFullT: "Level 70 — maximum reached",
+      gsRes: "Resources", gsPoints: "Point allocation ({n} pts left, from first-clears & level-ups)", gsCardData: "General data", gsCapNote: "Troop cap = cumulative per-level growth (Lv1-20 +500 / Lv21-40 +1000 / Lv41-60 +2000 / Lv61-70 +5000) × star and gear bonus, never above the grade's configured maximum",
+      resRice: "Grain", resRiceD: "Feeds soldiers — recruiting costs grain, and every reserve soldier eats 0.5 grain per month",
+      resWood: "Timber", resWoodD: "Building material — used for city works and wall reinforcement",
+      resCopper: "Copper", resCopperD: "Craft metal — needed for equipment and city works, tradable at the market",
+      resIron: "Iron", resIronD: "Weapons and armour material — used for smithing and high-tier equipment",
+      resCoin: "Coins", resCoinD: "Currency — pays for recruiting, trading and construction",
+      resRiceU: "Recruiting · monthly troop upkeep · trading", resWoodU: "City works · wall reinforcement",
+      resCopperU: "Crafting · city works · market trade", resIronU: "Smithing · high-tier equipment",
+      resCoinU: "Recruiting · building · buying at the market",
+      resTipMkt: "Sell price · trend", resTipCity: "This city · monthly", resTipUse: "Typical uses",
+      resOutT: "Output", resInT: "Upkeep", resNetT: "Net", resNoMarket: "Not traded at the market (coin only)",
+      seaSpring: "Spring · grain dear, metals steady", seaSummer: "Summer · grain cheap, metals dear",
+      seaAutumn: "Harvest (Jul-Sep) · grain cheapest, metals dearest", seaWinter: "Winter (Oct-Dec) · grain dearest, metals cheapest",
+      trendUp: "Rising", trendDown: "Falling", trendFlat: "Stable", perMonth: "/mo", trendForecast: "next month", gsPrevMonth: "vs last month",
       lootGain: "Plunder: grain +{a} · wood +{w} · copper +{b} · iron +{c} · coins +{d}", gsBuyOk: "Bought {n} (-{p} coins)", gsSellOk: "Sold {n} (+{p} coins)", gsSpOk: "{n} +1", gsNoSp: "No skill points to allocate — first-clear a stage for 5 pts",
       close: "Close", back: "Back", rate5: "5 stars", noAccount: "No account? Sign up", hasAccount: "Already registered? Sign in",
       cardOf: "Card", serial: "No.", gotFrom: "Received from {n}", empty: "Empty"
@@ -6972,7 +6985,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       loginReward: "ログイン特典", streakNow: "現在の連続", bestStreak: "最長連続",
       nextDraw: "次の抽選まで {n} 日", drawReady: "抽選できます", drawBtn: "武将カードを引く",
       drawNone: "抽選権がありません。3日連続ごとに1回。",
-      wallCards: "ゲーム空間", wallBadges: "実績", noCards: "カードがありません。まず一枚引きましょう。", cSort: "並べ替え", csDef: "既定", csLv: "レベル", csTier: "レア度", csStars: "星級", csWu: "武力", csIn: "知力", csSt: "統率", csCh: "魅力",
+      wallCards: "カードウォール", wallBadges: "実績", noCards: "カードがありません。まず一枚引きましょう。", cSort: "並べ替え", csDef: "既定", csLv: "レベル", csTier: "レア度", csStars: "星級", csWu: "武力", csIn: "知力", csSt: "統率", csCh: "魅力",
       gift: "贈る", giftTitle: "カードを贈る", giftTo: "受取人（メール・電話・名前）",
       giftMsg: "メッセージ（任意）", giftSend: "贈る", giftLast: "最後の一枚は贈れません。",
       giftOk: "{n} に贈りました", giftRecord: "贈答履歴", giftFrom: "{n} より", giftToYou: "{n} へ",
@@ -7034,7 +7047,7 @@ html[data-lang="en"]{letter-spacing:.01em}
       loginReward: "每日登录", streakNow: "当前连续", bestStreak: "最长连续",
       nextDraw: "再登录 {n} 天可获得抽卡机会", drawReady: "已有抽卡机会", drawBtn: "抽取武将卡",
       drawNone: "暂无抽卡机会：每连续登录 3 天获得 1 次。",
-      wallCards: "游戏空间", wallBadges: "成就徽章", noCards: "还没有卡牌，先抽一张吧。", cSort: "排序", csDef: "默认", csLv: "等级", csTier: "颜色", csStars: "星级", csWu: "武力", csIn: "智力", csSt: "统率", csCh: "魅力",
+      wallCards: "卡牌墙", wallBadges: "成就徽章", noCards: "还没有卡牌，先抽一张吧。", cSort: "排序", csDef: "默认", csLv: "等级", csTier: "颜色", csStars: "星级", csWu: "武力", csIn: "智力", csSt: "统率", csCh: "魅力",
       gift: "赠予", giftTitle: "赠予卡牌", giftTo: "收赠人（邮箱 / 手机 / 名称）",
       giftMsg: "赠言（可选）", giftSend: "确认赠予", giftLast: "仅剩一张卡牌，无法赠出。",
       giftOk: "已赠予 {n}", giftRecord: "赠卡记录", giftFrom: "得自 {n}", giftToYou: "赠予 {n}",
@@ -7077,21 +7090,61 @@ html[data-lang="en"]{letter-spacing:.01em}
       close: "关闭", back: "返回", rate5: "五星", noAccount: "还没有账号？去注册", hasAccount: "已注册？去登录",
       cardOf: "卡牌", serial: "编号", gotFrom: "得自 {n}", empty: "空",
       bTitle: "游戏", bSub: "君临城池 · 内政治理 · 麾下群英 · 征战天下", pickSpawn: "选择出生地", spawnDesc: "每位主公在大地图上选一座城作为出生地，此后以该城为起点征战天下", spawnOk: "已定都 {n}", stageTitle: "主线关卡", stage: "第 {n} 关", stageClear: "已通关", stageCur: "当前", stageLock: "未解锁", firstReward: "首通奖励", spGain: "技能点 +{n}", squad: "出战阵容", squadDesc: "每战最多 5 名武将出战 · 兵力按等级递增（每级 +1000）", fight: "开战", sweep: "扫荡", sweepDesc: "扫荡已通关卡：获得 60% 经验与碎片，无装备掉落", wild: "野战", pvp: "演武 · 挑战诸侯", shopT: "积分商店", bagT: "背包", vs: "VS", victory: "大 捷", defeat: "惜 败", rounds: "回合", battleLog: "战报", remain: "残兵", expGain: "经验 +{n}", lvUp: "{n} 升到 Lv.{m}", dropEquip: "获得装备：{n}", dropMount: "获得坐骑：{n}", dropShards: "获得碎片：{n} ×{m}", rewardPts: "积分 +{n}", againF: "再战", backBattle: "返回游戏", expFull: "经验 {a}/{b}", growTitle: "武将培养", starUp: "升星", starMax: "已达星级上限", starUpCost: "消耗同名碎片 ×{n}", starUpOk: "升星成功！全属性 +8%、兵力 +10%", shard: "碎片", shardsOf: "「{n}」碎片 {a}/{b}", synth: "合成", synthOk: "碎片已合成整卡：{n}", synthNot: "碎片不足", spPool: "技能点", spAlloc: "分配技能点（剩余 {n} 点）", spAudit: "累計獲得 {g} · 配布済み {u}（永続化済み）", spAudit: "累计获得 {g} 点 · 已分配 {u} 点（已持久化）", equipT: "装备", mountT: "坐骑", eqHead: "头盔", eqBody: "盔甲", eqLegs: "下身", eqWpn: "武器", eqAmu: "项链", eqBrc: "手镯", eqEmpty: "空", eqUp: "升级", eqStar: "升星", eqUpOk: "装备升级成功", eqStarOk: "装备升星成功", eqLack: "积分不足", wpnLock: "武器类型不匹配（需 {n}）", bagEq: "装备库", bagMt: "坐骑厩", bagShard: "碎片匣", wear: "穿戴", takeOff: "卸下", ride: "骑乘", shopEquip: "装备箱（{n}）", shopMount: "坐骑（{n}）", shopShard: "碎片匣（随机 6 片）", buy: "兑换", buyOk: "兑换成功", decoT: "武将装饰", decoNote: "武器（含羽扇）· 坐骑（含木轮车）· 盔甲 · 头盔", eqAdd: "添加", eqChange: "更换", eqEmptyHint: "空 · 点击添加", eqUsesLeft: "剩 {n} 次作战", eqPerm: "永久", eqShopT: "装备商店", eqShopHi: "高级装备（S/A/B/C）· 积分购买 · 永久有效", eqShopLo: "低级装备（D/E/F）· 金币铜铁 · 会损耗", eqShopNote: "低级装备每作战 1 次损耗 1 次，{n} 次后自动损毁；高级装备（S/A/B/C）永久有效", eqShopGo: "可去装备商店购买", eqArmN: "盔甲", eqLackRes: "金币 / 铜 / 铁不足", wearOk: "已装备 {n}", rideOk: "已骑乘 {n}", takeOffOk: "已卸下", eqWornOut: "因损耗损毁：{n}", tut1: "乱世降临……主公请收下这张武将卡，点「开战」讨伐 1-1 黄巾余党！", tut1Btn: "收下武将卡", tut2: "首战告捷！军中士气大振，又有一名豪杰来投——", tut2Btn: "招募入队", tut3: "两局两胜！军威已立，现在可以去抽卡池招募更多名将了！", tut3Btn: "开始抽卡", needCard: "至少需要 1 名武将出战", pvpDesc: "与各地诸侯切磋，赢取经验与积分", sweepOk: "扫荡完成", lvShort: "Lv.{n}", troopShort: "兵力 {n}", skip: "跳过", starLvNeed: "需武将达到 Lv.{n}",
-      gsT: "游戏空间", gsLogin: "登录后进入游戏空间，点选武将卡进行培养、募兵与集市经营", gsHint: "点击卡片进入专属详情页：分配点数 · 选择兵种 · 招募士兵 · 集市经营",
+      gsT: "卡牌墙", gsLogin: "登录后进入卡牌墙，点选武将卡进行培养、募兵与集市经营", gsHint: "点击卡片进入专属详情页：分配点数 · 选择兵种 · 招募士兵 · 集市经营",
       gsDate: "{y}年{m}月", gsMarket: "集市", gsGrain: "粮草（石）", gsWood: "木头（斤）", gsCopper: "铜（斤）", gsIron: "铁（斤）", gsCoin: "铜钱",
       gsBuy: "买入", gsSell: "卖出", gsPrice: "现价（钱）", gsHave: "库存", gsCoinHave: "铜钱",
       gsSeasonNote: "集市价格随游戏时间波动（每打一仗推进 1 个月，184年1月 → 220年12月循环）：秋收（7-9月）粮贱、铜铁贵；冬季（10-12月）粮贵、铜铁贱。低买高卖可赚差价。",
       gsArm: "兵种选择", gsArmOk: "已改领 {n}", gsArmNote: "按该将适性加成攻击：S +6% / A +3% / B +1% · 可随时更换",
-      gsSold: "带兵", gsSoldOf: "现役兵力 {a} / 上限 {b}", gsRecruit: "招募士兵", gsRecCost: "每募 1 兵耗 0.5 粮草 + 2 铜钱；战后兵力为战损剩余，需回此补员", gsRecOk: "募兵 +{n}", gsResLack: "资源不足", gsFull: "已达带兵上限",
-      gsRes: "势力资源", gsPoints: "点数分配（剩余 {n} 点，来自关卡首通与升级）", gsCardData: "武将数据", gsCapNote: "带兵上限 = 1000 × 等级 × 星级加成，受品级上限约束",
+      gsSold: "带兵", gsSoldOf: "现役兵力 {a} / 上限 {b}", gsSoldAdd: "本战升级后带兵上限 +{n}（现上限 {b}）", gsSoldCapMax: "已达品级最高上限 {b}，升级不再增加带兵", gsRecruit: "招募士兵", gsRecCost: "每募 1 兵耗 0.5 粮草 + 2 铜钱；战后兵力为战损剩余，需回此补员", gsRecOk: "募兵 +{n}", gsResLack: "资源不足", gsFull: "已达带兵上限", gsSoldNext: "下一级带兵上限 +{n}（上限 {b}）", lvFullT: "已达 70 级满级",
+      gsRes: "势力资源", gsPoints: "点数分配（剩余 {n} 点，来自关卡首通与升级）", gsCardData: "武将数据", gsCapNote: "带兵上限 = 按等级分段累加（1-20 级每级 +500 / 21-40 级 +1000 / 41-60 级 +2000 / 61-70 级 +5000）× 星级与装备加成，且不超过该品级配置的最高上限",
+      resRice: "粮草", resRiceD: "军粮——募兵需粮草，每月每名备兵另耗 0.5 粮草",
+      resWood: "木头", resWoodD: "建材——城内建造与城墙加固所需",
+      resCopper: "铜", resCopperD: "铸造用铜——装备打造与城建所需，可在集市买卖",
+      resIron: "铁", resIronD: "兵器甲胄用铁——铁匠铺与高级装备所需",
+      resCoin: "铜钱", resCoinD: "通货——募兵、交易与建造通用",
+      resRiceU: "募兵 · 每月养兵 · 集市交易", resWoodU: "城内建造 · 城墙加固",
+      resCopperU: "装备打造 · 城建 · 集市买卖", resIronU: "铁匠铺锻造 · 高级装备",
+      resCoinU: "募兵 · 建造 · 集市买入",
+      resTipMkt: "本月售价 · 交易趋势", resTipCity: "本城月度", resTipUse: "主要用途",
+      resOutT: "产出", resInT: "消耗", resNetT: "净额", resNoMarket: "集市不交易此资源（仅作货币）",
+      seaSpring: "春季 —— 粮价略高，铜铁平稳", seaSummer: "夏季 —— 粮价平，铜铁略贵",
+      seaAutumn: "秋收（7-9月）—— 粮价最贱，铜铁最贵", seaWinter: "冬季（10-12月）—— 粮价最贵，铜铁最贱",
+      trendUp: "看涨", trendDown: "看跌", trendFlat: "走平", perMonth: "/月", trendForecast: "下月预估", gsPrevMonth: "较上月",
+      gsT: "カードウォール", gsLogin: "サインインするとカードウォールに入れます：武将カードを選んで育成・徴兵・市の経営ができます", gsHint: "カードをタップで詳細ページ：ポイント配分・兵種選択・徴兵・市の経営",
       lootGain: "缴获 粮草+{a} · 木头+{w} · 铜+{b} · 铁+{c} · 铜钱+{d}", gsBuyOk: "已买入 {n}（-铜钱 {p}）", gsSellOk: "已卖出 {n}（+铜钱 {p}）", gsSpOk: "{n} +1", gsNoSp: "没有可分配的技能点，打关卡首通可获 5 点",
-      gsT: "游戏空间", gsLogin: "登录后进入游戏空间，点选武将卡进行培养、募兵与集市经营", gsHint: "点击卡片进入专属详情页：分配点数 · 选择兵种 · 招募士兵 · 集市经营",
+      gsT: "卡牌墙", gsLogin: "登录后进入卡牌墙，点选武将卡进行培养、募兵与集市经营", gsHint: "点击卡片进入专属详情页：分配点数 · 选择兵种 · 招募士兵 · 集市经营",
       gsDate: "{y}年{m}月", gsMarket: "集市", gsGrain: "粮草（石）", gsWood: "木头（斤）", gsCopper: "铜（斤）", gsIron: "铁（斤）", gsCoin: "铜钱",
       gsBuy: "买入", gsSell: "卖出", gsPrice: "现价（钱）", gsHave: "库存", gsCoinHave: "铜钱",
       gsSeasonNote: "集市价格随游戏时间波动（每打一仗推进 1 个月，184年1月 → 220年12月循环）：秋收（7-9月）粮贱、铜铁贵；冬季（10-12月）粮贵、铜铁贱。低买高卖可赚差价。",
       gsArm: "兵种选择", gsArmOk: "已改领 {n}", gsArmNote: "按该将适性加成攻击：S +6% / A +3% / B +1% · 可随时更换",
-      gsSold: "带兵", gsSoldOf: "现役兵力 {a} / 上限 {b}", gsRecruit: "招募士兵", gsRecCost: "每募 1 兵耗 0.5 粮草 + 2 铜钱；战后兵力为战损剩余，需回此补员", gsRecOk: "募兵 +{n}", gsResLack: "资源不足", gsFull: "已达带兵上限",
-      gsRes: "势力资源", gsPoints: "点数分配（剩余 {n} 点，来自关卡首通与升级）", gsCardData: "武将数据", gsCapNote: "带兵上限 = 1000 × 等级 × 星级加成，受品级上限约束",
+      gsSold: "带兵", gsSoldOf: "现役兵力 {a} / 上限 {b}", gsSoldAdd: "本战升级后带兵上限 +{n}（现上限 {b}）", gsSoldCapMax: "已达品级最高上限 {b}，升级不再增加带兵", gsRecruit: "招募士兵", gsRecCost: "每募 1 兵耗 0.5 粮草 + 2 铜钱；战后兵力为战损剩余，需回此补员", gsRecOk: "募兵 +{n}", gsResLack: "资源不足", gsFull: "已达带兵上限", gsSoldNext: "次のレベルで兵力上限 +{n}（上限 {b}）", lvFullT: "レベル70・上限に到達",
+      gsRes: "势力资源", gsPoints: "点数分配（剩余 {n} 点，来自关卡首通与升级）", gsCardData: "武将数据", gsCapNote: "带兵上限 = 按等级分段累加（1-20 级每级 +500 / 21-40 级 +1000 / 41-60 级 +2000 / 61-70 级 +5000）× 星级与装备加成，且不超过该品级配置的最高上限",
+      resRice: "兵糧", resRiceD: "軍糧——募兵に必要、予備兵 1 名につき毎月 0.5 消費",
+      resWood: "木材", resWoodD: "建材——城内建設と城壁補強に使用",
+      resCopper: "銅", resCopperD: "鋳造用の銅——装備製作と建設に必要、市場で売買可",
+      resIron: "鉄", resIronD: "武具甲冑用の鉄——鍛冶場と上級装備に必要",
+      resCoin: "銅銭", resCoinD: "通貨——募兵・交易・建設に使用",
+      resRiceU: "募兵・毎月の養兵・市場取引", resWoodU: "城内建設・城壁補強",
+      resCopperU: "装備製作・建設・市場売買", resIronU: "鍛冶・上級装備",
+      resCoinU: "募兵・建設・市場での買付",
+      resTipMkt: "今月の売値・相場", resTipCity: "この城の月次", resTipUse: "主な用途",
+      resOutT: "生産", resInT: "消費", resNetT: "差引", resNoMarket: "市場では取引されません（通貨のみ）",
+      seaSpring: "春 —— 兵糧やや高、銅鉄は横ばい", seaSummer: "夏 —— 兵糧は安、銅鉄やや高",
+      seaAutumn: "秋の収穫（7-9月）—— 兵糧が最も安く、銅鉄が最も高い", seaWinter: "冬（10-12月）—— 兵糧が最も高く、銅鉄が最も安い",
+      trendUp: "上昇", trendDown: "下落", trendFlat: "横ばい", perMonth: "/月", trendForecast: "来月予想", gsPrevMonth: "前月比",
+      resRice: "粮草", resRiceD: "军粮——募兵需粮草，每月每名备兵另耗 0.5 粮草",
+      resWood: "木头", resWoodD: "建材——城内建造与城墙加固所需",
+      resCopper: "铜", resCopperD: "铸造用铜——装备打造与城建所需，可在集市买卖",
+      resIron: "铁", resIronD: "兵器甲胄用铁——铁匠铺与高级装备所需",
+      resCoin: "铜钱", resCoinD: "通货——募兵、交易与建造通用",
+      resRiceU: "募兵 · 每月养兵 · 集市交易", resWoodU: "城内建造 · 城墙加固",
+      resCopperU: "装备打造 · 城建 · 集市买卖", resIronU: "铁匠铺锻造 · 高级装备",
+      resCoinU: "募兵 · 建造 · 集市买入",
+      resTipMkt: "本月售价 · 交易趋势", resTipCity: "本城月度", resTipUse: "主要用途",
+      resOutT: "产出", resInT: "消耗", resNetT: "净额", resNoMarket: "集市不交易此资源（仅作货币）",
+      seaSpring: "春季 —— 粮价略高，铜铁平稳", seaSummer: "夏季 —— 粮价平，铜铁略贵",
+      seaAutumn: "秋收（7-9月）—— 粮价最贱，铜铁最贵", seaWinter: "冬季（10-12月）—— 粮价最贵，铜铁最贱",
+      trendUp: "看涨", trendDown: "看跌", trendFlat: "走平", perMonth: "/月", trendForecast: "下月预估", gsPrevMonth: "较上月",
       lootGain: "缴获 粮草+{a} · 木头+{w} · 铜+{b} · 铁+{c} · 铜钱+{d}", gsBuyOk: "已买入 {n}（-铜钱 {p}）", gsSellOk: "已卖出 {n}（+铜钱 {p}）", gsSpOk: "{n} +1", gsNoSp: "没有可分配的技能点，打关卡首通可获 5 点",
     }
   };
@@ -9524,8 +9577,8 @@ var BOTS = [
     }
     function cfgPull() {
       /* 后台卡牌配置表：启动拉取，覆盖本地七阶数值（积分/属性/触发率/带兵/职位/每10级），失败自动重试一次 */
-      var okT = false, okG = false;
-      function retry() { if (!okT || !okG) setTimeout(cfgPull, 6000); }
+      var okT = false, okG = false, okW = false;
+      function retry() { if (!okT || !okG || !okW) setTimeout(cfgPull, 6000); }
       try {
         var p1 = rpcP("sg_cfg_get", { p_key: "tiers" }).then(function (r) {
           if (r && r.ok && r.data) {
@@ -9547,7 +9600,17 @@ var BOTS = [
           }
           return false;
         })["catch"](function () { return false; });
-        return Promise.all([p1, p2]).then(function () { retry(); return okT || okG; });
+        /* V49：带兵成长曲线（每级增兵）同样走云端配置 */
+        var p3 = rpcP("sg_cfg_get", { p_key: "troopgrow" }).then(function (r) {
+          if (r && r.ok && r.data) {
+            var o = r.data;
+            if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+            if (o && applyTroopCfg(o.rows || o)) { okW = true; if (me()) { save(); rerender(); } }
+            return true;
+          }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2, p3]).then(function () { retry(); return okT || okG || okW; });
       } catch (e) { return Promise.resolve(false); }
     }
 
@@ -10375,12 +10438,104 @@ var BOTS = [
     function pr(base, f, seed) { return Math.round(base * f * (0.9 + 0.2 * ((hashNum("mk" + seed + "_" + m) % 1000) / 1000)) * 10) / 10; }
     return { rice: pr(2, sf.g, "r"), copper: pr(8, sf.m, "c"), iron: pr(6, sf.m, "i") };
   }
+  /* ---------------- V49 资源悬浮信息：是什么 · 时令售价与趋势 · 本城月产出与月消耗 ---------------- */
+  var RES_META = {
+    rice:   { icon: "🌾", k: "resRice",   dk: "resRiceD",   fx: "rice",   unit: "石" },
+    wood:   { icon: "🪵", k: "resWood",   dk: "resWoodD",   fx: null,     unit: "斤" },
+    copper: { icon: "⛏", k: "resCopper", dk: "resCopperD", fx: "copper", unit: "斤" },
+    iron:   { icon: "🔩", k: "resIron",   dk: "resIronD",   fx: "iron",   unit: "斤" },
+    coin:   { icon: "🪙", k: "resCoin",   dk: "resCoinD",   fx: null,     unit: "钱" }
+  };
+  function resName(k) { var m = RES_META[k]; return m ? T(m.k) : k; }
+  function resDesc(k) { var m = RES_META[k]; return m ? T(m.dk) : ""; }
+  /* 售价与趋势：售价 = 集市现价（该资源可在集市卖出）；趋势 = 与上一月（gm-1）比较的涨跌。
+     注意 gm-1 < 0 时（开局第一个月）不与自身比较，改用「下月 vs 本月」作为前瞻趋势，避免恒为 0。 */
+  function resMarketInfo(k, gm) {
+    var m = RES_META[k]; if (!m || !m.fx) return null;
+    gm = Math.max(0, Math.min(CAL_MONTHS - 1, gm || 0));
+    var mp = marketPrices(gm), cur = mp[m.fx];
+    var hasPrev = gm > 0;
+    var base = hasPrev ? marketPrices(gm - 1)[m.fx] : (gm < CAL_MONTHS - 1 ? marketPrices(gm + 1)[m.fx] : cur);
+    var pct = base ? (cur - base) / base * 100 : 0;
+    var d = gameDate(gm), sf = seasonFac(d.mo);
+    var seasonKey = (d.mo >= 7 && d.mo <= 9) ? "seaAutumn" : (d.mo >= 10) ? "seaWinter" : (d.mo <= 3) ? "seaSpring" : "seaSummer";
+    return { price: cur, prev: base, pct: pct, dir: pct > 1.5 ? "up" : pct < -1.5 ? "down" : "flat", season: seasonKey, forecast: !hasPrev };
+  }
+  /* 本城月度产出（复用 cityPreview 口径，不扣减） */
+  function cityResOut(u) {
+    var o = cityPreview(u), r = { rice: o.rice || 0, wood: o.wood || 0, copper: 0, iron: o.iron || 0, coin: o.coin || 0 };
+    return r;
+  }
+  /* 本城月度消耗：备兵粮耗 + 伤兵各资源疗养耗（与月度结算 healWounds 口径一致） */
+  function cityResIn(u) {
+    var c = ensureCity(u), sold = c.pool || 0;
+    (c.roster || []).forEach(function (id) {
+      var cc = (u.cards || []).filter(function (x) { return x.id === id; })[0];
+      if (cc && cc.sold) sold += cc.sold;
+    });
+    var wN = cityWoundN(c);
+    return { rice: Math.ceil(sold * 0.5) + wN, wood: wN, copper: wN, iron: wN, coin: wN, soldN: sold, wN: wN };
+  }
+  /* 单个资源胶囊的悬浮卡片 HTML（V49）：是什么 / 主要用途 / 本月售价与趋势 / 本城月产出与月消耗 */
+  function resHoverHTML(u, k) {
+    var meta = RES_META[k]; if (!meta) return "";
+    var gm = gMonth(u), gd = gameDate(gm);
+    var mi = resMarketInfo(k, gm), out = cityResOut(u), inn = cityResIn(u);
+    var o = out[k] || 0, i2 = inn[k] || 0, net = o - i2;
+    var netColor = net > 0 ? "#e07f7f" : net < 0 ? "#7fd08a" : "var(--ink-3,#8b93a3)";
+    var h = '<div class="reshov-head">' + meta.icon + " <b>" + esc(resName(k)) + "</b>" +
+      '<span style="opacity:.6;font-weight:400">（' + esc(meta.unit) + "）</span>" +
+      '<span class="reshov-have">' + esc(T("gsHave")) + " " + fmt(u.res && u.res[k] || 0) + "</span></div>" +
+      '<div class="reshov-row" style="opacity:.8">' + esc(resDesc(k)) + "</div>" +
+      '<div class="reshov-row" style="opacity:.62"><small>' + esc(T("resTipUse")) + "：" + esc(T("res" + k.charAt(0).toUpperCase() + k.slice(1) + "U") || "") + "</small></div>" +
+      '<div class="reshov-sep"></div>' +
+      '<div class="reshov-lab">💰 ' + esc(T("resTipMkt")) + " · " + gd.y + "年" + gd.mo + "月" + "</div>";
+    if (mi) {
+      var arrow = mi.dir === "up" ? "▲" : mi.dir === "down" ? "▼" : "▬";
+      var col = mi.dir === "up" ? "#e07f7f" : mi.dir === "down" ? "#7fd08a" : "var(--ink-3,#8b93a3)";
+      var tr = mi.dir === "up" ? T("trendUp") : mi.dir === "down" ? T("trendDown") : T("trendFlat");
+      var lbl = mi.forecast ? T("trendForecast") : T("gsPrevMonth");
+      h += '<div class="reshov-row">' + esc(T("gsPrice")) + ' <b style="color:#e8c988">' + mi.price + "</b>　" +
+        '<b style="color:' + col + '">' + arrow + " " + esc(tr) + "</b> " +
+        '<small style="color:' + col + '">' + (mi.pct >= 0 ? "+" : "") + mi.pct.toFixed(1) + "%</small>" +
+        ' <small style="opacity:.55">（' + esc(lbl) + "）</small></div>" +
+        '<div class="reshov-row" style="opacity:.7"><small>' + esc(T(mi.season)) + "</small></div>";
+    } else {
+      h += '<div class="reshov-row" style="opacity:.7"><small>' + esc(T("resNoMarket")) + "</small></div>";
+    }
+    h += '<div class="reshov-sep"></div>' +
+      '<div class="reshov-lab">🏙 ' + esc(T("resTipCity")) + " · " + esc(cityNameOf(u)) + "</div>" +
+      '<div class="reshov-row">' + esc(T("resOutT")) + ' <b style="color:#7fd08a">+' + fmt(o) + "</b>　·　" +
+      esc(T("resInT")) + ' <b style="color:#e07f7f">-' + fmt(i2) + "</b>　·　" +
+      esc(T("resNetT")) + ' <b style="color:' + netColor + '">' + (net >= 0 ? "+" : "") + fmt(net) + "</b>" +
+      '<span style="opacity:.5">' + esc(T("perMonth")) + "</span></div>";
+    if (k === "rice" && inn.soldN) h += '<div class="reshov-row" style="opacity:.58"><small>⚔ ' + esc(T("poolT")) + " " + fmt(inn.soldN) + " × 0.5</small></div>";
+    if (k !== "rice" && inn.wN) h += '<div class="reshov-row" style="opacity:.58"><small>⚕ ' + esc(T("woundT")) + " " + fmt(inn.wN) + "</small></div>";
+    return h;
+  }
+  function cityNameOf(u) { return (u && u.bat && (u.bat.spawn || u.bat.cur)) || "洛阳"; }
+  /* 资源胶囊：带 hover 卡片（桌面悬浮 / 触屏点击） */
+  function resPill(u, k, extraStyle) {
+    var meta = RES_META[k], val = (u.res && u.res[k]) || 0;
+    return '<span class="respill" tabindex="0"' + (extraStyle ? ' style="' + extraStyle + '"' : "") + ">" +
+      meta.icon + " " + fmt(val) +
+      '<div class="reshov">' + resHoverHTML(u, k) + "</div></span>";
+  }
   /* ================= V23 城池内政（君主主页） ================= */
   var GT = {
     en: {
       homeT: "Home", lordT: "Lord", cityT: "City Affairs", officeT: "Court Appointments", buildT: "City Works", polT: "Policy",
       taxBtn: "Collect Tax", taxCd: "Tax already collected this month — come back next month", taxGain: "Treasury +{n} coins",
       offEmpty: "Vacant", appointT: "Appoint {n}", resigned: "Removed from office", underling: "Under your banner: {n} generals",
+      reassign: "Transfer", curOffice: "Currently {n}", sortBy: "Sort by",
+  apoInSquad: "Already in the battle squad — remove it from the squad first",
+  apoNow: "In office",
+  apoRule: "One general, one office · squad members cannot take office · uncheck to vacate",
+  apoVacate: "Vacate",
+  apoLocked: "Not selectable",
+  apoState: "Status",
+  apoPickN: "{n} of {m} selectable",
+  multiOfficeNote: "A general may hold only one office — transferring removes the old post",
       gotoStage: "Campaign", gotoGs: "Generals", bldNoRes: "Not enough resources", bldMax: "Fully upgraded", bldUpOk: "{n} upgraded to Lv.{m}",
       polOk: "Policy updated: {n}", polNow: "Active policy", incomeT: "Monthly yield", campNote: "Barracks: all generals' troop cap +2% per level",
       st1: "The two armies meet — dust darkens the sky, war drums shake the field.",
@@ -10424,6 +10579,15 @@ var BOTS = [
       homeT: "主页", lordT: "君主", cityT: "城池内政", officeT: "政治任命", buildT: "城内建设", polT: "政策调整",
       taxBtn: "收税", taxCd: "本月已征税，下月再来", taxGain: "入库 铜钱 +{n}",
       offEmpty: "虚位以待", appointT: "任命 {n}", resigned: "已卸任", underling: "麾下武将 {n} 名",
+      reassign: "调任", curOffice: "现任 {n}", sortBy: "排序",
+  apoInSquad: "已在出战阵容——请先从阵容移除",
+  apoNow: "在任",
+  apoRule: "一人一职 · 出战阵容中的武将不可任命 · 取消勾选即卸任",
+  apoVacate: "卸任",
+  apoLocked: "不可选",
+  apoState: "状态",
+  apoPickN: "可选 {n} / {m}",
+  multiOfficeNote: "一人只任一职——调任将自动卸去原职",
       gotoStage: "出征", gotoGs: "武将养成", bldNoRes: "资源不足", bldMax: "已满级", bldUpOk: "{n} 升到 Lv.{m}",
       polOk: "政策已调整：{n}", polNow: "当前政策", incomeT: "内政月入", campNote: "兵营：全体武将带兵上限每级 +2%",
       st1: "两军对圆，战鼓擂动，杀声震天。",
@@ -10466,7 +10630,15 @@ var BOTS = [
     ja: {
       homeT: "ホーム", lordT: "君主", cityT: "都市内政", officeT: "登用・任命", buildT: "都市建設", polT: "政策",
       taxBtn: "徴税", taxCd: "今月は徴税済み。来月またどうぞ", taxGain: "銅銭 +{n} 入庫",
-      offEmpty: "空席", appointT: "{n} を任命", resigned: "罷免しました", underling: "配下の武将 {n} 名",
+      offEmpty: "空席", appointT: "{n} を任命", resigned: "罷免しました", underling: "配下の武将 {n} 名", reassign: "転任", curOffice: "現任 {n}", sortBy: "並べ替え",
+  apoInSquad: "出陣編成に含まれています——先に編成から外してください",
+  apoNow: "在任",
+  apoRule: "一人一職 · 出陣中の武将は任命不可 · チェックを外すと罷免",
+  apoVacate: "罷免",
+  apoLocked: "選択不可",
+  apoState: "状態",
+  apoPickN: "選択可 {n} / {m}",
+  multiOfficeNote: "一人一職のみ——転任すると旧職は自動的に解かれます",
       gotoStage: "出陣", gotoGs: "武将育成", bldNoRes: "資源不足", bldMax: "最大レベル", bldUpOk: "{n} が Lv.{m} に昇格",
       polOk: "政策を変更：{n}", polNow: "現在の政策", incomeT: "月間収入", campNote: "兵営：全武将の率兵上限が1レベルごとに+2%",
       st1: "両軍対峙、戦鼓が響き、殺声が天を衝く。",
@@ -10646,14 +10818,16 @@ var BOTS = [
   /* 胡商：按月种子到访，买卖价优于集市 */
   var MERCHANTS = [
     { k: "silk", n: "丝路胡商", en: "Silk Road Caravan", icon: "🐪", from: "西域·敦煌", nen: "絹の道の隊商" },
-    { k: "sea", n: "南海舶商", en: "Maritime Trader", icon: "⛵", from: "南海·交趾", nen: "南海の交易商" },
+    { k: "sea", n: "南海舶商", en: "Maritime Trader", icon: "⛵", from: "南海·交趾", nen: "南海の交易商", en2: "Nanhai Sea Trader" },
     { k: "north", n: "塞北马商", en: "Steppe Horse Trader", icon: "🐎", from: "塞北·朔方", nen: "塞北の馬商" }
   ];
   function merchantOf(u) {
     var gm = gMonth(u), m = MERCHANTS[hashNum("mch" + gm) % MERCHANTS.length];
     var bp = 0.74 + (hashNum("mb" + gm) % 9) / 100, sp = 1.18 + (hashNum("ms" + gm) % 10) / 100;
-    return { m: m, gm: gm, bp: bp, sp: sp, city: (ensureCity(u).name || "洛阳") };
+    return { m: m, mn: merchantName(m), gm: gm, bp: bp, sp: sp, city: (ensureCity(u).name || "洛阳") };
   }
+  /* V49：胡商名称按界面语言取值——国内站(zh)与日文站一律用中文名「南海舶商」，不再落到英文 */
+  function merchantName(m) { var l = lang(); if (l === "zh" || l === "ja") return m.n; return m.en; }
   function merchantPrice(u, key) {
     var mp = marketPrices(gMonth(u)), mm = merchantOf(u);
     return { buy: Math.max(1, Math.round(mp[key] * mm.bp * 10) / 10), sell: Math.round(mp[key] * mm.sp * 10) / 10 };
@@ -10871,6 +11045,8 @@ var BOTS = [
     return { hp: 0.08 * (1 + 0.15 * (m.st || 0)) * (m.ti + 1) * 0.5, spd: 0.10 + 0.02 * ((m.lv || 1) - 1) + 0.03 * (m.st || 0), m: m };
   }
   function cardLv(c) { return c.lv || 1; }
+  /* V49：带兵上限（卡牌本身，不含兵营加成）——统一封装，便于升级前后对比 */
+  function cardTroopCap(c) { return troopOfCard(c, gById(c.gid)); }
   /* V41 点数台账：所有增量发放统一走 spGrant（累计获得 spG），消耗走 spU（累计分配），
      待分配点数 sp = spG - spU 派生并实时回写；两个计数器单调递增，随云端存档持久化 */
   function spGrant(u, n) {
@@ -10908,11 +11084,65 @@ var BOTS = [
       (spLeft > 0 ? "" : " disabled") + ' style="width:58px;padding:3px 6px;border-radius:7px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit;text-align:center;font-size:12px">';
   }
   function expNeed(lv) { return 60 + lv * 30; }
+  /* ---------------- V49 带兵成长曲线（后台管控台「卡牌配置 → 带兵成长曲线」可远程调整）
+     规则：每升一级按当前等级所在分段累加兵力；
+       1-20 级 +500 / 级，21-40 级 +1000 / 级，41-60 级 +2000 / 级，61-70 级 +5000 / 级。
+     Lv.1 起始 1000 兵，且第 1 级即 +500 —— 每升一级按「新等级所在分段」加兵：
+     Lv.20 = 11000，Lv.40 = 31000，Lv.60 = 71000，Lv.70 = 121000。
+     上限约束：最终带兵不得超过该卡品级 tr.troop（卡牌配置里的「带兵上限」）。 ---------------- */
+  var TROOP_BASE = 1000;
+  var TROOP_GROWTH = [
+    { from: 1,  to: 20, add: 500 },
+    { from: 21, to: 40, add: 1000 },
+    { from: 41, to: 60, add: 2000 },
+    { from: 61, to: 70, add: 5000 }
+  ];
+  /* 后台远程配置覆盖：数组形式 [{from,to,add}]；仅接受数值合法且连续覆盖 1~70 的表 */
+  function applyTroopCfg(arr) {
+    try {
+      if (!arr || !arr.length) return false;
+      var rows = arr.map(function (o) { return { from: +o.from, to: +o.to, add: +o.add }; })
+        .filter(function (o) { return isFinite(o.from) && isFinite(o.to) && isFinite(o.add) && o.to >= o.from && o.add >= 0; })
+        .sort(function (a, b) { return a.from - b.from; });
+      if (!rows.length) return false;
+      /* 必须从 1 级起、连续无空洞、覆盖到 70 级（后台可能把 70 拆成 61-65 / 66-70 两段，故下限是「最后一段覆盖到 70」） */
+      if (rows[0].from !== 1) return false;
+      for (var i = 1; i < rows.length; i++) if (rows[i].from !== rows[i - 1].to + 1) return false;
+      if (rows[rows.length - 1].to < 70) return false;
+      TROOP_GROWTH = rows;
+      if (isFinite(+arr.base) && +arr.base > 0) TROOP_BASE = +arr.base;
+      return true;
+    } catch (e) { return false; }
+  }
+  /* 某等级的“未封顶带兵值”：Lv.1 = 起始值，此后每升 1 级按「新等级所在分段」累加
+     例：Lv.1 = 1000+500 = 1500（首级亦算一次升级），Lv.20 = 1000+20×500 = 11000，Lv.21 = 12000，Lv.70 = 121000 */
+  function troopRawAt(lv) {
+    lv = Math.max(1, Math.min(70, Math.round(lv || 1)));
+    var t = TROOP_BASE;
+    for (var i = 0; i < TROOP_GROWTH.length; i++) {
+      var g = TROOP_GROWTH[i];
+      if (lv < g.from) break;                                  /* 还没进入该段 */
+      if (lv <= g.to) { t += (lv - (g.from - 1)) * g.add; break; }  /* 落在该段内 */
+      t += (g.to - (g.from - 1)) * g.add;                      /* 整段走完，继续下一段 */
+    }
+    return t;
+  }
+  /* 从 a 级升到 b 级的累计增长（用于升级提示） */
+  function troopGainLv(a, b) { return Math.max(0, troopRawAt(b) - troopRawAt(a)); }
+
   function troopOfCard(c, g) {
     var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
-    var t = Math.min(1000 * cardLv(c), tr.troop);
+    /* V49：按等级分段累加（不再线性 1000×lv），再乘星级与装备加成，最后受品级最高上限约束 */
+    var t = troopRawAt(cardLv(c));
     t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
-    return t;
+    return Math.min(t, tr.troop);
+  }
+  /* V49：该卡在当前等级下是否已顶到品级上限（升级不再涨兵）——用于升级提示 */
+  function troopCapInfo(c, g) {
+    var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
+    var mul = (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0));
+    var raw = Math.round(troopRawAt(cardLv(c)) * mul), cap = tr.troop;
+    return { raw: raw, cap: cap, capped: raw >= cap, nextAdd: Math.max(0, Math.min(cap, Math.round(troopRawAt(cardLv(c) + 1) * mul)) - Math.min(cap, raw)) };
   }
   /* V33 装备耐久：高级装备（品阶 S/A/B/C = ti 0~3）永久有效；低级装备（D/E/F = ti 4~6）作战 10 次自动损毁 */
   var EQ_LO_USES = 10;
@@ -11051,10 +11281,20 @@ var BOTS = [
   /* ---------- 经验 / 掉落 / 结算 ---------- */
   function gainExp(c, exp, ups) {
     c.lv = cardLv(c); c.exp = c.exp || 0; var g = gById(c.gid);
+    var cap0 = cardTroopCap(c);
     c.exp += exp;
     var upN = 0;
-    while (c.lv < 70 && c.exp >= expNeed(c.lv)) { c.exp -= expNeed(c.lv); c.lv++; upN++; if (ups) ups.push(g.name + " → Lv." + c.lv); }
+    while (c.lv < 70 && c.exp >= expNeed(c.lv)) { c.exp -= expNeed(c.lv); c.lv++; upN++; }
     if (c.lv >= 70) c.exp = 0;
+    /* V49：升级提示（合并成一条，避免多级升级刷屏）——等级 + 带兵上限增量 / 是否已顶到品级最高上限 */
+    if (upN > 0) {
+      var cap1 = cardTroopCap(c), add = cap1 - cap0;
+      c._troopDelta = add;   /* 供武将详情页提示 */
+      if (ups) {
+        var head = T("lvUp", { n: g.name, m: c.lv }) + (add > 0 ? "　" + T("gsSoldAdd", { n: fmt(add), b: fmt(cap1) }) : "　" + T("gsSoldCapMax", { b: fmt(TIERS[cardTier(c)].troop) }));
+        ups.push(head);
+      }
+    }
     return upN;
   }
   function rollDropTi(stage) {
@@ -11097,7 +11337,7 @@ var BOTS = [
     var baseExp = 40 + stage * 18;
     /* V35：游戏时间由日历自走（一局一个月），战斗不再推进月份；月内政按日历月界结算 */
     var monthInc = tickMonth(u);
-    /* 战后兵力回写：现役士兵 = 战损剩余，需回游戏空间补员 */
+    /* 战后兵力回写：现役士兵 = 战损剩余，需回卡牌墙补员 */
     var _loss = 0;
     if (res && res.units && res.units.A) {
       res.units.A.forEach(function (un, i) {
@@ -11230,14 +11470,21 @@ var BOTS = [
         '<button class="sgbtn primary" data-bat="tut-card">' + T("tut1Btn") + "</button></div></div>";
       return html;
     }
-    var tabs = [["home", gt("homeT")], ["stage", T("stageTitle")], ["pvp", T("pvp")], ["shop", T("shopT")], ["bag", T("bagT")]];
-    var cur = tabs.filter(function (t) { return t[0] === BATUI.tab; })[0] || tabs[0];
-    html += '<div class="sg-panel"><div style="position:relative;display:inline-block;margin-bottom:12px;z-index:60">' +
-      '<button class="sgbtn primary" data-bat="tabmenu" style="min-width:180px;display:flex;align-items:center;justify-content:space-between;gap:14px">☰ ' + cur[1] + '<span style="opacity:.8">' + (BATUI.tabmenu ? "▴" : "▾") + "</span></button>" +
-      (BATUI.tabmenu ? '<div style="position:absolute;left:0;top:calc(100% + 6px);min-width:220px;background:var(--panel,#1d2027);border:1px solid var(--line-2,#3a3f4a);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.45);padding:6px;display:flex;flex-direction:column;z-index:9">' +
-        tabs.map(function (t) { return '<button data-bat="tab" data-v="' + t[0] + '" style="text-align:left;padding:10px 14px;border:none;background:transparent;color:' + (BATUI.tab === t[0] ? "#e8c988" : "var(--ink,#dfe3ea)") + ";border-radius:7px;cursor:pointer;font-size:13.5px;font-weight:" + (BATUI.tab === t[0] ? "700" : "400") + '">' + (BATUI.tab === t[0] ? "● " : "○ ") + t[1] + "</button>"; }).join("") +
-        "</div>" : "") +
-      "</div>";
+    var tabs = [["home", "🏛 " + gt("homeT")], ["stage", "⚔ " + T("stageTitle")], ["pvp", "🏹 " + T("pvp")], ["shop", "🛒 " + T("shopT")], ["bag", "🎒 " + T("bagT")]];
+    /* V49：原「☰ 下拉菜单」改为横向平铺选项卡（一行排开、当前页高亮、窄屏可横向滚动） */
+    html += '<div class="sg-panel"><div class="sg-flat-tabs" role="tablist">' +
+      tabs.map(function (t) {
+        var on = BATUI.tab === t[0];
+        return '<button role="tab" aria-selected="' + (on ? "true" : "false") + '" class="sg-flat-tab' + (on ? " on" : "") + '" data-bat="tab" data-v="' + t[0] + '">' + t[1] + "</button>";
+      }).join("") +
+      '<style>' +
+      ".sg-flat-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}" +
+      ".sg-flat-tab{flex:0 0 auto;white-space:nowrap;padding:8px 16px;border-radius:9px;border:1px solid var(--line-2,#3a3f4a);" +
+      "background:transparent;color:var(--ink-2,#c8d0dc);font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s}" +
+      ".sg-flat-tab:hover{border-color:#c9a45c;color:#e8c988}" +
+      ".sg-flat-tab.on{border-color:#c9a45c;background:rgba(201,164,92,.16);color:#e8c988;font-weight:700}" +
+      "@media(max-width:640px){.sg-flat-tab{padding:7px 11px;font-size:12px}}" +
+      "</style></div>";
     if (BATUI.tab === "home") html += batHomeTab(u);
     else if (BATUI.tab === "stage") html += batStageTab(u);
     else if (BATUI.tab === "pvp") html += batPvpTab(u);
@@ -11251,14 +11498,25 @@ var BOTS = [
     ensureRes(u);
     var c = ensureCity(u);
     var wN = cityWoundN(c);
-    return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 11px">🌾 ' + fmt(u.res.rice) + "</span>" +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 11px">🪵 ' + fmt(u.res.wood) + "</span>" +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 11px">⛏ ' + fmt(u.res.copper) + "</span>" +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 11px">🔩 ' + fmt(u.res.iron) + "</span>" +
-      '<span style="border:1px solid #c9a45c66;border-radius:999px;padding:4px 11px;color:#e8c988">🪙 ' + fmt(u.res.coin) + "</span>" +
+    /* V49：五种资源均可悬浮/点按查看「是什么 · 时令售价与趋势 · 本城月产出与月消耗」 */
+    return '<div class="sg-resrow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
+      resPill(u, "rice") + resPill(u, "wood") + resPill(u, "copper") + resPill(u, "iron") +
+      resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("upNoteT")) + '">⚔ ' + gt("poolT") + " " + fmt(c.pool || 0) + "</span>" +
-      '<span style="border:1px solid ' + (wN ? "#e07f7f88" : "var(--line-2)") + ';border-radius:999px;padding:4px 11px;color:' + (wN ? "#ffb3b3" : "var(--ink-2)") + '" title="' + esc(gt("infT") + " · " + gt("upNoteT")) + '">⚕ ' + gt("woundT") + " " + fmt(wN) + "</span></div>";
+      '<span style="border:1px solid ' + (wN ? "#e07f7f88" : "var(--line-2)") + ';border-radius:999px;padding:4px 11px;color:' + (wN ? "#ffb3b3" : "var(--ink-2)") + '" title="' + esc(gt("infT") + " · " + gt("upNoteT")) + '">⚕ ' + gt("woundT") + " " + fmt(wN) + "</span>" +
+      '<style>' +
+      ".respill{position:relative;display:inline-block;border:1px solid var(--line-2,#3a3f4a);border-radius:999px;padding:4px 11px;cursor:help;outline:none}" +
+      ".respill:hover,.respill:focus{border-color:#c9a45c;color:#e8c988}" +
+      ".reshov{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:900;width:264px;padding:10px 12px;border-radius:10px;text-align:left;" +
+      "background:var(--panel,#1d2027);border:1px solid var(--line-2,#3a3f4a);box-shadow:0 12px 34px rgba(0,0,0,.5);font-size:11.5px;line-height:1.55;color:var(--ink,#dfe3ea);white-space:normal;font-weight:400;pointer-events:none}" +
+      ".respill:hover .reshov,.respill:focus .reshov,.respill:focus-within .reshov{display:block}" +
+      ".reshov-head{font-size:12.5px;margin-bottom:2px;color:var(--ink,#dfe3ea)}" +
+      ".reshov-have{float:right;font-size:11px;font-weight:400;color:#c9a45c;opacity:.9}" +
+      ".reshov-lab{color:#c9a45c;font-size:11px;margin:1px 0 2px}" +
+      ".reshov-row{margin:1px 0}" +
+      ".reshov-sep{height:1px;background:var(--line-2,#3a3f4a);margin:6px 0;opacity:.7}" +
+      "@media(max-width:640px){.reshov{width:220px;font-size:11px}}" +
+      "</style></div>";
   }
   /* ---------- V24 洛阳城池图（游戏主页） ---------- */
   /* ---------- V27 武将编队（前锋/中军/左军/右军/骑军） ---------- */
@@ -12242,7 +12500,7 @@ var BOTS = [
         '<button class="sgbtn sm primary" data-bat="mbuy" data-r="' + k + '" data-n="200">' + T("merchantBuy") + " 200</button>" +
         '<button class="sgbtn sm ghost" data-bat="msell" data-r="' + k + '" data-n="200">' + T("merchantSell") + " 200</button></div>";
     }).join("");
-    return '<div class="sg-panel-hd"><h3><i>·</i>' + mm.m.icon + " " + T("merchantT") + " · " + esc(mm.m.n) + "</h3><span class=\"sp\"></span>" +
+    return '<div class="sg-panel-hd"><h3><i>·</i>' + mm.m.icon + " " + T("merchantT") + " · " + esc(mm.mn || mm.m.n) + "</h3><span class=\"sp\"></span>" +
       '<small style="color:var(--ink-3)">' + T("merchantFrom", { n: esc(mm.m.from) }) + "</small></div>" + rows +
       '<div class="sg-note" style="margin-top:8px;font-size:11px">' + "🚚 " + T("caravanT") + " · " +
       '<button class="sgbtn sm ghost" data-bat="transport">' + T("transportT") + "</button></div>" + caravanListHTML(u);
@@ -12553,22 +12811,77 @@ var BOTS = [
     if ((c.mobs || []).some(function (m) { return m.inCity && !m.dead; })) Object.keys(out).forEach(function (rk) { out[rk] = Math.round(out[rk] * 0.6); });
     return out;
   }
+  /* ---------- V49 大殿任命：改为与武将编队一致的勾选列表 ----------
+     规则：①已有官职的卡不能再勾（一人一职，必须先卸任）；②已在出战阵容里的卡不能勾
+     （上阵武将不参与内政，避免同一张卡既打仗又当官）；
+     ③按该职务主属性排序，列头可切换升降。 */
+  function squadIdSet() {
+    var s = {};
+    (BATUI.squad || []).forEach(function (id) { if (id) s[id] = 1; });
+    return s;
+  }
+  function offOfCard(u, cid) {
+    var hits = OFFICES.filter(function (x) { return (u.bat.off || {})[x.k] === cid; });
+    return hits.length ? hits[0] : null;
+  }
   function appointOpen(officeKey) {
     var u = me(); if (!u) return;
     var o = OFFICES.filter(function (x) { return x.k === officeKey; })[0];
     if (!o) return;
     ensureCity(u);
-    var rows = (u.cards || []).map(function (c0) {
+    var stt = BATUI.appointSort || {};
+    var sk = stt.k === o.k ? stt : { k: o.k, dir: -1 };
+    var sq = squadIdSet();
+    var curId = (u.bat.off || {})[o.k] || "";
+    /* 可勾选 = 未在阵容 + 未任他职（当前本职务在位者单独标记，可卸任） */
+    function whyNot(c) {
+      if (sq[c.id] && c.id !== curId) return gt("apoInSquad");
+      var other = offOfCard(u, c.id);
+      if (other && other.k !== o.k) return gt("curOffice", { n: offName(other) });
+      return null;
+    }
+    var list = (u.cards || []).slice().sort(function (a, b) {
+      var ga = gById(a.gid) || {}, gb = gById(b.gid) || {};
+      var va = (Number(ga[o.st]) || 0) + (a.spa && a.spa[o.st] || 0);
+      var vb = (Number(gb[o.st]) || 0) + (b.spa && b.spa[o.st] || 0);
+      var d = (va - vb) * (sk.dir || -1);
+      if (d) return d;
+      return cardLv(b) - cardLv(a);
+    });
+    var rows = list.map(function (c0) {
       var g = gById(c0.gid); if (!g) return "";
-      var tr = TIERS[cardTier(c0)], on = u.bat.off[o.k] === c0.id;
-      return '<div class="sg-rankline"><span class="i" style="background:' + tr.c + ';color:#10131a">' + esc(g.name.slice(0, 1)) + "</span>" +
-        "<span><b style='color:" + tr.c + "'>" + esc(g.name) + "</b> <small style='color:var(--ink-3)'>Lv." + cardLv(c0) + " · " + o.stN + " " + (g[o.st] || 0) + (c0.spa && c0.spa[o.st] ? '<b style="color:#e8c988"> +' + c0.spa[o.st] + "</b>" : "") + "</small></span>" +
-        '<span class="sp"></span>' +
-        '<button class="sgbtn sm ' + (on ? "" : "primary") + '" data-bat="appoint" data-k="' + o.k + '" data-id="' + (on ? "" : c0.id) + '">' + (on ? gt("resigned") : gt("appointT", { n: "" }).trim()) + "</button></div>";
-    }).join("") || '<div class="sg-muted">' + T("empty") + "</div>";
+      var tr = TIERS[cardTier(c0)], on = c0.id === curId;
+      var why = on ? null : whyNot(c0);
+      var stat = (Number(g[o.st]) || 0) + (c0.spa && c0.spa[o.st] || 0);
+      return '<tr class="pkrow' + (on ? " on" : "") + (why ? " dis" : "") + '" data-bat="appoint-tog" data-k="' + o.k + '" data-id="' + c0.id + '"' +
+        (why ? ' title="' + esc(why) + '"' : "") + ">" +
+        '<td><span class="pkcb">' + (on ? "✓" : "") + "</span></td>" +
+        '<td><span class="pk-pill" style="border-color:' + tr.c + ';color:' + tr.c + '">' + tierLabel(tr) + "</span></td>" +
+        '<td class="l"><b>' + esc(g.name) + "</b></td>" +
+        "<td>" + cardLv(c0) + "</td>" +
+        '<td><b style="color:#ffd76a">' + stat + "</b></td>" +
+        "<td>" + (c0.arm ? armName(c0.arm) : "—") + "</td>" +
+        "<td>" + troopTxt(troopOfCard(c0, g)) + "</td>" +
+        '<td class="l" style="font-size:10.5px">' + (why ? '<span style="color:#e07f7f">✕ ' + esc(why) + "</span>"
+          : on ? '<span style="color:#8fd694">' + esc(gt("apoNow")) + "</span>" : "") + "</td></tr>";
+    }).join("") || '<tr><td colspan="8" class="l">' + T("empty") + "</td></tr>";
+    var th = ["", T("pkTier"), T("pkGen"), T("pkLv"), o.stN, T("pkArm"), T("pkTroop"), gt("apoState")]
+      .map(function (h, i) {
+        if (i !== 4) return "<th>" + h + "</th>";
+        var arr = sk.dir === -1 ? " ▼" : " ▲";
+        return '<th style="cursor:pointer;user-select:none;color:#e8c988" data-bat="appoint-sort" data-k="' + o.k + '" data-d="' + (sk.dir === -1 ? 1 : -1) + '" title="' + esc(gt("sortBy")) + '">' + h + arr + "</th>";
+      }).join("");
+    var nOk = list.filter(function (c) { return c.id === curId || !whyNot(c); }).length;
     modal("<h3>" + gt("appointT", { n: offName(o) }) + "</h3>" +
-      '<div class="sg-note" style="margin-bottom:8px">' + offDesc(o) + " · " + (lang() === "en" ? "Best stat" : "宜") + " " + o.stN + " " + (lang() === "en" ? "high" : "高者") + "</div>" + rows +
-      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
+      '<div class="sg-note" style="margin-bottom:8px">' + offDesc(o) + " · " + (lang() === "en" ? "Best stat" : "宜") + " " + o.stN + " " + (lang() === "en" ? "high" : "高者") + "</div>" +
+      '<div class="sg-note" style="margin-bottom:8px;color:#e0b76a">' + esc(gt("apoRule")) + "</div>" +
+      '<div class="pkwrap"><table class="pktb"><thead><tr>' + th + "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      '<small style="color:var(--ink-3)">' + esc(gt("apoPickN", { n: nOk, m: list.length })) + '　·　<span id="apoCurName">' + (curId ? esc((gById((u.cards || []).filter(function (x) { return x.id === curId; })[0] ? (u.cards || []).filter(function (x) { return x.id === curId; })[0].gid : "") || {}).name || "—") : "—") + "</span></small>" +
+      '<span style="flex:1"></span>' +
+      (curId ? '<button class="sgbtn sm ghost" data-bat="appoint-clear" data-k="' + o.k + '">✕ ' + esc(gt("apoVacate")) + "</button>" : "") +
+      '<button class="sgbtn" data-sgact="close">' + T("close") + "</button>" +
+      '<button class="sgbtn primary" data-bat="appoint-confirm" data-k="' + o.k + '">' + T("pkApply") + "</button></div>", "xwide");
   }
   /* ---------- V38-3 S 型剧情路径（蛇形节点布局，关卡/演武共用） ---------- */
   function sPathHTML(items, cols) {
@@ -13076,7 +13389,7 @@ var BOTS = [
       '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
       '<div style="text-align:center;margin-top:14px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
   }
-  /* ---------- V33 武将装饰：装备选择 / 装备商店（游戏空间详情页） ---------- */
+  /* ---------- V33 武将装饰：装备选择 / 装备商店（卡牌墙详情页） ---------- */
   var EQ_SHOP_HI = [0, 1, 2, 3], EQ_SHOP_LO = [4, 5, 6];
   function eqPricePts(ti) { return TIERS[ti].pts * 2; }
   function eqPriceRes(ti) { return { coin: TIERS[ti].pts * 6, copper: TIERS[ti].pts * 2, iron: TIERS[ti].pts * 2 }; }
@@ -13161,15 +13474,13 @@ var BOTS = [
     }
   }
 
-  /* ---------- V22 游戏空间 · 卡片专属详情页 ---------- */
+  /* ---------- V22 卡牌墙 · 卡片专属详情页 ---------- */
   function gsResBar(u) {
     ensureRes(u);
-    return '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 12px">🌾 ' + T("gsGrain") + " <b>" + fmt(u.res.rice) + "</b></span>" +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 12px">🪵 ' + T("gsWood") + " <b>" + fmt(u.res.wood || 0) + "</b></span>" +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 12px">⛏ ' + T("gsCopper") + " <b>" + fmt(u.res.copper) + "</b></span>" +
-      '<span style="border:1px solid var(--line-2);border-radius:999px;padding:4px 12px">🔩 ' + T("gsIron") + " <b>" + fmt(u.res.iron) + "</b></span>" +
-      '<span style="border:1px solid #c9a45c66;border-radius:999px;padding:4px 12px;color:#e8c988">🪙 ' + T("gsCoin") + " <b>" + fmt(u.res.coin) + "</b></span></div>";
+    /* V49：卡片详情页资源条同样带悬浮提示（是什么 / 售价趋势 / 本城月度产出与消耗） */
+    return '<div class="sg-resrow" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
+      resPill(u, "rice") + resPill(u, "wood") + resPill(u, "copper") + resPill(u, "iron") +
+      resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") + "</div>";
   }
   function renderGameSpace(cardId) {
     var u = me(); if (!u) return "";
@@ -13264,7 +13575,14 @@ var BOTS = [
       '<small style="color:var(--ink-3)">' + (g.zi ? "字 " + esc(g.zi) : esc(g.title || "")) + "</small></div>" +
       '<div class="sg-note" style="margin-top:4px">' + tierLabel(tr) + " · " + "★".repeat(tr.star) + (c.stars ? '<b style="color:#e8c988"> +' + c.stars + "★</b>" : "") + "</div>" +
       '<div style="margin-top:8px"><div class="sg-note">' + T("expFull", { a: fmt(c.exp || 0), b: fmt(expNeed(lv)) }) + '</div><div class="sg-prog"><i style="width:' + Math.min(100, (c.exp || 0) / expNeed(lv) * 100) + '%"></i></div></div>' +
-      '<div style="margin-top:12px;text-align:left"><div class="sg-note">' + T("gsSold") + "：" + T("gsSoldOf", { a: fmt(sold), b: fmt(cap) }) + '</div><div class="sg-prog"><i style="width:' + pct + '%"></i></div></div>' +
+      '<div style="margin-top:12px;text-align:left"><div class="sg-note">' + T("gsSold") + "：" + T("gsSoldOf", { a: fmt(sold), b: fmt(cap) }) + '</div><div class="sg-prog"><i style="width:' + pct + '%"></i></div>' +
+      (function () {
+        /* V49：升级提示 —— 下一级增兵 / 是否已顶到品级最高上限 */
+        var ci = troopCapInfo(c, g);
+        if (lv >= 70) return '<div class="sg-note" style="margin-top:4px;color:#e8c988">★ ' + T("lvFullT") + "</div>";
+        if (ci.capped) return '<div class="sg-note" style="margin-top:4px;color:#e8a05c">⚠ ' + T("gsSoldCapMax", { b: fmt(ci.cap) }) + "</div>";
+        return '<div class="sg-note" style="margin-top:4px;color:#9ec9ff">⬆ ' + T("gsSoldNext", { n: fmt(ci.nextAdd), b: fmt(ci.cap) }) + "</div>";
+      })() + "</div>" +
       "</div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>🎖 ' + T("decoT") + '</h3><span class="sp"></span><button class="sgbtn sm primary" data-gs="eqshop" data-id="' + c.id + '">🛒 ' + T("eqShopT") + "</button></div>" +
       '<div class="sg-note" style="margin-bottom:2px">' + T("decoNote") + "</div>" + eqRows33 + "</div>" +
@@ -13296,7 +13614,7 @@ var BOTS = [
       '<style>@media(max-width:1060px){.fgrid{grid-template-columns:1fr!important}}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}</style>' +
       "</div>";
   }
-  /* ---------- 游戏空间事件（data-gs 委托） ---------- */
+  /* ---------- 卡牌墙事件（data-gs 委托） ---------- */
   document.addEventListener("click", function (e) {
     var azEl = e.target.closest("#gsArt");
     if (azEl) {
@@ -13455,6 +13773,11 @@ var BOTS = [
     switch (act) {
       /* ---------- V23 内政 ---------- */
       case "office": appointOpen(t.getAttribute("data-k")); return;
+      case "appoint-sort": {
+        /* V49：任命列表按该职务主属性升/降序切换 */
+        BATUI.appointSort = { k: t.getAttribute("data-k"), dir: parseInt(t.getAttribute("data-d"), 10) === 1 ? 1 : -1 };
+        appointOpen(t.getAttribute("data-k")); return;
+      }
       /* ---------- V24 城池图 ---------- */
       case "bld": bldOpen(t.getAttribute("data-k")); return;
       case "recruit-draw": {
@@ -13709,15 +14032,35 @@ var BOTS = [
         else { if (BATUI.squad.length >= 5) return toast(T("squadDesc"), "err"); BATUI.squad.push(id); }
         mobOpen(midx); return;
       }
-      case "appoint": {
+      case "appoint-tog": {
+        /* V49 大殿任命：勾选式。已被阵容占用 / 已任他职 → 不可勾 */
+        var aKey = t.getAttribute("data-k"), aId = t.getAttribute("data-id") || "";
+        if ((t.className || "").indexOf("dis") >= 0) {
+          return toast(t.getAttribute("title") || gt("apoLocked"), "err");
+        }
+        closeModal();
         ensureCity(u);
-        var ok2 = t.getAttribute("data-k"), nid = t.getAttribute("data-id") || "";
-        if (nid) { (u.cards || []).forEach(function (cc) { Object.keys(u.bat.off).forEach(function (kk) { if (u.bat.off[kk] === nid) delete u.bat.off[kk]; }); }); u.bat.off[ok2] = nid; }
-        else delete u.bat.off[ok2];
-        save();
-        var apG = nid ? gById(((u.cards || []).filter(function (x) { return x.id === nid; })[0] || {}).gid) : null;
-        toast(nid && apG ? offName(OFFICES.filter(function (x) { return x.k === ok2; })[0] || {}) + " · " + apG.name : gt("resigned"), "ok");
-        closeModal(); refreshBattle(); return;
+        var aNow = (u.bat.off || {})[aKey] || "";
+        if (aNow === aId) {
+          /* 再点一次已任命的 = 卸任 */
+          delete u.bat.off[aKey];
+          save();
+          toast(gt("resigned"), "ok");
+        } else {
+          Object.keys(u.bat.off).forEach(function (kk) { if (u.bat.off[kk] === aId) delete u.bat.off[kk]; });
+          u.bat.off[aKey] = aId;
+          save();
+          var apG = gById(((u.cards || []).filter(function (x) { return x.id === aId; })[0] || {}).gid);
+          toast(offName(OFFICES.filter(function (x) { return x.k === aKey; })[0] || {}) + " · " + (apG ? apG.name : ""), "ok");
+        }
+        refreshBattle(); appointOpen(aKey); return;
+      }
+      case "appoint-confirm": appointOpen(t.getAttribute("data-k")); return;
+      case "appoint-clear": {
+        ensureCity(u);
+        delete u.bat.off[t.getAttribute("data-k")];
+        save(); toast(gt("resigned"), "ok");
+        refreshBattle(); appointOpen(t.getAttribute("data-k")); return;
       }
       case "build-up": {
         ensureCity(u);
@@ -13750,8 +14093,7 @@ var BOTS = [
       /* ---------- 原作战事件 ---------- */
       case "spawn": u.bat.spawn = t.getAttribute("data-n"); save(); toast(T("spawnOk", { n: u.bat.spawn }), "ok"); refreshBattle(); return;
       case "tut-card": { var g0 = rollStarter(); if (g0) { var nc0 = mkCard(g0.id); nc0.lv = 3; u.cards.unshift(nc0); u.bat.tut = 1; save(); toast(T("tut1Btn") + "：" + g0.name, "ok"); } refreshBattle(); return; }
-      case "tab": BATUI.tab = v; BATUI.tabmenu = false; BATUI.res = null; BATUI.fight = null; refreshBattle(); return;
-      case "tabmenu": BATUI.tabmenu = !BATUI.tabmenu; refreshBattle(); return;
+      case "tab": BATUI.tab = v; BATUI.res = null; BATUI.fight = null; refreshBattle(); return;
       case "citysel": toast(T("cityLocked")); return;
       /* ---------- V27 多城池 / 编队 / 商队 ---------- */
       case "cityswitch": {
@@ -14041,7 +14383,12 @@ var BOTS = [
     _bots: BOTS,
     _tiers: TIERS,
     _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes, gMonth: gMonth, ensureCity: ensureCity, ensureMobs: ensureMobs, mobEnemies: mobEnemies, cityPop: cityPop, wallCost: wallCost,
-      switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard, growOpen: growOpen, catCounts: cardTierCounts, catOpen: openCatRecycle, catRun: doCatRecycle }; },
+      switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard, growOpen: growOpen, catCounts: cardTierCounts, catOpen: openCatRecycle, catRun: doCatRecycle,
+      /* V49 六项需求探针导出 */
+      troopRaw: troopRawAt, troopOf: troopOfCard, troopCapInfo: troopCapInfo, troopGain: troopGainLv, TROOP_GROWTH: TROOP_GROWTH,
+      resHover: resHoverHTML, wallText: function (k) { return T(k); }, setLang: function (l) { localStorage.setItem("sg_lang", l); return l; }, resMarket: resMarketInfo, cityResOut: cityResOut, cityResIn: cityResIn, resPill: resPill,
+      appointOpen: appointOpen, offName: offName, cardLv: cardLv, gById: gById, expNeed: expNeed, gainExp: gainExp,
+      squadIdSet: squadIdSet, offOfCard: offOfCard }; },
     tierOf: tierOf,
     cardTier: cardTier,
     mobTierOf: mobTierOf,
