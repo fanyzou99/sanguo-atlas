@@ -1008,10 +1008,19 @@ footer.foot{
     radial-gradient(120% 90% at 50% -20%, color-mix(in srgb,var(--tc,#c9a45c) 24%, transparent), transparent 62%),
     linear-gradient(170deg,#222a37,#171c25 62%);
   transition:.2s;isolation:isolate;
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--tc,#c9a45c) 26%, transparent),0 6px 18px rgba(0,0,0,.35);
+  box-shadow:0 0 0 1.5px color-mix(in srgb,var(--tc,#c9a45c) 58%, transparent),0 0 13px color-mix(in srgb,var(--tc,#c9a45c) 30%, transparent),0 8px 22px rgba(0,0,0,.42);
 }
-.sg-card:hover{transform:translateY(-3px);border-color:var(--tc,#c9a45c);
-  box-shadow:0 0 16px color-mix(in srgb,var(--tc,#c9a45c) 42%, transparent),0 12px 30px rgba(0,0,0,.5)}
+/* V58.2 卡牌墙光效强化：常亮品阶光环 + 立体光泽 + 悬浮 3D + 高阶呼吸光 */
+.sg-card::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:11px;
+  background:linear-gradient(165deg,rgba(255,255,255,.16),rgba(255,255,255,0) 32%),
+    radial-gradient(95% 62% at 50% 110%, color-mix(in srgb,var(--tc,#c9a45c) 34%, transparent), transparent 62%);
+  mix-blend-mode:screen}
+.sg-card::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:11px;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--tc,#c9a45c) 70%, transparent),inset 0 -16px 24px rgba(0,0,0,.36)}
+.sg-card:hover{transform:translateY(-4px) perspective(620px) rotateX(2.4deg);border-color:var(--tc,#c9a45c);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--tc,#c9a45c) 78%, transparent),0 0 22px color-mix(in srgb,var(--tc,#c9a45c) 52%, transparent),0 14px 34px rgba(0,0,0,.52)}
+.sg-glowhi{animation:sgTierGlow 2.8s ease-in-out infinite}
+@keyframes sgTierGlow{0%,100%{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--tc,#c9a45c) 58%, transparent),0 0 13px color-mix(in srgb,var(--tc,#c9a45c) 30%, transparent),0 8px 22px rgba(0,0,0,.42)}50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--tc,#c9a45c) 85%, transparent),0 0 24px color-mix(in srgb,var(--tc,#c9a45c) 55%, transparent),0 10px 26px rgba(0,0,0,.45)}}
 
 /* 品级镶边：赤→橙→红→绿→青→蓝→紫（自高到低） */
 .sg-card-tier{
@@ -8631,7 +8640,7 @@ var BOTS = [
     var picking = !!UI.selR && !!withGift, on = !!(picking && UI.selR[c.id]);
     /* V51：等级超过回收门槛的卡在批量模式下显示锁定角标（显式告知「为什么点不动」） */
     var lvLock = picking && !recycleLvOk(c);
-    return '<div class="sg-card' + (on ? " sel" : "") + (lvLock ? " sg-lvlock" : "") + (skFull ? " sg-dragon" : "") + '" style="--fc:' + facColor(g.faction) + ';--tc:' + tr.c + '" data-sgact="' + (picking && !lvLock ? "card-sel" : "card-open") + '" data-id="' + (picking && !lvLock ? c.id : g.id) + '"' + (picking && !lvLock ? "" : ' data-cid="' + c.id + '"') + '>' +
+    return '<div class="sg-card' + (on ? " sel" : "") + (lvLock ? " sg-lvlock" : "") + (skFull ? " sg-dragon" : (tr.star >= 6 ? " sg-glowhi" : "")) + '" style="--fc:' + facColor(g.faction) + ';--tc:' + tr.c + '" data-sgact="' + (picking && !lvLock ? "card-sel" : "card-open") + '" data-id="' + (picking && !lvLock ? c.id : g.id) + '"' + (picking && !lvLock ? "" : ' data-cid="' + c.id + '"') + '>' +
       '<span class="sg-card-tier">' + tierLabel(tr) + "</span>" +
       (picking ? '<span class="sg-card-pick">' + (lvLock ? "🔒" : "✓") + "</span>" : "") +
       (c.from ? '<span class="sg-card-new">赠</span>' : "") +
@@ -15854,6 +15863,12 @@ var BOTS = [
       try { tickCityUp(u); } catch (e56a) {}
       try { tickMarches(u); } catch (e56b) {}
     }
+  }, 1000);
+  /* V58.2：城市升级/托管链与行军结算不再局限战斗页——任意页面每秒结算（修复升级完工不落地） */
+  setInterval(function () {
+    var _u2 = me(); if (!_u2) return;
+    try { tickCityUp(_u2); } catch (e56c) {}
+    try { tickMarches(_u2); } catch (e56d) {}
   }, 1000);
   /* V56：行军队伍标记沿贝塞尔轨迹行走（200ms 步进） */
   setInterval(function () {
