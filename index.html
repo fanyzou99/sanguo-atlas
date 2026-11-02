@@ -13568,6 +13568,35 @@ var BOTS = [
       '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("pvp") + "</h3><span class=\"sp\"></span><small style='color:var(--ink-3)'>群雄逐鹿 · S 型巡演</small></div>" +
       sPathHTML(items, 4);
   }
+  /* V59：积分商店 —— 后台「商店配置」上架的武器/盔甲/头盔/坐骑，可直接用积分或资源购买 */
+  function shopCfgSection(u) {
+    var cfg = SG_SHOP_CFG || [];
+    if (!cfg.length) return "";
+    var rows = cfg.map(function (it) {
+      var trI = TIERS[it.ti] || TIERS[6];
+      var slotN = ({ wpn: T("eqWpn"), head: T("eqHead"), body: T("eqBody"), mt: T("mountT") })[it.slot] || it.slot;
+      var stTx = [];
+      if (+it.atkp) stTx.push("⚔+" + it.atkp + "%");
+      if (+it.defp) stTx.push("🛡+" + it.defp + "%");
+      if (+it.hpp) stTx.push("❤+" + it.hpp + "%");
+      if (+it.spdp) stTx.push("👟+" + it.spdp + "%");
+      var skTx = (it.sks || []).map(function (s2) {
+        return "<i>" + esc(s2.n || "") + "</i>" + (s2.d ? " " + esc(s2.d) : "") + ((+s2.atk || +s2.def) ? " <b style='color:#e8c988'>（" + (+s2.atk ? "伤+" + s2.atk + "%" : "") + ((+s2.atk && +s2.def) ? " " : "") + (+s2.def ? "防+" + s2.def + "%" : "") + "）</b>" : "");
+      }).join("；");
+      var price = [];
+      if (+it.pts) price.push(fmt(it.pts) + "★");
+      if (+it.coin) price.push("🪙" + fmt(it.coin));
+      if (+it.copper) price.push("⛏" + fmt(it.copper));
+      if (+it.iron) price.push("🔩" + fmt(it.iron));
+      return '<div class="sg-rankline" style="align-items:center">' +
+        (it.img ? '<img src="' + it.img + '" alt="" style="width:48px;height:48px;object-fit:contain;border:1px solid ' + trI.c + '66;border-radius:9px;background:rgba(255,255,255,.05);box-shadow:0 0 10px ' + trI.c + '33;flex:none">' : '<span class="i" style="background:' + trI.c + ';color:#10131a">🛒</span>') +
+        '<span style="min-width:0"><b style="color:' + trI.c + '">' + esc(it.name) + '</b> <small style="color:var(--ink-3)">' + esc(slotN) + " · " + trI.grade + " · Lv." + (it.lv || 1) + (stTx.length ? " · " + stTx.join(" ") : "") + "</small>" +
+        (skTx ? '<br><small style="color:#9fb0c8;font-size:10.5px">✦ ' + skTx + "</small>" : "") + "</span>" +
+        '<span class="sp"></span><button class="sgbtn sm primary" data-bat="shop-buy-cfg" data-item="' + esc(it.id) + '">' + (price.join("+") || fmt(0) + "★") + "</button></div>";
+    }).join("");
+    return '<div class="sg-panel-hd"><h3><i>·</i>🛒 ' + T("eqShopT") + '</h3><span class="sp"></span><small style="color:var(--ink-3)">' + T("eqShopHi") + "</small></div>" +
+      '<div style="margin:8px 0 14px">' + rows + "</div>";
+  }
   function batShopTab(u) {
     var eqRow = TIERS.map(function (t, i) {
       return '<button class="sgchip" data-bat="buy-eq" data-i="' + i + '" style="border-color:' + t.c + '">' + T("shopEquip", { n: tierLabel(t) }) + " · " + fmt(t.pts) + "</button>";
@@ -13579,7 +13608,8 @@ var BOTS = [
     var RESDEF = [["rice", "gsGrain", "🌾"], ["wood", "gsWood", "🪵"], ["copper", "gsCopper", "⛏"], ["iron", "gsIron", "🔩"], ["coin", "gsCoin", "🪙"]];
     var exOut = RESDEF.map(function (x) { return '<button class="sgchip" data-bat="pts2res" data-r="' + x[0] + '">1000★ → 10万 ' + x[2] + "</button>"; }).join(" ");
     var exIn = RESDEF.map(function (x) { return '<button class="sgchip" data-bat="res2pts" data-r="' + x[0] + '">20万 ' + x[2] + " → 1000★</button>"; }).join(" ");
-    return '<div class="sg-note" style="margin-bottom:10px">' + T("shopT") + " · " + T("points") + " <b>" + fmt(u.points) + "</b></div>" +
+    return '<div class="sg-note" style="margin-bottom:10px">' + T("shopT") + " · " + T("points") + " <b>" + fmt(u.points) + "</b>　·　🪙 " + fmt((u.res || {}).coin || 0) + " · ⛏ " + fmt((u.res || {}).copper || 0) + " · 🔩 " + fmt((u.res || {}).iron || 0) + "</div>" +
+      shopCfgSection(u) +
       '<div class="sg-panel-hd"><h3><i>·</i>' + T("shopXch") + '</h3></div>' +
       '<div class="sg-note" style="margin:6px 0 4px">' + T("shopXchOut") + '</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' + exOut + '</div>' +
       '<div class="sg-note" style="margin:6px 0 4px">' + T("shopXchIn") + '</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + exIn + '</div>' +
@@ -15766,6 +15796,23 @@ var BOTS = [
       case "skip": skipLog(); return;
       case "buy-eq": { var ti1 = i, price = TIERS[ti1].pts; if ((u.points || 0) < price) return toast(T("eqLack"), "err"); addPoints(u, -price, T("shopT") + " · " + T("shopEquip", { n: TIERS[ti1].n })); var ne = mkEquip(SLOT_KEYS[Math.floor(Math.random() * SLOT_KEYS.length)], ti1); ne.wt = WTYPES[Math.floor(Math.random() * WTYPES.length)]; u.eqs.push(ne); save(); toast(T("buyOk") + "：" + eqName(ne), "ok"); refreshBattle(); return; }
       case "buy-mt": { var ti2 = i, price2 = Math.round(TIERS[ti2].pts * 1.5); if ((u.points || 0) < price2) return toast(T("eqLack"), "err"); addPoints(u, -price2, T("shopT") + " · " + T("shopMount", { n: TIERS[ti2].n })); u.mts.push(mkMount(ti2)); save(); toast(T("buyOk"), "ok"); refreshBattle(); return; }
+      case "shop-buy-cfg": {
+        /* V59：积分商店购买后台配置商品（无需先选武将；武器类型在首次装备时绑定） */
+        var itS = shopItemOf(t.getAttribute("data-item")); if (!itS) return;
+        var ptsS = +itS.pts || 0;
+        if (ptsS > (u.points || 0)) return toast(T("eqLack"), "err");
+        ensureRes(u);
+        if ((u.res.coin || 0) < (+itS.coin || 0) || (u.res.copper || 0) < (+itS.copper || 0) || (u.res.iron || 0) < (+itS.iron || 0)) return toast(T("eqLackRes"), "err");
+        if (ptsS) addPoints(u, -ptsS, T("shopT") + " · " + itS.name);
+        ["coin", "copper", "iron"].forEach(function (rk2) { if (+itS[rk2]) u.res[rk2] -= +itS[rk2]; });
+        var neS = { id: (itS.slot === "mt" ? "m" : "e") + Date.now(), ti: itS.ti | 0, lv: Math.max(1, +itS.lv || 1), st: 0 };
+        ["name", "img", "atkp", "defp", "hpp", "spdp", "sks"].forEach(function (k3) { if (itS[k3] != null) neS[k3] = itS[k3]; });
+        if ((neS.ti | 0) >= 4) neS.uses = EQ_LO_USES;
+        if (itS.slot === "mt") { u.mts.push(neS); }
+        else { neS.slot = itS.slot; u.eqs.push(neS); }
+        save(); toast(T("buyOk") + "：" + itS.name + (neS.uses != null ? "（" + T("eqUsesLeft", { n: neS.uses }) + "）" : ""), "ok", 4200);
+        refreshBattle(); return;
+      }
       case "buy-shard": { if ((u.points || 0) < 300) return toast(T("eqLack"), "err"); addPoints(u, -300, T("shopT") + " · " + T("bagShard")); var names = []; for (var k = 0; k < 6; k++) { var gg = rollGeneral(); addShards(u, gg.id, 1); names.push(gg.name); } save(); toast(T("buyOk") + "：" + names.join("、"), "ok", 6000); refreshBattle(); return; }
       case "pts2res": {
         ensureRes(u);
