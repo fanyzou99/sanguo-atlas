@@ -7296,7 +7296,10 @@ html[data-lang="en"]{letter-spacing:.01em}
       for (var i = 0; i < arr.length; i++) {
         var o = arr[i], t = TIERS[i];
         if (!o) continue;
-        ["n", "grade", "c"].forEach(function (k) { if (o[k] != null) t[k] = String(o[k]).slice(0, 6); });
+        ["n", "grade"].forEach(function (k) { if (o[k] != null) t[k] = String(o[k]).slice(0, 6); });
+        /* V63b 修复：颜色此前被 slice(0,6) 截断——"#9257e0" 是 7 个字符，切掉末位变成非法 "#9257e"，
+           导致整条 background-image 失效、全站卡牌只剩金色外圈。现在只接受合法 #RGB/#RRGGBB，非法一律忽略 */
+        if (o.c != null) { var hx63 = _hexOk(o.c); if (hx63) t.c = hx63; }
         ["min", "pts", "stat", "trig", "troop", "posb", "pts10", "star", "kp", "skd"].forEach(function (k) {
           if (o[k] != null && isFinite(+o[k])) t[k] = +o[k];
         });
@@ -8673,11 +8676,23 @@ var BOTS = [
 
   /* V61：品阶色派生变量。旧版 Chrome 不支持 color-mix()，卡牌的 border / box-shadow 会整条失效
      → 颜色边框直接不显示。这里在 JS 侧把颜色算成纯 rgb/rgba，CSS 只做 var() 取值。 */
-  function _hxRgb(h) {
+  /* V63b：严格校验 #RGB/#RRGGBB 并归一化为 "#rrggbb"，非法返回 ""。
+     背景：云端品阶配置曾把 "#9257e0" 截成 "#9257e"（slice(0,6)），非法色值会让
+     整条 background-image 失效 → 卡牌边框全部退化成金色外圈阴影。 */
+  function _hexOk(h) {
     var t = String(h || "").replace("#", "").trim();
     if (t.length === 3) t = t.charAt(0) + t.charAt(0) + t.charAt(1) + t.charAt(1) + t.charAt(2) + t.charAt(2);
-    var v = parseInt(t, 16);
-    if (t.length !== 6 || !isFinite(v)) return [201, 164, 92];
+    if (t.length !== 6) return "";
+    for (var i = 0; i < 6; i++) {
+      var ch = t.charAt(i);
+      if (!((ch >= "0" && ch <= "9") || (ch >= "a" && ch <= "f") || (ch >= "A" && ch <= "F"))) return "";
+    }
+    return "#" + t.toLowerCase();
+  }
+  function _hxRgb(h) {
+    var t = _hexOk(h);
+    if (!t) return [201, 164, 92]; /* 非法输入兜底色 */
+    var v = parseInt(t.slice(1), 16);
     return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
   }
   function _mixRgb(a, b, t) {
@@ -8689,7 +8704,8 @@ var BOTS = [
        --tcb 仍是品阶标注色本身（卡面「S级·紫」同一个 #hex），保证边框与标注同色。 */
     var c = _hxRgb(hex), lw = _mixRgb(c, [255, 255, 255], .62), ll = _mixRgb(c, [255, 255, 255], .34),
       dk = _mixRgb(c, [0, 0, 0], .30), dp = _mixRgb(c, [0, 0, 0], .52), de = _mixRgb(c, [0, 0, 0], .74);
-    var base = (String(hex || "").charAt(0) === "#") ? hex : "rgb(" + c.join(",") + ")";
+    /* V63b：base 一律输出合法颜色——hex 合法用归一化 hex，非法退回 rgb()，绝不让坏值弄废整条 background-image */
+    var base = _hexOk(hex) || "rgb(" + c.join(",") + ")";
     return "--tc:" + base +
       ";--tcb:" + base +
       ";--tck:rgb(" + dk.join(",") + ");--tcd:rgb(" + dp.join(",") + ");--tce:rgb(" + de.join(",") + ")" +
@@ -16153,6 +16169,8 @@ var BOTS = [
       renderBattle: renderBattle, renderFight: renderFight, setApp: setApp, rerender: rerender, teamPanel: teamPanelHTML,
       /* V61 探针导出 */
       sortByTier: sortByTier, cele: sgTierCele, tierVars: tierVars, homeTab: function (u) { return batHomeTab(u); },
+      /* V63b 探针导出：云端品阶配置落地与颜色校验 */
+      tierCfgF: applyTierCfg, tierColorOf: function (i) { return TIERS[i] ? TIERS[i].c : ""; },
       /* V62 探针：按品阶造一张卡并读计算样式（边框色/层级特效） */
       tierColor: function (ti) { return TIERS[ti].c; },
       cardProbe: function (c) {
