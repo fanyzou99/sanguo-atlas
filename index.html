@@ -1003,73 +1003,68 @@ footer.foot{
 .sg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px}
 .sg-card{
   position:relative;border-radius:11px;overflow:hidden;cursor:pointer;
-  /* V61：品阶色一律走 JS 预算好的 --tcb/--tcg/--tcs（纯 rgb/rgba）——
-     原来用 color-mix()，旧版 Chrome（<111）不支持会让 border / box-shadow 整条声明失效，
-     表现就是「卡牌墙的颜色边框完全不显示」 */
-  border:1.5px solid var(--tcb,#8f7245);
-  background:
+  /* V63：边框色 = 卡面品阶标注色（S 紫 / A 蓝 / B 绿 / C 黄 / D 橙 / E 赤 / F 白）。
+     炫酷感来自「同一颜色」的明暗层次，而不是闪烁：
+       ① 边框本身是一条多段渐变环（亮边 → 本色 → 暗边 → 回亮），一道边就有立体倒角；
+       ② 外侧压一圈深色衬边（--tck/--tcd），把亮色边托出来；
+       ③ 内侧用 --ring 叠「画框内衬线」，层次随品阶递增。
+     实现走 border-box 背景层（透明 border + 渐变底），不依赖 color-mix / border-image，
+     旧版 Chrome 也能画出圆角渐变框。全部静态：无呼吸、无流光、无旋转光带。 */
+  border:1.5px solid transparent;
+  background-image:
     radial-gradient(120% 90% at 50% -20%, var(--tcs,rgba(201,164,92,.15)), transparent 62%),
-    linear-gradient(170deg,#222a37,#171c25 62%);
-  transition:transform .2s,box-shadow .2s,border-color .2s;isolation:isolate;
-  box-shadow:0 0 0 1.5px var(--tcg,rgba(201,164,92,.5)),0 0 14px var(--tcg,rgba(201,164,92,.5)),0 8px 22px rgba(0,0,0,.42);
+    linear-gradient(170deg,#222a37,#171c25 62%),
+    var(--fr,linear-gradient(150deg,#d8c79b,#c9a45c 55%,#8f7245));
+  background-origin:padding-box,padding-box,border-box;
+  background-clip:padding-box,padding-box,border-box;
+  transition:transform .2s,box-shadow .2s;isolation:isolate;
+  box-shadow:0 0 0 1px var(--tcd,#3a2c10),0 8px 22px rgba(0,0,0,.42);
 }
-/* V61 卡牌墙光效：品阶光环常亮 + 顶部光泽立体 + 悬浮 3D + 高阶呼吸光（纯 rgba，兼容旧版 Chrome） */
+/* 卡面玻璃层（顶部光泽 + 底部回光）+ 内侧画框内衬线（--ring 按阶叠加） */
 .sg-card::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:11px;
   background:linear-gradient(165deg,rgba(255,255,255,.15),rgba(255,255,255,0) 34%),
     radial-gradient(95% 62% at 50% 110%, var(--tcs,rgba(201,164,92,.15)), transparent 64%);
-  box-shadow:inset 0 1px 0 var(--tch,rgba(201,164,92,.8)),inset 0 -16px 24px rgba(0,0,0,.36)}
-.sg-card:hover{transform:translateY(-4px) perspective(620px) rotateX(2.4deg);border-color:var(--tc,#c9a45c);
-  box-shadow:0 0 0 2px var(--tc,#c9a45c),0 0 24px var(--tcg,rgba(201,164,92,.5)),0 14px 34px rgba(0,0,0,.52)}
-/* ---- V62 品阶边框递进：边框色 = 卡面标注色，阶越高越粗越亮、光晕层数越多、呼吸与流光越强 ---- */
-/* F(6) 白：单层细描边 */
-.sg-card.sg-t6{border-width:1.5px;
-  box-shadow:0 0 0 1px var(--tcg,rgba(201,164,92,.5)),0 0 6px var(--tcg,rgba(201,164,92,.5)),0 8px 22px rgba(0,0,0,.42)}
-/* E(5) 赤：+1 层微光 */
-.sg-card.sg-t5{border-width:1.5px;
-  box-shadow:0 0 0 1.5px var(--tcg,rgba(201,164,92,.5)),0 0 10px var(--tcg,rgba(201,164,92,.5)),0 8px 22px rgba(0,0,0,.42)}
-/* D(4) 橙：框加粗 + 远处漫射 */
+  box-shadow:inset 0 1px 0 var(--tch,rgba(201,164,92,.8)),inset 0 -16px 24px rgba(0,0,0,.36),var(--ring,0 0 0 0 rgba(0,0,0,0))}
+/* ---- V63 品阶层次递进（同一品阶色，不换色不闪烁）----
+   F 1.4px/3段  → E 1.6px/4段  → D 2.0px/6段+内衬1  → C 2.4px/7段+内衬2+外衬
+   → B 2.8px/8段+内衬3 → A 3.2px/9段+内衬4 → S 3.8px/10段+内衬4+双层外衬 */
+/* F(6) 白：单段由浅到深的细边 */
+.sg-card.sg-t6{border-width:1.4px;
+  --fr:linear-gradient(150deg,var(--tcl,#d8c79b),var(--tc,#c9a45c) 55%,var(--tck,#8f7245));
+  box-shadow:0 0 0 1px var(--tcd,#3a2c10),0 8px 22px rgba(0,0,0,.42)}
+/* E(5) 赤：亮边起笔、暗边收尾 */
+.sg-card.sg-t5{border-width:1.6px;
+  --fr:linear-gradient(150deg,var(--tcw,#f0dfb8),var(--tc,#c9a45c) 34%,var(--tck,#8f7245) 66%,var(--tcl,#d8c79b));
+  --ring:inset 0 0 0 1px var(--tcs,rgba(201,164,92,.15));
+  box-shadow:0 0 0 1.5px var(--tck,#8f7245),0 8px 22px rgba(0,0,0,.42)}
+/* D(4) 橙：四段往返 + 内侧 1px 亮衬线 */
 .sg-card.sg-t4{border-width:2px;
-  box-shadow:0 0 0 1.5px var(--tcg,rgba(201,164,92,.5)),0 0 13px var(--tcg,rgba(201,164,92,.5)),0 0 24px var(--tcs,rgba(201,164,92,.15)),0 8px 22px rgba(0,0,0,.44)}
-/* C(3) 黄：+ 缓慢呼吸 */
-.sg-card.sg-t3{border-width:2px;
-  box-shadow:0 0 0 2px var(--tcg,rgba(201,164,92,.5)),0 0 15px var(--tcg,rgba(201,164,92,.5)),0 0 30px var(--tcs,rgba(201,164,92,.15)),0 8px 22px rgba(0,0,0,.44);
-  animation:sgPulC 5.4s ease-in-out infinite}
-/* B(2) 绿：呼吸加快 + 卡内旋转光带 */
-.sg-card.sg-t2{border-width:2.5px;
-  box-shadow:0 0 0 2px var(--tcg,rgba(201,164,92,.5)),0 0 18px var(--tcg,rgba(201,164,92,.5)),0 0 38px var(--tcs,rgba(201,164,92,.15)),0 8px 24px rgba(0,0,0,.46);
-  animation:sgPulB 4.2s ease-in-out infinite}
-/* A(1) 蓝：三层光晕 + 明显呼吸 */
-.sg-card.sg-t1{border-width:2.5px;
-  box-shadow:0 0 0 3px var(--tcg,rgba(201,164,92,.5)),0 0 22px var(--tcg,rgba(201,164,92,.5)),0 0 46px var(--tcs,rgba(201,164,92,.15)),0 8px 26px rgba(0,0,0,.48);
-  animation:sgPulA 3.2s ease-in-out infinite}
-/* S(0) 紫：最粗边框 + 四层光环 + 最急呼吸 */
-.sg-card.sg-t0{border-width:3px;
-  box-shadow:0 0 0 3px var(--tcg,rgba(201,164,92,.5)),0 0 18px var(--tcw,rgba(240,223,184,1)),0 0 34px var(--tcg,rgba(201,164,92,.5)),0 0 64px var(--tcs,rgba(201,164,92,.15)),0 8px 28px rgba(0,0,0,.5);
-  animation:sgPulS 2.6s ease-in-out infinite}
-@keyframes sgPulC{
-  0%,100%{box-shadow:0 0 0 2px var(--tcg,rgba(201,164,92,.5)),0 0 15px var(--tcg,rgba(201,164,92,.5)),0 0 30px var(--tcs,rgba(201,164,92,.15)),0 8px 22px rgba(0,0,0,.44)}
-  50%{box-shadow:0 0 0 3px var(--tcg,rgba(201,164,92,.5)),0 0 21px var(--tcg,rgba(201,164,92,.5)),0 0 42px var(--tcs,rgba(201,164,92,.15)),0 8px 22px rgba(0,0,0,.44)}}
-@keyframes sgPulB{
-  0%,100%{box-shadow:0 0 0 2px var(--tcg,rgba(201,164,92,.5)),0 0 18px var(--tcg,rgba(201,164,92,.5)),0 0 38px var(--tcs,rgba(201,164,92,.15)),0 8px 24px rgba(0,0,0,.46)}
-  50%{box-shadow:0 0 0 3.5px var(--tcg,rgba(201,164,92,.5)),0 0 26px var(--tcg,rgba(201,164,92,.5)),0 0 52px var(--tcs,rgba(201,164,92,.15)),0 8px 24px rgba(0,0,0,.46)}}
-@keyframes sgPulA{
-  0%,100%{box-shadow:0 0 0 3px var(--tcg,rgba(201,164,92,.5)),0 0 22px var(--tcg,rgba(201,164,92,.5)),0 0 46px var(--tcs,rgba(201,164,92,.15)),0 8px 26px rgba(0,0,0,.48)}
-  50%{box-shadow:0 0 0 4px var(--tcg,rgba(201,164,92,.5)),0 0 32px var(--tcw,rgba(240,223,184,1)),0 0 62px var(--tcs,rgba(201,164,92,.15)),0 8px 26px rgba(0,0,0,.48)}}
-@keyframes sgPulS{
-  0%,100%{box-shadow:0 0 0 3px var(--tcg,rgba(201,164,92,.5)),0 0 18px var(--tcw,rgba(240,223,184,1)),0 0 34px var(--tcg,rgba(201,164,92,.5)),0 0 64px var(--tcs,rgba(201,164,92,.15)),0 8px 28px rgba(0,0,0,.5)}
-  50%{box-shadow:0 0 0 5px var(--tcg,rgba(201,164,92,.5)),0 0 30px var(--tcw,rgba(240,223,184,1)),0 0 58px var(--tcg,rgba(201,164,92,.5)),0 0 96px var(--tcs,rgba(201,164,92,.15)),0 8px 28px rgba(0,0,0,.5)}}
-/* 卡内旋转品阶光带（B/A/S）：作为首个子节点，压在文字下方，只做柔光扫过 */
-.sg-card-aur{position:absolute;left:-55%;top:-55%;width:210%;height:210%;pointer-events:none;
-  background:conic-gradient(from 0deg,rgba(255,255,255,0) 0deg,var(--tcg,rgba(201,164,92,.5)) 40deg,var(--tcw,rgba(240,223,184,1)) 58deg,var(--tcg,rgba(201,164,92,.5)) 76deg,rgba(255,255,255,0) 118deg,rgba(255,255,255,0) 360deg);
-  mix-blend-mode:screen;opacity:.10;animation:sgAurSpin 9s linear infinite}
-.sg-card.sg-t2 .sg-card-aur{opacity:.12;animation-duration:7.4s}
-.sg-card.sg-t1 .sg-card-aur{opacity:.16;animation-duration:5.6s}
-.sg-card.sg-t0 .sg-card-aur{opacity:.22;animation-duration:4.2s}
-.sg-card.sg-t0 .sg-card-tier{background-size:220% 100%;animation:sgTagShine 2.8s linear infinite}
-@keyframes sgAurSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes sgTagShine{0%{background-position:0 0}100%{background-position:220% 0}}
-/* 悬浮时暂停呼吸，用更强的悬停光环（否则 box-shadow 被动画锁住看不到 hover 反馈） */
-.sg-card:hover{animation:none}
+  --fr:linear-gradient(148deg,var(--tcw,#f0dfb8),var(--tcl,#d8c79b) 16%,var(--tc,#c9a45c) 44%,var(--tck,#8f7245) 60%,var(--tc,#c9a45c) 82%,var(--tcl,#d8c79b));
+  --ring:inset 0 0 0 1px var(--tch,rgba(201,164,92,.8));
+  box-shadow:0 0 0 2px var(--tck,#8f7245),0 8px 24px rgba(0,0,0,.44)}
+/* C(3) 黄：五段色阶 + 内衬双层 + 外衬薄环 */
+.sg-card.sg-t3{border-width:2.4px;
+  --fr:linear-gradient(146deg,var(--tcw,#f0dfb8),var(--tcl,#d8c79b) 12%,var(--tc,#c9a45c) 30%,var(--tck,#8f7245) 48%,var(--tcd,#3a2c10) 58%,var(--tc,#c9a45c) 78%,var(--tcw,#f0dfb8));
+  --ring:inset 0 0 0 1px var(--tch,rgba(201,164,92,.8)),inset 0 0 0 2.5px var(--tcs,rgba(201,164,92,.15));
+  box-shadow:0 0 0 2px var(--tck,#8f7245),0 0 0 2.8px var(--tcs,rgba(201,164,92,.15)),0 9px 26px rgba(0,0,0,.46)}
+/* B(2) 绿：六段往返 + 内衬三层 */
+.sg-card.sg-t2{border-width:2.8px;
+  --fr:linear-gradient(144deg,var(--tcw,#f0dfb8),var(--tcl,#d8c79b) 9%,var(--tc,#c9a45c) 24%,var(--tck,#8f7245) 40%,var(--tcd,#3a2c10) 50%,var(--tcl,#d8c79b) 68%,var(--tc,#c9a45c) 86%,var(--tcw,#f0dfb8));
+  --ring:inset 0 0 0 1px var(--tch,rgba(201,164,92,.8)),inset 0 0 0 2.5px var(--tcs,rgba(201,164,92,.15)),inset 0 0 0 3.5px var(--tcd,#3a2c10);
+  box-shadow:0 0 0 2.2px var(--tck,#8f7245),0 0 0 3px var(--tcs,rgba(201,164,92,.15)),0 10px 28px rgba(0,0,0,.48)}
+/* A(1) 蓝：七段色阶 + 内衬四层（含本色内晕，静态深度） */
+.sg-card.sg-t1{border-width:3.2px;
+  --fr:linear-gradient(142deg,var(--tcw,#f0dfb8),var(--tcl,#d8c79b) 7%,var(--tc,#c9a45c) 20%,var(--tck,#8f7245) 34%,var(--tcd,#3a2c10) 44%,var(--tce,#1f1810) 52%,var(--tcl,#d8c79b) 70%,var(--tc,#c9a45c) 88%,var(--tcw,#f0dfb8));
+  --ring:inset 0 0 0 1px var(--tch,rgba(201,164,92,.8)),inset 0 0 0 2.5px var(--tcs,rgba(201,164,92,.15)),inset 0 0 0 3.5px var(--tcd,#3a2c10),inset 0 0 12px -4px var(--tcg,rgba(201,164,92,.5));
+  box-shadow:0 0 0 2.4px var(--tcd,#3a2c10),0 0 0 3.2px var(--tcs,rgba(201,164,92,.15)),0 10px 30px rgba(0,0,0,.5)}
+/* S(0) 紫：最粗边 + 九段往返色阶 + 内衬四层 + 双层外衬 */
+.sg-card.sg-t0{border-width:3.8px;
+  --fr:linear-gradient(140deg,var(--tcw,#f0dfb8),var(--tcl,#d8c79b) 5%,var(--tc,#c9a45c) 16%,var(--tck,#8f7245) 30%,var(--tcd,#3a2c10) 40%,var(--tce,#1f1810) 47%,var(--tck,#8f7245) 54%,var(--tcl,#d8c79b) 72%,var(--tc,#c9a45c) 90%,var(--tcw,#f0dfb8));
+  --ring:inset 0 0 0 1px var(--tcw,#f0dfb8),inset 0 0 0 2.6px var(--tcs,rgba(201,164,92,.15)),inset 0 0 0 3.6px var(--tcd,#3a2c10),inset 0 0 14px -4px var(--tcg,rgba(201,164,92,.5));
+  box-shadow:0 0 0 2.6px var(--tcd,#3a2c10),0 0 0 3.6px var(--tcs,rgba(201,164,92,.15)),0 12px 32px rgba(0,0,0,.52)}
+/* 悬浮：只抬起 + 加深外衬（静态，不加亮度/不加扫光） */
+.sg-card:hover{transform:translateY(-4px) perspective(620px) rotateX(2.4deg);
+  box-shadow:0 0 0 1px var(--tcd,#3a2c10),0 0 0 3.2px var(--tck,#8f7245),0 14px 34px rgba(0,0,0,.52)}
 
 /* 品级镶边：赤→橙→红→绿→青→蓝→紫（自高到低） */
 .sg-card-tier{
@@ -1108,12 +1103,6 @@ footer.foot{
 .sg-artwrap{position:relative;width:100%;height:100%;line-height:0}
 .sg-artwrap img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 10%}
 .sg-artwrap .sg-artov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.sg-card:before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.09) 48%,transparent 62%);
-  transform:translateX(-120%);transition:.6s;
-}
-.sg-card:hover:before{transform:translateX(120%)}
 .sg-card-hd{display:flex;align-items:center;gap:6px;padding:8px 9px 0}
 .sg-card-fac{font-size:10px;letter-spacing:.1em;color:var(--fc,#c9a45c);border:1px solid currentColor;border-radius:4px;padding:0 5px;opacity:.9}
 .sg-card-rar{margin-left:auto;font-size:9.5px;color:#e8c15c;letter-spacing:.04em}
@@ -1136,10 +1125,12 @@ footer.foot{
 .sg-bulkrow .sp{flex:1}
 .sg-bulkrow .sg-note{font-size:10.5px}
 .sg-card.sel{
-  border-color:#e8c988;
-  box-shadow:0 0 0 2px rgba(232,201,136,.6),0 12px 30px rgba(0,0,0,.55);
+  /* 选中：整条边框换成描金渐变（同样是多段明暗），不与品阶色冲突 */
+  --fr:linear-gradient(148deg,#ffeeb0,#e8c988 22%,#c9a45c 44%,#8f7245 58%,#e8c988 78%,#ffeeb0);
+  box-shadow:0 0 0 1px #6b5228,0 0 0 3px rgba(232,201,136,.34),0 12px 30px rgba(0,0,0,.55);
 }
-.sg-card.sel:hover{transform:translateY(-3px);border-color:#f0d97a}
+.sg-card.sel:hover{transform:translateY(-3px);
+  --fr:linear-gradient(148deg,#fff3c4,#f0d97a 24%,#d8b96a 46%,#8f7245 60%,#f0d97a 80%,#fff3c4)}
 .sg-card.sel:after{content:"";position:absolute;inset:0;background:rgba(232,201,136,.10);pointer-events:none;z-index:3}
 .sg-card-pick{
   position:absolute;right:7px;top:7px;z-index:5;width:22px;height:22px;border-radius:7px;
@@ -8693,13 +8684,16 @@ var BOTS = [
     return [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)];
   }
   function tierVars(hex) {
-    var c = _hxRgb(hex), dk = _mixRgb(c, [26, 32, 42], .24), dp = _mixRgb(c, [0, 0, 0], .52), lw = _mixRgb(c, [255, 255, 255], .55);
-    /* V62：--tcb 就是品阶标注色本身（卡面「S级·紫」用的同一个 #hex），保证边框与标注完全同色；
-       --tck 才是混深后的颜色，只给卡内小条线用 */
+    /* V63：一个品阶色 → 六个明暗层（逐层只向白/黑混，色相 100% 不变），
+       边框渐变就由这六层拼出来：--tcw 最亮 / --tcl 次亮 / --tc 本色 / --tck 微暗 / --tcd 深 / --tce 最暗。
+       --tcb 仍是品阶标注色本身（卡面「S级·紫」同一个 #hex），保证边框与标注同色。 */
+    var c = _hxRgb(hex), lw = _mixRgb(c, [255, 255, 255], .62), ll = _mixRgb(c, [255, 255, 255], .34),
+      dk = _mixRgb(c, [0, 0, 0], .30), dp = _mixRgb(c, [0, 0, 0], .52), de = _mixRgb(c, [0, 0, 0], .74);
     var base = (String(hex || "").charAt(0) === "#") ? hex : "rgb(" + c.join(",") + ")";
     return "--tc:" + base +
       ";--tcb:" + base +
-      ";--tck:rgb(" + dk.join(",") + ");--tcd:rgb(" + dp.join(",") + ");--tcw:rgb(" + lw.join(",") + ")" +
+      ";--tck:rgb(" + dk.join(",") + ");--tcd:rgb(" + dp.join(",") + ");--tce:rgb(" + de.join(",") + ")" +
+      ";--tcl:rgb(" + ll.join(",") + ");--tcw:rgb(" + lw.join(",") + ")" +
       ";--tcg:rgba(" + c.join(",") + ",.5);--tcs:rgba(" + c.join(",") + ",.15);--tch:rgba(" + c.join(",") + ",.8)";
   }
   function cardHTML(c, withGift) {
@@ -8712,7 +8706,6 @@ var BOTS = [
     /* V51：等级超过回收门槛的卡在批量模式下显示锁定角标（显式告知「为什么点不动」） */
     var lvLock = picking && !recycleLvOk(c);
     return '<div class="sg-card sg-t' + ti + (on ? " sel" : "") + (lvLock ? " sg-lvlock" : "") + (skFull ? " sg-dragon" : "") + '" style="--fc:' + facColor(g.faction) + ';' + tierVars(tr.c) + '" data-sgact="' + (picking && !lvLock ? "card-sel" : "card-open") + '" data-id="' + (picking && !lvLock ? c.id : g.id) + '"' + (picking && !lvLock ? "" : ' data-cid="' + c.id + '"') + '>' +
-      (tr.star >= 5 ? '<i class="sg-card-aur" aria-hidden="true"></i>' : "") +
       '<span class="sg-card-tier">' + tierLabel(tr) + "</span>" +
       (picking ? '<span class="sg-card-pick">' + (lvLock ? "🔒" : "✓") + "</span>" : "") +
       (c.from ? '<span class="sg-card-new">赠</span>' : "") +
@@ -16168,9 +16161,12 @@ var BOTS = [
         var el = host.firstChild;
         if (!el) { document.body.removeChild(host); return null; }
         var cs = getComputedStyle(el);
+        var bg = cs.backgroundImage || "", fi = bg.lastIndexOf("linear-gradient");
         var r = { tcb: el.style.getPropertyValue("--tcb"), cls: el.getAttribute("class"),
           bw: parseFloat(cs.borderTopWidth), bc: cs.borderTopColor, bStyle: cs.borderTopStyle,
-          bs: cs.boxShadow, anim: cs.animationName, aur: el.querySelectorAll(".sg-card-aur").length };
+          bs: cs.boxShadow, anim: cs.animationName, aur: el.querySelectorAll(".sg-card-aur").length,
+          frame: fi >= 0 ? bg.slice(fi) : "", ring: cs.getPropertyValue("--ring") || "",
+          ringCss: getComputedStyle(el, "::after").boxShadow || "" };
         document.body.removeChild(host); return r;
       },
       sortCards: function (list, key) {
