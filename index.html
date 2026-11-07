@@ -9922,7 +9922,12 @@ var BOTS = [
           if (r && r.ok && r.data) { if (applyShopCfg(r.data) && me()) rerender(); return true; }
           return false;
         })["catch"](function () { return false; });
-        return Promise.all([p1, p2, p3, p4, p5, p6]).then(function () { retry(); return okT || okG || okW; });
+        /* V68：户口经济模型（后台「经济模型」保存，key = econ） */
+        var p7 = rpcP("sg_cfg_get", { p_key: "econ" }).then(function (r) {
+          if (r && r.ok && r.data) { if (applyEconCfg(r.data) && me()) rerender(); return true; }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2, p3, p4, p5, p6, p7]).then(function () { retry(); return okT || okG || okW; });
       } catch (e) { return Promise.resolve(false); }
     }
 
@@ -10943,7 +10948,7 @@ var BOTS = [
   }
   /* 本城月度产出（复用 cityPreview 口径，不扣减） */
   function cityResOut(u) {
-    var o = cityPreview(u), r = { rice: o.rice || 0, wood: o.wood || 0, copper: 0, iron: o.iron || 0, coin: o.coin || 0 };
+    var o = cityPreview(u), r = { rice: o.rice || 0, wood: o.wood || 0, copper: o.copper || 0, iron: o.iron || 0, coin: o.coin || 0 };
     return r;
   }
   /* 本城月度消耗：备兵粮耗 + 伤兵各资源疗养耗（与月度结算 healWounds 口径一致） */
@@ -11265,6 +11270,42 @@ var BOTS = [
       Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
     });
   })();
+  /* ================= V68：户口经济三语词条 ================= */
+  (function () {
+    var ADD = {
+      en: {
+        ecoHhT: "Households", ecoHhUnit: "hh", ecoPerT: "{n} people per household",
+        ecoYearT: "One farm household per year: harvests {a} shi · keeps {b} shi · pays {c} shi in tax",
+        ecoMonthT: "Tax grain {n} shi per household per month",
+        ecoGrossT: "This city collects {n} shi this month",
+        ecoFarmT: "Farmland (extra income)",
+        ecoFarmLineT: "Adds {n} shi on top of the household tax grain",
+        ecoTipT: "Grain comes from registered farming households: the household tax is the main income, while farmland and other buildings are extra income. More population means more households, and more tax grain."
+      },
+      ja: {
+        ecoHhT: "戸籍", ecoHhUnit: "戸", ecoPerT: "1 戸あたり {n} 人",
+        ecoYearT: "農家 1 戸の年間：収穫 {a} 石 · 自家消費 {b} 石 · 上納 {c} 石",
+        ecoMonthT: "1 戸あたり月 {n} 石を上納",
+        ecoGrossT: "今月の入庫 {n} 石",
+        ecoFarmT: "農田（付加収入）",
+        ecoFarmLineT: "戸籍上納のほかに {n} 石を追加",
+        ecoTipT: "食糧は戸籍に載る農家の上納が主な収入で、農田などの施設は付加収入です。人口が増えれば戸数も増え、上納も増えます。"
+      },
+      zh: {
+        ecoHhT: "户籍", ecoHhUnit: "户", ecoPerT: "户均 {n} 人",
+        ecoYearT: "一户农家一年：产 {a} 石 · 自留 {b} 石 · 上缴 {c} 石",
+        ecoMonthT: "每户每月上缴 {n} 石",
+        ecoGrossT: "本城本月入库 {n} 石",
+        ecoFarmT: "农田（附加收入）",
+        ecoFarmLineT: "在户口上缴之外再加 {n} 石",
+        ecoTipT: "粮食主要来自在籍农户的上缴；农田等设施是附加收入。人口越多，户数越多，上缴的粮也越多。"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
   /* 官职（参考三国志9 文武官衔），任命后被动生效 */
   var OFFICES = [
     { k: "juns", n: "军师",   nen: "軍師",     en: "Military Advisor", st: "in", stN: "智", inc: 0.10, dzh: "产出 +10%", den: "Yield +10%" },
@@ -11470,12 +11511,17 @@ var BOTS = [
     var c = u.bat.city, pf = polFac(u);
     var ob = officeYieldBonus(u);
     var g = 1 + offEff(u, "juns") + ob.all, f = 1 + offEff(u, "sin") + ob.rice;
-    var gain = { rice: 0, wood: 0, iron: 0, coin: 0 };
-    var pm = popMulOf(u);                       /* V66：人口产出加成 */
+    var gain = { rice: 0, wood: 0, copper: 0, iron: 0, coin: 0 };
+    /* V68：户口产出（人口 → 户数 → 上缴）是主体收入 */
+    var eo = cityEcoOut(u);
+    Object.keys(eo.res).forEach(function (rk) { gain[rk] += Math.round(eo.res[rk]); });
+    /* V66/V68：建筑产出是「附加收入」，仍吃人口加成（pm） */
+    var pm = popMulOf(u);
     BUILDINGS.forEach(function (b) {
       var lv = c.bld[b.k] || 0;
       Object.keys(b.out).forEach(function (rk) {
         var v = bldYieldAt(b, rk, lv) * g * (rk === "rice" ? pf.rice * f : rk === "coin" ? pf.coin : 1);
+        if (rk === "rice") v *= ECON.farmBonus;   /* V68：农田为附加收入，系数可后台调 */
         gain[rk] += Math.round(v * pm);
       });
     });
@@ -11605,6 +11651,76 @@ var BOTS = [
   /* V66：人口对资源产出的高额加成（10 万人口 +60%，上限 +160%） */
   function popMulOf(u) { return Math.min(2.6, 1 + 0.6 * Math.pow(Math.max(0, cityPop(u)) / 100000, 0.65)); }
   function popBonusPct(u) { return Math.round((popMulOf(u) - 1) * 100); }
+  /* ================= V68：户口经济模型 =================
+     口径（云端 key = econ，后台「经济模型」可调）：
+     ① 一户农家一年产粮 grainYear 石，自留口粮 grainSelf 石，上缴 grainTax 石 —— 上缴即官府实收；
+        每月上缴 = grainTax ÷ 12（默认 6 ÷ 12 = 0.5 石）。
+     ② 户数由城市人口换算：households = ceil/round(人口 ÷ perHouse)（默认 20 人记 1 户），
+        放归田野等操作带来的人口会直接长成新户；后台可设户数上限。
+     ③ 农田等建筑产出是「附加收入」，在户口上缴之外叠加（粮 × farmBonus）。
+     ④ 木/铜/铁/钱按「每户每月」小额产出，随户数线性增长，同样可在后台改。 */
+  var ECON_DEF = {
+    perHouse: 20, hhCap: 0,
+    grainYear: 30, grainSelf: 24, grainTax: 6,
+    farmBonus: 1,
+    wood: 0.004, copper: 0.0015, iron: 0.0025, coin: 0.012
+  };
+  function econNum(v, d, lo, hi) {
+    var x = Number(v);
+    if (v == null || v === "" || !isFinite(x)) x = d;
+    return Math.max(lo, Math.min(hi, x));
+  }
+  function econNorm(o) {
+    o = o || {};
+    var d = ECON_DEF;
+    var gy = econNum(o.grainYear, d.grainYear, 0, 100000);
+    var gs = Math.min(gy, econNum(o.grainSelf, d.grainSelf, 0, 100000));
+    var gtx = (o.grainTax == null || o.grainTax === "") ? Math.max(0, gy - gs) : econNum(o.grainTax, d.grainTax, 0, 100000);
+    return {
+      perHouse: Math.round(econNum(o.perHouse, d.perHouse, 1, 100000)),
+      hhCap: Math.round(econNum(o.hhCap, d.hhCap, 0, 1000000000)),
+      grainYear: gy, grainSelf: gs, grainTax: gtx,
+      farmBonus: econNum(o.farmBonus, d.farmBonus, 0, 20),
+      wood: econNum(o.wood, d.wood, 0, 1000), copper: econNum(o.copper, d.copper, 0, 1000),
+      iron: econNum(o.iron, d.iron, 0, 1000), coin: econNum(o.coin, d.coin, 0, 100000)
+    };
+  }
+  var ECON = econNorm(null);
+  /* 云端配置落地：后台保存后，玩家下次打开（或刷新）即按新参数结算 */
+  function applyEconCfg(o) {
+    if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { return false; } }
+    if (!o || typeof o !== "object") return false;
+    ECON = econNorm(o);
+    return true;
+  }
+  function econGet() { return ECON; }
+  function econDef() { return econNorm(null); }
+  /* 户数：人口 ÷ 户均人口（+ 事件/放归带来的人工户），可后台封顶 */
+  function households(u) {
+    var c = ensureCity(u);
+    var per = Math.max(1, ECON.perHouse || 1);
+    var hh = Math.round(cityPop(u) / per) + (c.houseAdd || 0);
+    if (ECON.hhCap > 0) hh = Math.min(hh, ECON.hhCap);
+    return Math.max(0, hh);
+  }
+  /* 每户每月上缴粮食（官府实收） */
+  function grainPerHouseMonth() { return Math.max(0, (ECON.grainYear - ECON.grainSelf) / 12); }
+  function fmt2(v) { var x = Number(v) || 0; return (Math.round(x * 100) / 100).toString(); }
+  /* 户口产出：人口 → 户数 → 月入库。政策与官职加成作用于此处；
+     不再乘人口系数（人口已经通过户数进入公式，避免重复放大）。 */
+  function cityEcoOut(u) {
+    var pf = polFac(u), ob = officeYieldBonus(u);
+    var g = 1 + offEff(u, "juns") + ob.all, f = 1 + offEff(u, "sin") + ob.rice;
+    var hh = households(u), per = grainPerHouseMonth();
+    var res = {
+      rice: hh * per * pf.rice * f,
+      wood: hh * (ECON.wood || 0) * g,
+      copper: hh * (ECON.copper || 0) * g,
+      iron: hh * (ECON.iron || 0) * g,
+      coin: hh * (ECON.coin || 0) * g * pf.coin
+    };
+    return { hh: hh, per: per, res: res, year: ECON.grainYear, self: ECON.grainSelf, tax: ECON.grainTax, perHouse: ECON.perHouse };
+  }
   /* 月份推进时结算内政产出（战斗推进或实时整点推进，先到先结算） */
   function tickMonth(u) {
     var c = ensureCity(u), gm = gMonth(u);
@@ -13117,6 +13233,7 @@ var BOTS = [
   }
   function popPanelHTML(u) {
     var c = ensureCity(u), wN = cityWoundN(c), pool = c.pool || 0, pop = cityPop(u), pct = popBonusPct(u);
+    var eco = cityEcoOut(u), inc2 = cityPreview(u);
     var inp = function (k, max) {
       return '<input class="sg-relin" type="number" inputmode="numeric" min="1" max="' + Math.max(1, max) + '" step="1" placeholder="' + esc(gt("relQtyT")) + '" data-k="' + k + '"' +
         (max > 0 ? "" : " disabled") + ' style="width:76px;padding:3px 6px;border-radius:7px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit;text-align:center;font-size:12px">';
@@ -13129,7 +13246,17 @@ var BOTS = [
       (pool > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="pool" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>" +
       '<div class="sg-rankline"><span class="i" style="background:#6b3a3a;color:#ffd9d9">伤</span><span><b>' + gt("woundT") + " " + fmt(wN) + "</b></span><span class=\"sp\"></span>" + inp("wound", wN) +
       '<button class="sgbtn sm' + (wN > 0 ? " primary" : "") + '" data-bat="rel" data-k="wound"' + (wN > 0 ? "" : " disabled") + ">" + gt("relT") + "</button>" +
-      (wN > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="wound" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>";
+      (wN > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="wound" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>" +
+      /* V68：户籍经济——户数 / 一户年账 / 本月实收（户口 + 农田附加） */
+      '<div class="sg-panel-hd" style="margin:14px 0 4px"><h3><i>·</i>🏘 ' + gt("ecoHhT") + "</h3></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#3f5b6b;color:#dbeef7">户</span><span><b>' + gt("ecoHhT") + " " + fmt(eco.hh) + " " + gt("ecoHhUnit") + "</b>" +
+      "　<small style='color:var(--ink-3)'>" + gt("ecoPerT", { n: fmt(eco.perHouse) }) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b6b3a;color:#f0f7db">粮</span><span><b>' + gt("ecoYearT", { a: fmt2(eco.year), b: fmt2(eco.self), c: fmt2(eco.tax) }) + "</b><br>" +
+      "<small style='color:#e8c988'>" + gt("ecoMonthT", { n: fmt2(eco.per) }) + "</small>" +
+      "　<small style='color:#8fd694'>" + gt("ecoGrossT", { n: fmt(Math.round(eco.res.rice)) }) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">附</span><span><b>' + gt("ecoFarmT") + "</b><br>" +
+      "<small style='color:var(--ink-3)'>" + gt("ecoFarmLineT", { n: fmt(Math.max(0, Math.round((inc2.rice || 0) - eco.res.rice))) }) + "</small></span></div>" +
+      '<div class="sg-note" style="margin:6px 0 0">' + gt("ecoTipT") + "</div>";
   }
   /* ================= V66 爵位：给任意武将封爵 ================= */
   function rankRowHTML(u, c) {
@@ -13897,12 +14024,15 @@ var BOTS = [
     var c = ensureCity(u), pf = polFac(u);
     var ob = officeYieldBonus(u);
     var g = 1 + offEff(u, "juns") + ob.all, f = 1 + offEff(u, "sin") + ob.rice;
-    var out = { rice: 0, wood: 0, iron: 0, coin: 0 };
-    var pm = popMulOf(u);                       /* V66：人口产出加成（与实际结算同口径） */
+    var out = { rice: 0, wood: 0, copper: 0, iron: 0, coin: 0 };
+    var eo = cityEcoOut(u);                     /* V68：户口产出，与月度结算同口径 */
+    Object.keys(eo.res).forEach(function (rk) { out[rk] += Math.round(eo.res[rk]); });
+    var pm = popMulOf(u);                       /* V66：人口对建筑（附加）产出的加成 */
     BUILDINGS.forEach(function (b) {
       var lv = c.bld[b.k] || 0;
       Object.keys(b.out).forEach(function (rk) {
         var v = bldYieldAt(b, rk, lv) * g * (rk === "rice" ? pf.rice * f : rk === "coin" ? pf.coin : 1);
+        if (rk === "rice") v *= ECON.farmBonus;   /* V68：农田为附加收入 */
         out[rk] += Math.round(v * pm);
       });
     });
@@ -16624,6 +16754,9 @@ var BOTS = [
       recBarOf: recBarOf, slotRecHTML: slotRecHTML,
       soldFix: function (u) { var n = 0; ((u && u.cards) || []).forEach(function (c) { if (c.sold == null) { var un = unitOf(c, "A"); if (un && un.troopMax) { c.sold = un.troopMax; n++; } } }); return n; },
       releaseF: releaseToField, rankBodyHTML: rankBodyHTML, popPanelHTML: popPanelHTML, cityPopF: cityPop,
+      /* V68 探针导出：户口经济（户数 / 一户年账 / 户口产出 / 云端参数） */
+      econGet: econGet, econDef: econDef, econSet: applyEconCfg, householdsF: households,
+      grainMonthF: grainPerHouseMonth, cityEcoOutF: cityEcoOut, cityPreviewF: cityPreview, cityMonthlyF: cityMonthly,
       /* V62 探针：按品阶造一张卡并读计算样式（边框色/层级特效） */
       tierColor: function (ti) { return TIERS[ti].c; },
       cardProbe: function (c) {
