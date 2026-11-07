@@ -7262,31 +7262,31 @@ html[data-lang="en"]{letter-spacing:.01em}
      （云端 sg_cfg_get('tiers') 启动拉取并覆盖）：
      pts=回收积分  stat=属性增加  trig=技能触发率%  troop=带兵上限  posb=职位加成%  pts10=每10级增加点数 */
   var TIERS = [
-    { n: "紫", grade: "S", star: 7, c: "#9257e0", min: 88, pts: 1500, stat: 10, trig: 60, troop: 100000, posb: 60, pts10: 20, kp: 3.375, skd: 50, skills: [
+    { n: "紫", grade: "S", star: 7, c: "#9257e0", min: 88, pts: 1500, stat: 10, trig: 60, troop: 60000, posb: 60, pts10: 20, kp: 3.375, skd: 50, skills: [
       { n: "天命·山河永镇", t: "攻", d: "伤害 +32%，无视敌方 30% 防御" },
       { n: "天命·龙魂觉醒", t: "辅", d: "五维 +12，暴击率 +35%" },
       { n: "天命·万军辟易", t: "破", d: "首回合伤害 ×1.8，震慑全军" } ] },
-    { n: "蓝", grade: "A", star: 6, c: "#3f7fe0", min: 85, pts: 800, stat: 6, trig: 30, troop: 30000, posb: 30, pts10: 10, kp: 2.25, skd: 30, skills: [
+    { n: "蓝", grade: "A", star: 6, c: "#3f7fe0", min: 85, pts: 800, stat: 6, trig: 30, troop: 52000, posb: 30, pts10: 10, kp: 2.25, skd: 30, skills: [
       { n: "焚天·烈焰连营", t: "攻", d: "伤害 +26%，灼烧 2 回合" },
       { n: "焚天·赤壁借风", t: "谋", d: "计策命中 +25%，火伤 +20%" },
       { n: "焚天·燎原之势", t: "破", d: "破防 25%，连击 2 次" } ] },
-    { n: "绿", grade: "B", star: 5, c: "#35b96e", min: 82, pts: 500, stat: 5, trig: 20, troop: 20000, posb: 20, pts10: 8, kp: 1.5, skd: 18, skills: [
+    { n: "绿", grade: "B", star: 5, c: "#35b96e", min: 82, pts: 500, stat: 5, trig: 20, troop: 44000, posb: 20, pts10: 8, kp: 1.5, skd: 18, skills: [
       { n: "破军·裂阵突袭", t: "攻", d: "伤害 +20%，破甲 18%" },
       { n: "破军·七进七出", t: "速", d: "先手 +20%，突击 2 次" },
       { n: "破军·单骑救主", t: "辅", d: "护盾（攻击 30%），援护友军" } ] },
-    { n: "黄", grade: "C", star: 4, c: "#e8c988", min: 78, pts: 300, stat: 4, trig: 10, troop: 10000, posb: 10, pts10: 6, kp: 1, skd: 10, skills: [
+    { n: "黄", grade: "C", star: 4, c: "#e8c988", min: 78, pts: 300, stat: 4, trig: 10, troop: 36000, posb: 10, pts10: 6, kp: 1, skd: 10, skills: [
       { n: "玄甲·不动如山", t: "防", d: "减伤 22%，反震 15%" },
       { n: "玄甲·铁壁坚阵", t: "防", d: "全军防御 +16%" },
       { n: "玄甲·陷阵之志", t: "攻", d: "伤害 +15%，受创回血 8%" } ] },
-    { n: "橙", grade: "D", star: 3, c: "#ff8f2d", min: 72, pts: 200, stat: 3, trig: 5, troop: 5000, posb: 5, pts10: 4, kp: 0.7, skd: 5, skills: [
+    { n: "橙", grade: "D", star: 3, c: "#ff8f2d", min: 72, pts: 200, stat: 3, trig: 5, troop: 30000, posb: 5, pts10: 4, kp: 0.7, skd: 5, skills: [
       { n: "疾风·千里奔袭", t: "速", d: "先手 +15%，闪避 +12%" },
       { n: "疾风·奇兵截道", t: "谋", d: "敌方命中 -14%" },
       { n: "疾风·追风逐电", t: "速", d: "连击 1 次，速度 +14%" } ] },
-    { n: "赤", grade: "E", star: 2, c: "#ff3054", min: 65, pts: 100, stat: 2, trig: 2, troop: 2000, posb: 2, pts10: 2, kp: 0.5, skd: 2, skills: [
+    { n: "赤", grade: "E", star: 2, c: "#ff3054", min: 65, pts: 100, stat: 2, trig: 2, troop: 24000, posb: 2, pts10: 2, kp: 0.5, skd: 2, skills: [
       { n: "疑兵·八门金锁", t: "谋", d: "敌方攻击 -10%" },
       { n: "疑兵·草木皆兵", t: "谋", d: "敌方士气 -12%" },
       { n: "疑兵·虚张声势", t: "辅", d: "受击 25% 概率免伤" } ] },
-    { n: "白", grade: "F", star: 1, c: "#c8d2dc", min: -1, pts: 20, stat: 1, trig: 1, troop: 1000, posb: 1, pts10: 1, kp: 0.35, skd: 0, skills: [
+    { n: "白", grade: "F", star: 1, c: "#c8d2dc", min: -1, pts: 20, stat: 1, trig: 1, troop: 20000, posb: 1, pts10: 1, kp: 0.35, skd: 0, skills: [
       { n: "坚壁·据守要津", t: "防", d: "减伤 8%" },
       { n: "坚壁·深沟高垒", t: "防", d: "生命 +8%" },
       { n: "坚壁·持久之计", t: "辅", d: "每回合回复 5%" } ] }
@@ -8747,7 +8747,7 @@ var BOTS = [
       '<div><b>' + g["in"] + "</b><span>智</span></div><div><b>" + g.po + "</b><span>政</span></div>" +
       '<div><b>' + g.ch + "</b><span>魅</span></div></div>" +
       '<div class="sg-card-skill"><i>' + sk.t + '</i><em>' + esc(sk.n) + "</em><b>" + tr.trig + "%</b></div>" +
-      '<div class="sg-card-cfg">' + T("lbAttr") + " +" + tr.stat + "　·　" + T("lbTroop") + " " + troopTxt(tr.troop) + "　·　" + T("lbPos") + " +" + tr.posb + "%</div>" +
+      '<div class="sg-card-cfg">' + "⚔ " + T("lbKill") + " ×" + tr.kp + "　·　" + T("lbTroop") + " " + troopTxt(tr.troop) + "</div>" +
       '<div class="sg-card-cfg" style="opacity:.92">⚔ ' + T("lbKill") + " ×" + (tr.kp || 1) + "　·　" + T("lbTrig") + " " + tr.trig + "%　·　" + T("lbSkd") + " +" + (tr.skd || 0) + "%</div>" +
       '<div class="sg-card-ft">' +
       (picking ? '<span class="sg-card-price">+' + fmt(tr.pts) + " " + T("pts") + "</span>" : '<span>' + tierLabel(tr) + " · " + tr.star + "★</span>") +
@@ -9714,7 +9714,7 @@ var BOTS = [
         '<div class="sg-drawbox" style="' + tierVars(tr.c) + '"><div class="sg-drawrays"></div><div class="sg-drawcard">' + cardHTML(c, false) + "</div></div>" +
         '<div class="sg-drawskill"><i>' + sk.t + "</i><b>" + esc(sk.n) + "</b><span>" + T("skillTrig", { p: tr.trig }) + "</span></div>" +
         '<div class="sg-drawskill-d">' + esc(sk.d) + "</div>" +
-        '<div class="sg-drawskill-d">' + T("lbAttr") + " +" + tr.stat + "　·　" + T("lbTroop") + " " + troopTxt(tr.troop) + "　·　" + T("lbPos") + " +" + tr.posb + "%　·　" + T("lb10") + " +" + tr.pts10 + "</div>" +
+        '<div class="sg-drawskill-d">' + "⚔ " + T("lbKill") + " ×" + tr.kp + "　·　" + T("lbTroop") + " " + troopTxt(tr.troop) + "</div>" +
         '<div class="sg-drawmeta"><b style="color:' + tr.c + '">' + tierLabel(tr) + " · " + tr.star + "★</b><span>" + T("serial") + " " + c.serial +
         "　·　" + extra + "</span></div>" +
         '<div style="display:flex;gap:8px;margin-top:16px">' +
@@ -11220,6 +11220,48 @@ var BOTS = [
     if (v) s = s.replace(/\{(\w+)\}/g, function (m, p) { return v[p] != null ? v[p] : m; });
     return s;
   }
+  /* ================= V66：三语词条（注入 GT，随语言切换） ================= */
+  (function () {
+    var ADD = {
+      en: {
+        rankT: "Rank", rankHintT: "Rank sets each general's troop ceiling (max 60,000). Promotion costs points and the general must reach the required level.",
+        rankAutoT: "Promote all", rankAutoOkT: "Promoted {n} rank(s), {p} pts spent", rankNoneT: "No general can be promoted yet",
+        rankUpT: "Promote", rankOkT: "{n} promoted to {m}", rankMaxT: "Highest rank reached", rankLvT: "Needs Lv.{n}",
+        rankCapT: "Troop cap", rankPtsT: "Points {n}",
+        popT: "Population", popBonusT: "Output +{n}%",
+        relHintT: "Send reserve or wounded soldiers back to the fields: each one adds 1 population to this city, and higher population greatly boosts resource output.",
+        relQtyT: "Qty", relAllT: "All", relT: "Release", relOkT: "Released {n} {k} · population now {p}",
+        relNoneT: "No soldiers to release", relBadT: "Enter a valid amount",
+        squadDesc: "Up to 5 generals per battle · troops scale with level, capped by rank"
+      },
+      ja: {
+        rankT: "爵位", rankHintT: "爵位が各武将の帯兵上限を決めます（最大 60,000）。昇爵にはポイントと武将の必要レベルが必要です。",
+        rankAutoT: "一括昇爵", rankAutoOkT: "{n} 階級を昇爵、{p} ポイント消費", rankNoneT: "昇爵できる武将がいません",
+        rankUpT: "昇爵", rankOkT: "{n} は {m} に昇爵", rankMaxT: "最高爵位です", rankLvT: "Lv.{n} が必要",
+        rankCapT: "帯兵上限", rankPtsT: "ポイント {n}",
+        popT: "人口", popBonusT: "生産 +{n}%",
+        relHintT: "予備兵や傷兵を田野に帰すと、1 名につきこの城の人口が 1 増えます。人口が多いほど資源生産が大きく上がります。",
+        relQtyT: "数量", relAllT: "全部", relT: "帰農", relOkT: "{n} 名の{k}を帰農 · 人口 {p}",
+        relNoneT: "帰農できる兵がいません", relBadT: "有効な数量を入力してください",
+        squadDesc: "最大 5 名で出撃 · 帯兵はレベルに応じて増え、爵位の上限で頭打ち"
+      },
+      zh: {
+        rankT: "爵位", rankHintT: "爵位决定每名武将的带兵上限（最高 6 万）。晋升消耗积分，且武将需达到对应等级。",
+        rankAutoT: "一键晋爵", rankAutoOkT: "共晋升 {n} 阶爵位，消耗积分 {p}", rankNoneT: "暂无可晋升的武将",
+        rankUpT: "晋爵", rankOkT: "{n} 晋爵为 {m}", rankMaxT: "已达最高爵位", rankLvT: "需 Lv.{n}",
+        rankCapT: "带兵上限", rankPtsT: "可用积分 {n}",
+        popT: "人口", popBonusT: "产出 +{n}%",
+        relHintT: "把备兵或伤兵放归田野：每放归 1 名，本城人口 +1；人口越多，资源产出加成越高。",
+        relQtyT: "数量", relAllT: "全部", relT: "放归", relOkT: "已放归 {n} 名{k} · 现有人口 {p}",
+        relNoneT: "没有可放归的兵员", relBadT: "请输入有效数量",
+        squadDesc: "最多 5 名武将出战 · 带兵随等级成长，受爵位上限约束"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
   /* 官职（参考三国志9 文武官衔），任命后被动生效 */
   var OFFICES = [
     { k: "juns", n: "军师",   nen: "軍師",     en: "Military Advisor", st: "in", stN: "智", inc: 0.10, dzh: "产出 +10%", den: "Yield +10%" },
@@ -11426,11 +11468,12 @@ var BOTS = [
     var ob = officeYieldBonus(u);
     var g = 1 + offEff(u, "juns") + ob.all, f = 1 + offEff(u, "sin") + ob.rice;
     var gain = { rice: 0, wood: 0, iron: 0, coin: 0 };
+    var pm = popMulOf(u);                       /* V66：人口产出加成 */
     BUILDINGS.forEach(function (b) {
       var lv = c.bld[b.k] || 0;
       Object.keys(b.out).forEach(function (rk) {
         var v = bldYieldAt(b, rk, lv) * g * (rk === "rice" ? pf.rice * f : rk === "coin" ? pf.coin : 1);
-        gain[rk] += Math.round(v);
+        gain[rk] += Math.round(v * pm);
       });
     });
     /* V26：城内有野怪劫掠时月产出 -40% */
@@ -11502,7 +11545,7 @@ var BOTS = [
         var si = (s >> 4) % MOB_SPOTS.length;
         while (usedSpots[si]) si = (si + 1) % MOB_SPOTS.length;
         usedSpots[si] = 1;
-        mobs.push({ i: i, t: ty.k, ti: mobTierOf(lv), lv: lv, gid: boss.id, troop: 400 + lv * 260, spot: MOB_SPOTS[si], dead: false });
+        mobs.push({ i: i, t: ty.k, ti: mobTierOf(lv), lv: lv, gid: boss.id, troop: mobTroopOf(lv, mobTierOf(lv)), spot: MOB_SPOTS[si], dead: false });
       }
       /* V56：城外山贼驻扎地（陆地帐篷 / 水上船只），只出现在城外 */
       var geoC = (typeof CITY_GEO !== "undefined" && CITY_GEO[cn0]) || { river: "", mts: 1 };
@@ -11542,18 +11585,23 @@ var BOTS = [
   }
   function mobEnemies(u, mob) {
     var bti = (mob.ti != null) ? mob.ti : mobTierOf(mob.lv);
-    var arr = [{ gid: mob.gid, lv: mob.lv, m: 0.9, ti: bti }], pool = stagePool();
+    var mrk = Math.min(RANKS.length - 1, Math.floor(mob.lv / 3));
+    var arr = [{ gid: mob.gid, lv: mob.lv, m: 0.9, ti: bti, rk: mrk, tm: 0.3 }], pool = stagePool();
     var bi = Math.max(0, pool.map(function (x) { return x.id; }).indexOf(mob.gid));
     var n = Math.min(2, Math.floor(mob.lv / 6));
-    for (var i = 0; i < n; i++) { var j = Math.max(0, bi - 1 - i); arr.push({ gid: pool[j].id, lv: Math.max(1, mob.lv - 1), m: 0.75, ti: Math.max(0, bti - 1 - (i % 2)) }); }
+    for (var i = 0; i < n; i++) { var j = Math.max(0, bi - 1 - i); var mlv = Math.max(1, mob.lv - 1); arr.push({ gid: pool[j].id, lv: mlv, m: 0.75, ti: Math.max(0, bti - 1 - (i % 2)), rk: Math.min(RANKS.length - 1, Math.floor(mlv / 3)), tm: 0.3 }); }
     return arr;
   }
   function cityPop(u) {
-    var c = ensureCity(u), cityName = u.bat.spawn || "洛阳";
+    var c = ensureCity(u), cityName = u.bat.cur || u.bat.spawn || "洛阳";
     var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
     var base = (cd ? cd.pop : 20) * 10000;
-    return Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0)));
+    /* V66：放归田野的兵员转为常驻人口（c.popAdd） */
+    return Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0))) + (c.popAdd || 0);
   }
+  /* V66：人口对资源产出的高额加成（10 万人口 +60%，上限 +160%） */
+  function popMulOf(u) { return Math.min(2.6, 1 + 0.6 * Math.pow(Math.max(0, cityPop(u)) / 100000, 0.65)); }
+  function popBonusPct(u) { return Math.round((popMulOf(u) - 1) * 100); }
   /* 月份推进时结算内政产出（战斗推进或实时整点推进，先到先结算） */
   function tickMonth(u) {
     var c = ensureCity(u), gm = gMonth(u);
@@ -11637,7 +11685,7 @@ var BOTS = [
     var ks = GS_ARMS.filter(function (a) { return g.ad[a.k] || a.k === "dao"; }).map(function (a) { return a.k; });
     return ks.map(function (k) { return { k: k, v: armProf(c, k), apt: armApt(g, k) }; }).sort(function (x, y) { return y.v - x.v; }).slice(0, n || 2);
   }
-  function armProfBonus(c, k) { return k ? ((armProf(c, k) - 100) / 899) * 0.03 : 0; }
+  function armProfBonus(c, k) { return k ? ((armProf(c, k) - 100) / 899) * 0.12 : 0; }   /* V66：熟悉度最高 +12% 杀伤 */
   function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
   function eqOf(c) {
     var out = { atk: 0, def: 0, hp: 0, spd: 0 }, u = me(), list = (u && u.eqs) || [];
@@ -11757,18 +11805,65 @@ var BOTS = [
   /* 从 a 级升到 b 级的累计增长（用于升级提示） */
   function troopGainLv(a, b) { return Math.max(0, troopRawAt(b) - troopRawAt(a)); }
 
+  /* ================= V66 爵位体系（参考三国志9/11 官爵，带兵等比放大，最高 60000） =================
+     爵位由主公在大殿「爵位」页任命；每级带兵上限 +2500（末级补足 60000）。 */
+  var RANKS = [
+    { n: "无爵",        ja: "無爵",            en: "No Rank",        troop: 20000 },
+    { n: "都尉",        ja: "都尉",            en: "Commandant",     troop: 22500 },
+    { n: "校尉",        ja: "校尉",            en: "Colonel",        troop: 25000 },
+    { n: "中郎将",      ja: "中郎将",          en: "General of the Household", troop: 27500 },
+    { n: "杂号将军",    ja: "雑号将軍",        en: "General",        troop: 30000 },
+    { n: "四平将军",    ja: "四平将軍",        en: "General of the Four Pacifications", troop: 32500 },
+    { n: "四安将军",    ja: "四安将軍",        en: "General of the Four Comforts", troop: 35000 },
+    { n: "四镇将军",    ja: "四鎮将軍",        en: "General of the Four Garrisons", troop: 37500 },
+    { n: "四征将军",    ja: "四征将軍",        en: "General of the Four Expeditions", troop: 40000 },
+    { n: "前后左右将军", ja: "前後左右将軍",   en: "General of the Front/Rear/Left/Right", troop: 42500 },
+    { n: "卫将军",      ja: "衛将軍",          en: "General of the Guards", troop: 45000 },
+    { n: "车骑将军",    ja: "車騎将軍",        en: "General of Chariots and Cavalry", troop: 47500 },
+    { n: "骠骑将军",    ja: "驃騎将軍",        en: "General of Agile Cavalry", troop: 50000 },
+    { n: "大将军",      ja: "大将軍",          en: "Grand General",  troop: 52500 },
+    { n: "大司马",      ja: "大司馬",          en: "Grand Marshal",  troop: 55000 },
+    { n: "公",          ja: "公",              en: "Duke",           troop: 57500 },
+    { n: "王",          ja: "王",              en: "King",           troop: 60000 }
+  ];
+  function rankOf(c) {
+    if (!c) return 0;
+    var r = (c.rk == null) ? 0 : parseInt(c.rk, 10);      /* V66：新卡默认无爵，需在大殿任命 */
+    if (!isFinite(r)) r = 0;
+    return Math.max(0, Math.min(RANKS.length - 1, r));
+  }
+  function rankTroop(c) { return RANKS[rankOf(c)].troop; }
+  function rankName(i) {
+    var r = RANKS[Math.max(0, Math.min(RANKS.length - 1, i | 0))], lg = lang();
+    return lg === "zh" ? r.n : lg === "ja" ? r.ja : r.en;
+  }
+  function rankCost(n) { return 10 * n; }                 /* 晋升到第 n 级所需积分 */
+  function rankNeedLv(n) { return n * 3; }                /* 晋升到第 n 级所需武将等级 */
+  function troopCapOf(c) { return Math.min(TIERS[cardTier(c)].troop, rankTroop(c)); }
+  /* 关卡守军总兵力（与 stageEnemies 同口径，仅用于展示） */
+  function stageGuardN(n) {
+    var lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
+    var cnt = n <= 5 ? 1 : n <= 15 ? 2 : 3;
+    var ti = stageTierOf(n, 0);
+    var c = { gid: "stage", lv: lv, t: ti, rk: Math.min(RANKS.length - 1, Math.floor(lv / 3)) };
+    return Math.round(Math.min(troopRawAt(lv), TIERS[ti].troop, rankTroop(c)) * 0.6) * cnt;
+  }
+  function mobTroopOf(lv, ti) {
+    var c = { gid: "mob", lv: lv, t: ti, rk: Math.min(RANKS.length - 1, Math.floor(lv / 3)) };
+    return Math.max(200, Math.round(Math.min(troopRawAt(lv), (TIERS[ti] || TIERS[6]).troop, rankTroop(c)) * 0.3));
+  }
   function troopOfCard(c, g) {
     var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
     /* V49：按等级分段累加（不再线性 1000×lv），再乘星级与装备加成，最后受品级最高上限约束 */
     var t = troopRawAt(cardLv(c));
     t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
-    return Math.min(t, tr.troop);
+    return Math.min(t, tr.troop, rankTroop(c));   /* V66：再受爵位带兵上限约束 */
   }
   /* V49：该卡在当前等级下是否已顶到品级上限（升级不再涨兵）——用于升级提示 */
   function troopCapInfo(c, g) {
     var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
     var mul = (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0));
-    var raw = Math.round(troopRawAt(cardLv(c)) * mul), cap = tr.troop;
+    var raw = Math.round(troopRawAt(cardLv(c)) * mul), cap = Math.min(tr.troop, rankTroop(c));
     return { raw: raw, cap: cap, capped: raw >= cap, nextAdd: Math.max(0, Math.min(cap, Math.round(troopRawAt(cardLv(c) + 1) * mul)) - Math.min(cap, raw)) };
   }
   /* V33 装备耐久：高级装备（品阶 S/A/B/C = ti 0~3）永久有效；低级装备（D/E/F = ti 4~6）作战 10 次自动损毁 */
@@ -11796,13 +11891,14 @@ var BOTS = [
     var bi = p.indexOf(boss), lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
     /* 早期关卡敌方强度系数：让新手期的白板卡也能赢，随关卡推进恢复 1.0 */
     var m = n <= 3 ? 0.55 : n <= 6 ? 0.75 : n <= 10 ? 0.9 : 1;
-    arr.push({ gid: boss.id, lv: lv, m: m, ti: stageTierOf(n, 0) });
+    arr.push({ gid: boss.id, lv: lv, m: m, ti: stageTierOf(n, 0), rk: Math.min(RANKS.length - 1, Math.floor(lv / 3)), tm: 0.6 });
     var used = {}; used[boss.id] = 1;
     for (var i = 1; i < cnt; i++) {
       var j = Math.max(0, Math.min(p.length - 1, bi + Math.floor((Math.random() * 2 - 1) * 40)));
       if (used[p[j].id]) j = Math.max(0, bi - i);
       used[p[j].id] = 1;
-      arr.push({ gid: p[j].id, lv: Math.max(1, lv - 1), m: m, ti: stageTierOf(n, i) });
+      var lvj = Math.max(1, lv - 1);
+      arr.push({ gid: p[j].id, lv: lvj, m: m, ti: stageTierOf(n, i), rk: Math.min(RANKS.length - 1, Math.floor(lvj / 3)), tm: 0.6 });
     }
     return arr;
   }
@@ -11880,10 +11976,16 @@ var BOTS = [
   function pseudoUnit(e) {
     var c = { gid: e.gid, lv: e.lv || 1 };
     if (e.ti != null) c.t = e.ti;   /* V46：野怪/关卡带品级颜色与战力倍率 */
+    if (e.rk != null) c.rk = e.rk;   /* V66：敌方按关卡/等级封爵，决定带兵上限 */
     /* V65：敌军也列阵——按武将 id 稳定分配，同关每次一致但不同关各异 */
     var ef = e.f || formOfUnitIdx(e.gid);
     var un = unitOf(c, "B", { form: ef });
     if (un && e.m) { un.atk = Math.round(un.atk * e.m); un.def = Math.round(un.def * e.m); if (un.atk0) un.atk0 = Math.round(un.atk0 * e.m); }
+    /* V66：关卡/野怪总兵力下调（系数 tm），与展示口径一致 */
+    if (un && e.tm) {
+      un.troop = Math.max(1, Math.round(un.troop * e.tm));
+      un.troopMax = Math.max(un.troop, Math.round(un.troopMax * e.tm));
+    }
     return un;
   }
   function unitOf(c, side, ctx) {
@@ -11905,7 +12007,15 @@ var BOTS = [
     var subA = bestWu > myWu ? Math.round((bestWu - myWu) * (bondA ? 0.5 : 0.3)) : 0;
     var subD = bestSt > mySt ? Math.round((bestSt - mySt) * (bondD ? 0.5 : 0.3)) : 0;
     /* V65 等级指挥加成（乘算）——属性封顶后等级仍有意义；队内羁绊 ≥2 人再 +5%（三人组队羁绊） */
-    var cAtk = 1 + lv * 0.004 + (bondN >= 2 ? 0.05 : 0), cDef = 1 + lv * 0.003;
+    /* V66：等级不再提供指挥乘算。杀伤只来自 兵种适性/熟悉度 + 技能 + 同兵种人物关系羁绊 */
+    var bondArmN = 0;                                  /* 同兵种且有人物关系的同伴数 */
+    for (var bmi = 0; bmi < mates.length; bmi++) {
+      var bmc = mates[bmi]; if (!bmc || bmc.id === c.id) continue;
+      if (!c.arm || bmc.arm !== c.arm) continue;
+      var bmg = gById(bmc.gid); if (!bmg) continue;
+      if (isBond(g, bmg)) bondArmN++;
+    }
+    var cAtk = 1 + Math.min(0.18, bondArmN * 0.06) + (bondN >= 2 ? 0.05 : 0), cDef = 1;
     /* V65 士气：魅力入战场（初始 60 + 魅力×0.35，上限 70 + 魅力×0.3） */
     var ch = Number(g.ch) || 0;
     var moraleMax = Math.round(70 + ch * 0.3), morale = Math.round(60 + ch * 0.35);
@@ -11913,7 +12023,7 @@ var BOTS = [
     /* V65 阵形 */
     var form = ctxO.form ? formOf(ctxO.form) : null;
     var fA = form ? form.atk : 1, fD = form ? form.def : 1;
-    var growA = Math.floor((lv - 1) * 0.5), growD = Math.floor((lv - 1) * 0.4); /* 线性成长减半，余额改由指挥乘算 */
+    var growA = 0, growD = 0;   /* V66：等级不再提供属性点成长（用户要求：默认不按等级加成属性） */ /* 线性成长减半，余额改由指挥乘算 */
     var atk = Math.round((myWu + subA + (g["in"] || 0) * 0.3 + growA) * (1 + 0.08 * stars) * (1 + ab) * (1 + skb.atk)) + eq.atk;
     var kp = tr.kp || 1;                       /* V46：品级杀伤力倍率（S3.375/A2.25/B1.5/C1）——同等兵力以一敌多 */
     atk = Math.round(atk * kp);
@@ -11931,7 +12041,7 @@ var BOTS = [
       st: g.st + (spa.st || 0), wu: g.wu + (spa.wu || 0), "in": g["in"] + (spa["in"] || 0), prof: c.arm ? armProf(c, c.arm) : 0,
       troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g, ti), alive: true, skn: skb.n, kp: kp, skd: tr.skd || 0, sp: spg ? spg.k : null, spT: spT,
       /* V65 */
-      morale: morale, moraleMax: moraleMax, atk0: atk0, form: form ? form.k : "", subA: subA, subD: subD, bond: !!(bondA || bondD), cAtk: cAtk };
+      morale: morale, moraleMax: moraleMax, atk0: atk0, form: form ? form.k : "", subA: subA, subD: subD, bond: !!(bondA || bondD), cAtk: cAtk, rk: rankOf(c), rkN: rankName(rankOf(c)), bondArm: bondArmN };
   }
   /* V36 队伍战力评估：总战力 = Σ(士兵数 + 士兵数 × 统率力/100) */
   function teamPowerOf(u, ti) {
@@ -12251,6 +12361,7 @@ var BOTS = [
     return '<div class="sg-resrow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
       resPill(u, "rice") + resPill(u, "wood") + resPill(u, "copper") + resPill(u, "iron") +
       resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") +
+      '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("upNoteT")) + '">⚔ ' + gt("poolT") + " " + fmt(c.pool || 0) + "</span>" +
       '<span style="border:1px solid ' + (wN ? "#e07f7f88" : "var(--line-2)") + ';border-radius:999px;padding:4px 11px;color:' + (wN ? "#ffb3b3" : "var(--ink-2)") + '" title="' + esc(gt("infT") + " · " + gt("upNoteT")) + '">⚕ ' + gt("woundT") + " " + fmt(wN) + "</span>" +
       '<style>' +
@@ -12744,7 +12855,7 @@ var BOTS = [
     var cityName = u.bat.cur || u.bat.spawn || "洛阳";
     modal("<h3>⛩ " + gt("passT") + " · " + esc(name) + "</h3>" +
       '<div class="sg-note">' + gt("passNear", { c: esc(cityName) }) + "</div>" +
-      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">⚔</span><span><b>' + gt("passGuard") + "：</b>" + fmt(3000 + hashNum(name) % 9000) + "</span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">⚔</span><span><b>' + gt("passGuard") + "：</b>" + fmt(1600 + hashNum(name) % 4400) + "</span></div>" +
       '<div style="text-align:center;margin-top:12px"><button class="sgbtn primary" data-bat="pass-go">⚔ ' + gt("passGo") + "</button> " +
       '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
   }
@@ -12971,13 +13082,83 @@ var BOTS = [
       "@media(max-width:640px){.sg-mob{font-size:9px;padding:2px 7px}.sg-field{padding:34px 22px 24px}}" +
       "</style></div>";
   }
+  /* ================= V66 民政：伤兵/备兵放归田野 → 人口 ================= */
+  function relInputOf(k) {
+    var el = document.querySelector('input.sg-relin[data-k="' + k + '"]');
+    return el ? el.value : "";
+  }
+  function releaseToField(u, kind, raw) {
+    var c = ensureCity(u);
+    var max = kind === "wound" ? cityWoundN(c) : (c.pool || 0);
+    var n = parseInt(String(raw == null ? "" : raw).replace(/[^0-9]/g, ""), 10);
+    if (!isFinite(n) || n <= 0) return { err: "bad", max: max };
+    if (max <= 0) return { err: "none", max: 0 };
+    n = Math.min(n, max);
+    if (kind === "wound") {
+      var left = n;
+      c.wounded = (c.wounded || []).filter(function (w) {
+        if (left <= 0) return true;
+        var take = Math.min(left, w.n || 0);
+        w.n = (w.n || 0) - take; left -= take;
+        return w.n > 0;
+      });
+    } else {
+      c.pool = Math.max(0, (c.pool || 0) - n);
+    }
+    c.popAdd = (c.popAdd || 0) + n;              /* 1 名兵员 → 1 人口 */
+    save();
+    return { ok: true, n: n, pop: cityPop(u) };
+  }
+  function popPanelHTML(u) {
+    var c = ensureCity(u), wN = cityWoundN(c), pool = c.pool || 0, pop = cityPop(u), pct = popBonusPct(u);
+    var inp = function (k, max) {
+      return '<input class="sg-relin" type="number" inputmode="numeric" min="1" max="' + Math.max(1, max) + '" step="1" placeholder="' + esc(gt("relQtyT")) + '" data-k="' + k + '"' +
+        (max > 0 ? "" : " disabled") + ' style="width:76px;padding:3px 6px;border-radius:7px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit;text-align:center;font-size:12px">';
+    };
+    return '<div class="sg-panel-hd" style="margin:12px 0 4px"><h3><i>·</i>👥 ' + gt("popT") + "</h3></div>" +
+      '<div class="sg-note" style="margin:0 0 8px">' + gt("relHintT") + "</div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#3a6b5b;color:#dff5ea">人</span><span><b>' + gt("popT") + " " + fmt(pop) + "</b>　<small style='color:#8fd694'>" + gt("popBonusT", { n: pct }) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">备</span><span><b>' + gt("poolT") + " " + fmt(pool) + "</b></span><span class=\"sp\"></span>" + inp("pool", pool) +
+      '<button class="sgbtn sm' + (pool > 0 ? " primary" : "") + '" data-bat="rel" data-k="pool"' + (pool > 0 ? "" : " disabled") + ">" + gt("relT") + "</button>" +
+      (pool > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="pool" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#6b3a3a;color:#ffd9d9">伤</span><span><b>' + gt("woundT") + " " + fmt(wN) + "</b></span><span class=\"sp\"></span>" + inp("wound", wN) +
+      '<button class="sgbtn sm' + (wN > 0 ? " primary" : "") + '" data-bat="rel" data-k="wound"' + (wN > 0 ? "" : " disabled") + ">" + gt("relT") + "</button>" +
+      (wN > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="wound" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>";
+  }
+  /* ================= V66 爵位：给任意武将封爵 ================= */
+  function rankRowHTML(u, c) {
+    var g = gById(c.gid); if (!g) return "";
+    var rk = rankOf(c), nx = rk + 1, ti = cardTier(c);
+    var can = nx < RANKS.length && cardLv(c) >= rankNeedLv(nx) && (u.points || 0) >= rankCost(nx);
+    var why = nx >= RANKS.length ? gt("rankMaxT") : cardLv(c) < rankNeedLv(nx) ? gt("rankLvT", { n: rankNeedLv(nx) }) : (u.points || 0) < rankCost(nx) ? T("eqLack") : "";
+    return '<div class="sg-rankline sg-palrow">' +
+      '<span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
+      "<span><b>" + esc(g.name) + "</b> <small>Lv." + cardLv(c) + " · " + gt("lbTroop") + " " + fmt(troopOfCard(c, g)) + "</small><br>" +
+      '<small style="color:#e8c988">🏅 ' + rankName(rk) + " · " + gt("rankCapT") + " " + fmt(RANKS[rk].troop) + "</small>" +
+      (why ? ' <small style="color:var(--ink-3)">' + esc(why) + "</small>" : "") + "</span>" +
+      '<span class="sp"></span>' +
+      (nx < RANKS.length ? '<button class="sgbtn sm' + (can ? " primary" : "") + '" data-bat="rank-up" data-id="' + c.id + '"' + (can ? "" : " disabled") + ">⬆ " + gt("rankUpT") + " " + fmt(rankCost(nx)) + "</button>" : "") +
+      (rk > 0 ? '<button class="sgbtn sm ghost" data-bat="rank-down" data-id="' + c.id + '">⬇</button>' : "") +
+      "</div>";
+  }
+  function rankBodyHTML(u) {
+    var cards = (u.cards || []).slice().sort(function (a, b) {
+      var ta = cardTier(a), tb = cardTier(b);
+      return ta !== tb ? ta - tb : cardLv(b) - cardLv(a);
+    });
+    var head = '<div class="sg-note" style="margin:0 0 8px">' + gt("rankHintT") + "</div>" +
+      '<div class="sg-rankline" style="margin-bottom:6px"><span>' + esc(gt("rankPtsT", { n: fmt(u.points || 0) })) + '</span><span class="sp"></span>' +
+      '<button class="sgbtn sm primary" data-bat="rank-auto">🏅 ' + gt("rankAutoT") + "</button></div>";
+    var rows = cards.slice(0, 120).map(function (c) { return rankRowHTML(u, c); }).join("");
+    return head + rows + (cards.length > 120 ? '<div class="sg-note">… +' + (cards.length - 120) + "</div>" : "");
+  }
   function palaceOpen() {
     var u = me(); if (!u) return;
     ensureCity(u);
     var c = u.bat.city, cards = u.cards || [], inc = cityPreview(u);
     /* V64：三页签，避免整页过长把底部按钮顶出屏幕 */
     var tk = BATUI.palTab || "off";
-    if (["off", "city", "gov"].indexOf(tk) < 0) tk = "off";
+    if (["off", "city", "gov", "rank"].indexOf(tk) < 0) tk = "off";
     var offRows = OFFICES.map(function (o) {
       var cid = u.bat.off[o.k], holder = null, hg = null;
       if (cid) holder = cards.filter(function (x) { return x.id === cid; })[0];
@@ -12997,16 +13178,18 @@ var BOTS = [
       "<span><b>" + gt("taxBtn") + "</b> <small style='color:var(--ink-3)'>" + gt("taxGain", { n: fmt(taxAmount(u)) }) + "</small></span><span class=\"sp\"></span>" +
       '<button class="sgbtn sm primary" data-bat="tax"' + (taxOk ? "" : " disabled") + ">" + gt("taxBtn") + "</button>" +
       (taxOk ? "" : '<small style="color:var(--ink-3)">' + gt("taxCd") + "</small>") + "</div>";
-    var incLine = '<div class="sg-note" style="margin:4px 0 8px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) + "</div>";
+    var incLine = '<div class="sg-note" style="margin:4px 0 8px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) +
+      '<br>👥 ' + gt("popT") + " " + fmt(cityPop(u)) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
     var offN = OFFICES.filter(function (o) { return !!u.bat.off[o.k]; }).length;
-    var tabs = [["off", "🎖 " + gt("officeT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")]]
+    var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")]]
       .map(function (t) {
         return '<button class="sgchip' + (tk === t[0] ? " on" : "") + '" data-bat="pal-tab" data-k="' + t[0] + '">' + t[1] + "</button>";
       }).join("");
     var body = "";
     if (tk === "off") body = offRows;
+    else if (tk === "rank") body = rankBodyHTML(u);
     else if (tk === "city") body = cityUpHTML(u, true);
-    else body = polRow + incLine + taxHTML;
+    else body = polRow + incLine + taxHTML + popPanelHTML(u);
     modal('<style>' +
       '.sg-modal.sg-palacemodal{background-image:linear-gradient(180deg,rgba(8,10,16,.86),rgba(8,10,16,.92)),url(' + SG_IMG_NIGHT_WALL + ');background-size:cover;background-position:center 28%;' +
       'padding:0;display:flex;flex-direction:column;max-height:calc(100vh - 48px);overflow:hidden}' +
@@ -13027,7 +13210,8 @@ var BOTS = [
       '<div class="sg-palbody">' + body + "</div>" +
       '<div class="sg-palfoot"><div style="display:flex;align-items:center;gap:10px">' +
       '<small style="color:var(--ink-3)">' + gt("cityLvT", { n: c.lv || 1, m: bldMaxLv(u) }) + " · " + gt("officeT") + " " + offN + "/" + OFFICES.length + "</small>" +
-      '<span style="flex:1"></span><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div></div>", "wide sg-palacemodal");
+      '<span style="flex:1"></span><button class="sgbtn sm ghost" data-bat="rank-auto">🏅 ' + gt("rankAutoT") + '</button>' +
+      '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div></div>", "wide sg-palacemodal");
   }
   function bldOpen(k) {
     var u = me(); if (!u) return;
@@ -13502,7 +13686,7 @@ var BOTS = [
     var un = unitOf(card, "A");
     var g = gById(card.gid) || {};
     var spg = spGroupOf(g);
-    var stats = un ? '<div class="sg-note">⚔ ' + T("lbAttr") + "：攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + "　·　" + T("lbTroop") + " " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "　·　⚡ " + gt("teamPow", { n: fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) }).replace(/^战力 /, "").replace(/^Power /, "").replace(/^戦力 /, "") + "（统 " + (un.st || 0) + "）</div>" : "";
+    var stats = un ? '<div class="sg-note">⚔ ' + T("lbAttr") + "：攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + "　·　" + T("lbTroop") + " " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "　·　🏅 " + rankName(rankOf(card)) + "（" + gt("rankCapT") + " " + fmt(rankTroop(card)) + "）　·　⚡ " + gt("teamPow", { n: fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) }).replace(/^战力 /, "").replace(/^Power /, "").replace(/^戦力 /, "") + "（统 " + (un.st || 0) + "）</div>" : "";
     /* V35：编队内快捷操作——补兵 / 吞噬升级（无需回卡牌墙）；V37：正常兵池优先免费 */
     var capQ = troopOfCard(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
     var addQ = capQ - curQ;
@@ -13691,11 +13875,12 @@ var BOTS = [
     var ob = officeYieldBonus(u);
     var g = 1 + offEff(u, "juns") + ob.all, f = 1 + offEff(u, "sin") + ob.rice;
     var out = { rice: 0, wood: 0, iron: 0, coin: 0 };
+    var pm = popMulOf(u);                       /* V66：人口产出加成（与实际结算同口径） */
     BUILDINGS.forEach(function (b) {
       var lv = c.bld[b.k] || 0;
       Object.keys(b.out).forEach(function (rk) {
         var v = bldYieldAt(b, rk, lv) * g * (rk === "rice" ? pf.rice * f : rk === "coin" ? pf.coin : 1);
-        out[rk] += Math.round(v);
+        out[rk] += Math.round(v * pm);
       });
     });
     /* V26：劫掠中展示扣减后产出 */
@@ -13847,7 +14032,7 @@ var BOTS = [
       var st = u.bat.hist[n], locked = n > u.bat.stage;
       items.push({ n: n, name: STAGE_NAMES[n - 1], stars: st || 0, bat: locked ? "" : "fight", sweep: !!st,
         st: locked ? "lock" : (n === u.bat.stage ? "cur" : st ? "done" : "open"),
-        title: esc(STAGE_NAMES[n - 1]) + " · " + esc(boss.name) + " · " + tierLabel(tr) + " · Lv." + Math.max(1, Math.round(n * 2.2)) });
+        title: esc(STAGE_NAMES[n - 1]) + " · " + esc(boss.name) + " · " + tierLabel(tr) + " · Lv." + Math.max(1, Math.round(n * 2.2)) + " · " + esc(gt("passGuard")) + " " + fmt(stageGuardN(n)) });
     }
     return '<div class="sg-note" style="margin-bottom:8px">' + T("firstReward") + "：" + T("spGain", { n: 5 }) + " + " + T("squadDesc") + "</div>" + squadHTML + autoBtn +
       '<div class="sg-panel-hd" style="margin-top:14px"><h3><i>·</i>' + T("stageTitle") + "（1-1 → 1-30）</h3><span class=\"sp\"></span><small style='color:var(--ink-3)'>章节剧情 · S 型进军路线</small></div>" +
@@ -15170,6 +15355,7 @@ var BOTS = [
       '<div class="sg-note" style="margin:10px 0 4px">' + T("spAlloc", { n: spLeft }) +
       (u.bat.spG != null ? ' <small style="color:var(--ink-3)">' + T("spAudit", { g: u.bat.spG, u: u.bat.spU || 0 }) + "</small>" : "") + "</div><div style='display:flex;flex-wrap:wrap;gap:6px'>" + spHTML + "</div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("equipT") + " · " + T("eqWpn") + "：" + wtypeOf(g) + "</div>" + eqHTML +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">爵</span><span><b>🏅 ' + rankName(rankOf(c)) + "</b> <small>" + gt("rankCapT") + " " + fmt(RANKS[rankOf(c)].troop) + " · " + gt("lbTroop") + " " + fmt(troopOfCard(c, g)) + "</small></span></div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
       '<div style="text-align:center;margin-top:14px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
   }
@@ -16211,6 +16397,57 @@ var BOTS = [
       case "synth": { var g3 = gById(id); if (!g3) return; var ti3 = tierOf(g3), need3 = SYNTH[ti3]; if ((u.shards[id] || 0) < need3) return toast(T("synthNot"), "err"); u.shards[id] -= need3; var nc = mkCard(id); u.cards.unshift(nc); checkBadges(u); save(); toast(T("synthOk", { n: g3.name }), "ok"); refreshBattle(); return; }
       case "grow-open": growOpen(id); return;
       case "starup": { var c4 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c4) return; var g4 = gById(c4.gid), st4 = c4.stars || 0; if (st4 >= 5) return; var cost4 = STAR_COST[st4]; if (cardLv(c4) < (st4 + 1) * 10) return toast(T("starLvNeed", { n: (st4 + 1) * 10 }), "err"); if ((u.shards[g4.id] || 0) < cost4) return toast(T("synthNot"), "err"); u.shards[g4.id] -= cost4; c4.stars = st4 + 1; save(); toast(T("starUpOk"), "ok"); growOpen(id); return; }
+      case "rel": {
+        var rk2 = t.getAttribute("data-k") === "wound" ? "wound" : "pool";
+        var all2 = t.getAttribute("data-all") === "1";
+        var c2r = ensureCity(u);
+        var raw2 = all2 ? String(rk2 === "wound" ? cityWoundN(c2r) : (c2r.pool || 0)) : relInputOf(rk2);
+        var rr3 = releaseToField(u, rk2, raw2);
+        if (rr3.err) return toast(rr3.err === "none" ? gt("relNoneT") : gt("relBadT"), "err");
+        toast(gt("relOkT", { n: fmt(rr3.n), k: rk2 === "wound" ? gt("woundT") : gt("poolT"), p: fmt(rr3.pop) }), "ok");
+        refreshBattle(); palaceOpen(); return;
+      }
+      case "rank-up": {
+        var cru = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cru) return;
+        var rk3 = rankOf(cru), nx3 = rk3 + 1;
+        if (nx3 >= RANKS.length) return toast(gt("rankMaxT"), "err");
+        if (cardLv(cru) < rankNeedLv(nx3)) return toast(gt("rankLvT", { n: rankNeedLv(nx3) }), "err");
+        var cst3 = rankCost(nx3);
+        if ((u.points || 0) < cst3) return toast(T("eqLack"), "err");
+        var gn3 = (gById(cru.gid) || {}).name || "";
+        addPoints(u, -cst3, T("rankT") + " · " + gn3);
+        cru.rk = nx3; save();
+        toast(gt("rankOkT", { n: gn3, m: rankName(nx3) }), "ok");
+        refreshBattle(); palaceOpen(); return;
+      }
+      case "rank-down": {
+        var crd = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!crd) return;
+        var rk4 = rankOf(crd); if (rk4 <= 0) return;
+        crd.rk = rk4 - 1; save(); refreshBattle(); palaceOpen(); return;
+      }
+      case "rank-auto": {
+        var upN = 0, spentN = 0;
+        /* 优先给高阶、高等级武将晋爵 */
+        var poolA = (u.cards || []).slice().sort(function (a, b) {
+          var ta = cardTier(a), tb = cardTier(b);
+          return ta !== tb ? ta - tb : cardLv(b) - cardLv(a);
+        });
+        poolA.forEach(function (c) {
+          var guard = 0;
+          while (guard++ < RANKS.length) {
+            var rkA = rankOf(c), nxA = rkA + 1;
+            if (nxA >= RANKS.length) break;
+            if (cardLv(c) < rankNeedLv(nxA)) break;
+            var costA = rankCost(nxA);
+            if ((u.points || 0) < costA) break;
+            addPoints(u, -costA, T("rankT") + " · " + ((gById(c.gid) || {}).name || ""));
+            c.rk = nxA; spentN += costA; upN++;
+          }
+        });
+        save();
+        toast(upN ? gt("rankAutoOkT", { n: upN, p: fmt(spentN) }) : gt("rankNoneT"), upN ? "ok" : "err");
+        refreshBattle(); palaceOpen(); return;
+      }
       case "sp-add": {
         /* V39：按输入数量加点，校验剩余点数 */
         var c5 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c5) return;
@@ -16359,6 +16596,11 @@ var BOTS = [
       sortByTier: sortByTier, cele: sgTierCele, tierVars: tierVars, homeTab: function (u) { return batHomeTab(u); },
       /* V63b 探针导出：云端品阶配置落地与颜色校验 */
       tierCfgF: applyTierCfg, tierColorOf: function (i) { return TIERS[i] ? TIERS[i].c : ""; },
+      /* V66 探针导出：爵位 / 带兵上限 / 放归 / 人口产出 */
+      rankOf: rankOf, ranks: function () { return RANKS.map(function (r) { return { n: r.n, troop: r.troop }; }); },
+      rankTroop: rankTroop, rankName: rankName, rankCost: rankCost, rankNeedLv: rankNeedLv, troopCapOf: troopCapOf,
+      stageGuardN: stageGuardN, mobTroopOf: mobTroopOf, popMulOf: popMulOf, popBonusPct: popBonusPct,
+      releaseF: releaseToField, rankBodyHTML: rankBodyHTML, popPanelHTML: popPanelHTML, cityPopF: cityPop,
       /* V62 探针：按品阶造一张卡并读计算样式（边框色/层级特效） */
       tierColor: function (ti) { return TIERS[ti].c; },
       cardProbe: function (c) {
