@@ -11229,6 +11229,7 @@ var BOTS = [
         rankUpT: "Promote", rankOkT: "{n} promoted to {m}", rankMaxT: "Highest rank reached", rankLvT: "Needs Lv.{n}",
         rankCapT: "Troop cap", rankPtsT: "Points {n}", lbTroop: "Troops",
         popT: "Population", popBonusT: "Output +{n}%",
+        fullT: "Full", missT: "{n} short", recProgT: "Recruit progress",
         relHintT: "Send reserve or wounded soldiers back to the fields: each one adds 1 population to this city, and higher population greatly boosts resource output.",
         relQtyT: "Qty", relAllT: "All", relT: "Release", relOkT: "Released {n} {k} · population now {p}",
         relNoneT: "No soldiers to release", relBadT: "Enter a valid amount",
@@ -11240,6 +11241,7 @@ var BOTS = [
         rankUpT: "昇爵", rankOkT: "{n} は {m} に昇爵", rankMaxT: "最高爵位です", rankLvT: "Lv.{n} が必要",
         rankCapT: "帯兵上限", rankPtsT: "ポイント {n}", lbTroop: "帯兵",
         popT: "人口", popBonusT: "生産 +{n}%",
+        fullT: "満兵", missT: "{n} 不足", recProgT: "募兵進捗",
         relHintT: "予備兵や傷兵を田野に帰すと、1 名につきこの城の人口が 1 増えます。人口が多いほど資源生産が大きく上がります。",
         relQtyT: "数量", relAllT: "全部", relT: "帰農", relOkT: "{n} 名の{k}を帰農 · 人口 {p}",
         relNoneT: "帰農できる兵がいません", relBadT: "有効な数量を入力してください",
@@ -11251,6 +11253,7 @@ var BOTS = [
         rankUpT: "晋爵", rankOkT: "{n} 晋爵为 {m}", rankMaxT: "已达最高爵位", rankLvT: "需 Lv.{n}",
         rankCapT: "带兵上限", rankPtsT: "可用积分 {n}", lbTroop: "兵力",
         popT: "人口", popBonusT: "产出 +{n}%",
+        fullT: "满兵", missT: "缺 {n}", recProgT: "招募进度",
         relHintT: "把备兵或伤兵放归田野：每放归 1 名，本城人口 +1；人口越多，资源产出加成越高。",
         relQtyT: "数量", relAllT: "全部", relT: "放归", relOkT: "已放归 {n} 名{k} · 现有人口 {p}",
         relNoneT: "没有可放归的兵员", relBadT: "请输入有效数量",
@@ -12035,6 +12038,9 @@ var BOTS = [
     var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd + (form ? form.spd : 0);
     var cap = troopOfCard(c, g);
     if (side === "A") { try { var cu = me(); if (cu && cu.bat && cu.bat.city && cu.bat.city.bld) cap = Math.round(cap * (1 + 0.02 * (cu.bat.city.bld.camp || 0))); } catch (e) {} }
+    /* V67：兵力口径落地——旧档 sold 为空（旧逻辑=永久满员）时，按当前有效上限写实一次，
+       之后升级/升爵/升兵营抬高的上限不再自动变成兵力，进度条如实显示招募缺口 */
+    if (c.sold == null && side === "A") c.sold = cap;
     var troop = (c.sold == null ? cap : Math.min(c.sold, cap));
     var spg = spGroupOf(g), spT = spg ? spTrig(spg.k, g, skb.n) : 0; /* V29 特殊武将 */
     return { side: side, cid: c.id || "", gid: g.id, name: g.name, ti: ti, lv: lv, atk: atk, def: def, spd: spd, arm: c.arm || "",
@@ -12491,7 +12497,7 @@ var BOTS = [
     var c = ensureCity(u); c.pool = c.pool || 0; var okAll = true;
     squad.forEach(function (cd) {
       var g = gById(cd.gid); if (!g) return;
-      var cap = troopOfCard(cd, g), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
+      var cap = troopCapEff(cd, g), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
       var add = cap - cur; if (add <= 0) return;
       var fromPool = Math.min(add, c.pool || 0);
       if (fromPool > 0) { c.pool -= fromPool; cur += fromPool; add -= fromPool; }
@@ -13474,22 +13480,39 @@ var BOTS = [
     }).join("");
   }
   function resIcon(k) { return k === "rice" ? "🌾" : k === "wood" ? "🪵" : k === "copper" ? "⛏" : k === "iron" ? "🔩" : "🪙"; }
+  /* ================= V67：招募进度条 =================
+     口径：现兵 / 带兵上限。满兵 = 100%（绿条），未满按档位变色并显示缺口。
+     上限随等级、爵位、兵营上涨；现兵只在募兵后增长，因此升级/升爵会立刻露出缺口。 */
+  function recBarOf(un) {
+    var cap = un ? Math.max(0, un.troopMax || 0) : 0;
+    var cur = un ? Math.max(0, Math.min(un.troop || 0, cap)) : 0;
+    var pct = cap ? Math.max(0, Math.min(100, Math.round(cur / cap * 100))) : 0;
+    var full = cap > 0 && cur >= cap;
+    var col = !cap ? "#666" : full ? "#7fce9f" : pct >= 60 ? "#e8c988" : "#e07f7f";
+    return { cap: cap, cur: cur, pct: pct, full: full, col: col, miss: Math.max(0, cap - cur) };
+  }
+  function slotRecHTML(r) {
+    if (!r || !r.cap) return "";
+    return '<span class="sg-slot-bar' + (r.full ? " full" : "") + '"><i style="width:' + r.pct + "%;background:" + r.col + '"></i><em>' + r.pct + "%</em></span>" +
+      '<span class="sg-slot-cap">' + (r.full ? "✅ " + gt("fullT") + " " + troopTxt(r.cap) : troopTxt(r.cur) + " / " + troopTxt(r.cap)) + "</span>" +
+      (r.full ? "" : '<span class="sg-slot-miss">🩹' + gt("missT", { n: troopTxt(r.miss) }) + "</span>");
+  }
   function teamPanelHTML(u) {
     var c = ensureCity(u), roster = cityRoster(u);
     var rows = (c.teams || []).map(function (t, ti) {
+      var shortN = 0;
       var slots = TEAM_POS.map(function (p) {
         var cid = t.slots[p.k], card = cid ? (u.cards || []).filter(function (x) { return x.id === cid; })[0] : null;
         var g = card ? gById(card.gid) : null;
         var un = card ? unitOf(card, "A", { form: t.f || "yulin", mates: teamCards(u, ti) }) : null;
-        var capP = un ? un.troopMax : 0, curP = un ? un.troop : 0;
-        var pct = capP ? Math.max(3, Math.round(curP / capP * 100)) : 0;
-        var barC = !capP ? "#666" : pct >= 60 ? "#7fce9f" : pct >= 30 ? "#e8c988" : "#e07f7f";
+        var rb = recBarOf(un), capP = rb.cap, curP = rb.cur;
+        if (card && rb.cap && !rb.full) shortN++;
         var armTxt = card ? (card.arm ? armName(card.arm) + " " + armProf(card, card.arm) : (armProfTop(card, 1)[0] || {}).k ? "适" + armName(armProfTop(card, 1)[0].k) + " " + armProfTop(card, 1)[0].v : "") : "";
-        return '<button class="sg-slot' + (card ? " on" : "") + '" data-bat="slot" data-t="' + ti + '" data-p="' + p.k + '" title="' + esc(posDesc(p)) + '">' +
+        return '<button class="sg-slot' + (card ? " on" : "") + (card && rb.full ? " sg-full" : "") + '" data-bat="slot" data-t="' + ti + '" data-p="' + p.k + '" title="' + esc(posDesc(p) + (card ? " · " + gt("recProgT") + " " + rb.pct + "%" + (rb.full ? "" : "（" + gt("missT", { n: troopTxt(rb.miss) }) + "）") : "")) + '">' +
           (card ? '<span class="sg-slot-av">' + styledArtSVG(g, null, true) + "</span>" : '<span class="sg-slot-av sg-slot-av-e">＋</span>') +
           "<b>" + posName(p) + "</b>" + (card ? "<span>" + esc(g ? g.name : "?") + " <i>Lv." + cardLv(card) + "</i></span>" : '<span style="opacity:.45">' + T("slotEmpty") + "</span>") +
           (card ? '<span class="sg-slot-arm">' + esc(armTxt) + "</span>" : "") +
-          (card ? '<span class="sg-slot-bar"><i style="width:' + pct + "%;background:" + barC + '"></i></span><span class="sg-slot-cap">' + troopTxt(curP) + "/" + troopTxt(capP) + "</span>" : "") +
+          (card ? slotRecHTML(rb) : "") +
           "</button>";
       }).join("");
       var pw = teamPowerOf(u, ti);
@@ -13497,7 +13520,7 @@ var BOTS = [
     return '<div class="sg-team"><div class="sg-team-hd"><b class="sg-team-nm" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚔ ' + tn + "</b>" +
       '<small class="sg-team-pw" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚡' + fmt(pw) + "</small><small>" + teamSize(u, ti) + "/5</small>" +
       '<button class="sgbtn sm ghost" data-bat="team-name" data-t="' + ti + '" title="' + esc(gt("teamNmT")) + '">✏</button>' +
-      '<button class="sgbtn sm ghost" data-bat="rec-all" data-t="' + ti + '" title="' + esc(gt("recAllT")) + '"' + (teamSize(u, ti) ? "" : " disabled") + ">🩹 " + gt("recAllT") + "</button></div>" +
+      '<button class="sgbtn sm ghost" data-bat="rec-all" data-t="' + ti + '" title="' + esc(gt("recAllT")) + '"' + (shortN ? "" : " disabled") + ">🩹 " + gt("recAllT") + "</button></div>" +
       /* V65：阵形选择（同队 5 人共享，影响攻防速与相互克制） */
       '<div class="sg-formrow">' + FORMS.map(function (f) {
         var on = (t.f || "yulin") === f.k;
@@ -13536,10 +13559,10 @@ var BOTS = [
       ".sg-slot-av{width:40px;height:40px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;flex:none;border:1px solid rgba(201,164,92,.35)}" +
       ".sg-slot-av img{width:100%;height:100%;object-fit:cover;object-position:top}.sg-slot-av svg{width:100%;height:100%}.sg-slot-av-e{font-size:18px;color:#5a6172}" +
       ".sg-slot-arm{font-size:9px;color:#9ec9ff!important}" +
-      ".sg-slot-bar{width:100%;height:5px;border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden;display:block}" +
-      ".sg-slot-bar i{display:block;height:100%;border-radius:3px;transition:width .3s}" +
-      ".sg-slot-cap{font-size:8.5px!important;color:var(--ink-3)!important}" +
-      ".sg-slot.on{border-style:solid;border-color:#c9a45c;background:rgba(201,164,92,.12)}" +
+      ".sg-slot-bar{width:100%;height:7px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;display:block;position:relative}" +
+      ".sg-slot-bar i{display:block;height:100%;border-radius:4px;transition:width .3s}.sg-slot-bar em{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:7px;line-height:1;color:#f2f6fa;text-shadow:0 1px 1px rgba(0,0,0,.9);pointer-events:none}" +
+      ".sg-slot-miss{font-size:8px!important;color:#e6a887!important}.sg-slot-cap{font-size:8.5px!important;color:var(--ink-3)!important}" +
+      ".sg-slot.sg-full .sg-slot-bar i{background:linear-gradient(90deg,#4fae7c,#8fd6a2)!important}.sg-slot.on{border-style:solid;border-color:#c9a45c;background:rgba(201,164,92,.12)}" +
       ".sg-slot:hover{border-color:var(--gold);transform:translateY(-1px)}" +
       /* V51：编队槽位与驻城武将视觉强化 */
       ".sg-slot.on{background:linear-gradient(180deg,rgba(201,164,92,.18),rgba(0,0,0,.3));box-shadow:0 2px 10px rgba(0,0,0,.45)}" +
@@ -13688,7 +13711,7 @@ var BOTS = [
     var spg = spGroupOf(g);
     var stats = un ? '<div class="sg-note">⚔ ' + T("lbAttr") + "：攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + "　·　" + T("lbTroop") + " " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "　·　🏅 " + rankName(rankOf(card)) + "（" + gt("rankCapT") + " " + fmt(rankTroop(card)) + "）　·　⚡ " + gt("teamPow", { n: fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) }).replace(/^战力 /, "").replace(/^Power /, "").replace(/^戦力 /, "") + "（统 " + (un.st || 0) + "）</div>" : "";
     /* V35：编队内快捷操作——补兵 / 吞噬升级（无需回卡牌墙）；V37：正常兵池优先免费 */
-    var capQ = troopOfCard(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
+    var capQ = troopCapEff(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
     var addQ = capQ - curQ;
     var rcQ0 = addQ > 0 ? refillCalc(u, addQ) : { freeN: 0, newN: 0, needR: 0, needC: 0 };
     var recBtn = addQ > 0
@@ -14048,14 +14071,11 @@ var BOTS = [
       var g = c ? gById(c.gid) : null;
       if (!c) return '<button class="sg-slot" data-bat="pk-open" data-mode="squad"><b>' + (ix + 1) + "</b>" +
         '<span class="sg-slot-av sg-slot-av-e">＋</span><span style="opacity:.45">' + T("slotEmpty") + "</span></button>";
-      var un = unitOf(c, "A"), capP = un ? un.troopMax : 0, curP = un ? un.troop : 0;
-      var pct = capP ? Math.max(3, Math.round(curP / capP * 100)) : 0;
-      var barC = pct >= 60 ? "#7fce9f" : pct >= 30 ? "#e8c988" : "#e07f7f";
-      return '<button class="sg-slot on" data-bat="squad" data-id="' + c.id + '" title="' + T("pkRemove") + '"><b>' + (ix + 1) + "</b>" +
+      var un = unitOf(c, "A"), rb = recBarOf(un), capP = rb.cap, curP = rb.cur;
+      return '<button class="sg-slot on' + (rb.full ? " sg-full" : "") + '" data-bat="squad" data-id="' + c.id + '" title="' + esc(T("pkRemove") + " · " + gt("recProgT") + " " + rb.pct + "%") + '"><b>' + (ix + 1) + "</b>" +
         '<span class="sg-slot-av">' + (g ? styledArtSVG(g, null, true) : "") + "</span>" +
         "<span>" + esc(g ? g.name : "?") + " <i>Lv." + cardLv(c) + "</i></span>" +
-        '<span class="sg-slot-bar"><i style="width:' + pct + "%;background:" + barC + '"></i></span>' +
-        '<span class="sg-slot-cap">' + troopTxt(curP) + "/" + troopTxt(capP) + "</span></button>";
+        slotRecHTML(rb) + "</button>";
     }).join("");
     var pw = chosen.length ? chosen.map(function (id) { var c = cards.filter(function (x) { return x.id === id; })[0], g = gById(c.gid); return unitOf(c, "A"); }).filter(Boolean) : [];
     var pwSum = pw.reduce(function (s, un) { return s + un.atk + un.def + Math.round(un.troop / 1000); }, 0);
@@ -14071,10 +14091,10 @@ var BOTS = [
       ".sg-slot b{font-size:9.5px;color:#c9a45c;font-weight:600;letter-spacing:.04em}.sg-slot span{font-size:11px;color:var(--ink-1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sg-slot i{font-style:normal;font-size:9px;color:#e8c988}" +
       ".sg-slot-av{width:40px;height:40px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;flex:none;border:1px solid rgba(201,164,92,.35)}" +
       ".sg-slot-av img{width:100%;height:100%;object-fit:cover;object-position:top}.sg-slot-av svg{width:100%;height:100%}.sg-slot-av-e{font-size:18px;color:#5a6172}" +
-      ".sg-slot-bar{width:100%;height:5px;border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden;display:block}" +
-      ".sg-slot-bar i{display:block;height:100%;border-radius:3px;transition:width .3s}" +
-      ".sg-slot-cap{font-size:8.5px!important;color:var(--ink-3)!important}" +
-      ".sg-slot.on{border-style:solid;border-color:#c9a45c;background:rgba(201,164,92,.12)}" +
+      ".sg-slot-bar{width:100%;height:7px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;display:block;position:relative}" +
+      ".sg-slot-bar i{display:block;height:100%;border-radius:4px;transition:width .3s}.sg-slot-bar em{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:7px;line-height:1;color:#f2f6fa;text-shadow:0 1px 1px rgba(0,0,0,.9);pointer-events:none}" +
+      ".sg-slot-miss{font-size:8px!important;color:#e6a887!important}.sg-slot-cap{font-size:8.5px!important;color:var(--ink-3)!important}" +
+      ".sg-slot.sg-full .sg-slot-bar i{background:linear-gradient(90deg,#4fae7c,#8fd6a2)!important}.sg-slot.on{border-style:solid;border-color:#c9a45c;background:rgba(201,164,92,.12)}" +
       ".sg-slot:hover{border-color:var(--gold);transform:translateY(-1px)}" +
       "@media(max-width:640px){.sg-slots{grid-template-columns:repeat(3,1fr)!important}}</style>";
   }
@@ -15511,7 +15531,7 @@ var BOTS = [
     if (!c) return '<div class="sg-page"><div class="sg-panel" style="text-align:center;padding:30px"><div class="sg-muted">卡牌不存在或已回收</div><div style="margin-top:12px"><button class="sgbtn primary" data-sgact="go-me">返回个人中心</button></div></div></div>';
     var g = gById(c.gid); if (!g) return "";
     var tr = TIERS[cardTier(c)];
-    var lv = cardLv(c), cap = troopOfCard(c, g), sold = (c.sold == null ? cap : Math.min(c.sold, cap));
+    var lv = cardLv(c), cap = troopCapEff(c, g), sold = (c.sold == null ? cap : Math.min(c.sold, cap));
     var gd = gameDate(gMonth(u)), mp = marketPrices(gMonth(u));
     var spa = c.spa || {}, spLeft = u.bat.sp || 0;
     var art = "";
@@ -15760,7 +15780,7 @@ var BOTS = [
       }
       case "rec": {
         var g = gById(c.gid); if (!g) return;
-        var cap = troopOfCard(c, g), cur = (c.sold == null ? cap : Math.min(c.sold, cap));
+        var cap = troopCapEff(c, g), cur = (c.sold == null ? cap : Math.min(c.sold, cap));
         var want = +t.getAttribute("data-n") || 0;
         var add = want < 0 ? (cap - cur) : Math.min(want, cap - cur);
         if (add <= 0) return toast(T("gsFull"), "err");
@@ -15901,7 +15921,7 @@ var BOTS = [
         var cid6 = t.getAttribute("data-id");
         var c6 = (u.cards || []).filter(function (x) { return x.id === cid6; })[0]; if (!c6) return;
         var g6 = gById(c6.gid); if (!g6) return;
-        var cap6 = troopOfCard(c6, g6), cur6 = (c6.sold == null ? cap6 : Math.min(c6.sold, cap6));
+        var cap6 = troopCapEff(c6, g6), cur6 = (c6.sold == null ? cap6 : Math.min(c6.sold, cap6));
         var add6 = cap6 - cur6;
         if (add6 <= 0) return toast(gt("recNone"), "err");
         /* V37：正常兵池优先免费补充，不足部分才新募（耗资源） */
@@ -15953,7 +15973,7 @@ var BOTS = [
         var adds = [];
         cardsC.forEach(function (cc) {
           var gg = gById(cc.gid); if (!gg) return;
-          var cap2 = troopOfCard(cc, gg), cur2 = (cc.sold == null ? cap2 : Math.min(cc.sold, cap2));
+          var cap2 = troopCapEff(cc, gg), cur2 = (cc.sold == null ? cap2 : Math.min(cc.sold, cap2));
           var ad = cap2 - cur2; if (ad <= 0) return;
           adds.push([cc, cap2, cur2, ad]);
         });
@@ -15983,7 +16003,7 @@ var BOTS = [
         var addsQ = [];
         cardsQ.forEach(function (cq) {
           var gq = gById(cq.gid); if (!gq) return;
-          var capq = troopOfCard(cq, gq), curq = (cq.sold == null ? capq : Math.min(cq.sold, capq));
+          var capq = troopCapEff(cq, gq), curq = (cq.sold == null ? capq : Math.min(cq.sold, capq));
           var adq = capq - curq; if (adq <= 0) return;
           addsQ.push([cq, capq, curq, adq]);
         });
@@ -16600,6 +16620,9 @@ var BOTS = [
       rankOf: rankOf, ranks: function () { return RANKS.map(function (r) { return { n: r.n, troop: r.troop }; }); },
       rankTroop: rankTroop, rankName: rankName, rankCost: rankCost, rankNeedLv: rankNeedLv, troopCapOf: troopCapOf,
       stageGuardN: stageGuardN, mobTroopOf: mobTroopOf, popMulOf: popMulOf, popBonusPct: popBonusPct,
+      /* V67 探针导出：招募进度条口径 + 兵力口径迁移 */
+      recBarOf: recBarOf, slotRecHTML: slotRecHTML,
+      soldFix: function (u) { var n = 0; ((u && u.cards) || []).forEach(function (c) { if (c.sold == null) { var un = unitOf(c, "A"); if (un && un.troopMax) { c.sold = un.troopMax; n++; } } }); return n; },
       releaseF: releaseToField, rankBodyHTML: rankBodyHTML, popPanelHTML: popPanelHTML, cityPopF: cityPop,
       /* V62 探针：按品阶造一张卡并读计算样式（边框色/层级特效） */
       tierColor: function (ti) { return TIERS[ti].c; },
