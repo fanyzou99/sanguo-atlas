@@ -10848,6 +10848,8 @@ var BOTS = [
     u.eqs.forEach(function (e) { if ((e.ti || 0) >= 4 && e.uses == null) e.uses = EQ_LO_USES; });
     u.mts.forEach(function (m) { if ((m.ti || 0) >= 4 && m.uses == null) m.uses = EQ_LO_USES; });
     if (!u.bat.hist) u.bat.hist = {};
+    if (u.bat.legion == null) u.bat.legion = 1;
+    if (!u.bat.legionH) u.bat.legionH = {};
     /* V41 点数台账（存量+增量）：存量账号以当前 sp 为基线初始化 spG/spU；此后 sp = spG - spU 派生，
        台账单调计数随云端同步（statePull 各取 max），分配/发放不再怕云端旧档覆盖或推送失败丢失 */
     if (u.bat.spG == null) { u.bat.spG = Math.max(0, Math.round(u.bat.sp || 0)); u.bat.spU = 0; }
@@ -12101,7 +12103,7 @@ var BOTS = [
         '<button class="sgbtn primary" data-bat="tut-card">' + T("tut1Btn") + "</button></div></div>";
       return html;
     }
-    var tabs = [["home", "🏛 " + gt("homeT")], ["stage", "⚔ " + T("stageTitle")], ["pvp", "🏹 " + T("pvp")], ["shop", "🛒 " + T("shopT")], ["bag", "🎒 " + T("bagT")]];
+    var tabs = [["home", "🏛 " + gt("homeT")], ["stage", "⚔ " + T("stageTitle")], ["legion", "🚩 军团战役"], ["pvp", "🏹 " + T("pvp")], ["shop", "🛒 " + T("shopT")], ["bag", "🎒 " + T("bagT")]];
     /* V49：原「☰ 下拉菜单」改为横向平铺选项卡（一行排开、当前页高亮、窄屏可横向滚动） */
     html += '<div class="sg-panel"><div class="sg-flat-tabs" role="tablist">' +
       tabs.map(function (t) {
@@ -12118,6 +12120,7 @@ var BOTS = [
       "</style></div>";
     if (BATUI.tab === "home") html += batHomeTab(u);
     else if (BATUI.tab === "stage") html += batStageTab(u);
+    else if (BATUI.tab === "legion") html += batLegionTab(u);
     else if (BATUI.tab === "pvp") html += batPvpTab(u);
     else if (BATUI.tab === "shop") html += batShopTab(u);
     else html += batBagTab(u);
@@ -13769,6 +13772,441 @@ var BOTS = [
       ".sg-slot:hover{border-color:var(--gold);transform:translateY(-1px)}" +
       "@media(max-width:640px){.sg-slots{grid-template-columns:repeat(3,1fr)!important}}</style>";
   }
+  /* ================= V66 军团战役：双方各最多 5 编队的大军团会战（谋定天下式演出） ================= */
+  var LEGION_BATTLES = [
+    { n: "黄巾之乱", foe: "张角军", lv: 8, teams: 2, terr: "plain", story: "黄巾百万 烽烟四起" },
+    { n: "虎牢关会战", foe: "吕布军", lv: 14, teams: 3, terr: "valley", story: "三英战吕布 雄关血未干" },
+    { n: "界桥之战", foe: "公孙瓒军", lv: 19, teams: 3, terr: "plain", story: "白马义从 对垒大戟士" },
+    { n: "下邳之战", foe: "吕布军", lv: 24, teams: 3, terr: "river", story: "水淹下邳 白门楼殒命" },
+    { n: "官渡之战", foe: "袁绍军", lv: 29, teams: 4, terr: "river", story: "乌巢一把火 烧尽十万粮" },
+    { n: "长坂坡之战", foe: "曹军", lv: 33, teams: 4, terr: "valley", story: "单骑救主 七进七出" },
+    { n: "赤壁之战", foe: "曹操水军", lv: 37, teams: 4, terr: "river", story: "借东风 火烧连环船" },
+    { n: "潼关之战", foe: "马超军", lv: 41, teams: 4, terr: "valley", story: "割须弃袍 西凉铁骑纵横" },
+    { n: "合肥之战", foe: "孙权军", lv: 45, teams: 5, terr: "plain", story: "张辽止啼 大战逍遥津" },
+    { n: "汉中之战", foe: "刘备军", lv: 49, teams: 5, terr: "valley", story: "定军山 黄忠斩夏侯" },
+    { n: "襄樊之战", foe: "关羽军", lv: 53, teams: 5, terr: "river", story: "水淹七军 威震华夏" },
+    { n: "夷陵之战", foe: "陆逊军", lv: 57, teams: 5, terr: "valley", story: "火烧连营 白帝托孤" }
+  ];
+  function legionTiOf(b) { return b <= 2 ? 4 : b <= 5 ? 3 : b <= 8 ? 2 : b <= 10 ? 1 : 0; }
+  function legionFoeGen(b) {
+    var cfg = LEGION_BATTLES[b - 1], p = stagePool(), ti = legionTiOf(b);
+    var bi = Math.min(p.length - 1, Math.floor((b - 1) * (p.length - 1) / (LEGION_BATTLES.length - 1)));
+    var used = {}, teams = [];
+    for (var t = 0; t < cfg.teams; t++) {
+      var mem = [], n = 3 + (t % 2);
+      for (var k = 0; k < n; k++) {
+        var j = Math.max(0, Math.min(p.length - 1, bi - t * 2 - k * 9 + ((hashNum("lg" + b + "t" + t + "k" + k) % 13) - 6)));
+        var tries = 0;
+        while (used[p[j].id] && tries++ < 5) j = Math.max(0, j - 1 - tries);
+        used[p[j].id] = 1;
+        mem.push({ gid: p[j].id, lv: Math.max(1, cfg.lv - (k ? 1 : 0)), ti: ti });
+      }
+      teams.push(mem);
+    }
+    return teams;
+  }
+  /* 编队 → 军团单位：统率最高者为主帅，兵力/攻防为成员之和，速度/技能/兵种随主帅 */
+  function legionUnitOf(members, side, teamName) {
+    var us = [];
+    members.forEach(function (m) {
+      var un = m.side ? m : pseudoUnit(m);
+      if (un) us.push(un);
+    });
+    if (!us.length) return null;
+    us.sort(function (a, b2) { return (b2.st || 0) - (a.st || 0); });
+    var L = us[0];
+    return { side: side, cid: "", gid: L.gid, name: teamName || (L.name + "军"), ti: L.ti, lv: L.lv,
+      atk: us.reduce(function (s, x) { return s + (x.atk || 0); }, 0),
+      def: us.reduce(function (s, x) { return s + (x.def || 0); }, 0),
+      spd: L.spd, arm: L.arm, st: L.st, wu: L.wu, "in": L["in"], prof: 0,
+      troop: us.reduce(function (s, x) { return s + (x.troop || 0); }, 0),
+      troopMax: us.reduce(function (s, x) { return s + (x.troopMax || 0); }, 0) || 1,
+      trig: L.trig, sk: L.sk, alive: true, skn: L.skn, kp: L.kp, skd: L.skd,
+      sp: L.sp, spT: L.spT, members: us, leader: L.name, memN: us.length };
+  }
+  function legionFightKey(b) {
+    var u = me(); ensureBat(u);
+    var cfg = LEGION_BATTLES[b - 1]; if (!cfg) return null;
+    var teams = ensureCity(u).teams || [];
+    var tis = (BATUI.legionTis || []).filter(function (ti) { return teams[ti] && teamReady(u, ti).ok; });
+    if (!tis.length) { var f0 = firstReadyTeam(u); if (f0 >= 0) tis = [f0]; }
+    var A = [], flat = [];
+    tis.forEach(function (ti) {
+      var tSquad = teamCards(u, ti);
+      if (!tSquad.length) return;
+      var tObj = teams[ti] || {};
+      var lu = legionUnitOf(tSquad.map(function (c) { return unitOf(c, "A"); }), "A", tObj.nm ? (String(tObj.nm) + "军团") : "");
+      if (!lu) return;
+      lu.teamTi = ti;
+      A.push(lu); flat = flat.concat(tSquad);
+    });
+    if (!A.length) return null;
+    var m = (70 + b * 3) / 100, B = [];
+    legionFoeGen(b).forEach(function (mem) {
+      var lu2 = legionUnitOf(mem, "B", "");
+      if (lu2) { lu2.atk = Math.round(lu2.atk * m); lu2.def = Math.round(lu2.def * m); B.push(lu2); }
+    });
+    if (!B.length) return null;
+    return { kind: "legion", stage: b, squad: flat, enemies: [], foe: cfg.n + " · " + cfg.foe, unitsA: A, unitsB: B, legion: cfg };
+  }
+  function legionSettle(b, res, flat) {
+    var u = me(); if (!u) return null;
+    ensureBat(u); ensureRes(u);
+    var cfg = LEGION_BATTLES[b - 1];
+    var out = { exp: 0, pts: 0, ups: [], shards: [], sp: 0, loot: { rice: 0, wood: 0, copper: 0, iron: 0, coin: 0 } };
+    var baseExp = 80 + b * 40;
+    out.exp = res.win ? baseExp : Math.round(baseExp * 0.3);
+    out.pts = res.win ? 30 + b * 20 : b * 4;
+    var first = !u.bat.legionH[b] && res.win;
+    if (first) { u.bat.legionH[b] = res.stars; spGrant(u, 5); out.sp = 5; out.pts += 30 + b * 10; }
+    else if (res.win) u.bat.legionH[b] = Math.max(u.bat.legionH[b] || 0, res.stars);
+    if (res.win) {
+      if ((u.bat.legion || 1) <= b) u.bat.legion = Math.min(LEGION_BATTLES.length, b + 1);
+      var sg = flat.length ? flat[Math.floor(Math.random() * flat.length)].gid : stagePool()[0].id;
+      addShards(u, sg, 2); out.shards.push(gById(sg).name);
+      out.loot.coin = 600 + b * 160 + Math.floor(Math.random() * 200);
+      out.loot.rice = 300 + b * 80; out.loot.wood = 40 + b * 12;
+      out.loot.copper = 45 + b * 14; out.loot.iron = 45 + b * 14;
+    } else { out.loot.coin = 80 + b * 10; out.loot.rice = 40 + b * 5; }
+    /* 战损按编队剩余兵力比例摊回各成员卡（军团编队共用兵力池） */
+    if (res.units && res.units.A) {
+      res.units.A.forEach(function (lu) {
+        if (!lu || !lu.members) return;
+        var ratio = lu.troopMax ? Math.max(0, lu.troop / lu.troopMax) : 0;
+        lu.members.forEach(function (mu) {
+          if (!mu.cid) return;
+          var cd = (u.cards || []).filter(function (x) { return x.id === mu.cid; })[0];
+          if (cd) cd.sold = Math.max(0, Math.round((cd.sold == null ? mu.troopMax : cd.sold) * ratio));
+        });
+      });
+    }
+    out.inc = tickMonth(u);
+    addRes(u, out.loot);
+    flat.forEach(function (c) { if (out.exp) gainExp(c, out.exp, out.ups); });
+    if (out.pts) addPoints(u, out.pts, "军团战役 · " + cfg.n);
+    save();
+    try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}
+    return out;
+  }
+  /* 播放同步：刷新编队卡血条 / 顶部兵力条 / 阵亡置灰 */
+  function legionSync(res) {
+    if (!res || !res.units) return;
+    var arena = document.querySelector(".sg-arena");
+    ["A", "B"].forEach(function (sd) {
+      var us = res.units[sd] || [], tot = 0, max = 0;
+      us.forEach(function (un, i) {
+        tot += Math.max(0, un.troop || 0); max += un.troopMax || 0;
+        var b = arena && arena.querySelector('.bcard[data-side="' + sd + '"][data-ix="' + i + '"]');
+        if (b) {
+          var bar = b.querySelector(".lg-hp i");
+          if (bar) bar.style.width = Math.max(0, Math.min(100, un.troopMax ? un.troop / un.troopMax * 100 : 0)) + "%";
+          b.style.opacity = un.alive === false ? ".45" : "";
+        }
+        var tu = document.querySelector(".lgf-u.lgf-" + sd + '[data-i="' + i + '"]');
+        if (tu) {
+          var t2 = tu.querySelector(".lgf-t");
+          if (t2) t2.textContent = troopTxt(Math.max(0, un.troop || 0));
+          tu.style.opacity = un.alive === false ? ".4" : "";
+        }
+      });
+      var bar2 = document.getElementById("lgBar" + sd), txt2 = document.getElementById("lgTxt" + sd);
+      if (bar2) bar2.style.width = (max ? Math.max(0, tot / max * 100) : 0) + "%";
+      if (txt2) txt2.textContent = troopTxt(tot) + "/" + troopTxt(max);
+    });
+  }
+  function legionAv(g) {
+    var av = "";
+    try { var AX = window.__SGAtlas; if (g && AX) av = (AX.avFor ? AX.avFor(g) : ""); } catch (e) {}
+    return av;
+  }
+  function batLegionTab(u) {
+    var teams = ensureCity(u).teams || [];
+    var sel = (BATUI.legionTis || []).filter(function (ti) { return teams[ti] && teamReady(u, ti).ok; });
+    BATUI.legionTis = sel;
+    if (!sel.length) { var f0 = firstReadyTeam(u); if (f0 >= 0) { sel = [f0]; BATUI.legionTis = sel; } }
+    var chips = teams.map(function (t, ti) {
+      var cards = teamCards(u, ti);
+      if (!cards.length) return "";
+      var rdy = teamReady(u, ti);
+      var lead = cards.filter(function (c) { return c.id === rdy.centerId; })[0] || cards[0];
+      var g = gById(lead.gid);
+      var on = sel.indexOf(ti) >= 0;
+      return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="lg-ti" data-ti="' + ti + '"' + (rdy.ok ? "" : ' title="编队未就绪（≥' + MOB_TEAM_MIN + ' 人且含中军）" style="opacity:.55"') + '>' +
+        (t.nm ? esc(String(t.nm)) : (g ? esc(g.name) : "编队 " + (ti + 1))) + " <i>" + (rdy.ok ? fmt(teamPowerOf(u, ti)) : "未就绪") + "</i></button>";
+    }).join("");
+    var rows = LEGION_BATTLES.map(function (cfg, i) {
+      var b = i + 1, st = u.bat.legionH[b], locked = b > (u.bat.legion || 1);
+      var foeTeams = cfg.teams;
+      return '<button class="lg-row' + (locked ? " lk" : "") + '" data-bat="lg-go" data-n="' + b + '"' + (locked ? " disabled" : "") + ">" +
+        '<span class="lg-no">' + (locked ? "🔒" : "🚩") + "</span>" +
+        '<span class="lg-nm"><b>' + esc(cfg.n) + "</b><small>" + esc(cfg.story) + " · 敌 " + esc(cfg.foe) + " · " + foeTeams + " 编队 · Lv." + cfg.lv + "</small></span>" +
+        '<span class="lg-stars">' + (st ? "★★★".slice(0, st) : locked ? "—" : "可战") + "</span></button>";
+    }).join("");
+    var pwTis = sel.length ? sel : [];
+    return '<div class="sg-note" style="margin-bottom:8px">军团战役：双方各投入最多 5 个作战编队的大军团会战（一个编队 = 一路军团，统率最高者为主帅）。选择出战编队 → 击败守军推进战役；首通奖励技能点 5 与双倍点数。</div>' +
+      '<div class="sg-panel-hd"><h3><i>·</i>出战编队（' + sel.length + '/5）</h3><span class="sp"></span><small style="color:var(--ink-3)">点击选择/取消 · 数值为编队战力</small></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">' + chips + "</div>" +
+      '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>战役列表（已推进 ' + Math.min((u.bat.legion || 1) - 1, LEGION_BATTLES.length) + "/" + LEGION_BATTLES.length + "）</h3><span class=\"sp\"></span><small style='color:var(--ink-3)'>按史实战役推进</small></div>" +
+      rows +
+      '<style>.lg-row{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 12px;border:1px solid var(--line-2,#3a3f4a);border-radius:10px;background:rgba(0,0,0,.14);margin:5px 0;cursor:pointer;color:var(--ink-1,#dfe3ea);font-family:inherit}' +
+      '.lg-row:hover:not(.lk){border-color:#c9a45c}.lg-row.lk{opacity:.45;cursor:not-allowed}' +
+      '.lg-no{font-size:16px;flex:none}.lg-nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.lg-nm small{color:var(--ink-3,#8b93a3);font-size:10.5px}' +
+      '.lg-stars{color:#e8c988;font-size:12px;white-space:nowrap;letter-spacing:.1em}</style>';
+  }
+  var _SG_ARENA_CSS66 = null;
+  function arenaCSS66() { if (_SG_ARENA_CSS66 == null) _SG_ARENA_CSS66 = '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}' +
+      '.sg-warbg{position:relative;border-radius:14px;padding:12px;background-image:linear-gradient(180deg,rgba(10,14,20,.30),rgba(10,14,20,.55)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center;box-shadow:inset 0 0 90px rgba(0,0,0,.62)}' +
+      /* V52 地形：山谷 / 河两岸 / 平原（叠在战场图上） */
+      '.sg-terr-valley::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(6,10,8,.72),transparent 22%,transparent 78%,rgba(6,10,8,.72)),linear-gradient(180deg,rgba(20,26,20,.34),transparent 40%)}' +
+      '.sg-terr-river::before{content:"";position:absolute;left:0;right:0;top:30%;height:26%;pointer-events:none;background:linear-gradient(180deg,rgba(40,90,130,.10),rgba(70,140,180,.42) 45%,rgba(40,90,130,.10));box-shadow:0 0 24px rgba(90,170,220,.25);animation:sgRiver 7s ease-in-out infinite}' +
+      '@keyframes sgRiver{0%,100%{opacity:.75}50%{opacity:1}}' +
+      '.sg-terr-plain::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(120,110,60,.18))}' +
+      /* V52 中缝战报 */
+      '.sg-midlog{flex:1;min-height:220px;max-height:640px;overflow:auto;text-align:left;background:rgba(8,11,17,.66);border:1px solid rgba(201,164,92,.28);border-radius:12px;padding:10px 12px;backdrop-filter:blur(3px);box-shadow:inset 0 0 26px rgba(0,0,0,.5)}' +
+      '.sg-midlog-idle{display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:11.5px}' +
+      /* V52 动效：投石 / 箭矢 / 骑兵突击 */
+      '.sg-fxlayer{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}' +
+      '.fx{position:absolute;display:block;opacity:0}' +
+      '.fx-stone{left:6%;top:52%;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#b9b2a4,#5c564a 70%);box-shadow:0 2px 6px rgba(0,0,0,.6);animation:fxStoneA 6.5s linear infinite}' +
+      '.fx-stone.fb{left:auto;right:6%;top:52%;animation-name:fxStoneB;animation-delay:3.2s}' +
+      '@keyframes fxStoneA{0%{opacity:0;transform:translate(0,0) rotate(0)}4%{opacity:1}50%{transform:translate(46vw,150px) rotate(540deg)}52%{opacity:1}54%,100%{opacity:0;transform:translate(50vw,190px) rotate(600deg)}}' +
+      '@keyframes fxStoneB{0%{opacity:0;transform:translate(0,0) rotate(0)}4%{opacity:1}50%{transform:translate(-46vw,150px) rotate(-540deg)}52%{opacity:1}54%,100%{opacity:0;transform:translate(-50vw,190px) rotate(-600deg)}}' +
+      '.fx-arrow{left:10%;top:58%;width:34px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(240,230,200,0),#f0e6c8);transform-origin:100% 50%;animation:fxArrowA 5.2s linear infinite}' +
+      '.fx-arrow.ab{top:62%;animation-delay:1.7s}.fx-arrow.ac{top:54%;animation-delay:3.4s}' +
+      '.fx-arrow.ba{left:auto;right:10%;top:58%;background:linear-gradient(90deg,#f0e6c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxArrowB}.fx-arrow.bb{left:auto;right:10%;top:63%;background:linear-gradient(90deg,#f0e6c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxArrowB;animation-delay:2.6s}' +
+      '@keyframes fxArrowA{0%{opacity:0;transform:translate(0,0) rotate(-14deg)}6%{opacity:1}45%{transform:translate(34vw,-26px) rotate(4deg)}50%{opacity:1;transform:translate(38vw,-16px) rotate(10deg)}52%,100%{opacity:0;transform:translate(40vw,-8px) rotate(14deg)}}' +
+      '@keyframes fxArrowB{0%{opacity:0;transform:translate(0,0) rotate(14deg)}6%{opacity:1}45%{transform:translate(-34vw,-26px) rotate(-4deg)}50%{opacity:1;transform:translate(-38vw,-16px) rotate(-10deg)}52%,100%{opacity:0;transform:translate(-40vw,-8px) rotate(-14deg)}}' +
+      '.fx-cav{left:2%;top:70%;font-size:19px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7));animation:fxCavA 9s linear infinite}' +
+      '.fx-cav.cb{left:auto;right:2%;top:74%;animation-name:fxCavB;animation-delay:4.5s}' +
+      '@keyframes fxCavA{0%{opacity:0;transform:translateX(0) scaleY(1)}3%{opacity:1}44%{transform:translateX(56vw) scaleY(1)}46%{opacity:0}47%,100%{opacity:0;transform:translateX(60vw)}}' +
+      '@keyframes fxCavB{0%{opacity:0;transform:translateX(0) scaleX(-1)}3%{opacity:1}44%{transform:translateX(-56vw) scaleX(-1)}46%{opacity:0}47%,100%{opacity:0;transform:translateX(-60vw)}}' +
+      /* V52 箭雨齐射（多段抛物线错落） */
+      '.fx-volley{left:8%;top:60%;width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(240,230,200,0),#fff3c8);transform-origin:100% 50%;animation:fxVolley 4.6s linear infinite}' +
+      '.fx-volley.vb{left:auto;right:8%;top:64%;background:linear-gradient(90deg,#fff3c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxVolleyB;animation-delay:2.3s}' +
+      '@keyframes fxVolley{0%{opacity:0;transform:translate(0,0) rotate(-30deg)}8%{opacity:.95}30%{transform:translate(16vw,-58px) rotate(-8deg)}52%{opacity:.95;transform:translate(32vw,-38px) rotate(6deg)}62%{transform:translate(40vw,14px) rotate(26deg)}64%,100%{opacity:0;transform:translate(42vw,26px) rotate(30deg)}}' +
+      '@keyframes fxVolleyB{0%{opacity:0;transform:translate(0,0) rotate(30deg)}8%{opacity:.95}30%{transform:translate(-16vw,-58px) rotate(8deg)}52%{opacity:.95;transform:translate(-32vw,-38px) rotate(-6deg)}62%{transform:translate(-40vw,14px) rotate(-26deg)}64%,100%{opacity:0;transform:translate(-42vw,26px) rotate(-30deg)}}' +
+      /* V52 命中爆点：尘土（投石）+ 血光（箭矢） */
+      '.fx-blast{left:46%;top:66%;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,rgba(255,220,150,.95),rgba(200,140,60,.45) 45%,transparent 70%);animation:fxBlast 3.6s ease-out infinite}' +
+      '.fx-blast.bb{left:52%;top:70%;animation-delay:1.8s}' +
+      '@keyframes fxBlast{0%,72%{opacity:0;transform:scale(.3)}76%{opacity:1;transform:scale(1)}88%{opacity:0;transform:scale(2.6)}}' +
+      /* V52 真实单次弹道：JS 触发（.run = 播放一次） */
+      '.fx-arc{position:absolute;z-index:36;pointer-events:none;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#cfc7b6,#5c564a 70%);box-shadow:0 3px 10px rgba(0,0,0,.7),0 0 12px rgba(255,190,90,.45);opacity:0}' +
+      '.fx-arc.run{animation:fxArcRun .78s cubic-bezier(.35,.02,.72,.55) forwards}' +
+      '@keyframes fxArcRun{0%{opacity:0;transform:translate(0,0) scale(.7)}8%{opacity:1;transform:translate(var(--mx),var(--my)) scale(1)}82%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.05)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.7)}}' +
+      '.fx-spark{position:absolute;z-index:37;pointer-events:none;width:2px;height:26px;border-radius:2px;background:linear-gradient(180deg,rgba(255,247,214,0),#fff7d6);opacity:0;transform-origin:50% 0}' +
+      '.fx-spark.run{animation:fxSpark .62s cubic-bezier(.4,0,.8,.5) forwards}' +
+      '@keyframes fxSpark{0%{opacity:0;transform:translate(0,0) rotate(28deg)}12%{opacity:1;transform:translate(calc(var(--mx)*.28),calc(var(--my)*.28)) rotate(18deg)}88%{opacity:1;transform:translate(var(--ex),var(--ey)) rotate(34deg)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) rotate(36deg)}}' +
+      '.fx-tramp{position:absolute;z-index:34;pointer-events:none;font-size:20px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.8));opacity:0}' +
+      '.fx-tramp.run{animation:fxTramp .9s cubic-bezier(.2,.6,.5,1) forwards}' +
+      '@keyframes fxTramp{0%{opacity:0;transform:translate(0,0) scale(.85)}14%{opacity:1}72%{opacity:1;transform:translate(var(--ex),0) scale(1.12)}100%{opacity:0;transform:translate(var(--ex),0) scale(1.02)}}' +
+      '.fx-hit{position:absolute;z-index:38;pointer-events:none;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(255,225,150,.9);opacity:0}' +
+      '.fx-hit.run{animation:fxHit .42s ease-out forwards}' +
+      '@keyframes fxHit{0%{opacity:1;transform:scale(.25)}100%{opacity:0;transform:scale(1.5)}}' +
+      /* V52 技能特写：火海（技能）/ 高崖主帅（策略）背景一闪 */
+      /* V53 技能特写：居中 1/5 画面 + 外围光环（虚线环扩散 + 描边光圈） */
+      '.sg-skillbg{position:absolute;inset:0;z-index:35;pointer-events:none;display:flex;align-items:center;justify-content:center;opacity:0;animation:sgSkillBg 1.25s ease-out forwards}' +
+      '.sg-skillbg .sdim{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(0,0,0,.08) 30%,rgba(0,0,0,.62))}' +
+      '.sg-skillbg .simg{position:relative;width:min(19vmax,190px);height:min(19vmax,190px);border-radius:50%;background-size:cover;background-position:center;border:3px solid rgba(255,222,150,.95);box-shadow:0 0 30px 10px rgba(255,170,60,.55),0 0 90px 34px rgba(255,120,40,.28);animation:simgIn .5s cubic-bezier(.2,1.5,.4,1) both}' +
+      '.sg-skillbg .simg::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(255,200,110,.6);animation:sgRing2 1.2s ease-out infinite}' +
+      '.sg-skillbg.sp .simg{border-color:rgba(178,204,255,.95);box-shadow:0 0 30px 10px rgba(120,160,255,.55),0 0 90px 34px rgba(70,110,255,.26)}' +
+      '.sg-skillbg.sp .simg::after{border-color:rgba(170,200,255,.6)}' +
+      '.sg-skillbg::before{content:"";position:absolute;width:min(26vmax,260px);height:min(26vmax,260px);border-radius:50%;border:2px dashed rgba(255,210,130,.85);animation:sgRing 1.15s ease-out infinite}' +
+      '.sg-skillbg.sp::before{border-color:rgba(170,200,255,.85)}' +
+      '@keyframes sgSkillBg{0%{opacity:0}12%{opacity:1}78%{opacity:.95}100%{opacity:0}}' +
+      '@keyframes simgIn{0%{transform:scale(.35)}100%{transform:scale(1)}}' +
+      '@keyframes sgRing{0%{transform:scale(.55);opacity:.95}100%{transform:scale(2.1);opacity:0}}' +
+      '@keyframes sgRing2{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.7);opacity:0}}' +
+      '.sg-warbg .sg-panel{background:rgba(10,13,20,.66)!important;backdrop-filter:blur(3px);border-radius:12px}' +
+      '.sg-warbg .sg-logline{font-size:12.5px;line-height:1.75;text-shadow:0 1px 3px rgba(0,0,0,.85)}' +
+      '.sg-warbg .sg-logline .who{font-weight:700;font-size:12.5px}' +
+      /* V52 出征行军画面 */
+      '.sg-march{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(201,164,92,.35);background:radial-gradient(120% 80% at 50% 0,rgba(60,46,22,.85),rgba(12,14,20,.96))}' +
+      '.sg-march-art{position:relative;min-height:300px;background-image:url(' + SG_IMG_MARCH1 + ');background-size:cover;background-position:center 22%;display:flex;align-items:flex-end}' +
+      '.sg-march-art::before{content:"";position:absolute;inset:0;background-image:var(--mimg);background-size:cover;background-position:center 24%;animation:sgMarchArt 9s ease-in-out infinite alternate}' +
+      '.sg-march-shade{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(8,10,16,.15),rgba(8,10,16,.25) 40%,rgba(8,10,16,.92))}' +
+      '@keyframes sgMarchArt{0%{transform:scale(1.04) translateX(-1.5%)}100%{transform:scale(1.12) translateX(1.5%)}}' +
+      '.sg-march-tp{position:absolute;left:50%;top:12%;z-index:3;transform:translateX(-50%);font-size:46px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.8));animation:sgMarchTp 2.4s ease-in-out infinite}' +
+      '@keyframes sgMarchTp{0%,100%{transform:translateX(-50%) translateY(0) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-6px) rotate(3deg)}}' +
+      '.sg-march-txt{position:relative;z-index:3;width:100%;padding:16px 18px 14px;text-align:center}' +
+      '.sg-march-k{font-family:"STKaiti","KaiTi","Noto Serif SC",serif;font-size:28px;font-weight:900;letter-spacing:.18em;color:#ffe9b8;text-shadow:0 0 16px rgba(255,170,60,.75),0 2px 8px rgba(0,0,0,.9)}' +
+      '.sg-march-s{font-size:12.5px;color:#e8dfc8;margin-top:6px;letter-spacing:.06em;text-shadow:0 1px 4px rgba(0,0,0,.9)}' +
+      '.sg-march-foe{margin-top:8px;display:inline-block;font-size:11.5px;color:#ffd0a0;border:1px solid rgba(232,201,136,.4);border-radius:999px;padding:3px 12px;background:rgba(40,26,10,.6)}' +
+      '.sg-march-roads{position:relative;height:26px;overflow:hidden;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(30,24,12,.7))}' +
+      '.sg-march-roads i{position:absolute;top:11px;height:2px;width:38px;border-radius:2px;background:linear-gradient(90deg,transparent,#e8c988,transparent);animation:sgRoad 1.6s linear infinite}' +
+      '.sg-march-roads i:nth-child(1){left:10%;animation-delay:0s}.sg-march-roads i:nth-child(2){left:38%;animation-delay:.35s}.sg-march-roads i:nth-child(3){left:66%;animation-delay:.7s}' +
+      '@keyframes sgRoad{0%{opacity:0;transform:translateX(-30px) scaleX(.4)}40%{opacity:1}100%{opacity:0;transform:translateX(70px) scaleX(1.3)}}' +
+      '.sg-march-bar{height:4px;background:rgba(255,255,255,.08)}' +
+      '.sg-march-bar b{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9a45c,#ffe9b8);box-shadow:0 0 12px rgba(255,220,150,.7);animation:sgMarchBar 2.6s ease-in-out infinite}' +
+      '@keyframes sgMarchBar{0%{width:6%}55%{width:72%}100%{width:100%;opacity:.6}}' +
+      '.sg-march-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}' +
+      '.sg-march-foot small{color:var(--ink-3);font-size:11.5px}' +
+      /* V53 士兵方阵 + 武将卡行 + VS 大字 */
+      /* V54 士兵环绕卡片：外圈→内圈沿矩形周界布点，随战况减员、被震飞 */
+      '.brow{position:relative;display:flex;gap:8px;align-items:stretch;padding:17px 19px}' +
+      '.brow.br{flex-direction:row-reverse}' +
+      '.brow>.bcard{position:relative;z-index:2}' +
+      '.sg-bown{position:absolute;inset:0;z-index:0;pointer-events:none}' +
+      '.sg-bown i{position:absolute;width:12px;height:16px;transform:translate(-50%,-50%);background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));transition:opacity .4s ease}' +
+      '.brow.br .sg-bown i{scale:-1 1}' +
+      '.sg-bown i.dying{opacity:0!important;transform:translate(-50%,-50%) translateY(12px) rotate(22deg) scale(.72);transition:all .45s ease-in}' +
+      '.sg-bown.fly i{animation:sgFly .78s ease-out forwards}' +
+      '@keyframes sgFly{0%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--fx,0px)),calc(-50% + var(--fy,-46px))) rotate(var(--fr,120deg)) scale(.72)}}' +
+      /* V54 技能大火球 + 命中爆炸 */
+      '.fx-fireball{position:absolute;z-index:39;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:radial-gradient(circle at 40% 38%,#fff8d6,#ffb03c 46%,rgba(214,64,18,.9) 72%,rgba(120,20,0,0));box-shadow:0 0 26px 10px rgba(255,120,40,.55),0 0 64px 28px rgba(255,70,0,.26);opacity:0}' +
+      '.fx-fireball.run{animation:fxFireball .72s cubic-bezier(.35,.05,.7,.6) forwards}' +
+      '@keyframes fxFireball{0%{opacity:0;transform:translate(0,0) scale(.45)}10%{opacity:1;transform:translate(calc(var(--ex)*.14),calc(var(--ey)*.14 - 46px)) scale(.8)}55%{opacity:1;transform:translate(calc(var(--ex)*.6),calc(var(--ey)*.6 - 66px)) scale(1.15)}92%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.2)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.9)}}' +
+      '.fx-boom{position:absolute;z-index:40;pointer-events:none;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50%;background:radial-gradient(circle,rgba(255,248,214,.98) 0%,rgba(255,176,60,.9) 20%,rgba(226,74,20,.52) 44%,transparent 70%);opacity:0}' +
+      '.fx-boom.run{animation:fxBoom .72s ease-out forwards}' +
+      '@keyframes fxBoom{0%{opacity:1;transform:scale(.22)}55%{opacity:.92;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}' +
+      /* V54 战果左右栏（左打方 / 右守方） */
+      '.sg-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}' +
+      '@media(max-width:860px){.sg-results{grid-template-columns:1fr}}' +
+      '.sg-rescol{border:1px solid rgba(232,201,136,.22);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.5),rgba(12,15,21,.66));padding:10px 12px}' +
+      '.sg-rescol.a{border-color:rgba(127,208,138,.4)}.sg-rescol.b{border-color:rgba(224,127,127,.4)}' +
+      '.sg-rescol .rh{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;letter-spacing:.05em;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.14);margin-bottom:8px}' +
+      '.sg-rescol.a .rh{color:#9be0a8}.sg-rescol.b .rh{color:#f0a0a0}' +
+      '.sg-rescol .rh small{color:var(--ink-3);font-weight:700;font-size:11px}' +
+      '.sg-rescol .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden;margin:2px 0 8px}' +
+      '.sg-rescol .bar i{display:block;height:100%;background:linear-gradient(90deg,#5fbf8a,#9be0a8)}' +
+      '.sg-rescol.b .bar i{background:linear-gradient(90deg,#d07070,#f0a0a0)}' +
+      '.sg-rescol .kv{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#cfd8e2;padding:2px 0}' +
+      '.sg-rescol .kv b{font-weight:800;color:#fff}.sg-rescol .kv b.neg{color:#f09a9a}.sg-rescol .kv b.pos{color:#9be0a8}' +
+      '.sg-rescol .sec{font-size:10.5px;color:var(--gold-2,#e8c988);letter-spacing:.1em;margin:9px 0 3px;opacity:.95}' +
+      '.sg-rescol .u{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9c4d0;padding:2.5px 0;border-bottom:1px dotted rgba(255,255,255,.08)}' +
+      '.sg-rescol .u b{color:#e07f7f;font-weight:800}' +
+      '.sg-vsbig{font-size:46px;font-weight:900;letter-spacing:.1em;line-height:1.05;background:linear-gradient(180deg,#fff3d0,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,200,110,.45))}' +
+      ".sg-rephp{display:grid;grid-template-columns:1fr 56px 1fr;gap:8px;align-items:center;margin:0 0 10px;padding:10px 14px;border:1px solid rgba(232,201,136,.25);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.55),rgba(16,18,24,.55))}" +
+      ".sg-rephp .ph{display:flex;align-items:center;gap:9px;font-size:12px;color:#e8dfc8}.sg-rephp .ph.r{flex-direction:row-reverse;text-align:right}" +
+      ".sg-rephp .bar{flex:1;height:9px;border-radius:5px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(0,0,0,.45)}" +
+      ".sg-rephp .bar i{display:block;height:100%;background:linear-gradient(90deg,#4f8fd0,#8cc3ee)}" +
+      ".sg-rephp .ph.r .bar i{background:linear-gradient(90deg,#e06c6c,#ff9a7a)}" +
+      ".sg-rephp .mid{font-size:20px;color:var(--gold-2,#e8c988);text-align:center;text-shadow:0 0 10px rgba(232,201,136,.6)}" +
+      ".sg-reschar{font-family:'STKaiti','KaiTi','Noto Serif SC',serif;font-size:54px;line-height:1.15;font-weight:900;letter-spacing:.12em;text-shadow:0 2px 14px rgba(0,0,0,.65)}" +
+      ".sg-reschar.win{color:#e8c988}.sg-reschar.lose{color:#c97070}" +
+      ".sg-expline{color:#7fd08a;font-size:12px}.sg-casline{color:#e07f7f;font-size:12px}" +
+      ".sg-skillfx{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden}" +
+      ".sg-skillfx .streak{position:absolute;left:-40%;right:-40%;top:44%;height:34px;transform:translateY(-50%) skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(232,201,136,.85) 30%,rgba(255,240,200,.95) 50%,rgba(232,201,136,.85) 70%,transparent);animation:sgStreak .8s ease-out forwards;filter:blur(1px)}" +
+      ".sg-skillfx.sp .streak{background:linear-gradient(90deg,transparent,rgba(158,201,255,.85) 30%,rgba(224,170,255,.95) 50%,rgba(158,201,255,.85) 70%,transparent)}" +
+      ".sg-skillfx .sktxt{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center;font-family:'STKaiti','KaiTi','Noto Serif SC',serif;font-size:30px;font-weight:900;color:#ffe9b8;letter-spacing:.14em;text-shadow:0 0 12px rgba(255,180,60,.95),0 2px 6px rgba(0,0,0,.9);animation:sgSkTxt .8s ease-out forwards}" +
+      ".sg-skillfx.sp .sktxt{color:#e0c8ff;text-shadow:0 0 12px rgba(160,120,255,.95),0 2px 6px rgba(0,0,0,.9)}" +
+      ".sg-skillfx.cri .sktxt{font-size:38px;color:#ffd76a}" +
+      "@keyframes sgStreak{0%{opacity:0;transform:translateY(-50%) skewX(-18deg) scaleX(.2)}30%{opacity:1}100%{opacity:0;transform:translateY(-50%) skewX(-18deg) scaleX(1.15)}}" +
+      "@keyframes sgSkTxt{0%{opacity:0;transform:translateY(-50%) scale(1.7)}25%{opacity:1;transform:translateY(-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-50%) scale(1.05)}}" +
+      ".sg-arena.quake{animation:sgQuake .45s ease-in-out}" +
+      "@keyframes sgQuake{0%,100%{transform:translate(0,0)}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,-2px)}80%{transform:translate(4px,2px)}}</style></div>"; return _SG_ARENA_CSS66; }
+  function renderLegionPage(key, fk) {
+    var u = me(); if (!u) return "";
+    var cfg = fk.legion;
+    var res = (BATUI.res && BATUI.res._lgKey === key) ? BATUI.res : null;
+    var out = res ? res.out : null;
+    var usA = (res && res.units && res.units.A) || fk.unitsA;
+    var usB = (res && res.units && res.units.B) || fk.unitsB;
+    usA.forEach(function (un, i) { un.ix = i; });
+    usB.forEach(function (un, i) { un.ix = i; });
+    var headBtns = (res
+      ? '<button class="sgbtn primary" data-bat="lg-again" data-key="' + esc(key) + '">🔁 再战</button> '
+      : '<button class="sgbtn primary" data-bat="go" data-key="' + esc(key) + '">⚔ 开战</button> ') +
+      '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button>";
+    var head = '<div class="sg-page"><div class="sg-hero"><div class="sg-hero-row"><div class="grow"><h2>🚩 军团战役 · ' + esc(cfg.n) + "</h2><p>" +
+      esc(cfg.story) + " · 敌军 " + esc(cfg.foe) + "（" + usB.length + " 编队 · Lv." + cfg.lv + "） · 我方 " + usA.length + " 编队出战</p></div>" +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">' + headBtns + "</div></div></div>";
+    /* 顶部：两军编队头像 + 总兵力条 + 中央回合徽章（谋定天下式） */
+    var totA = usA.reduce(function (s, x) { return s + (x.troopMax || 0); }, 0) || 1;
+    var totB = usB.reduce(function (s, x) { return s + (x.troopMax || 0); }, 0) || 1;
+    function uChip(un, sd, i) {
+      var g = gById(un.gid);
+      return '<span class="lgf-u lgf-' + sd + '" data-i="' + i + '" title="' + esc(un.name) + (un.leader ? " · 帅 " + esc(un.leader) : "") + '">' +
+        '<span class="lgf-av">' + legionAv(g) + "</span><b>" + un.lv + "</b><i class=\"lgf-t\">" + troopTxt(un.troop) + "</i></span>";
+    }
+    var topBar = '<div class="lgf-top">' +
+      '<div class="lgf-half"><div class="lgf-chips">' + usA.map(function (un, i) { return uChip(un, "A", i); }).join("") + "</div>" +
+      '<div class="lgf-bar a"><i id="lgBarA" style="width:100%"></i></div><small id="lgTxtA">' + troopTxt(usA.reduce(function (s, x) { return s + (x.troop || 0); }, 0)) + "/" + troopTxt(totA) + "</small></div>" +
+      '<span class="lgf-round">回<b id="sgRoundCur">1</b></span>' +
+      '<div class="lgf-half r"><div class="lgf-chips jend">' + usB.map(function (un, i) { return uChip(un, "B", i); }).join("") + "</div>" +
+      '<div class="lgf-bar b"><i id="lgBarB" style="width:100%"></i></div><small id="lgTxtB">' + troopTxt(usB.reduce(function (s, x) { return s + (x.troop || 0); }, 0)) + "/" + troopTxt(totB) + "</small></div></div>";
+    /* 行动顺序栏（按速度） */
+    var orderU = usA.concat(usB).slice().sort(function (a, b2) { return (b2.spd || 0) - (a.spd || 0); });
+    var rail = '<div class="lg-rail"><small>行动顺序</small>' + orderU.map(function (un) {
+      var g = gById(un.gid);
+      return '<span class="lg-rail-u" title="' + esc(un.name) + " · 速 " + un.spd + '" style="border-color:' + (un.side === "A" ? "#5fbf8a" : "#e07f7f") + '">' + legionAv(g) + "</span>";
+    }).join("") + "</div>";
+    var logHTML = res ? res.log.map(function (l) {
+      if (l.story) return '<div class="sg-logline sg-story" data-r="' + l.r + '">' + esc(l.txt) + "</div>";
+      return '<div class="sg-logline" data-r="' + l.r + '"><span class="r">' + l.r + "</span>" +
+        '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + "</span>" +
+        (l.sd ? '<div class="sg-note" style="margin:2px 0 2px 34px;color:#e8c988;font-style:italic">' + esc(l.sd) + "</div>" : "") +
+        "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + "</b>" +
+        (l.ex ? '<b style="color:#ffd76a">⚡-' + fmt(l.ex) + "</b>" : "") +
+        (l.lc ? '<b style="color:#c77fd0">▼' + fmt(l.lc) + "</b>" : "") +
+        '<small style="color:var(--ink-3)">（余 ' + troopTxt(l.rem) + "）</small>" +
+        (l.dead ? '<span class="dead">✝ ' + esc(l.dead) + "</span>" : "") + "</div>";
+    }).join("") : "";
+    var midLog = res
+      ? '<div id="sgBatLog" class="sg-midlog">' + logHTML + "</div>"
+      : '<div class="sg-midlog sg-midlog-idle">两军对垒 · 点右上「⚔ 开战」号令全军</div>';
+    var arenaHTML = '<div class="gs-grid fgrid sg-warbg">' +
+      '<div class="sg-panel sg-arena sg-terr-' + cfg.terr + '" style="display:grid;grid-template-columns:1fr minmax(250px,1.02fr) 1fr;gap:10px;align-items:start">' +
+      '<div class="sg-fxlayer" aria-hidden="true">' +
+      '<i class="fx fx-stone fa"></i><i class="fx fx-stone fb"></i>' +
+      '<i class="fx fx-arrow aa"></i><i class="fx fx-arrow ab"></i><i class="fx fx-arrow ac"></i>' +
+      '<i class="fx fx-arrow ba"></i><i class="fx fx-arrow bb"></i>' +
+      '<i class="fx fx-cav ca"></i><i class="fx fx-cav cb"></i>' +
+      '<i class="fx fx-volley va"></i><i class="fx fx-volley vb"></i>' +
+      '<i class="fx fx-blast ba"></i><i class="fx fx-blast bb"></i></div>' +
+      '<div style="display:flex;flex-direction:column;gap:9px;position:relative;z-index:5" data-team="A">' +
+      '<div style="text-align:center;font-size:11px;color:#7fd08a;letter-spacing:.2em">⚔ 我方军团</div>' +
+      usA.map(function (un, i) { return bcardHTML(un, "A", i); }).join("") + "</div>" +
+      '<div style="display:flex;flex-direction:column;gap:8px;min-width:0;position:relative;z-index:5;text-align:center;padding-top:6px">' +
+      '<div style="font-size:11px;color:var(--gold-2,#e8c988);letter-spacing:.3em">⚔ ⚔ ⚔</div><div class="sg-vsbig">VS</div>' +
+      rail + midLog + "</div>" +
+      '<div style="display:flex;flex-direction:column;gap:9px" data-team="B">' +
+      '<div style="text-align:center;font-size:11px;color:#e07f7f;letter-spacing:.2em">🛡 ' + esc(cfg.foe) + "</div>" +
+      usB.map(function (un, i) { return bcardHTML(un, "B", i); }).join("") + "</div></div></div>";
+    var resHTML = "";
+    if (res) {
+      var loot65 = (out && out.loot) || {}, chips65 = [];
+      [["🌾", loot65.rice], ["🪵", loot65.wood], ["🪙", loot65.copper], ["⛏", loot65.iron], ["💰", loot65.coin]].forEach(function (x) {
+        if (x[1]) chips65.push('<span class="sgchip" style="font-size:10.5px">' + x[0] + " +" + fmt(x[1]) + "</span>");
+      });
+      if (out && out.exp) chips65.push('<span class="sgchip" style="font-size:10.5px">EXP +' + fmt(out.exp) + "</span>");
+      if (out && out.pts) chips65.push('<span class="sgchip" style="font-size:10.5px">🏅 +' + fmt(out.pts) + "</span>");
+      if (out && out.sp) chips65.push('<span class="sgchip" style="font-size:10.5px">✦ +' + fmt(out.sp) + "</span>");
+      if (out && out.shards && out.shards.length) chips65.push('<span class="sgchip" style="font-size:10.5px">🧩 ' + esc(out.shards.join("、")) + "</span>");
+      resHTML = '<div class="sg-panel sg-vfx-host" id="sgVfxHost" style="position:relative;margin-top:14px">' +
+        '<div style="position:relative;text-align:center;padding:4px 0 8px">' +
+        '<div class="sg-reschar ' + (res.win ? "win" : "lose") + '">' + (res.win ? "军 团 大 捷" : "军 团 败 退") + "</div>" +
+        '<b style="font-size:15px;color:' + (res.win ? "#e8c988" : "#c97070") + ';letter-spacing:.2em">' +
+        (res.win ? ["", "★ 险胜", "★★ 大胜", "★★★ 完胜"][res.stars] : "整军再战") + "</b>" +
+        '<div class="sg-note" style="margin-top:4px">剩余兵力：我方 ' + fmt(res.pR) + " / " + fmt(res.pM) + " · 敌方 " + fmt(res.eR) + " / " + fmt(res.eM) + " · 历时 " + res.rounds + " 回合</div>" +
+        (chips65.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px">' + chips65.join("") + "</div>" : "") + "</div>" +
+        '<div class="sg-panel-hd"><h3><i>·</i>战报回放</h3><span class="sp"></span>' +
+        '<button class="sgbtn sm ghost" data-bat="speed">×' + BATUI.speed + "</button>" +
+        '<button class="sgbtn sm ghost" data-bat="mute" title="音效">' + (BATUI.mute ? "🔇" : "🔊") + "</button>" +
+        '<button class="sgbtn sm ghost" data-bat="skip">' + T("skip") + "</button></div></div>";
+    }
+    var css65 = '<style>' +
+      ".lgf-top{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:10px;padding:8px 12px;border:1px solid var(--line-2,#3a3f4a);border-radius:12px;background:rgba(8,11,17,.66)}" +
+      ".lgf-half{display:flex;flex-direction:column;gap:4px;min-width:0}.lgf-half.r{text-align:right}.lgf-half.r small{align-self:flex-end}" +
+      ".lgf-chips{display:flex;gap:5px}.lgf-chips.jend{justify-content:flex-end}" +
+      ".lgf-u{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;transition:opacity .4s}" +
+      ".lgf-av{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid #5fbf8a;background:#0d1117;flex:none}.lgf-B .lgf-av{border-color:#e07f7f}" +
+      ".lgf-av svg,.lgf-av img{width:100%;height:100%;object-fit:cover;object-position:top}" +
+      ".lgf-u b{font-size:9px;color:#e8c988;line-height:1}.lgf-u i{font-style:normal;font-size:9px;color:#c8d4e0;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2}" +
+      ".lgf-bar{height:7px;border-radius:4px;background:rgba(255,255,255,.10);overflow:hidden}" +
+      ".lgf-bar i{display:block;height:100%;background:linear-gradient(90deg,#5fbf8a,#9be0a8);transition:width .45s ease}" +
+      ".lgf-bar.b i{background:linear-gradient(90deg,#d07070,#f0a0a0)}" +
+      ".lgf-half small{font-size:10px;color:var(--ink-3,#8b93a3)}" +
+      ".lgf-round{display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;border:2px solid #c9a45c;color:#e8c988;font-size:9px;letter-spacing:.2em;background:radial-gradient(circle,rgba(60,44,16,.92),rgba(20,16,8,.92));flex:none}" +
+      ".lgf-round b{font-size:20px;line-height:1.1}" +
+      ".lg-rail{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;align-items:center;margin:4px 0}" +
+      ".lg-rail small{color:var(--ink-3,#8b93a3);font-size:9.5px;letter-spacing:.15em;margin-right:2px}" +
+      ".lg-rail-u{width:24px;height:24px;border-radius:50%;overflow:hidden;border:1.5px solid #5fbf8a;background:#0d1117;display:inline-block}.lg-rail-u svg,.lg-rail-u img{width:100%;height:100%;object-fit:cover;object-position:top}" +
+      "@media(max-width:640px){.lgf-av{width:26px;height:26px}.lgf-u b{font-size:8px}.lgf-top{padding:6px 8px}}" +
+      "</style>";
+    return head + topBar + arenaHTML + resHTML + arenaCSS66() + css65;
+  }
+/* ==== V65END ==== */
+
   function pvpFoes(u) {
     var myAvg = (u.cards || []).length ? Math.round((u.cards || []).reduce(function (s, c) { return s + cardLv(c); }, 0) / (u.cards || []).length) : 1;
     var others = DB.users.filter(function (x) { return x.uid !== u.uid; });
@@ -14218,6 +14656,7 @@ var BOTS = [
       return { kind: "monster", stage: mob.lv, squad: tSquad, enemies: mobEnemies(u, mob), foe: mobTypeName(mty), mob: mob,
         teamTi: ti, centerId: trm.centerId, centerIx: cIx };
     }
+    if (kind === "l") return legionFightKey(+num);
     return null;
   }
   function renderFight(key) {
@@ -14231,6 +14670,7 @@ var BOTS = [
       closeModal();
     }
     var fk = BATUI.fight;
+    if (fk.kind === "legion") { if (BATUI.res && BATUI.res._lgKey !== key) BATUI.res = null; return renderLegionPage(key, fk); }
     var myUnits = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
     /* V32：标出中军（被击溃即判负） */
     if (fk.centerId) myUnits.forEach(function (un) { if (un.cid === fk.centerId) un.pos = "center"; });
@@ -14297,129 +14737,7 @@ var BOTS = [
     if (!BATUI.res) {
       /* V54：开战/偷袭已上移右上角，下方不再放按钮面板 */
       return head + roster + "</div></div>" +
-        '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}' +
-      /* V51：夜城墙中缝背景 + 右侧战报半透明悬浮 */
-      '.sg-warbg{position:relative;border-radius:14px;padding:12px;background-image:linear-gradient(180deg,rgba(10,14,20,.30),rgba(10,14,20,.55)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center;box-shadow:inset 0 0 90px rgba(0,0,0,.62)}' +
-      /* V52 地形：山谷 / 河两岸 / 平原（叠在战场图上） */
-      '.sg-terr-valley::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(6,10,8,.72),transparent 22%,transparent 78%,rgba(6,10,8,.72)),linear-gradient(180deg,rgba(20,26,20,.34),transparent 40%)}' +
-      '.sg-terr-river::before{content:"";position:absolute;left:0;right:0;top:30%;height:26%;pointer-events:none;background:linear-gradient(180deg,rgba(40,90,130,.10),rgba(70,140,180,.42) 45%,rgba(40,90,130,.10));box-shadow:0 0 24px rgba(90,170,220,.25);animation:sgRiver 7s ease-in-out infinite}' +
-      '@keyframes sgRiver{0%,100%{opacity:.75}50%{opacity:1}}' +
-      '.sg-terr-plain::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(120,110,60,.18))}' +
-      /* V52 中缝战报 */
-      '.sg-midlog{flex:1;min-height:220px;max-height:640px;overflow:auto;text-align:left;background:rgba(8,11,17,.66);border:1px solid rgba(201,164,92,.28);border-radius:12px;padding:10px 12px;backdrop-filter:blur(3px);box-shadow:inset 0 0 26px rgba(0,0,0,.5)}' +
-      '.sg-midlog-idle{display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:11.5px}' +
-      /* V52 动效：投石 / 箭矢 / 骑兵突击 */
-      '.sg-fxlayer{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}' +
-      '.fx{position:absolute;display:block;opacity:0}' +
-      '.fx-stone{left:6%;top:52%;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#b9b2a4,#5c564a 70%);box-shadow:0 2px 6px rgba(0,0,0,.6);animation:fxStoneA 6.5s linear infinite}' +
-      '.fx-stone.fb{left:auto;right:6%;top:52%;animation-name:fxStoneB;animation-delay:3.2s}' +
-      '@keyframes fxStoneA{0%{opacity:0;transform:translate(0,0) rotate(0)}4%{opacity:1}50%{transform:translate(46vw,150px) rotate(540deg)}52%{opacity:1}54%,100%{opacity:0;transform:translate(50vw,190px) rotate(600deg)}}' +
-      '@keyframes fxStoneB{0%{opacity:0;transform:translate(0,0) rotate(0)}4%{opacity:1}50%{transform:translate(-46vw,150px) rotate(-540deg)}52%{opacity:1}54%,100%{opacity:0;transform:translate(-50vw,190px) rotate(-600deg)}}' +
-      '.fx-arrow{left:10%;top:58%;width:34px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(240,230,200,0),#f0e6c8);transform-origin:100% 50%;animation:fxArrowA 5.2s linear infinite}' +
-      '.fx-arrow.ab{top:62%;animation-delay:1.7s}.fx-arrow.ac{top:54%;animation-delay:3.4s}' +
-      '.fx-arrow.ba{left:auto;right:10%;top:58%;background:linear-gradient(90deg,#f0e6c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxArrowB}.fx-arrow.bb{left:auto;right:10%;top:63%;background:linear-gradient(90deg,#f0e6c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxArrowB;animation-delay:2.6s}' +
-      '@keyframes fxArrowA{0%{opacity:0;transform:translate(0,0) rotate(-14deg)}6%{opacity:1}45%{transform:translate(34vw,-26px) rotate(4deg)}50%{opacity:1;transform:translate(38vw,-16px) rotate(10deg)}52%,100%{opacity:0;transform:translate(40vw,-8px) rotate(14deg)}}' +
-      '@keyframes fxArrowB{0%{opacity:0;transform:translate(0,0) rotate(14deg)}6%{opacity:1}45%{transform:translate(-34vw,-26px) rotate(-4deg)}50%{opacity:1;transform:translate(-38vw,-16px) rotate(-10deg)}52%,100%{opacity:0;transform:translate(-40vw,-8px) rotate(-14deg)}}' +
-      '.fx-cav{left:2%;top:70%;font-size:19px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7));animation:fxCavA 9s linear infinite}' +
-      '.fx-cav.cb{left:auto;right:2%;top:74%;animation-name:fxCavB;animation-delay:4.5s}' +
-      '@keyframes fxCavA{0%{opacity:0;transform:translateX(0) scaleY(1)}3%{opacity:1}44%{transform:translateX(56vw) scaleY(1)}46%{opacity:0}47%,100%{opacity:0;transform:translateX(60vw)}}' +
-      '@keyframes fxCavB{0%{opacity:0;transform:translateX(0) scaleX(-1)}3%{opacity:1}44%{transform:translateX(-56vw) scaleX(-1)}46%{opacity:0}47%,100%{opacity:0;transform:translateX(-60vw)}}' +
-      /* V52 箭雨齐射（多段抛物线错落） */
-      '.fx-volley{left:8%;top:60%;width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(240,230,200,0),#fff3c8);transform-origin:100% 50%;animation:fxVolley 4.6s linear infinite}' +
-      '.fx-volley.vb{left:auto;right:8%;top:64%;background:linear-gradient(90deg,#fff3c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxVolleyB;animation-delay:2.3s}' +
-      '@keyframes fxVolley{0%{opacity:0;transform:translate(0,0) rotate(-30deg)}8%{opacity:.95}30%{transform:translate(16vw,-58px) rotate(-8deg)}52%{opacity:.95;transform:translate(32vw,-38px) rotate(6deg)}62%{transform:translate(40vw,14px) rotate(26deg)}64%,100%{opacity:0;transform:translate(42vw,26px) rotate(30deg)}}' +
-      '@keyframes fxVolleyB{0%{opacity:0;transform:translate(0,0) rotate(30deg)}8%{opacity:.95}30%{transform:translate(-16vw,-58px) rotate(8deg)}52%{opacity:.95;transform:translate(-32vw,-38px) rotate(-6deg)}62%{transform:translate(-40vw,14px) rotate(-26deg)}64%,100%{opacity:0;transform:translate(-42vw,26px) rotate(-30deg)}}' +
-      /* V52 命中爆点：尘土（投石）+ 血光（箭矢） */
-      '.fx-blast{left:46%;top:66%;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,rgba(255,220,150,.95),rgba(200,140,60,.45) 45%,transparent 70%);animation:fxBlast 3.6s ease-out infinite}' +
-      '.fx-blast.bb{left:52%;top:70%;animation-delay:1.8s}' +
-      '@keyframes fxBlast{0%,72%{opacity:0;transform:scale(.3)}76%{opacity:1;transform:scale(1)}88%{opacity:0;transform:scale(2.6)}}' +
-      /* V52 真实单次弹道：JS 触发（.run = 播放一次） */
-      '.fx-arc{position:absolute;z-index:36;pointer-events:none;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#cfc7b6,#5c564a 70%);box-shadow:0 3px 10px rgba(0,0,0,.7),0 0 12px rgba(255,190,90,.45);opacity:0}' +
-      '.fx-arc.run{animation:fxArcRun .78s cubic-bezier(.35,.02,.72,.55) forwards}' +
-      '@keyframes fxArcRun{0%{opacity:0;transform:translate(0,0) scale(.7)}8%{opacity:1;transform:translate(var(--mx),var(--my)) scale(1)}82%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.05)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.7)}}' +
-      '.fx-spark{position:absolute;z-index:37;pointer-events:none;width:2px;height:26px;border-radius:2px;background:linear-gradient(180deg,rgba(255,247,214,0),#fff7d6);opacity:0;transform-origin:50% 0}' +
-      '.fx-spark.run{animation:fxSpark .62s cubic-bezier(.4,0,.8,.5) forwards}' +
-      '@keyframes fxSpark{0%{opacity:0;transform:translate(0,0) rotate(28deg)}12%{opacity:1;transform:translate(calc(var(--mx)*.28),calc(var(--my)*.28)) rotate(18deg)}88%{opacity:1;transform:translate(var(--ex),var(--ey)) rotate(34deg)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) rotate(36deg)}}' +
-      '.fx-tramp{position:absolute;z-index:34;pointer-events:none;font-size:20px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.8));opacity:0}' +
-      '.fx-tramp.run{animation:fxTramp .9s cubic-bezier(.2,.6,.5,1) forwards}' +
-      '@keyframes fxTramp{0%{opacity:0;transform:translate(0,0) scale(.85)}14%{opacity:1}72%{opacity:1;transform:translate(var(--ex),0) scale(1.12)}100%{opacity:0;transform:translate(var(--ex),0) scale(1.02)}}' +
-      '.fx-hit{position:absolute;z-index:38;pointer-events:none;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(255,225,150,.9);opacity:0}' +
-      '.fx-hit.run{animation:fxHit .42s ease-out forwards}' +
-      '@keyframes fxHit{0%{opacity:1;transform:scale(.25)}100%{opacity:0;transform:scale(1.5)}}' +
-      /* V52 技能特写：火海（技能）/ 高崖主帅（策略）背景一闪 */
-      /* V53 技能特写：居中 1/5 画面 + 外围光环（虚线环扩散 + 描边光圈） */
-      '.sg-skillbg{position:absolute;inset:0;z-index:35;pointer-events:none;display:flex;align-items:center;justify-content:center;opacity:0;animation:sgSkillBg 1.25s ease-out forwards}' +
-      '.sg-skillbg .sdim{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(0,0,0,.08) 30%,rgba(0,0,0,.62))}' +
-      '.sg-skillbg .simg{position:relative;width:min(19vmax,190px);height:min(19vmax,190px);border-radius:50%;background-size:cover;background-position:center;border:3px solid rgba(255,222,150,.95);box-shadow:0 0 30px 10px rgba(255,170,60,.55),0 0 90px 34px rgba(255,120,40,.28);animation:simgIn .5s cubic-bezier(.2,1.5,.4,1) both}' +
-      '.sg-skillbg .simg::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(255,200,110,.6);animation:sgRing2 1.2s ease-out infinite}' +
-      '.sg-skillbg.sp .simg{border-color:rgba(178,204,255,.95);box-shadow:0 0 30px 10px rgba(120,160,255,.55),0 0 90px 34px rgba(70,110,255,.26)}' +
-      '.sg-skillbg.sp .simg::after{border-color:rgba(170,200,255,.6)}' +
-      '.sg-skillbg::before{content:"";position:absolute;width:min(26vmax,260px);height:min(26vmax,260px);border-radius:50%;border:2px dashed rgba(255,210,130,.85);animation:sgRing 1.15s ease-out infinite}' +
-      '.sg-skillbg.sp::before{border-color:rgba(170,200,255,.85)}' +
-      '@keyframes sgSkillBg{0%{opacity:0}12%{opacity:1}78%{opacity:.95}100%{opacity:0}}' +
-      '@keyframes simgIn{0%{transform:scale(.35)}100%{transform:scale(1)}}' +
-      '@keyframes sgRing{0%{transform:scale(.55);opacity:.95}100%{transform:scale(2.1);opacity:0}}' +
-      '@keyframes sgRing2{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.7);opacity:0}}' +
-      '.sg-warbg .sg-panel{background:rgba(10,13,20,.66)!important;backdrop-filter:blur(3px);border-radius:12px}' +
-      '.sg-warbg .sg-logline{font-size:12.5px;line-height:1.75;text-shadow:0 1px 3px rgba(0,0,0,.85)}' +
-      '.sg-warbg .sg-logline .who{font-weight:700;font-size:12.5px}' +
-      /* V52 出征行军画面 */
-      '.sg-march{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(201,164,92,.35);background:radial-gradient(120% 80% at 50% 0,rgba(60,46,22,.85),rgba(12,14,20,.96))}' +
-      '.sg-march-art{position:relative;min-height:300px;background-image:url(' + SG_IMG_MARCH1 + ');background-size:cover;background-position:center 22%;display:flex;align-items:flex-end}' +
-      '.sg-march-art::before{content:"";position:absolute;inset:0;background-image:var(--mimg);background-size:cover;background-position:center 24%;animation:sgMarchArt 9s ease-in-out infinite alternate}' +
-      '.sg-march-shade{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(8,10,16,.15),rgba(8,10,16,.25) 40%,rgba(8,10,16,.92))}' +
-      '@keyframes sgMarchArt{0%{transform:scale(1.04) translateX(-1.5%)}100%{transform:scale(1.12) translateX(1.5%)}}' +
-      '.sg-march-tp{position:absolute;left:50%;top:12%;z-index:3;transform:translateX(-50%);font-size:46px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.8));animation:sgMarchTp 2.4s ease-in-out infinite}' +
-      '@keyframes sgMarchTp{0%,100%{transform:translateX(-50%) translateY(0) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-6px) rotate(3deg)}}' +
-      '.sg-march-txt{position:relative;z-index:3;width:100%;padding:16px 18px 14px;text-align:center}' +
-      '.sg-march-k{font-family:"STKaiti","KaiTi","Noto Serif SC",serif;font-size:28px;font-weight:900;letter-spacing:.18em;color:#ffe9b8;text-shadow:0 0 16px rgba(255,170,60,.75),0 2px 8px rgba(0,0,0,.9)}' +
-      '.sg-march-s{font-size:12.5px;color:#e8dfc8;margin-top:6px;letter-spacing:.06em;text-shadow:0 1px 4px rgba(0,0,0,.9)}' +
-      '.sg-march-foe{margin-top:8px;display:inline-block;font-size:11.5px;color:#ffd0a0;border:1px solid rgba(232,201,136,.4);border-radius:999px;padding:3px 12px;background:rgba(40,26,10,.6)}' +
-      '.sg-march-roads{position:relative;height:26px;overflow:hidden;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(30,24,12,.7))}' +
-      '.sg-march-roads i{position:absolute;top:11px;height:2px;width:38px;border-radius:2px;background:linear-gradient(90deg,transparent,#e8c988,transparent);animation:sgRoad 1.6s linear infinite}' +
-      '.sg-march-roads i:nth-child(1){left:10%;animation-delay:0s}.sg-march-roads i:nth-child(2){left:38%;animation-delay:.35s}.sg-march-roads i:nth-child(3){left:66%;animation-delay:.7s}' +
-      '@keyframes sgRoad{0%{opacity:0;transform:translateX(-30px) scaleX(.4)}40%{opacity:1}100%{opacity:0;transform:translateX(70px) scaleX(1.3)}}' +
-      '.sg-march-bar{height:4px;background:rgba(255,255,255,.08)}' +
-      '.sg-march-bar b{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9a45c,#ffe9b8);box-shadow:0 0 12px rgba(255,220,150,.7);animation:sgMarchBar 2.6s ease-in-out infinite}' +
-      '@keyframes sgMarchBar{0%{width:6%}55%{width:72%}100%{width:100%;opacity:.6}}' +
-      '.sg-march-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}' +
-      '.sg-march-foot small{color:var(--ink-3);font-size:11.5px}' +
-      /* V53 士兵方阵 + 武将卡行 + VS 大字 */
-      /* V54 士兵环绕卡片：外圈→内圈沿矩形周界布点，随战况减员、被震飞 */
-      '.brow{position:relative;display:flex;gap:8px;align-items:stretch;padding:17px 19px}' +
-      '.brow.br{flex-direction:row-reverse}' +
-      '.brow>.bcard{position:relative;z-index:2}' +
-      '.sg-bown{position:absolute;inset:0;z-index:0;pointer-events:none}' +
-      '.sg-bown i{position:absolute;width:12px;height:16px;transform:translate(-50%,-50%);background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));transition:opacity .4s ease}' +
-      '.brow.br .sg-bown i{scale:-1 1}' +
-      '.sg-bown i.dying{opacity:0!important;transform:translate(-50%,-50%) translateY(12px) rotate(22deg) scale(.72);transition:all .45s ease-in}' +
-      '.sg-bown.fly i{animation:sgFly .78s ease-out forwards}' +
-      '@keyframes sgFly{0%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--fx,0px)),calc(-50% + var(--fy,-46px))) rotate(var(--fr,120deg)) scale(.72)}}' +
-      /* V54 技能大火球 + 命中爆炸 */
-      '.fx-fireball{position:absolute;z-index:39;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:radial-gradient(circle at 40% 38%,#fff8d6,#ffb03c 46%,rgba(214,64,18,.9) 72%,rgba(120,20,0,0));box-shadow:0 0 26px 10px rgba(255,120,40,.55),0 0 64px 28px rgba(255,70,0,.26);opacity:0}' +
-      '.fx-fireball.run{animation:fxFireball .72s cubic-bezier(.35,.05,.7,.6) forwards}' +
-      '@keyframes fxFireball{0%{opacity:0;transform:translate(0,0) scale(.45)}10%{opacity:1;transform:translate(calc(var(--ex)*.14),calc(var(--ey)*.14 - 46px)) scale(.8)}55%{opacity:1;transform:translate(calc(var(--ex)*.6),calc(var(--ey)*.6 - 66px)) scale(1.15)}92%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.2)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.9)}}' +
-      '.fx-boom{position:absolute;z-index:40;pointer-events:none;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50%;background:radial-gradient(circle,rgba(255,248,214,.98) 0%,rgba(255,176,60,.9) 20%,rgba(226,74,20,.52) 44%,transparent 70%);opacity:0}' +
-      '.fx-boom.run{animation:fxBoom .72s ease-out forwards}' +
-      '@keyframes fxBoom{0%{opacity:1;transform:scale(.22)}55%{opacity:.92;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}' +
-      /* V54 战果左右栏（左打方 / 右守方） */
-      '.sg-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}' +
-      '@media(max-width:860px){.sg-results{grid-template-columns:1fr}}' +
-      '.sg-rescol{border:1px solid rgba(232,201,136,.22);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.5),rgba(12,15,21,.66));padding:10px 12px}' +
-      '.sg-rescol.a{border-color:rgba(127,208,138,.4)}.sg-rescol.b{border-color:rgba(224,127,127,.4)}' +
-      '.sg-rescol .rh{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;letter-spacing:.05em;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.14);margin-bottom:8px}' +
-      '.sg-rescol.a .rh{color:#9be0a8}.sg-rescol.b .rh{color:#f0a0a0}' +
-      '.sg-rescol .rh small{color:var(--ink-3);font-weight:700;font-size:11px}' +
-      '.sg-rescol .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden;margin:2px 0 8px}' +
-      '.sg-rescol .bar i{display:block;height:100%;background:linear-gradient(90deg,#5fbf8a,#9be0a8)}' +
-      '.sg-rescol.b .bar i{background:linear-gradient(90deg,#d07070,#f0a0a0)}' +
-      '.sg-rescol .kv{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#cfd8e2;padding:2px 0}' +
-      '.sg-rescol .kv b{font-weight:800;color:#fff}.sg-rescol .kv b.neg{color:#f09a9a}.sg-rescol .kv b.pos{color:#9be0a8}' +
-      '.sg-rescol .sec{font-size:10.5px;color:var(--gold-2,#e8c988);letter-spacing:.1em;margin:9px 0 3px;opacity:.95}' +
-      '.sg-rescol .u{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9c4d0;padding:2.5px 0;border-bottom:1px dotted rgba(255,255,255,.08)}' +
-      '.sg-rescol .u b{color:#e07f7f;font-weight:800}' +
-      '.sg-vsbig{font-size:46px;font-weight:900;letter-spacing:.1em;line-height:1.05;background:linear-gradient(180deg,#fff3d0,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,200,110,.45))}' +
-      '</style></div>';
+        arenaCSS66();
     }
     /* V35 战报详情：经验（绿）/ 伤兵（红）汇总行 */
     var expLines = "", casLines = "";
@@ -14517,146 +14835,7 @@ var BOTS = [
       '<button class="sgbtn sm ghost" data-bat="skip">' + T("skip") + "</button></div>" +
       '<div id="sgRepDetail" style="display:none;max-height:260px;overflow:auto;margin-top:8px">' + expLines + casLines + "</div></div>" +
       resCols54 + "</div></div>" +
-      '<style>.sg-arena{position:relative;overflow:hidden;background-image:linear-gradient(180deg,rgba(96,128,168,.30),rgba(70,92,66,.20) 46%,rgba(28,36,24,.45)),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 56px)}.sg-arena>*{position:relative;z-index:1}@media(max-width:860px){.gs-grid{grid-template-columns:1fr!important}}' +
-      '.sg-warbg{position:relative;border-radius:14px;padding:12px;background-image:linear-gradient(180deg,rgba(10,14,20,.30),rgba(10,14,20,.55)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center;box-shadow:inset 0 0 90px rgba(0,0,0,.62)}' +
-      /* V52 地形：山谷 / 河两岸 / 平原（叠在战场图上） */
-      '.sg-terr-valley::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(6,10,8,.72),transparent 22%,transparent 78%,rgba(6,10,8,.72)),linear-gradient(180deg,rgba(20,26,20,.34),transparent 40%)}' +
-      '.sg-terr-river::before{content:"";position:absolute;left:0;right:0;top:30%;height:26%;pointer-events:none;background:linear-gradient(180deg,rgba(40,90,130,.10),rgba(70,140,180,.42) 45%,rgba(40,90,130,.10));box-shadow:0 0 24px rgba(90,170,220,.25);animation:sgRiver 7s ease-in-out infinite}' +
-      '@keyframes sgRiver{0%,100%{opacity:.75}50%{opacity:1}}' +
-      '.sg-terr-plain::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(120,110,60,.18))}' +
-      /* V52 中缝战报 */
-      '.sg-midlog{flex:1;min-height:220px;max-height:640px;overflow:auto;text-align:left;background:rgba(8,11,17,.66);border:1px solid rgba(201,164,92,.28);border-radius:12px;padding:10px 12px;backdrop-filter:blur(3px);box-shadow:inset 0 0 26px rgba(0,0,0,.5)}' +
-      '.sg-midlog-idle{display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:11.5px}' +
-      /* V52 动效：投石 / 箭矢 / 骑兵突击 */
-      '.sg-fxlayer{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}' +
-      '.fx{position:absolute;display:block;opacity:0}' +
-      '.fx-stone{left:6%;top:52%;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#b9b2a4,#5c564a 70%);box-shadow:0 2px 6px rgba(0,0,0,.6);animation:fxStoneA 6.5s linear infinite}' +
-      '.fx-stone.fb{left:auto;right:6%;top:52%;animation-name:fxStoneB;animation-delay:3.2s}' +
-      '@keyframes fxStoneA{0%{opacity:0;transform:translate(0,0) rotate(0)}4%{opacity:1}50%{transform:translate(46vw,150px) rotate(540deg)}52%{opacity:1}54%,100%{opacity:0;transform:translate(50vw,190px) rotate(600deg)}}' +
-      '@keyframes fxStoneB{0%{opacity:0;transform:translate(0,0) rotate(0)}4%{opacity:1}50%{transform:translate(-46vw,150px) rotate(-540deg)}52%{opacity:1}54%,100%{opacity:0;transform:translate(-50vw,190px) rotate(-600deg)}}' +
-      '.fx-arrow{left:10%;top:58%;width:34px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(240,230,200,0),#f0e6c8);transform-origin:100% 50%;animation:fxArrowA 5.2s linear infinite}' +
-      '.fx-arrow.ab{top:62%;animation-delay:1.7s}.fx-arrow.ac{top:54%;animation-delay:3.4s}' +
-      '.fx-arrow.ba{left:auto;right:10%;top:58%;background:linear-gradient(90deg,#f0e6c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxArrowB}.fx-arrow.bb{left:auto;right:10%;top:63%;background:linear-gradient(90deg,#f0e6c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxArrowB;animation-delay:2.6s}' +
-      '@keyframes fxArrowA{0%{opacity:0;transform:translate(0,0) rotate(-14deg)}6%{opacity:1}45%{transform:translate(34vw,-26px) rotate(4deg)}50%{opacity:1;transform:translate(38vw,-16px) rotate(10deg)}52%,100%{opacity:0;transform:translate(40vw,-8px) rotate(14deg)}}' +
-      '@keyframes fxArrowB{0%{opacity:0;transform:translate(0,0) rotate(14deg)}6%{opacity:1}45%{transform:translate(-34vw,-26px) rotate(-4deg)}50%{opacity:1;transform:translate(-38vw,-16px) rotate(-10deg)}52%,100%{opacity:0;transform:translate(-40vw,-8px) rotate(-14deg)}}' +
-      '.fx-cav{left:2%;top:70%;font-size:19px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7));animation:fxCavA 9s linear infinite}' +
-      '.fx-cav.cb{left:auto;right:2%;top:74%;animation-name:fxCavB;animation-delay:4.5s}' +
-      '@keyframes fxCavA{0%{opacity:0;transform:translateX(0) scaleY(1)}3%{opacity:1}44%{transform:translateX(56vw) scaleY(1)}46%{opacity:0}47%,100%{opacity:0;transform:translateX(60vw)}}' +
-      '@keyframes fxCavB{0%{opacity:0;transform:translateX(0) scaleX(-1)}3%{opacity:1}44%{transform:translateX(-56vw) scaleX(-1)}46%{opacity:0}47%,100%{opacity:0;transform:translateX(-60vw)}}' +
-      /* V52 箭雨齐射（多段抛物线错落） */
-      '.fx-volley{left:8%;top:60%;width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(240,230,200,0),#fff3c8);transform-origin:100% 50%;animation:fxVolley 4.6s linear infinite}' +
-      '.fx-volley.vb{left:auto;right:8%;top:64%;background:linear-gradient(90deg,#fff3c8,rgba(240,230,200,0));transform-origin:0 50%;animation-name:fxVolleyB;animation-delay:2.3s}' +
-      '@keyframes fxVolley{0%{opacity:0;transform:translate(0,0) rotate(-30deg)}8%{opacity:.95}30%{transform:translate(16vw,-58px) rotate(-8deg)}52%{opacity:.95;transform:translate(32vw,-38px) rotate(6deg)}62%{transform:translate(40vw,14px) rotate(26deg)}64%,100%{opacity:0;transform:translate(42vw,26px) rotate(30deg)}}' +
-      '@keyframes fxVolleyB{0%{opacity:0;transform:translate(0,0) rotate(30deg)}8%{opacity:.95}30%{transform:translate(-16vw,-58px) rotate(8deg)}52%{opacity:.95;transform:translate(-32vw,-38px) rotate(-6deg)}62%{transform:translate(-40vw,14px) rotate(-26deg)}64%,100%{opacity:0;transform:translate(-42vw,26px) rotate(-30deg)}}' +
-      /* V52 命中爆点：尘土（投石）+ 血光（箭矢） */
-      '.fx-blast{left:46%;top:66%;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,rgba(255,220,150,.95),rgba(200,140,60,.45) 45%,transparent 70%);animation:fxBlast 3.6s ease-out infinite}' +
-      '.fx-blast.bb{left:52%;top:70%;animation-delay:1.8s}' +
-      '@keyframes fxBlast{0%,72%{opacity:0;transform:scale(.3)}76%{opacity:1;transform:scale(1)}88%{opacity:0;transform:scale(2.6)}}' +
-      /* V52 真实单次弹道：JS 触发（.run = 播放一次） */
-      '.fx-arc{position:absolute;z-index:36;pointer-events:none;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#cfc7b6,#5c564a 70%);box-shadow:0 3px 10px rgba(0,0,0,.7),0 0 12px rgba(255,190,90,.45);opacity:0}' +
-      '.fx-arc.run{animation:fxArcRun .78s cubic-bezier(.35,.02,.72,.55) forwards}' +
-      '@keyframes fxArcRun{0%{opacity:0;transform:translate(0,0) scale(.7)}8%{opacity:1;transform:translate(var(--mx),var(--my)) scale(1)}82%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.05)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.7)}}' +
-      '.fx-spark{position:absolute;z-index:37;pointer-events:none;width:2px;height:26px;border-radius:2px;background:linear-gradient(180deg,rgba(255,247,214,0),#fff7d6);opacity:0;transform-origin:50% 0}' +
-      '.fx-spark.run{animation:fxSpark .62s cubic-bezier(.4,0,.8,.5) forwards}' +
-      '@keyframes fxSpark{0%{opacity:0;transform:translate(0,0) rotate(28deg)}12%{opacity:1;transform:translate(calc(var(--mx)*.28),calc(var(--my)*.28)) rotate(18deg)}88%{opacity:1;transform:translate(var(--ex),var(--ey)) rotate(34deg)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) rotate(36deg)}}' +
-      '.fx-tramp{position:absolute;z-index:34;pointer-events:none;font-size:20px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.8));opacity:0}' +
-      '.fx-tramp.run{animation:fxTramp .9s cubic-bezier(.2,.6,.5,1) forwards}' +
-      '@keyframes fxTramp{0%{opacity:0;transform:translate(0,0) scale(.85)}14%{opacity:1}72%{opacity:1;transform:translate(var(--ex),0) scale(1.12)}100%{opacity:0;transform:translate(var(--ex),0) scale(1.02)}}' +
-      '.fx-hit{position:absolute;z-index:38;pointer-events:none;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(255,225,150,.9);opacity:0}' +
-      '.fx-hit.run{animation:fxHit .42s ease-out forwards}' +
-      '@keyframes fxHit{0%{opacity:1;transform:scale(.25)}100%{opacity:0;transform:scale(1.5)}}' +
-      /* V52 技能特写：火海（技能）/ 高崖主帅（策略）背景一闪 */
-      /* V53 技能特写：居中 1/5 画面 + 外围光环（虚线环扩散 + 描边光圈） */
-      '.sg-skillbg{position:absolute;inset:0;z-index:35;pointer-events:none;display:flex;align-items:center;justify-content:center;opacity:0;animation:sgSkillBg 1.25s ease-out forwards}' +
-      '.sg-skillbg .sdim{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(0,0,0,.08) 30%,rgba(0,0,0,.62))}' +
-      '.sg-skillbg .simg{position:relative;width:min(19vmax,190px);height:min(19vmax,190px);border-radius:50%;background-size:cover;background-position:center;border:3px solid rgba(255,222,150,.95);box-shadow:0 0 30px 10px rgba(255,170,60,.55),0 0 90px 34px rgba(255,120,40,.28);animation:simgIn .5s cubic-bezier(.2,1.5,.4,1) both}' +
-      '.sg-skillbg .simg::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(255,200,110,.6);animation:sgRing2 1.2s ease-out infinite}' +
-      '.sg-skillbg.sp .simg{border-color:rgba(178,204,255,.95);box-shadow:0 0 30px 10px rgba(120,160,255,.55),0 0 90px 34px rgba(70,110,255,.26)}' +
-      '.sg-skillbg.sp .simg::after{border-color:rgba(170,200,255,.6)}' +
-      '.sg-skillbg::before{content:"";position:absolute;width:min(26vmax,260px);height:min(26vmax,260px);border-radius:50%;border:2px dashed rgba(255,210,130,.85);animation:sgRing 1.15s ease-out infinite}' +
-      '.sg-skillbg.sp::before{border-color:rgba(170,200,255,.85)}' +
-      '@keyframes sgSkillBg{0%{opacity:0}12%{opacity:1}78%{opacity:.95}100%{opacity:0}}' +
-      '@keyframes simgIn{0%{transform:scale(.35)}100%{transform:scale(1)}}' +
-      '@keyframes sgRing{0%{transform:scale(.55);opacity:.95}100%{transform:scale(2.1);opacity:0}}' +
-      '@keyframes sgRing2{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.7);opacity:0}}' +
-      '.sg-warbg .sg-panel{background:rgba(10,13,20,.66)!important;backdrop-filter:blur(3px);border-radius:12px}' +
-      '.sg-warbg .sg-logline{font-size:12.5px;line-height:1.75;text-shadow:0 1px 3px rgba(0,0,0,.85)}' +
-      '.sg-warbg .sg-logline .who{font-weight:700;font-size:12.5px}' +
-      /* V52 出征行军画面 */
-      '.sg-march{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(201,164,92,.35);background:radial-gradient(120% 80% at 50% 0,rgba(60,46,22,.85),rgba(12,14,20,.96))}' +
-      '.sg-march-art{position:relative;min-height:300px;background-image:url(' + SG_IMG_MARCH1 + ');background-size:cover;background-position:center 22%;display:flex;align-items:flex-end}' +
-      '.sg-march-art::before{content:"";position:absolute;inset:0;background-image:var(--mimg);background-size:cover;background-position:center 24%;animation:sgMarchArt 9s ease-in-out infinite alternate}' +
-      '.sg-march-shade{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(8,10,16,.15),rgba(8,10,16,.25) 40%,rgba(8,10,16,.92))}' +
-      '@keyframes sgMarchArt{0%{transform:scale(1.04) translateX(-1.5%)}100%{transform:scale(1.12) translateX(1.5%)}}' +
-      '.sg-march-tp{position:absolute;left:50%;top:12%;z-index:3;transform:translateX(-50%);font-size:46px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.8));animation:sgMarchTp 2.4s ease-in-out infinite}' +
-      '@keyframes sgMarchTp{0%,100%{transform:translateX(-50%) translateY(0) rotate(-3deg)}50%{transform:translateX(-50%) translateY(-6px) rotate(3deg)}}' +
-      '.sg-march-txt{position:relative;z-index:3;width:100%;padding:16px 18px 14px;text-align:center}' +
-      '.sg-march-k{font-family:"STKaiti","KaiTi","Noto Serif SC",serif;font-size:28px;font-weight:900;letter-spacing:.18em;color:#ffe9b8;text-shadow:0 0 16px rgba(255,170,60,.75),0 2px 8px rgba(0,0,0,.9)}' +
-      '.sg-march-s{font-size:12.5px;color:#e8dfc8;margin-top:6px;letter-spacing:.06em;text-shadow:0 1px 4px rgba(0,0,0,.9)}' +
-      '.sg-march-foe{margin-top:8px;display:inline-block;font-size:11.5px;color:#ffd0a0;border:1px solid rgba(232,201,136,.4);border-radius:999px;padding:3px 12px;background:rgba(40,26,10,.6)}' +
-      '.sg-march-roads{position:relative;height:26px;overflow:hidden;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(30,24,12,.7))}' +
-      '.sg-march-roads i{position:absolute;top:11px;height:2px;width:38px;border-radius:2px;background:linear-gradient(90deg,transparent,#e8c988,transparent);animation:sgRoad 1.6s linear infinite}' +
-      '.sg-march-roads i:nth-child(1){left:10%;animation-delay:0s}.sg-march-roads i:nth-child(2){left:38%;animation-delay:.35s}.sg-march-roads i:nth-child(3){left:66%;animation-delay:.7s}' +
-      '@keyframes sgRoad{0%{opacity:0;transform:translateX(-30px) scaleX(.4)}40%{opacity:1}100%{opacity:0;transform:translateX(70px) scaleX(1.3)}}' +
-      '.sg-march-bar{height:4px;background:rgba(255,255,255,.08)}' +
-      '.sg-march-bar b{display:block;height:100%;width:0;background:linear-gradient(90deg,#c9a45c,#ffe9b8);box-shadow:0 0 12px rgba(255,220,150,.7);animation:sgMarchBar 2.6s ease-in-out infinite}' +
-      '@keyframes sgMarchBar{0%{width:6%}55%{width:72%}100%{width:100%;opacity:.6}}' +
-      '.sg-march-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}' +
-      '.sg-march-foot small{color:var(--ink-3);font-size:11.5px}' +
-      /* V53 士兵方阵 + 武将卡行 + VS 大字 */
-      /* V54 士兵环绕卡片：外圈→内圈沿矩形周界布点，随战况减员、被震飞 */
-      '.brow{position:relative;display:flex;gap:8px;align-items:stretch;padding:17px 19px}' +
-      '.brow.br{flex-direction:row-reverse}' +
-      '.brow>.bcard{position:relative;z-index:2}' +
-      '.sg-bown{position:absolute;inset:0;z-index:0;pointer-events:none}' +
-      '.sg-bown i{position:absolute;width:12px;height:16px;transform:translate(-50%,-50%);background-image:var(--simg);background-size:contain;background-repeat:no-repeat;background-position:center bottom;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85));transition:opacity .4s ease}' +
-      '.brow.br .sg-bown i{scale:-1 1}' +
-      '.sg-bown i.dying{opacity:0!important;transform:translate(-50%,-50%) translateY(12px) rotate(22deg) scale(.72);transition:all .45s ease-in}' +
-      '.sg-bown.fly i{animation:sgFly .78s ease-out forwards}' +
-      '@keyframes sgFly{0%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--fx,0px)),calc(-50% + var(--fy,-46px))) rotate(var(--fr,120deg)) scale(.72)}}' +
-      /* V54 技能大火球 + 命中爆炸 */
-      '.fx-fireball{position:absolute;z-index:39;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:radial-gradient(circle at 40% 38%,#fff8d6,#ffb03c 46%,rgba(214,64,18,.9) 72%,rgba(120,20,0,0));box-shadow:0 0 26px 10px rgba(255,120,40,.55),0 0 64px 28px rgba(255,70,0,.26);opacity:0}' +
-      '.fx-fireball.run{animation:fxFireball .72s cubic-bezier(.35,.05,.7,.6) forwards}' +
-      '@keyframes fxFireball{0%{opacity:0;transform:translate(0,0) scale(.45)}10%{opacity:1;transform:translate(calc(var(--ex)*.14),calc(var(--ey)*.14 - 46px)) scale(.8)}55%{opacity:1;transform:translate(calc(var(--ex)*.6),calc(var(--ey)*.6 - 66px)) scale(1.15)}92%{opacity:1;transform:translate(var(--ex),var(--ey)) scale(1.2)}100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.9)}}' +
-      '.fx-boom{position:absolute;z-index:40;pointer-events:none;width:190px;height:190px;margin:-95px 0 0 -95px;border-radius:50%;background:radial-gradient(circle,rgba(255,248,214,.98) 0%,rgba(255,176,60,.9) 20%,rgba(226,74,20,.52) 44%,transparent 70%);opacity:0}' +
-      '.fx-boom.run{animation:fxBoom .72s ease-out forwards}' +
-      '@keyframes fxBoom{0%{opacity:1;transform:scale(.22)}55%{opacity:.92;transform:scale(1)}100%{opacity:0;transform:scale(1.4)}}' +
-      /* V54 战果左右栏（左打方 / 右守方） */
-      '.sg-results{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}' +
-      '@media(max-width:860px){.sg-results{grid-template-columns:1fr}}' +
-      '.sg-rescol{border:1px solid rgba(232,201,136,.22);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.5),rgba(12,15,21,.66));padding:10px 12px}' +
-      '.sg-rescol.a{border-color:rgba(127,208,138,.4)}.sg-rescol.b{border-color:rgba(224,127,127,.4)}' +
-      '.sg-rescol .rh{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;letter-spacing:.05em;padding-bottom:6px;border-bottom:1px dashed rgba(255,255,255,.14);margin-bottom:8px}' +
-      '.sg-rescol.a .rh{color:#9be0a8}.sg-rescol.b .rh{color:#f0a0a0}' +
-      '.sg-rescol .rh small{color:var(--ink-3);font-weight:700;font-size:11px}' +
-      '.sg-rescol .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden;margin:2px 0 8px}' +
-      '.sg-rescol .bar i{display:block;height:100%;background:linear-gradient(90deg,#5fbf8a,#9be0a8)}' +
-      '.sg-rescol.b .bar i{background:linear-gradient(90deg,#d07070,#f0a0a0)}' +
-      '.sg-rescol .kv{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:#cfd8e2;padding:2px 0}' +
-      '.sg-rescol .kv b{font-weight:800;color:#fff}.sg-rescol .kv b.neg{color:#f09a9a}.sg-rescol .kv b.pos{color:#9be0a8}' +
-      '.sg-rescol .sec{font-size:10.5px;color:var(--gold-2,#e8c988);letter-spacing:.1em;margin:9px 0 3px;opacity:.95}' +
-      '.sg-rescol .u{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#b9c4d0;padding:2.5px 0;border-bottom:1px dotted rgba(255,255,255,.08)}' +
-      '.sg-rescol .u b{color:#e07f7f;font-weight:800}' +
-      '.sg-vsbig{font-size:46px;font-weight:900;letter-spacing:.1em;line-height:1.05;background:linear-gradient(180deg,#fff3d0,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,200,110,.45))}' +
-      ".sg-rephp{display:grid;grid-template-columns:1fr 56px 1fr;gap:8px;align-items:center;margin:0 0 10px;padding:10px 14px;border:1px solid rgba(232,201,136,.25);border-radius:12px;background:linear-gradient(180deg,rgba(30,26,16,.55),rgba(16,18,24,.55))}" +
-      ".sg-rephp .ph{display:flex;align-items:center;gap:9px;font-size:12px;color:#e8dfc8}.sg-rephp .ph.r{flex-direction:row-reverse;text-align:right}" +
-      ".sg-rephp .bar{flex:1;height:9px;border-radius:5px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(0,0,0,.45)}" +
-      ".sg-rephp .bar i{display:block;height:100%;background:linear-gradient(90deg,#4f8fd0,#8cc3ee)}" +
-      ".sg-rephp .ph.r .bar i{background:linear-gradient(90deg,#e06c6c,#ff9a7a)}" +
-      ".sg-rephp .mid{font-size:20px;color:var(--gold-2,#e8c988);text-align:center;text-shadow:0 0 10px rgba(232,201,136,.6)}" +
-      ".sg-reschar{font-family:'STKaiti','KaiTi','Noto Serif SC',serif;font-size:54px;line-height:1.15;font-weight:900;letter-spacing:.12em;text-shadow:0 2px 14px rgba(0,0,0,.65)}" +
-      ".sg-reschar.win{color:#e8c988}.sg-reschar.lose{color:#c97070}" +
-      ".sg-expline{color:#7fd08a;font-size:12px}.sg-casline{color:#e07f7f;font-size:12px}" +
-      ".sg-skillfx{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden}" +
-      ".sg-skillfx .streak{position:absolute;left:-40%;right:-40%;top:44%;height:34px;transform:translateY(-50%) skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(232,201,136,.85) 30%,rgba(255,240,200,.95) 50%,rgba(232,201,136,.85) 70%,transparent);animation:sgStreak .8s ease-out forwards;filter:blur(1px)}" +
-      ".sg-skillfx.sp .streak{background:linear-gradient(90deg,transparent,rgba(158,201,255,.85) 30%,rgba(224,170,255,.95) 50%,rgba(158,201,255,.85) 70%,transparent)}" +
-      ".sg-skillfx .sktxt{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center;font-family:'STKaiti','KaiTi','Noto Serif SC',serif;font-size:30px;font-weight:900;color:#ffe9b8;letter-spacing:.14em;text-shadow:0 0 12px rgba(255,180,60,.95),0 2px 6px rgba(0,0,0,.9);animation:sgSkTxt .8s ease-out forwards}" +
-      ".sg-skillfx.sp .sktxt{color:#e0c8ff;text-shadow:0 0 12px rgba(160,120,255,.95),0 2px 6px rgba(0,0,0,.9)}" +
-      ".sg-skillfx.cri .sktxt{font-size:38px;color:#ffd76a}" +
-      "@keyframes sgStreak{0%{opacity:0;transform:translateY(-50%) skewX(-18deg) scaleX(.2)}30%{opacity:1}100%{opacity:0;transform:translateY(-50%) skewX(-18deg) scaleX(1.15)}}" +
-      "@keyframes sgSkTxt{0%{opacity:0;transform:translateY(-50%) scale(1.7)}25%{opacity:1;transform:translateY(-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-50%) scale(1.05)}}" +
-      ".sg-arena.quake{animation:sgQuake .45s ease-in-out}" +
-      "@keyframes sgQuake{0%,100%{transform:translate(0,0)}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,-2px)}80%{transform:translate(4px,2px)}}</style></div>";
+      arenaCSS66();
   }
   /* V34：中列战争场面（两军矛兵阵列 + 旌旗） */
   /* ---------- V52：兵种弹道（投石 / 箭矢 / 骑兵突击），按武将兵种路由 ---------- */
@@ -14773,7 +14952,7 @@ var BOTS = [
     if (un.pos === "center") posB += ' <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:#8a6b2a;color:#ffe9b8;font-weight:800;vertical-align:2px">★' + posName(TEAM_POS[1]) + "</span>";
     /* V53：详细属性（武 / 统 / 智）+ 技能行（品级技 + 特殊技） */
     var statLine = "攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + ' <small style="color:var(--ink-3)">（武' + un.wu + " 统" + un.st + " 智" + un["in"] + "）</small>";
-    var skLine = un.sk ? '<div style="font-size:10.5px;margin-top:3px"><span style="color:#e8c988">【' + esc(un.sk) + "】</span>" +
+    var skLine = un.sk ? '<div style="font-size:10.5px;margin-top:3px"><span style="color:#e8c988">【' + esc(un.sk && un.sk.n ? un.sk.n : "") + "】</span>" +
       (un.sp ? ' <span style="color:' + (SP_GROUPS.filter(function (x) { return x.k === un.sp; })[0] || {}).color + ';font-weight:800">' + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】</span>" : "") + "</div>" : "";
     return '<div class="brow' + (side === "B" ? " br" : "") + '" style="--simg:url(' + spriteOf(un.arm) + ')">' +
       soldiersHTML(un, side) +
@@ -14781,11 +14960,11 @@ var BOTS = [
       '<div style="display:flex;gap:9px;align-items:center">' +
       '<div class="bavatar" style="width:56px;height:74px;border-radius:9px;overflow:hidden;flex:0 0 auto;border:1px solid ' + tr.c + '66;background:#0d1117">' + avatar + '</div>' +
       '<div style="min-width:0;flex:1"><b style="color:' + tr.c + ';font-size:14px;letter-spacing:.05em">' + esc(un.name) + "</b>" + posB +
-      '<div style="font-size:10.5px;color:var(--ink-3);margin-top:2px">' + T("lvShort", { n: un.lv }) + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + "</div>" +
+      '<div style="font-size:10.5px;color:var(--ink-3);margin-top:2px">' + T("lvShort", { n: un.lv }) + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + (un.members ? ' · <b style="color:#e8c988">帅 ' + esc(un.leader || "") + " · " + un.memN + "将</b>" : "") + "</div>" +
       '<div style="font-size:10.5px;color:#c8d4e0;margin-top:3px">' + statLine + "</div>" + skLine +
       '<div style="font-size:11px;color:#c8d4e0;margin-top:4px">' + T("troopShort", { n: troopTxt(un.troop) }) +
       (un.troop < un.troopMax ? ' <small style="color:var(--ink-3)">/ ' + troopTxt(un.troopMax) + "</small>" : "") + "</div>" +
-      '<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.10);margin-top:4px;overflow:hidden"><i style="display:block;height:100%;width:' + pct + "%;background:linear-gradient(90deg," + (side === "A" ? "#5fbf8a,#7fd08a" : "#d07070,#e09a9a") + ')"></i></div>' +
+      '<div class="lg-hp" style="height:4px;border-radius:3px;background:rgba(255,255,255,.10);margin-top:4px;overflow:hidden"><i style="display:block;height:100%;width:' + pct + "%;background:linear-gradient(90deg," + (side === "A" ? "#5fbf8a,#7fd08a" : "#d07070,#e09a9a") + ')"></i></div>' +
       "</div></div></div></div>";
   }
   function playLog() {
@@ -14970,6 +15149,7 @@ var BOTS = [
         ln._fx = armFx(ln, ln._un);
       }
       fx(ln);
+      if (res.legion) legionSync(res);
       i++;
       if (i % 4 === 0 || i >= lines.length) box.scrollTop = box.scrollHeight;
       BATUI._timer = setTimeout(step, Math.max(40, 320 / BATUI.speed));
@@ -15952,11 +16132,30 @@ var BOTS = [
         else { if (BATUI.squad.length >= 5) return toast(T("squadDesc"), "err"); BATUI.squad.push(id); }
         refreshBattle(); return;
       }
+      case "lg-ti": {
+        var tis65 = BATUI.legionTis || (BATUI.legionTis = []);
+        var ti65 = +(t.getAttribute("data-ti") || -1);
+        var ix65 = tis65.indexOf(ti65);
+        if (ix65 >= 0) tis65.splice(ix65, 1);
+        else { if (tis65.length >= 5) return toast("军团战役最多同时投入 5 个编队", "err"); tis65.push(ti65); }
+        refreshBattle(); return;
+      }
+      case "lg-go": BATUI.res = null; location.hash = "#/battle/f/l" + n; return;
       case "fight": location.hash = "#/battle/f/s" + n; return;
       case "sweep": location.hash = "#/battle/f/w" + n; return;
       case "pvp": location.hash = "#/battle/f/p" + i; return;
       case "back": BATUI.fight = null; BATUI.res = null; location.hash = "#/battle"; return;
+      case "lg-again": BATUI.res = null;
       case "go": {
+        if (key.charAt(0) === "l") {
+          var fkl65 = BATUI.fight;
+          if (!fkl65 || fkl65.key !== key || fkl65.kind !== "legion") { fkl65 = fightKeyCards(key); if (!fkl65) return; BATUI.fight = fkl65; BATUI.fight.key = key; }
+          var resL65 = simulate(fkl65.unitsA, fkl65.unitsB, null);
+          resL65.legion = true; resL65._lgKey = key;
+          resL65.out = legionSettle(fkl65.stage, resL65, fkl65.squad);
+          BATUI.res = resL65; setApp(renderFight(key)); playLog();
+          return;
+        }
         var fk = fightKeyCards(key); if (!fk) return;
         var A = fk.squad.map(function (c) { return unitOf(c, "A"); }).filter(Boolean);
         if (!A.length) return toast(T("needCard"), "err");
