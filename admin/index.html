@@ -1,0 +1,1771 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>三国图鉴 · 后台监控台</title>
+<style>
+:root{
+  --bg:#0c1319; --bg2:#0f1a22; --panel:#121e27; --line:rgba(255,255,255,.09);
+  --txt:#e8eef4; --dim:#8fa3b3; --gold:#f2c14e; --red:#e05b4b; --grn:#3fae7a; --blu:#5b9bd5;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{
+  background:radial-gradient(1200px 600px at 20% -10%,#16303f 0%,transparent 60%),var(--bg);
+  color:var(--txt);font:14px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--gold);text-decoration:none}
+.top{display:flex;align-items:center;gap:12px;padding:14px 22px;border-bottom:1px solid var(--line);background:rgba(9,14,19,.72);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+.logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(145deg,#b3352b,#6d1a14);display:grid;place-items:center;font-size:12px;font-weight:700;color:#f7e6c4;box-shadow:0 2px 10px rgba(179,53,43,.4)}
+.top h1{font-size:15px;margin:0;letter-spacing:.06em;font-weight:600}
+.top h1 b{color:var(--gold);font-weight:600}
+.top .sp{flex:1}
+.pill{font-size:11px;color:var(--dim);border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+.btn{cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--txt);padding:7px 13px;border-radius:8px;font-size:12.5px;font-family:inherit;transition:.15s}
+.btn:hover{background:rgba(242,193,78,.12);border-color:rgba(242,193,78,.4)}
+.btn.gold{background:linear-gradient(160deg,#f2c14e,#d8a02e);color:#241a08;border-color:transparent;font-weight:600}
+.btn.gold:hover{filter:brightness(1.06)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* gate */
+#gate{min-height:calc(100vh - 60px);display:grid;place-items:center;padding:30px}
+.card{width:100%;max-width:380px;background:linear-gradient(180deg,rgba(24,38,48,.96),rgba(16,26,34,.96));border:1px solid var(--line);border-radius:16px;padding:26px 24px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.card h2{margin:0 0 4px;font-size:18px;letter-spacing:.04em}
+.card p.sub{margin:0 0 20px;color:var(--dim);font-size:12.5px}
+label{display:block;font-size:12px;color:var(--dim);margin:0 0 6px}
+input{width:100%;background:#0b141b;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;transition:.15s}
+input:focus{border-color:rgba(242,193,78,.55);box-shadow:0 0 0 3px rgba(242,193,78,.1)}
+.field{margin-bottom:14px}
+.err{color:#ff8f80;font-size:12.5px;min-height:18px;margin-top:4px}
+.tip{margin-top:16px;font-size:11.5px;color:#6c8092;line-height:1.6}
+
+/* app */
+main{max-width:1280px;margin:0 auto;padding:20px 22px 60px}
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.tab{cursor:pointer;padding:8px 16px;border-radius:9px;font-size:13px;color:var(--dim);border:1px solid transparent;background:transparent;font-family:inherit}
+.tab.on{background:rgba(242,193,78,.12);color:var(--gold);border-color:rgba(242,193,78,.3)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .l{font-size:11.5px;color:var(--dim);letter-spacing:.04em}
+.kpi .v{font-size:26px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:11px;color:#6c8092;margin-top:2px}
+.kpi.hi .v{color:var(--gold)}
+.grid2{display:grid;grid-template-columns:1.55fr 1fr;gap:14px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel h3{margin:0 0 14px;font-size:13px;color:#c9d7e2;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel h3 .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{cursor:pointer;background:transparent;border:0;color:var(--dim);font-size:11.5px;padding:5px 10px;font-family:inherit}
+.seg button.on{background:rgba(242,193,78,.16);color:var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--dim);font-weight:500;font-size:11.5px;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+tbody tr:hover{background:rgba(255,255,255,.025)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:5px;background:rgba(91,155,213,.14);color:#8fc0e8}
+.tag.cn{background:rgba(224,91,75,.15);color:#f0a196}
+.tag.intl{background:rgba(63,174,122,.15);color:#7fd3a7}
+.muted{color:#6c8092}
+.empty{color:var(--dim);text-align:center;padding:40px 0;font-size:13px}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input{max-width:260px}
+.bar{height:6px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#d8a02e,#f2c14e)}
+#accTable,#evtTable{overflow-x:auto}
+#accTable table,#evtTable table{min-width:920px}
+.foot{margin-top:22px;font-size:11.5px;color:#5d7183;line-height:1.7}
+.hint{font-size:11.5px;color:#6c8092;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="logo">三國</div>
+  <h1>三國圖鑑 · <b>後台監控台</b></h1>
+  <span class="pill" id="modeTag">—</span>
+  <span class="pill" id="svcTag">—</span>
+  <span class="pill" id="scopeTag" title="概览、账号、流水均统计云端全库，不限于当前登录者">监控范围：全部账号</span>
+  <span class="pill" id="verTag">后台 V18</span>
+  <div class="sp"></div>
+  <span class="pill" id="whoTag">未登录</span>
+  <a class="btn" href="../" style="text-decoration:none">图鉴首页</a>
+  <button class="btn" id="refreshBtn" hidden>刷新</button>
+  <button class="btn" id="logoutBtn" hidden>退出</button>
+</div>
+
+<section id="gate">
+  <div class="card">
+    <h2>管理员登录</h2>
+    <p class="sub">唯一后台入口 · 账号数据、发放与访问日志仅在此处可查</p>
+    <div class="field">
+      <label>用户名</label>
+      <input id="user" value="fanyzou" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input id="pwd" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <div class="err" id="gateErr"></div>
+    <button class="btn gold" id="loginBtn" style="width:100%;padding:10px">登 录</button>
+    <div class="tip">数据存储于云端数据库；账号邮箱与手机号仅可在本控制台查询，前端页面对匿名访问完全不可读。</div>
+  </div>
+</section>
+
+<main id="app" hidden>
+  <div class="tabs">
+    <button class="tab on" data-tab="ov">概览</button>
+    <button class="tab" data-tab="acc">账号清单</button>
+    <button class="tab" data-tab="evt">事件流水</button>
+    <button class="tab" data-tab="cfg">卡牌配置</button>
+    <button class="tab" data-tab="price">价表</button>
+    <button class="tab" data-tab="shop">商店配置</button>
+    <button class="tab" data-tab="econ">经济模型</button>
+  </div>
+
+  <section id="tab-ov">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>近 30 天访问与注册
+          <span class="sp"></span>
+          <span class="seg" id="seg">
+            <button data-k="all" class="on">全部</button>
+            <button data-k="cn">国内</button>
+            <button data-k="intl">海外</button>
+          </span>
+        </h3>
+        <div id="chart"></div>
+      </div>
+      <div class="panel">
+        <h3>地域分布</h3>
+        <div id="regions"></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3>近 7 天事件类型</h3>
+      <div id="topEv"></div>
+    </div>
+  </section>
+
+  <section id="tab-acc" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">注册账号（全部用户） <span class="muted" id="accTotal" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <input id="accQ" placeholder="搜索 ID / 邮箱 / 手机号 / 昵称">
+        <button class="btn" id="accSearch">搜索</button>
+        <button class="btn" id="accCsv">导出 CSV</button>
+      </div>
+      <div id="accTable"></div>
+      <div class="hint">按注册时间倒序；手机号默认脱敏，点击「显示」查看完整号码。</div>
+    </div>
+  </section>
+
+  <section id="tab-cfg" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">卡牌配置表（七阶品级 · 全站生效）</h3>
+        <span style="flex:1"></span>
+        <span class="muted" id="cfgUpdated"></span>
+        <button class="btn" id="cfgReload">刷新</button>
+        <button class="btn" id="cfgReset">恢复默认</button>
+        <button class="btn gold" id="cfgSave">保存并全量生效</button>
+      </div>
+      <div id="cfgTable"></div>
+      <div class="hint">保存后国内站与海外站的前端在用户下次打开时自动拉取新配置：卡牌的回收积分、属性增加、技能触发率、带兵上限、职位加成、每10级点数与星级即时随表生效，无需重新发布。颜色与品级（紫S/蓝A/绿B/黄C/橙D/赤E/白F）为体系标识不可改；品级按武将五维综合值划分（≥88 紫 / ≥85 蓝 / ≥82 绿 / ≥78 黄 / ≥72 橙 / ≥65 赤 / &lt;65 白）。</div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="toolbar">
+        <h3 style="margin:0">带兵成长曲线（每升一级增加的兵力 · 全站生效）</h3>
+        <span style="flex:1"></span>
+        <span class="muted" id="gwUpdated"></span>
+        <button class="btn" id="gwReload">刷新</button>
+        <button class="btn" id="gwReset">恢复默认</button>
+        <button class="btn gold" id="gwSave">保存带兵曲线</button>
+      </div>
+      <div id="gwTable"></div>
+      <div class="hint" id="gwHint">规则：每升一级，按<b>新等级所在分段</b>累加兵力。默认 1-20 级每级 +500、21-40 级每级 +1000、41-60 级每级 +2000、61-70 级每级 +5000——即 Lv.1 = 1,500 兵（起始 1,000 + 首级 +500），Lv.20 = 11,000、Lv.40 = 31,000、Lv.60 = 71,000、Lv.70 = 121,000。<b>带兵上限不能超过上方卡牌配置中的「带兵上限」</b>——超出部分会被裁剪，玩家升级时会在战报中收到「已达品级最高上限」提示。分段须从 1 级起连续无空洞并覆盖到 70 级，否则前端会拒绝应用。</div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="toolbar">
+        <h3 style="margin:0">抽卡概率配置（每 100 张卡片 · 全站生效）</h3>
+        <span style="flex:1"></span>
+        <span class="muted" id="gdUpdated"></span>
+        <button class="btn" id="gdReload">刷新</button>
+        <button class="btn" id="gdReset">恢复默认</button>
+        <button class="btn gold" id="gdSave">保存抽卡概率</button>
+      </div>
+      <div id="gdTable"></div>
+      <div style="margin:14px 0 4px;font-weight:600">配额口径（S/A/B/C 的张数按什么算）</div>
+      <div id="gdMode" style="display:flex;gap:20px;flex-wrap:wrap"></div>
+      <div class="hint">
+        <b>按「张」配置，不按「次」</b>：玩家每次抽卡得到 1 张卡片，100 张为一个配额周期。此处填写的数字 = 每 100 张卡片中该等级的目标张数（1% = 每 100 张 1 张）。<br>
+        仅 S / A / B / C 四个等级可设；其余张数按 D 35% / E 35% / F 30% 随机。小数（如 0.5）按周期累积进位，长期平均精确。<br>
+        S/A/B 的武将池仍为「武、统、智、政、魅各前 100 名」的并集（约 280 人）；C 及以下按该等级全量随机；同卡防重复加权与近 100 抽避重窗口保持不变。
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="toolbar">
+        <h3 style="margin:0">小兵人图片（作战页士兵模拟图 · 按兵种 · 全站生效）</h3>
+        <span style="flex:1"></span>
+        <span class="muted" id="spUpdated"></span>
+        <button class="btn" id="spReload">刷新</button>
+        <button class="btn" id="spResetAll">全部恢复默认</button>
+        <button class="btn gold" id="spSave">保存全部</button>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0 2px">
+        <input type="file" id="spBulk" accept="image/*" multiple style="font-size:12.5px">
+        <span class="muted" style="font-size:12px">批量：可一次选多张，按文件名匹配兵种（如 <code>qiang.png</code> / <code>枪兵.png</code>）</span>
+      </div>
+      <div id="spRows" style="margin:6px 0 2px"></div>
+      <div class="muted" id="spMsg" style="font-size:12px;margin-top:8px"></div>
+      <div class="hint">作战页每个武将卡周围按「每 1000 兵 = 1 个小人、最多 200 个」环绕布点，小人图按该武将的<b>兵种</b>取这里的图；某兵种没上传时回落到内置默认小人（弓兵）。上传后自动等比缩到高 96px 并转 WebP（保留透明底），点「保存全部」后国内站与海外站下次打开自动拉取生效。建议上传<b>透明底立绘抠图</b>（白底会带白框）；「恢复默认」清掉该兵种的图。</div>
+    </div>
+  </section>
+
+  <section id="tab-price" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">月度资源-金币价格映射表（1 单位资源 = ? 金币）</h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="priceReload">刷新</button>
+      </div>
+      <div id="priceTable"></div>
+      <div class="hint">基础价随季节浮动：秋收（7-9 月）粮贱、铜铁贵；冬季（10-12 月）粮贵、铜铁贱；春夏平稳。实际市价在基础价 ±10% 内按月度种子逐月波动（与游戏内集市完全同源）。<br>
+      <b>玩家交易加成规则</b>：武将每 1 点智力 +1% 资源兑换总量；卡牌等级倍率 = min(5, 1 + (等级-1) × 0.25)，最高 5 倍；买入时实际所得资源 = 数量 × 加成、卖出时实际所得金币 = 金额 × 加成；交易完成后客户端会弹窗给出数据分析说明（智力加成 × 等级倍率 → 合计倍率）。</div>
+    </div>
+  </section>
+
+  <section id="tab-shop" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">商店配置（全站生效） <span class="muted" id="shopUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="shopReload">刷新</button>
+        <button class="btn gold" id="shopAdd">＋ 新增商品</button>
+        <button class="btn gold" id="shopSave">保存全部</button>
+      </div>
+      <div id="shopRows"></div>
+      <div class="hint" id="shopMsg">配置后游戏内商店（卡牌墙详情 → 装备商店）只出售此处商品；清空并保存则恢复内置品级商品。属性比例为对该槽位基础属性的加成百分比；技能明细行的伤害/防御按合计 % 加成作用于出战武将。</div>
+    </div>
+  </section>
+
+  <section id="tab-econ" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">户口经济模型（全站生效） <span class="muted" id="ecoUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="ecoReload">刷新</button>
+        <button class="btn" id="ecoReset">恢复默认</button>
+        <button class="btn gold" id="ecoSave">保存并全站生效</button>
+      </div>
+      <div id="ecoTable"></div>
+      <div style="margin:16px 0 6px;font-weight:600">按当前参数试算（人口 → 户数 → 月入库）</div>
+      <div id="ecoPreview"></div>
+      <div class="hint">
+        计算链路：<b>城市人口 ÷ 户均人口 = 户数</b>；<b>户数 × 每户每月上缴 = 本月官府实收粮食</b>；木/铜/铁/钱按「每户每月」产出同比例增长。<b>农田及各类建筑产出是附加收入</b>，在户口上缴之外叠加（粮再乘「农田附加系数」）。<br>
+        默认口径：一户农家一年产 30 石、自留 24 石、上缴 6 石 —— 即每户每月上缴 0.5 石。改这里即改全站所有城市的产出，玩家端下次打开或刷新后生效。<br>
+        放归田野（城内政务页）每放归 1 名兵员就 +1 人口，人口增长会直接变成新的纳税户，因此「放归」现在是增产手段。
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-evt" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">事件流水（全部访客与账号） <span class="muted" id="evtTotal" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <select id="evtKind" class="btn" style="padding:7px 10px">
+          <option value="">全部事件</option>
+          <option value="visit">访问 visit</option>
+          <option value="click">点击 click</option>
+          <option value="login">登录 login</option>
+          <option value="register">注册 register</option>
+          <option value="draw">抽卡 draw</option>
+          <option value="post">发帖 post</option>
+          <option value="admin_login">后台登录 admin_login</option>
+        </select>
+        <button class="btn" id="evtMore">加载更多</button>
+      </div>
+      <div id="evtTable"></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    监控范围：云端数据库全库 —— 概览统计、账号清单、事件流水均覆盖<b>所有账号与所有访客</b>（含国内站与海外站），与管理员本人的浏览行为无关<br>
+    访问/点击由前端自动采集，登录与注册同时写入账号表；仅本控制台持有会话令牌，可直接读取；图鉴站点对这几张表无任何读取权限
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  /* 应用发布域名（唯一后台）。若本页正跑在任一 *.workbuddy.host 应用域名下，
+     直接以当前 origin 为准——域名一旦由平台重新分配也不会失联。 */
+  var HOST_FIXED = "https://sanguo-atlas.app.workbuddy.host";
+  var HOST = HOST_FIXED;
+  try { if (/\.workbuddy\.host$/i.test(location.hostname)) HOST = location.origin; } catch (e) {}
+  var KEY = "wbpk_CuEbv9EAEwwQYI92Z1RcYH_mwa0b6O1sk6njj7GmgTpz45jl7qncG2M";
+  var SAME = false;
+  try { SAME = (location.origin === HOST); } catch (e) {}
+
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var TOK_KEY = "sg_adm_tok";
+
+  /* ---------- 传输层：同源直连 / 跨源中继 ---------- */
+  var cli = null, seq = 0, waits = {}, frame = null, fready = false, fq = [];
+  var sdkQ = [], sdkState = "idle", lastErr = "";
+
+  function svcTag() {
+    var el = document.getElementById("svcTag");
+    if (!el) return;
+    if (!SAME) {
+      el.textContent = sdkState === "fail" ? "中继不可达" : "中继待命";
+      el.style.color = sdkState === "fail" ? "#f0a196" : "#8fa3b3";
+      return;
+    }
+    var map = { idle: "SDK 待加载", loading: "SDK 加载中…", ok: "云服务就绪", fail: "云服务不可达" };
+    el.textContent = map[sdkState] || "—";
+    el.style.color = sdkState === "fail" ? "#f0a196" : (sdkState === "ok" ? "#7fd3a7" : "#8fa3b3");
+  }
+  function initCli() {
+    if (cli) return cli;
+    if (!SAME) return null;
+    if (window.WorkBuddyCloud && window.WorkBuddyCloud.createWorkBuddyCloud) {
+      try {
+        cli = window.WorkBuddyCloud.createWorkBuddyCloud({ endpoint: HOST, publishableKey: KEY });
+        sdkState = "ok";
+      } catch (e) { cli = null; sdkState = "fail"; }
+    } else {
+      sdkState = "fail";
+    }
+    svcTag();
+    var q = sdkQ; sdkQ = [];
+    q.forEach(function (fn) { fn(cli); });
+    return cli;
+  }
+  function loadSdk() {
+    if (!SAME || cli) return;
+    if (loadSdk._x) return;
+    loadSdk._x = 1;
+    sdkState = "loading"; svcTag();
+    var s = document.createElement("script");
+    s.src = "./sdk.js";
+    s.onload = function () { loadSdk._x = 0; initCli(); };
+    s.onerror = function () { loadSdk._x = 0; sdkState = "fail"; svcTag(); };
+    document.head.appendChild(s);
+  }
+  /* 等待 SDK 就绪（最多 8s），避免"点得快就报密码错" */
+  function waitCli() {
+    if (cli) return Promise.resolve(cli);
+    if (!SAME) return Promise.resolve(null);
+    return new Promise(function (res) {
+      var done = false;
+      function fin(c) { if (done) return; done = true; if (!c) { sdkState = "fail"; svcTag(); lastErr = "sdk"; } res(c); }
+      sdkQ.push(fin);
+      loadSdk();
+      setTimeout(function () { fin(cli); }, 8000);
+    });
+  }
+  function ensureFrame() {
+    if (frame) return frame;
+    frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;opacity:0";
+    frame.src = HOST + "/_relay.html";
+    frame.onload = function () { fready = true; flush(); };
+    document.body.appendChild(frame);
+    window.addEventListener("message", function (e) {
+      if (e.origin !== HOST) return;
+      var d = e.data || {};
+      if (d && d.__sgrelay && d.id && waits[d.id]) { var fn = waits[d.id]; delete waits[d.id]; fn(d.data); }
+    });
+    return frame;
+  }
+  function flush() {
+    if (!fready || !frame) return;
+    while (fq.length) {
+      var it = fq.shift();
+      try { frame.contentWindow.postMessage({ __sg: 1, id: it.id, name: it.name, args: it.args }, HOST); } catch (e) {}
+    }
+  }
+  function callOnce(name, args) {
+    lastErr = "";
+    if (SAME) {
+      return waitCli().then(function (c) {
+        if (!c) { lastErr = "sdk"; return null; }
+        return Promise.resolve(c.database.rpc(name, args)).then(function (r) {
+          return r && r.data;
+        }, function () { lastErr = "rpc"; return null; });
+      });
+    }
+    return new Promise(function (res) {
+      var id = ++seq;
+      waits[id] = res;
+      fq.push({ id: id, name: name, args: args });
+      ensureFrame();
+      flush();
+      setTimeout(function () {
+        if (waits[id]) { delete waits[id]; lastErr = "timeout"; sdkState = "fail"; svcTag(); res(null); }
+      }, 12000);
+    });
+  }
+  /* 平台偶发 5xx/超时（如 525）：自动重试 2 次，避免整块数据静默空白 */
+  function call(name, args, tries) {
+    return callOnce(name, args).then(function (r) {
+      var n = tries || 0;
+      if (!r && n < 2) {
+        return new Promise(function (res) { setTimeout(function () { res(call(name, args, n + 1)); }, 1200); });
+      }
+      return r;
+    });
+  }
+
+  /* ---------- 工具 ---------- */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function num(n) { return (n == null ? 0 : n).toLocaleString("zh-CN"); }
+  function dt(s) {
+    if (!s) return "—";
+    var d = new Date(s);
+    if (isNaN(d)) return esc(s);
+    var p = function (x) { return x < 10 ? "0" + x : x; };
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  function maskPhone(p) { return p && p.length > 7 ? p.slice(0, 3) + "****" + p.slice(-4) : (p || "—"); }
+  function sha256(txt) {
+    if (!(window.crypto && crypto.subtle)) return Promise.resolve("");
+    var buf = new TextEncoder().encode(txt);
+    return crypto.subtle.digest("SHA-256", buf).then(function (h) {
+      return Array.prototype.map.call(new Uint8Array(h), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+    });
+  }
+  function toastMsg(t) { try { console.log("[admin]", t); } catch (e) {} }
+
+  var state = { ov: null, tab: "ov", accQ: "", accRows: [], evtKind: "", evtOff: 0, evtRows: [], range: "all" };
+
+  /* ---------- 登录 ---------- */
+  function token() { try { return sessionStorage.getItem(TOK_KEY) || ""; } catch (e) { return ""; } }
+  function setToken(t) { try { t ? sessionStorage.setItem(TOK_KEY, t) : sessionStorage.removeItem(TOK_KEY); } catch (e) {} }
+
+  function doLogin() {
+    var u = ($("#user").value || "").trim();
+    var p = $("#pwd").value || "";
+    var err = $("#gateErr");
+    err.textContent = "";
+    if (!p) { err.textContent = "请输入密码"; return; }
+    var btn = $("#loginBtn");
+    btn.disabled = true; btn.textContent = "验证中…";
+    sha256("sanguo|" + u + "|" + p).then(function (h) {
+      if (!h) { err.textContent = "当前环境不支持安全摘要（需 HTTPS）"; btn.disabled = false; btn.textContent = "登 录"; return; }
+      return call("sg_admin_login", { p_hash: h, p_ua: (navigator.userAgent || "").slice(0, 180) }).then(function (r) {
+        btn.disabled = false; btn.textContent = "登 录";
+        if (!r) {
+          err.textContent = lastErr === "sdk"
+            ? "后台脚本未能加载（/admin/sdk.js），请刷新页面或直接访问 " + HOST + "/admin/"
+            : lastErr === "timeout"
+              ? "云服务无响应（中继超时），请确认 " + HOST + " 可正常打开"
+              : "云服务连接失败，请稍后重试";
+          return;
+        }
+        if (!r.ok) { err.textContent = "用户名或密码不正确"; return; }
+        if (!r.token) { err.textContent = "登录返回异常（缺少令牌），请稍后重试"; return; }
+        setToken(r.token);
+        enterApp();
+      });
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = "登 录";
+      err.textContent = "登录失败，请检查网络后重试";
+    });
+  }
+
+  function enterApp() {
+    $("#gate").hidden = true;
+    $("#app").hidden = false;
+    $("#refreshBtn").hidden = false;
+    $("#logoutBtn").hidden = false;
+    $("#whoTag").textContent = "fanyzou · 管理员（数据=全库）";
+    loadOverview(); loadAccounts(true);
+  }
+
+  function logout() {
+    setToken("");
+    $("#app").hidden = true;
+    $("#gate").hidden = false;
+    $("#refreshBtn").hidden = true;
+    $("#logoutBtn").hidden = true;
+    $("#whoTag").textContent = "未登录";
+    $("#pwd").value = "";
+  }
+
+  /* ---------- 概览 ---------- */
+  function loadOverview() {
+    var t = token(); if (!t) return;
+    call("sg_admin_overview", { p_token: t }).then(function (r) {
+      if (!r || r.ok === false) {
+        if (r && r.err === "unauthorized") { logout(); return; }
+        if (!r) $("#kpis").innerHTML = '<div class="empty">概览加载失败（云服务无响应，已重试）— 请点击「刷新」重试</div>';
+        return;
+      }
+      state.ov = r;
+      renderKpis(r.totals);
+      renderChart();
+      renderRegions(r.regions || []);
+      renderTopEvents(r.events || []);
+    });
+  }
+
+  function renderKpis(t) {
+    t = t || {};
+    var items = [
+      { l: "今日访问", v: t.visits_today, d: "累计 " + num(t.visits_all), hi: 1 },
+      { l: "今日独立访客", v: t.uniq_today, d: "累计 " + num(t.uniq_all) },
+      { l: "今日登录", v: t.logins_today, d: "登录事件" },
+      { l: "今日注册", v: t.regs_today, d: "累计 " + num(t.regs_all) },
+      { l: "账号总数", v: t.regs_all, d: "含邮箱/手机号" },
+      { l: "事件总量", v: t.events_all, d: "访问+点击+登录" }
+    ];
+    $("#kpis").innerHTML = items.map(function (i) {
+      return '<div class="kpi' + (i.hi ? " hi" : "") + '"><div class="l">' + i.l + '</div><div class="v">' +
+        num(i.v) + '</div><div class="d">' + i.d + '</div></div>';
+    }).join("");
+  }
+
+  function renderChart() {
+    var o = state.ov; if (!o) return;
+    var d = (o.daily || []).slice(-30);
+    var key = state.range;
+    var vals = d.map(function (r) { return key === "all" ? r.visits : (r[key] || 0); });
+    var regs = d.map(function (r) { return r.regs || 0; });
+    var max = Math.max.apply(null, vals.concat([1]));
+    var maxR = Math.max.apply(null, regs.concat([1]));
+    var W = 640, H = 220, PL = 34, PB = 26, PT = 10;
+    var iw = W - PL - 8, ih = H - PB - PT;
+    var bw = iw / d.length;
+    var bars = "", line = "", labels = "";
+    d.forEach(function (r, i) {
+      var h = vals[i] / max * ih;
+      var x = PL + i * bw + bw * 0.18;
+      var y = PT + ih - h;
+      bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.64).toFixed(1) +
+        '" height="' + Math.max(0.8, h).toFixed(1) + '" rx="1.6" fill="url(#bg1)"><title>' + r.day + " · 访问 " + vals[i] + "</title></rect>";
+      var px = PL + i * bw + bw / 2;
+      var py = PT + ih - (regs[i] / maxR * ih) * 0.9;
+      line += (i ? "L" : "M") + px.toFixed(1) + " " + py.toFixed(1) + " ";
+      if (i % 5 === 0 || i === d.length - 1) {
+        labels += '<text x="' + px.toFixed(1) + '" y="' + (H - 8) + '" fill="#5d7183" font-size="9" text-anchor="middle">' +
+          r.day.slice(5) + "</text>";
+      }
+    });
+    var ylab = '<text x="4" y="' + (PT + 8) + '" fill="#5d7183" font-size="9">' + max + "</text>" +
+      '<text x="4" y="' + (PT + ih) + '" fill="#5d7183" font-size="9">0</text>';
+    $("#chart").innerHTML =
+      '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" height="' + H + '" preserveAspectRatio="none">' +
+      '<defs><linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#f2c14e" stop-opacity=".95"/><stop offset="100%" stop-color="#c98d1e" stop-opacity=".55"/></linearGradient></defs>' +
+      '<line x1="' + PL + '" y1="' + (PT + ih) + '" x2="' + (W - 8) + '" y2="' + (PT + ih) + '" stroke="rgba(255,255,255,.09)"/>' +
+      ylab + bars +
+      '<path d="' + line + '" fill="none" stroke="#5b9bd5" stroke-width="1.6" stroke-linejoin="round"/>' + labels +
+      "</svg>" +
+      '<div class="hint" style="display:flex;gap:16px"><span style="color:#f2c14e">■ 访问量</span>' +
+      '<span style="color:#5b9bd5">— 新增注册</span>' +
+      '<span class="muted">' + (key === "all" ? "全部地区" : key === "cn" ? "仅国内" : "仅海外") + "</span></div>";
+  }
+
+  function renderRegions(list) {
+    var total = list.reduce(function (s, r) { return s + (r.cnt || 0); }, 0) || 1;
+    var name = { cn: "国内", intl: "海外", unknown: "未知" };
+    var col = { cn: "#e05b4b", intl: "#3fae7a", unknown: "#5d7183" };
+    var rows = list.map(function (r) {
+      var pct = (r.cnt / total * 100);
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+        '<span style="width:44px;font-size:12px;color:' + (col[r.region] || "#8fa3b3") + '">' + (name[r.region] || r.region) + "</span>" +
+        '<div class="bar" style="flex:1"><i style="width:' + pct.toFixed(1) + "%;background:" + (col[r.region] || "#5d7183") + '"></i></div>' +
+        '<span class="mono" style="width:64px;text-align:right">' + num(r.cnt) + " · " + pct.toFixed(0) + "%</span></div>";
+    }).join("");
+    $("#regions").innerHTML = rows || '<div class="empty">暂无数据</div>';
+  }
+
+  function renderTopEvents(list) {
+    var max = Math.max.apply(null, list.map(function (r) { return r.cnt || 0; }).concat([1]));
+    var lbl = { visit: "访问", click: "点击", login: "登录", register: "注册", draw: "抽卡", post: "发帖", admin_login: "后台登录" };
+    $("#topEv").innerHTML = list.length ? list.map(function (r) {
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">' +
+        '<span style="width:76px;font-size:12px">' + (lbl[r.event] || esc(r.event)) + '<span class="muted mono" style="font-size:10px"> ' + esc(r.event) + "</span></span>" +
+        '<div class="bar" style="flex:1"><i style="width:' + ((r.cnt / max) * 100).toFixed(1) + '%"></i></div>' +
+        '<span class="mono" style="width:56px;text-align:right">' + num(r.cnt) + "</span></div>";
+    }).join("") : '<div class="empty">暂无数据</div>';
+  }
+
+  /* ---------- 账号 ---------- */
+  function loadAccounts(reset) {
+    var t = token(); if (!t) return;
+    if (reset) state.accRows = [];
+    call("sg_admin_accounts", { p_token: t, p_q: state.accQ, p_limit: 200, p_off: 0 }).then(function (r) {
+      if (!r || r.ok === false) {
+        if (r && r.err === "unauthorized") { logout(); return; }
+        $("#accTotal").textContent = "";
+        $("#accTable").innerHTML = '<div class="empty">账号清单加载失败（云服务无响应，已自动重试）— 请点击「刷新」重试</div>';
+        return;
+      }
+      state.accRows = r.rows || [];
+      $("#accTotal").textContent = "共 " + num(r.total) + " 条";
+      $("#accTable").innerHTML = state.accRows.length ? (
+        '<table><thead><tr><th>ID</th><th>邮箱</th><th>手机号</th><th>昵称</th><th>地区</th><th>注册站点</th><th>注册时间</th><th>最近登录</th><th>登录次数</th><th>发放抽卡</th><th>发放积分</th><th>发卡（等级）</th><th>密码</th></tr></thead><tbody>' +
+        state.accRows.map(function (a, i) {
+          return "<tr><td class=\"mono\">" + a.id + "</td>" +
+            '<td class="mono">' + esc(a.email) + "</td>" +
+            '<td class="mono"><span data-ph="' + esc(a.phone || "") + '">' + esc(maskPhone(a.phone)) + '</span> ' +
+            (a.phone ? '<a href="javascript:;" data-reveal="' + i + '" style="font-size:11px">显示</a>' : "") + "</td>" +
+            "<td>" + esc(a.nick || "—") + "</td>" +
+            '<td><span class="tag ' + esc(a.region || "") + '">' + (a.region === "intl" ? "海外" : a.region === "cn" ? "国内" : esc(a.region || "—")) + "</span></td>" +
+            '<td><span class="tag ' + (siteOf(a.source) === "cn" ? "cn" : "intl") + '">' + (siteOf(a.source) === "cn" ? "国内站" : "海外站") + "</span> " +
+            '<span class="muted mono" style="font-size:11px">' + esc(a.source || "—") + "</span></td>" +
+            '<td class="mono">' + dt(a.created_at) + "</td>" +
+            '<td class="mono">' + dt(a.last_login_at) + "</td>" +
+            '<td class="mono">' + (a.login_count || 0) + "</td>" +
+            '<td><span style="display:inline-flex;gap:4px;align-items:center">' +
+            '<input data-gin="' + i + '" type="number" min="1" max="999" value="20" style="width:58px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit">' +
+            '<button class="btn" data-grant="' + i + '" style="padding:4px 9px">发放</button></span></td>' +
+            '<td><span style="display:inline-flex;gap:4px;align-items:center">' +
+            '<input data-pin="' + i + '" type="number" min="1" max="1000000" value="100" style="width:70px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit">' +
+            '<button class="btn" data-gpt="' + i + '" style="padding:4px 9px">发放</button></span></td>' +
+            '<td><span style="display:inline-flex;gap:4px;align-items:center">' +
+            '<select data-clv="' + i + '" style="padding:4px 5px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit">' +
+            '<option value="0">S级·紫</option><option value="1">A级·蓝</option><option value="2">B级·绿</option><option value="3">C级·黄</option><option value="4">D级·橙</option><option value="5">E级·赤</option><option value="6" selected>F级·白</option></select>' +
+            '<input data-cin="' + i + '" type="number" min="1" max="10" value="1" style="width:50px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit">' +
+            '<button class="btn" data-gcard="' + i + '" style="padding:4px 9px">发卡</button></span></td>' +
+            '<td><button class="btn" data-pwd="' + i + '" style="padding:4px 9px">改密</button></td></tr>';
+        }).join("") + "</tbody></table>"
+      ) : '<div class="empty">暂无注册数据</div>';
+    });
+  }
+
+  /* ---------- 发放抽卡（V13：确认弹窗 + 发放目标站点） ---------- */
+  function siteOf(src) {
+    return /workbuddy\.host/i.test(String(src || "")) ? "cn" : "intl";
+  }
+  function grantModal(a, n) {
+    var site = siteOf(a.source);
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:98;display:flex;align-items:center;justify-content:center";
+    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:360px;color:#e8ecf3;font-family:inherit">' +
+      '<div style="font-weight:600;font-size:15px;margin-bottom:12px">确认发放抽卡</div>' +
+      '<div style="font-size:13px;margin-bottom:8px">账号：<span class="mono">' + esc(a.email) + "</span></div>" +
+      '<div style="font-size:13px;margin-bottom:14px">注册站点：<span class="tag ' + (site === "cn" ? "cn" : "intl") + '">' + (site === "cn" ? "国内站" : "海外站") + "</span></div>" +
+      '<div style="font-size:13px;margin-bottom:10px">次数：<input id="gN" type="number" min="1" max="999" value="' + n + '" style="width:70px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"></div>' +
+      '<div style="font-size:13px;margin-bottom:8px">发放到站点：</div>' +
+      '<div style="font-size:13px;margin-bottom:12px;display:flex;gap:18px">' +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gsite" value="cn"' + (site === "cn" ? " checked" : "") + "> 国内站</label>" +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gsite" value="intl"' + (site !== "cn" ? " checked" : "") + "> 海外站</label></div>" +
+      '<div class="muted" style="font-size:12px;margin-bottom:14px">发放仅对该站点生效：用户在对应站点登录后自动到账，另一站点不受影响。</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button id="gCancel" class="btn" style="padding:6px 14px">取消</button>' +
+      '<button id="gOk" class="btn" style="padding:6px 14px;background:#2c5a38">确认发放</button></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector("#gCancel").onclick = function () { document.body.removeChild(ov); };
+    ov.querySelector("#gOk").onclick = function () {
+      var site2 = ov.querySelector('input[name="gsite"]:checked').value;
+      var n2 = parseInt(ov.querySelector("#gN").value, 10) || 0;
+      if (n2 < 1 || n2 > 999) { admTip("次数需在 1~999 之间", true); return; }
+      ov.querySelector("#gOk").disabled = true;
+      call("sg_admin_grant_draws", { p_token: token(), p_email: a.email, p_n: n2, p_site: site2 }).then(function (r) {
+        document.body.removeChild(ov);
+        if (r && r.ok) admTip("已向 " + a.email + " 在" + (site2 === "cn" ? "国内站" : "海外站") + "发放 " + n2 + " 次抽卡");
+        else if (r && r.err === "unauthorized") { logout(); }
+        else if (r && r.err === "no_account") admTip("账号不存在（须已注册）", true);
+        else if (r && r.err === "bad_n") admTip("次数需在 1~999 之间", true);
+        else if (r && r.err === "bad_site") admTip("发放站点无效", true);
+        else admTip("发放失败，请重试", true);
+      });
+    };
+  }
+  function admTip(msg, bad) {
+    var d = document.createElement("div");
+    d.textContent = msg;
+    d.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:99;padding:10px 16px;border-radius:8px;font-size:13px;" +
+      (bad ? "background:#5c2626;color:#ffd9d9" : "background:#1f3a26;color:#c9f2d3");
+    document.body.appendChild(d);
+    setTimeout(function () { d.parentNode && d.parentNode.removeChild(d); }, 2600);
+  }
+  document.getElementById("accTable").addEventListener("click", function (ev) {
+    var b = ev.target.closest ? ev.target.closest("[data-grant]") : null;
+    if (!b) return;
+    var i = parseInt(b.getAttribute("data-grant"), 10);
+    var a = state.accRows[i];
+    if (!a) return;
+    var inp = document.querySelector('[data-gin="' + i + '"]');
+    var n = inp ? parseInt(inp.value, 10) || 0 : 0;
+    if (n < 1 || n > 999) return admTip("次数需在 1~999 之间", true);
+    grantModal(a, n);
+  });
+
+  /* ---------- 发放积分（V20）：云端待领取，用户下次打开站点自动到账 ---------- */
+  function grantPtsModal(a, n) {
+    var site = siteOf(a.source);
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:98;display:flex;align-items:center;justify-content:center";
+    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:360px;color:#e8ecf3;font-family:inherit">' +
+      '<div style="font-weight:600;font-size:15px;margin-bottom:12px">确认发放积分</div>' +
+      '<div style="font-size:13px;margin-bottom:8px">账号：<span class="mono">' + esc(a.email) + "</span></div>" +
+      '<div style="font-size:13px;margin-bottom:14px">注册站点：<span class="tag ' + (site === "cn" ? "cn" : "intl") + '">' + (site === "cn" ? "国内站" : "海外站") + "</span></div>" +
+      '<div style="font-size:13px;margin-bottom:10px">积分：<input id="gpN" type="number" min="1" max="1000000" value="' + n + '" style="width:90px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"></div>' +
+      '<div style="font-size:13px;margin-bottom:8px">发放到站点：</div>' +
+      '<div style="font-size:13px;margin-bottom:12px;display:flex;gap:18px">' +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gpsite" value="cn"' + (site === "cn" ? " checked" : "") + "> 国内站</label>" +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gpsite" value="intl"' + (site !== "cn" ? " checked" : "") + "> 海外站</label>" +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gpsite" value="all"> 两站通用</label></div>' +
+      '<div class="muted" style="font-size:12px;margin-bottom:14px">积分写入云端待领取队列：用户在对应站点登录后自动到账并计入积分流水。</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button id="gpCancel" class="btn" style="padding:6px 14px">取消</button>' +
+      '<button id="gpOk" class="btn" style="padding:6px 14px;background:#2c5a38">确认发放</button></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector("#gpCancel").onclick = function () { document.body.removeChild(ov); };
+    ov.querySelector("#gpOk").onclick = function () {
+      var site2 = ov.querySelector('input[name="gpsite"]:checked').value;
+      var n2 = parseInt(ov.querySelector("#gpN").value, 10) || 0;
+      if (n2 < 1 || n2 > 1000000) { admTip("积分需在 1~1000000 之间", true); return; }
+      ov.querySelector("#gpOk").disabled = true;
+      call("sg_admin_grant_points", { p_token: token(), p_email: a.email, p_n: n2, p_site: site2 }).then(function (r) {
+        document.body.removeChild(ov);
+        if (r && r.ok) admTip("已向 " + a.email + " 发放 " + n2 + " 积分（" + (site2 === "cn" ? "国内站" : site2 === "intl" ? "海外站" : "两站通用") + "）");
+        else if (r && r.err === "unauthorized") { logout(); }
+        else if (r && r.err === "no_account") admTip("账号不存在（须已注册）", true);
+        else if (r && r.err === "bad_n") admTip("积分需在 1~1000000 之间", true);
+        else if (r && r.err === "bad_site") admTip("发放站点无效", true);
+        else admTip("发放失败，请重试", true);
+      });
+    };
+  }
+  document.getElementById("accTable").addEventListener("click", function (ev) {
+    var b = ev.target.closest ? ev.target.closest("[data-gpt]") : null;
+    if (!b) return;
+    var i = parseInt(b.getAttribute("data-gpt"), 10);
+    var a = state.accRows[i];
+    if (!a) return;
+    var inp = document.querySelector('[data-pin="' + i + '"]');
+    var n = inp ? parseInt(inp.value, 10) || 0 : 0;
+    if (n < 1 || n > 1000000) return admTip("积分需在 1~1000000 之间", true);
+    grantPtsModal(a, n);
+  });
+
+  /* ---------- V39 密码管理：查看是否已设密码 / 后台改密（写入两站云端档案） ---------- */
+  function pwHashAdm(pw, email) {
+    var s = "sg:" + String(email || "").trim().toLowerCase() + "|" + String(pw || "");
+    try {
+      if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest && window.TextEncoder) {
+        return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)).then(function (buf) {
+          var b = new Uint8Array(buf), h = "";
+          for (var i = 0; i < b.length; i++) h += ("0" + b[i].toString(16)).slice(-2);
+          return "v1:" + h;
+        }, function () { return ""; });
+      }
+    } catch (e) {}
+    return Promise.resolve("");
+  }
+  function parseState(r) {
+    if (!(r && r.ok && r.data)) return null;
+    try { return typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { return null; }
+  }
+  function pwdModal(a) {
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:98;display:flex;align-items:center;justify-content:center";
+    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:380px;color:#e8ecf3;font-family:inherit">' +
+      '<div style="font-weight:600;font-size:15px;margin-bottom:12px">账号密码管理</div>' +
+      '<div style="font-size:13px;margin-bottom:8px">账号：<span class="mono">' + esc(a.email) + "</span></div>" +
+      '<div id="pwStat" class="muted" style="font-size:12px;margin-bottom:10px">正在读取云端档案…</div>' +
+      '<div style="font-size:13px;margin-bottom:10px">新密码：<input id="pwNew" type="password" maxlength="32" autocomplete="new-password" style="width:100%;margin-top:6px;padding:6px 8px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"></div>' +
+      '<div style="font-size:13px;margin-bottom:12px">确认密码：<input id="pwNew2" type="password" maxlength="32" autocomplete="new-password" style="width:100%;margin-top:6px;padding:6px 8px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"></div>' +
+      '<div class="muted" style="font-size:12px;margin-bottom:14px">改密后立即生效：用户下次登录需用新密码；已登录设备不受影响。密码仅以 SHA-256 哈希形式保存在账号云端档案（pw 字段）。</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button id="pwCancel" class="btn" style="padding:6px 14px">关闭</button>' +
+      '<button id="pwOk" class="btn" style="padding:6px 14px;background:#2c5a38">保存新密码</button></div></div>';
+    document.body.appendChild(ov);
+    var o1 = null, o2 = null;
+    Promise.all([
+      call("sg_state_get", { p_email: a.email, p_site: "intl" }),
+      call("sg_state_get", { p_email: a.email, p_site: "cn" })
+    ]).then(function (rs) {
+      o1 = parseState(rs[0]); o2 = parseState(rs[1]);
+      var pw = (o1 && o1.pw) || (o2 && o2.pw) || "";
+      var st = ov.querySelector("#pwStat");
+      if (st) st.innerHTML = "密码状态：" + (pw ? '<b style="color:#7fd08a">已设置</b>' : '<b style="color:#e8c988">未设置（历史账号，可登录后补设）</b>') +
+        '<br>档案：' + (o1 ? "海外站 ✓ " : "海外站 — ") + (o2 ? "国内站 ✓" : "国内站 —");
+    });
+    ov.querySelector("#pwCancel").onclick = function () { document.body.removeChild(ov); };
+    ov.querySelector("#pwOk").onclick = function () {
+      var p1 = ov.querySelector("#pwNew").value, p2 = ov.querySelector("#pwNew2").value;
+      if (p1.length < 6 || p1.length > 32) return admTip("密码需为 6~32 位字符", true);
+      if (p1 !== p2) return admTip("两次输入的密码不一致", true);
+      var btn = ov.querySelector("#pwOk"); btn.disabled = true;
+      pwHashAdm(p1, a.email).then(function (h) {
+        if (!h) { btn.disabled = false; return admTip("当前环境不支持加密（需 HTTPS）", true); }
+        var put = function (site, base) {
+          var obj = base || {};
+          obj.pw = h;
+          if (a.email) obj.vmail = String(a.email).toLowerCase();
+          return call("sg_state_put", { p_email: a.email, p_site: site, p_data: JSON.stringify(obj) });
+        };
+        return Promise.all([put("intl", o1), put("cn", o2)]).then(function (rs2) {
+          var ok = rs2.filter(function (r) { return r && r.ok; }).length;
+          document.body.removeChild(ov);
+          admTip(ok ? ("已为 " + a.email + " 更新密码（" + ok + "/2 个站点写入成功）") : "改密失败，请重试", !ok);
+        });
+      });
+    };
+  }
+  document.getElementById("accTable").addEventListener("click", function (ev) {
+    var b = ev.target.closest ? ev.target.closest("[data-pwd]") : null;
+    if (!b) return;
+    var a = state.accRows[parseInt(b.getAttribute("data-pwd"), 10)];
+    if (!a) return;
+    pwdModal(a);
+  });
+
+  /* ---------- 发卡（V25）：等级限定、随机武将，数量 1~10 张 ---------- */
+  var TIER_NAMES = ["S级·紫", "A级·蓝", "B级·绿", "C级·黄", "D级·橙", "E级·赤", "F级·白"];
+  function grantCardModal(a, ti, n) {
+    var site = siteOf(a.source);
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:98;display:flex;align-items:center;justify-content:center";
+    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:380px;color:#e8ecf3;font-family:inherit">' +
+      '<div style="font-weight:600;font-size:15px;margin-bottom:12px">确认发放卡牌</div>' +
+      '<div style="font-size:13px;margin-bottom:8px">账号：<span class="mono">' + esc(a.email) + "</span></div>" +
+      '<div style="font-size:13px;margin-bottom:14px">注册站点：<span class="tag ' + (site === "cn" ? "cn" : "intl") + '">' + (site === "cn" ? "国内站" : "海外站") + "</span></div>" +
+      '<div style="font-size:13px;margin-bottom:8px">品级（武将随机，等级限定）：</div>' +
+      '<div style="font-size:13px;margin-bottom:12px"><select id="gcT" style="padding:5px 8px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit">' +
+      TIER_NAMES.map(function (nm, i) { return '<option value="' + i + '"' + (i === ti ? " selected" : "") + ">" + nm + "</option>"; }).join("") + "</select>" +
+      '　数量：<input id="gcN" type="number" min="1" max="10" value="' + n + '" style="width:60px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit">（最多 10 张）</div>' +
+      '<div style="font-size:13px;margin-bottom:8px">发放到站点：</div>' +
+      '<div style="font-size:13px;margin-bottom:12px;display:flex;gap:18px">' +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gcsite" value="cn"' + (site === "cn" ? " checked" : "") + "> 国内站</label>" +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gcsite" value="intl"' + (site !== "cn" ? " checked" : "") + "> 海外站</label>" +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gcsite" value="all"> 两站通用</label></div>' +
+      '<div class="muted" style="font-size:12px;margin-bottom:14px">玩家领取时在该品级的武将池中随机抽取整卡，直接入卡牌墙并计入流水。</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button id="gcCancel" class="btn" style="padding:6px 14px">取消</button>' +
+      '<button id="gcOk" class="btn" style="padding:6px 14px;background:#2c5a38">确认发卡</button></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector("#gcCancel").onclick = function () { document.body.removeChild(ov); };
+    ov.querySelector("#gcOk").onclick = function () {
+      var site2 = ov.querySelector('input[name="gcsite"]:checked').value;
+      var t2 = parseInt(ov.querySelector("#gcT").value, 10) || 0;
+      var n2 = parseInt(ov.querySelector("#gcN").value, 10) || 0;
+      if (n2 < 1 || n2 > 10) { admTip("发卡数量需在 1~10 之间", true); return; }
+      ov.querySelector("#gcOk").disabled = true;
+      call("sg_admin_grant_cards", { p_token: token(), p_email: a.email, p_tier: t2, p_n: n2, p_site: site2 }).then(function (r) {
+        document.body.removeChild(ov);
+        if (r && r.ok) admTip("已向 " + a.email + " 发放 " + TIER_NAMES[t2] + " 卡 ×" + n2 + "（" + (site2 === "cn" ? "国内站" : site2 === "intl" ? "海外站" : "两站通用") + "）");
+        else if (r && r.err === "unauthorized") { logout(); }
+        else if (r && r.err === "no_account") admTip("账号不存在（须已注册）", true);
+        else if (r && r.err === "bad_n") admTip("发卡数量需在 1~10 之间", true);
+        else if (r && r.err === "bad_tier") admTip("品级无效", true);
+        else if (r && r.err === "bad_site") admTip("发放站点无效", true);
+        else admTip("发卡失败，请重试", true);
+      });
+    };
+  }
+  document.getElementById("accTable").addEventListener("click", function (ev) {
+    var b = ev.target.closest ? ev.target.closest("[data-gcard]") : null;
+    if (!b) return;
+    var i = parseInt(b.getAttribute("data-gcard"), 10);
+    var a = state.accRows[i];
+    if (!a) return;
+    var inp = document.querySelector('[data-cin="' + i + '"]');
+    var n = inp ? parseInt(inp.value, 10) || 0 : 0;
+    if (n < 1 || n > 10) return admTip("发卡数量需在 1~10 之间", true);
+    var sel = document.querySelector('[data-clv="' + i + '"]');
+    var ti = sel ? parseInt(sel.value, 10) || 0 : 0;
+    grantCardModal(a, ti, n);
+  });
+
+  /* ---------- 商店配置（V58）：商品 CRUD + 图片上传 + 技能明细行，云端 key = shop ---------- */
+  var SHOP_SLOTS = [["wpn", "武器"], ["head", "头盔"], ["body", "铠甲"], ["mt", "坐骑"]];
+  var shopRows = null, shopEditIx = -1;
+  function shopSlotN(k) { var a = SHOP_SLOTS.filter(function (x) { return x[0] === k; })[0]; return a ? a[1] : (k || "—"); }
+  function shopLoad() {
+    $("#shopUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "shop" }).then(function (r) {
+      if (r && r.ok && r.data) {
+        try { shopRows = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { shopRows = []; }
+        if (!Object.prototype.toString.call(shopRows).match(/Array/)) shopRows = [];
+        if (r.updated_at) $("#shopUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else shopRows = [];
+      shopPaint();
+    });
+  }
+  function shopPaint() {
+    if (!shopRows) return;
+    $("#shopRows").innerHTML = shopRows.length ? shopRows.map(function (it, i) {
+      function shopFmt(n) { return (+n || 0).toLocaleString("en-US"); }
+      var price = [+it.pts ? shopFmt(it.pts) + " 积分" : "", +it.coin ? shopFmt(it.coin) + " 铜钱" : "", +it.copper ? shopFmt(it.copper) + " 铜" : "", +it.iron ? shopFmt(it.iron) + " 铁" : ""].filter(Boolean).join(" + ") || "免费";
+      return '<div style="display:flex;align-items:center;gap:14px;padding:9px 0;border-top:1px solid #262c36">' +
+        (it.img ? '<img src="' + esc(it.img) + '" style="width:46px;height:46px;object-fit:contain;border:1px solid #333a46;border-radius:8px;background:rgba(255,255,255,.05)">' : '<div style="width:46px;height:46px;border:1px dashed #333a46;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#5a6472">无图</div>') +
+        '<div style="flex:1;min-width:0"><b>' + esc(it.name || "?") + '</b> <span class="muted">' + esc(shopSlotN(it.slot)) + " · " + (it.ti != null ? TIER_NAMES[it.ti] : "?") + " · Lv." + (it.lv || 1) + "</span>" +
+        '<div class="muted" style="font-size:12px">' + price +
+        " · 攻+" + (+it.atkp || 0) + "% 防+" + (+it.defp || 0) + "% 体+" + (+it.hpp || 0) + "% 速+" + (+it.spdp || 0) + "%" +
+        ((it.sks || []).length ? " · 技能 " + it.sks.length + " 条：" + it.sks.map(function (s) { return esc(s.n || ""); }).join("、") : "") +
+        '</div></div>' +
+        '<button class="btn shop-edit" data-i="' + i + '">修改</button>' +
+        '<button class="btn shop-del" data-i="' + i + '" style="color:#f0a196">删除</button></div>';
+    }).join("") : '<div class="muted" style="padding:14px 0">暂无商品——点击「＋ 新增商品」创建；游戏内商店将回落为内置品级商品。</div>';
+    bindShopRows();
+  }
+  function bindShopRows() {
+    $$("#shopRows .shop-edit").forEach(function (b) { b.onclick = function () { shopOpenEdit(+this.getAttribute("data-i")); }; });
+    $$("#shopRows .shop-del").forEach(function (b) { b.onclick = function () {
+      var i = +this.getAttribute("data-i");
+      if (!confirm("删除商品「" + ((shopRows || [])[i] || {}).name + "」？点击「保存全部」后云端生效。")) return;
+      shopRows.splice(i, 1); shopPaint();
+    }; });
+  }
+  function shopOpenEdit(i) {
+    shopEditIx = i;
+    if (!shopRows) shopRows = [];   /* 本地/file:// 下 RPC 未就绪也能新增 */
+    var it = i >= 0 ? shopRows[i] : { name: "", slot: "wpn", ti: 3, lv: 1, pts: 0, coin: 0, copper: 0, iron: 0, atkp: 0, defp: 0, hpp: 0, spdp: 0, img: "", sks: [] };
+    shopModal(it);
+  }
+  function shopModal(it) {
+    var m = document.createElement("div");
+    m.id = "shopMask";
+    m.style.cssText = "position:fixed;inset:0;background:rgba(6,8,12,.68);z-index:60;overflow:auto";
+    m.innerHTML = '<div class="card" style="max-width:680px;max-height:88vh;overflow:auto;position:relative;margin:5vh auto">' +
+      '<button class="btn" id="shopMClose" style="position:absolute;top:10px;right:10px;padding:2px 8px">×</button>' +
+      "<h3 style=\"margin-top:0\">" + (shopEditIx >= 0 ? "修改商品" : "新增商品") + "</h3>" +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px">' +
+      '<label class="field">名称<input id="shpN" value="' + esc(it.name || "") + '"></label>' +
+      '<label class="field">部位<select id="shpSlot">' + SHOP_SLOTS.map(function (a) { return '<option value="' + a[0] + '"' + (it.slot === a[0] ? " selected" : "") + ">" + a[1] + "</option>"; }).join("") + '</select></label>' +
+      '<label class="field">品级（等级）<select id="shpTi">' + TIER_NAMES.map(function (nm, i2) { return '<option value="' + i2 + '"' + (it.ti === i2 ? " selected" : "") + ">" + nm + "</option>"; }).join("") + '</select></label>' +
+      '<label class="field">物品等级 Lv<input id="shpLv" type="number" min="1" max="100" value="' + (it.lv || 1) + '"></label>' +
+      '<label class="field">售价·积分<input id="shpPts" type="number" min="0" value="' + (+it.pts || 0) + '"></label>' +
+      '<label class="field">售价·铜钱<input id="shpCoin" type="number" min="0" value="' + (+it.coin || 0) + '"></label>' +
+      '<label class="field">售价·铜料<input id="shpCopper" type="number" min="0" value="' + (+it.copper || 0) + '"></label>' +
+      '<label class="field">售价·铁料<input id="shpIron" type="number" min="0" value="' + (+it.iron || 0) + '"></label>' +
+      '<label class="field">攻击加成 %<input id="shpAtk" type="number" value="' + (+it.atkp || 0) + '"></label>' +
+      '<label class="field">防御加成 %<input id="shpDef" type="number" value="' + (+it.defp || 0) + '"></label>' +
+      '<label class="field">体力加成 %<input id="shpHp" type="number" value="' + (+it.hpp || 0) + '"></label>' +
+      '<label class="field">速度加成 %<input id="shpSpd" type="number" value="' + (+it.spdp || 0) + '"></label>' +
+      '</div>' +
+      '<div class="field">商品图片<input type="file" id="shpFile" accept="image/*" style="margin-top:4px"> <span class="muted" id="shpImgTip"></span><div id="shpPrev" style="margin-top:6px"></div></div>' +
+      '<div class="field"><b>技能明细行</b> <span class="muted">（技能名 / 描述 / 伤害% / 防御% / 触发率%）</span>' +
+      '<div id="skRows"></div>' +
+      '<button class="btn" id="skAdd" type="button">＋ 加一行</button></div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn gold" id="shpOk">确定</button></div>' +
+      "</div>";
+    document.body.appendChild(m);
+    function skRowHTML(s) {
+      return '<div class="skrow" style="display:grid;grid-template-columns:110px 1fr 74px 74px 74px 30px;gap:6px;margin:4px 0">' +
+        '<input class="sk-n" value="' + esc(s.n || "") + '" placeholder="技能名">' +
+        '<input class="sk-d" value="' + esc(s.d || "") + '" placeholder="描述（触发效果）">' +
+        '<input class="sk-atk" type="number" value="' + (+s.atk || 0) + '" title="伤害加成%">' +
+        '<input class="sk-def" type="number" value="' + (+s.def || 0) + '" title="防御加成%">' +
+        '<input class="sk-trig" type="number" value="' + (+s.trig || 0) + '" title="触发率%">' +
+        '<button class="btn sk-del" type="button" style="padding:2px 6px;color:#f0a196">×</button></div>';
+    }
+    $("#skRows").innerHTML = (it.sks || []).map(skRowHTML).join("");
+    function paintPrev(d) { $("#shpPrev").innerHTML = d ? '<img src="' + d + '" style="height:56px;border:1px solid #333a46;border-radius:8px;background:rgba(255,255,255,.05)">' : ""; }
+    paintPrev(it.img);
+    var pendImg = null;
+    $("#shpFile").onchange = function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var h = 128, w = Math.max(8, Math.round(img.width * h / img.height));
+          var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+          cv.getContext("2d").drawImage(img, 0, 0, w, h);
+          var d; try { d = cv.toDataURL("image/webp", 0.85); if (d.indexOf("image/webp") < 0) d = cv.toDataURL("image/png"); } catch (e) { d = cv.toDataURL("image/png"); }
+          pendImg = d; paintPrev(d);
+          $("#shpImgTip").textContent = w + "×" + h + "，约 " + Math.round(d.length * 3 / 4 / 1024) + " KB";
+        };
+        img.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+    };
+    $("#skAdd").onclick = function () { $("#skRows").insertAdjacentHTML("beforeend", skRowHTML({})); bindSkDel(); };
+    function bindSkDel() { $$("#skRows .sk-del").forEach(function (b) { b.onclick = function () { var r2 = this.parentNode; r2.parentNode.removeChild(r2); }; }); }
+    bindSkDel();
+    function closeM() { var e2 = document.getElementById("shopMask"); if (e2) e2.parentNode.removeChild(e2); }
+    $("#shopMClose").onclick = closeM;
+    $("#shpOk").onclick = function () {
+      var out = {
+        id: it.id || ("s" + Date.now()),
+        name: ($("#shpN").value || "").trim().slice(0, 24) || "未命名商品",
+        slot: $("#shpSlot").value, ti: +$("#shpTi").value, lv: Math.max(1, +$("#shpLv").value || 1),
+        pts: +$("#shpPts").value || 0, coin: +$("#shpCoin").value || 0, copper: +$("#shpCopper").value || 0, iron: +$("#shpIron").value || 0,
+        atkp: +$("#shpAtk").value || 0, defp: +$("#shpDef").value || 0, hpp: +$("#shpHp").value || 0, spdp: +$("#shpSpd").value || 0,
+        img: pendImg != null ? pendImg : (it.img || ""),
+        sks: []
+      };
+      $$("#skRows .skrow").forEach(function (row) {
+        var n = row.querySelector(".sk-n").value.trim(); if (!n) return;
+        out.sks.push({ n: n.slice(0, 20), d: row.querySelector(".sk-d").value.trim().slice(0, 80), atk: +row.querySelector(".sk-atk").value || 0, def: +row.querySelector(".sk-def").value || 0, trig: +row.querySelector(".sk-trig").value || 0 });
+      });
+      if (shopEditIx >= 0) shopRows[shopEditIx] = out; else shopRows.push(out);
+      if (!shopRows) shopRows = [];
+      closeM();
+      shopPaint();
+      $("#shopMsg").textContent = "已更新本地列表——点击「保存全部」后云端生效。";
+    };
+  }
+  $("#shopAdd").addEventListener("click", function () { shopOpenEdit(-1); });
+  $("#shopReload").addEventListener("click", shopLoad);
+  $("#shopSave").addEventListener("click", function () {
+    call("sg_cfg_set", { p_token: token(), p_key: "shop", p_data: shopRows || [] }).then(function (r) {
+      $("#shopMsg").textContent = r && r.ok ? "已保存，全站即时生效（游戏端刷新或下次启动拉取）。" : "保存失败：" + ((r && r.error) || "?");
+    });
+  });
+  /* ---------- V68 经济模型（户口）：参数 CRUD，云端 key = econ ---------- */
+  var ECO_DEF = { perHouse: 20, hhCap: 0, grainYear: 30, grainSelf: 24, grainTax: 6, farmBonus: 1, wood: 0.004, copper: 0.0015, iron: 0.0025, coin: 0.012 };
+  var ECO_COLS = [
+    ["perHouse", "户均人口（人/户）", 1, 100000, "城市人口 ÷ 该值 = 户数。默认 20 人记 1 户（放归田野 +1 人口即增加户数）"],
+    ["hhCap", "户数上限（0 = 不限）", 0, 1000000000, "单城户数封顶，避免后期人口膨胀把产出拉爆"],
+    ["grainYear", "每户年产粮（石）", 0, 100000, "一户农家一年的粮食总产，默认 30 石"],
+    ["grainSelf", "每户年自留口粮（石）", 0, 100000, "农户自己吃掉的部分，默认 24 石（不上账）"],
+    ["grainTax", "每户年上缴（石）", 0, 100000, "官府实收，默认 6 石（= 30 − 24）；每月实收 = 该值 ÷ 12 = 0.5 石"],
+    ["farmBonus", "农田附加系数", 0, 20, "农田建筑产出的倍率（农田是附加收入，1 = 保持原值，0 = 农田不计产出）"],
+    ["wood", "每户每月产木（斤）", 0, 1000, "按户数线性产出"],
+    ["copper", "每户每月产铜（斤）", 0, 1000, "按户数线性产出"],
+    ["iron", "每户每月产铁（斤）", 0, 1000, "按户数线性产出"],
+    ["coin", "每户每月产钱（钱）", 0, 100000, "按户数线性产出"]
+  ];
+  var ecoRows = null;
+  function ecoDef() { return JSON.parse(JSON.stringify(ECO_DEF)); }
+  function ecoNum(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
+  function ecoLoad() {
+    $("#ecoUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "econ" }).then(function (r) {
+      if (r && r.ok && r.data) {
+        var o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        ecoRows = ecoDef();
+        if (o && typeof o === "object") ECO_COLS.forEach(function (col) { if (o[col[0]] != null) ecoRows[col[0]] = Number(o[col[0]]); });
+        if (r.updated_at) $("#ecoUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else ecoRows = ecoDef();
+      ecoPaint();
+    });
+  }
+  function ecoPaint() {
+    if (!ecoRows) ecoRows = ecoDef();
+    $("#ecoTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:210px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' +
+      ECO_COLS.map(function (col) {
+        var k = col[0];
+        return '<tr><td><b>' + esc(col[1]) + '</b><div class="muted" style="font-size:11px">' + k + "</div></td>" +
+          '<td><input class="btn eco-in" data-k="' + k + '" type="number" step="' + (k === "wood" || k === "copper" || k === "iron" || k === "coin" ? "0.0005" : "1") + '" min="' + col[2] + '" max="' + col[3] + '" value="' + ecoRows[k] + '" style="width:120px;text-align:right;padding:6px 8px"></td>' +
+          "<td class=\"muted\" style=\"font-size:12px\">" + esc(col[4]) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    $$("#ecoTable .eco-in").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var k = this.getAttribute("data-k"), col = ECO_COLS.filter(function (x) { return x[0] === k; })[0];
+        ecoRows[k] = ecoNum(this.value, ECO_DEF[k], col[2], col[3]);
+        ecoPreview();
+      });
+    });
+    ecoPreview();
+  }
+  function ecoPreview() {
+    if (!ecoRows) return;
+    var per = Math.max(1, ecoRows.perHouse || 1);
+    var tax = Math.max(0, (ecoRows.grainYear || 0) - (ecoRows.grainSelf || 0));
+    var useTax = ecoRows.grainTax != null ? ecoRows.grainTax : tax;
+    var mo = useTax / 12;
+    var cities = [["洛阳（42 万人口）", 420000], ["中型州治（20 万人口）", 200000], ["小城（8 万人口）", 80000]];
+    function f(n) { return (+n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }); }
+    var rows = cities.map(function (c) {
+      var hh = Math.floor(c[1] / per);
+      if (ecoRows.hhCap > 0) hh = Math.min(hh, ecoRows.hhCap);
+      return '<tr><td>' + esc(c[0]) + "</td><td>" + f(hh) + "</td><td>" + f(hh * mo) + "</td><td>" + f(hh * (ecoRows.grainYear || 0)) + "</td><td>" + f(hh * useTax) + "</td><td>" + f(hh * (ecoRows.wood || 0)) + " / " + f(hh * (ecoRows.copper || 0)) + " / " + f(hh * (ecoRows.iron || 0)) + "</td><td>" + f(hh * (ecoRows.coin || 0)) + "</td></tr>";
+    }).join("");
+    $("#ecoPreview").innerHTML = '<table style="width:100%"><thead><tr><th>城市规模</th><th>户数</th><th>月收粮（石）</th><th>年产粮（石）</th><th>年上缴（石）</th><th>月木 / 铜 / 铁（斤）</th><th>月钱</th></tr></thead><tbody>' + rows + "</tbody></table>" +
+      '<div class="muted" style="font-size:12px;margin-top:6px">每户每月上缴 <b>' + f(mo) + " 石</b>；一户一年：产 " + f(ecoRows.grainYear) + " 石 · 自留 " + f(ecoRows.grainSelf) + " 石 · 上缴 " + f(useTax) + " 石。" +
+      (useTax > (ecoRows.grainYear || 0) - (ecoRows.grainSelf || 0) ? ' <span style="color:#f0a196">注意：上缴高于「年产 − 自留」，农户实际会倒欠口粮。</span>' : "") + "</div>";
+  }
+  $("#ecoReload").addEventListener("click", ecoLoad);
+  $("#ecoReset").addEventListener("click", function () {
+    ecoRows = ecoDef(); $("#ecoUpdated").textContent = "已恢复默认值（尚未保存）"; ecoPaint();
+  });
+  $("#ecoSave").addEventListener("click", function () {
+    if (!ecoRows) return;
+    var out = {}, bad = "";
+    ECO_COLS.forEach(function (col) {
+      var v = ecoNum(ecoRows[col[0]], ECO_DEF[col[0]], col[2], col[3]);
+      out[col[0]] = v;
+    });
+    if (out.grainSelf > out.grainYear) bad = "自留口粮不能高于年产";
+    if (bad) return admTip(bad, true);
+    var btn = $("#ecoSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "econ", p_data: out }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        admTip("经济模型已保存，全站生效（玩家端刷新或下次打开拉取）");
+        if (r.updated_at) $("#ecoUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
+  /* ---------- 卡牌配置表（V20）：七阶品级数值云端管理，保存后全站生效 ---------- */
+  var CFG_DEF = [
+    { n: "紫", grade: "S", star: 7, c: "#9257e0", min: 88, pts: 1500, stat: 10, rate: 60, troop: 100000, posb: 60, pts10: 20, kp: 3.375, skd: 50 },
+    { n: "蓝", grade: "A", star: 6, c: "#3f7fe0", min: 85, pts: 800, stat: 6, rate: 30, troop: 30000, posb: 30, pts10: 10, kp: 2.25, skd: 30 },
+    { n: "绿", grade: "B", star: 5, c: "#35b96e", min: 82, pts: 500, stat: 5, rate: 20, troop: 20000, posb: 20, pts10: 8, kp: 1.5, skd: 18 },
+    { n: "黄", grade: "C", star: 4, c: "#e8c988", min: 78, pts: 300, stat: 4, rate: 10, troop: 10000, posb: 10, pts10: 6, kp: 1, skd: 10 },
+    { n: "橙", grade: "D", star: 3, c: "#ff8f2d", min: 72, pts: 200, stat: 3, rate: 5, troop: 5000, posb: 5, pts10: 4, kp: 0.7, skd: 5 },
+    { n: "赤", grade: "E", star: 2, c: "#ff3054", min: 65, pts: 100, stat: 2, rate: 2, troop: 2000, posb: 2, pts10: 2, kp: 0.5, skd: 2 },
+    { n: "白", grade: "F", star: 1, c: "#c8d2dc", min: -1, pts: 20, stat: 1, rate: 1, troop: 1000, posb: 1, pts10: 1, kp: 0.35, skd: 0 }
+  ];
+  var CFG_COLS = [
+    ["pts", "回收积分", 1, 1000000], ["stat", "属性增加", 0, 100], ["rate", "技能触发率%", 0, 100],
+    ["troop", "带兵上限", 1, 10000000], ["posb", "职位加成%", 0, 100], ["pts10", "每10级点数", 0, 100],
+    ["kp", "战力倍率", 0.1, 10], ["skd", "技能伤害加成%", 0, 100]
+  ];
+  var cfgRows = null;
+  function cfgDef() { return JSON.parse(JSON.stringify(CFG_DEF)); }
+  function cfgLoad() {
+    $("#cfgUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "tiers" }).then(function (r) {
+      if (r && r.ok && r.data) {
+        try { cfgRows = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { cfgRows = cfgDef(); }
+        if (!Object.prototype.toString.call(cfgRows).match(/Array/) || cfgRows.length !== 7) cfgRows = cfgDef();
+        /* V46：补齐旧配置缺失的列（kp/skd 等），避免保存时被写成 0 */
+        cfgRows = cfgRows.map(function (row, i) {
+          var d = CFG_DEF[i] || {};
+          CFG_COLS.forEach(function (col) { if (row[col[0]] == null && d[col[0]] != null) row[col[0]] = d[col[0]]; });
+          return row;
+        });
+        if (r.updated_at) $("#cfgUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else {
+        cfgRows = cfgDef();
+        $("#cfgUpdated").textContent = "云端暂无配置，显示默认值";
+      }
+      cfgPaint();
+      /* V50.2：带兵页的「预计封顶等级」依赖最新品级上限——两条 RPC 并发返回顺序不定，
+         故配置到位后主动重绘一次，避免预览表用旧上限（曾显示 100,000 而实际生效 200,000） */
+      if (gwRows) { try { gwPaint(); } catch (e) {} }
+    });
+  }
+  function cfgPaint() {
+    var head = '<table><thead><tr><th>品级</th><th>等级</th><th>星级</th>';
+    CFG_COLS.forEach(function (c) { head += "<th>" + c[1] + "</th>"; });
+    head += "</tr></thead><tbody>";
+    var body = cfgRows.map(function (t, i) {
+      var row = '<tr><td><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + esc(t.c || "#888") + ';margin-right:6px"></span>' + esc(t.n || "?") + "（≥" + t.min + "）</td>" +
+        "<td>" + esc(t.grade || "—") + "</td><td>" + (t.star || "—") + "星</td>";
+      CFG_COLS.forEach(function (c) {
+        row += '<td><input data-cfg="' + i + ":" + c[0] + '" type="number" min="' + c[2] + '" max="' + c[3] + '" value="' + (t[c[0]] != null ? t[c[0]] : 0) + '" style="width:84px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit"></td>';
+      });
+      return row + "</tr>";
+    }).join("");
+    $("#cfgTable").innerHTML = head + body + "</tbody></table>";
+  }
+  function cfgCollect() {
+    document.querySelectorAll("[data-cfg]").forEach(function (inp) {
+      var p = inp.getAttribute("data-cfg").split(":");
+      var i = +p[0], k = p[1];
+      var v = parseFloat(inp.value);
+      if (isFinite(v) && cfgRows[i]) cfgRows[i][k] = v;
+    });
+  }
+  $("#cfgReload").addEventListener("click", cfgLoad);
+  $("#priceReload").addEventListener("click", priceLoad);
+  /* ---------- 小兵人图片（V55）：按兵种独立上传，云端 key = sprites（{ 兵种key: dataURL }） ---------- */
+  var SP_ARMS = [
+    ["dao", "刀盾兵"], ["qiang", "枪兵"], ["ji", "戟兵"], ["gong", "弓箭兵"], ["nu", "弩兵"],
+    ["qi", "骑兵"], ["xiang", "象兵"], ["nuche", "弩车"], ["toushi", "投石车"], ["bing", "兵器"], ["shui", "水军"]
+  ];
+  var spMap = {};    /* 云端已保存 */
+  var spPend = {};   /* 本次改动：k -> dataURL；空串表示恢复默认 */
+  function spVal(k) { return spPend.hasOwnProperty(k) ? spPend[k] : (spMap[k] || ""); }
+  function spPaint(k) {
+    var d = spVal(k);
+    var box = document.querySelector('.sp-prev[data-k="' + k + '"]');
+    if (box) box.innerHTML = d
+      ? '<img src="' + d + '" style="height:52px;max-width:116px;object-fit:contain;background:rgba(255,255,255,.06);border:1px solid #333a46;border-radius:6px;padding:3px">'
+      : '<span class="muted" style="font-size:12px">内置默认小人</span>';
+    var row = document.querySelector('.sp-row[data-k="' + k + '"]');
+    if (!row) return;
+    var tag = row.querySelector(".sp-tag");
+    if (!tag) return;
+    var pend = spPend.hasOwnProperty(k);
+    tag.textContent = pend ? (d ? "待保存" : "待清除") : (spMap[k] ? "已启用" : "默认");
+    tag.style.color = pend ? "#ffd76a" : (spMap[k] ? "#7fd08a" : "#8b97a8");
+  }
+  function spPaintAll() { SP_ARMS.forEach(function (a) { spPaint(a[0]); }); }
+  function spRows() {
+    $("#spRows").innerHTML = SP_ARMS.map(function (a) {
+      return '<div class="sp-row" data-k="' + a[0] + '" style="display:flex;align-items:center;gap:14px;padding:8px 0;border-top:1px solid #262c36">' +
+        '<div style="width:104px;font-weight:600">' + a[1] + ' <small class="muted" style="font-weight:400">' + a[0] + '</small></div>' +
+        '<div class="sp-prev" data-k="' + a[0] + '" style="width:126px;min-height:56px;display:flex;align-items:center"></div>' +
+        '<input type="file" class="sp-file" data-k="' + a[0] + '" accept="image/*" style="font-size:12.5px;max-width:220px">' +
+        '<button class="btn sp-reset" data-k="' + a[0] + '" type="button">恢复默认</button>' +
+        '<span class="sp-tag muted" style="font-size:12px"></span></div>';
+    }).join("");
+    Array.prototype.forEach.call($("#spRows").querySelectorAll(".sp-file"), function (inp) {
+      inp.addEventListener("change", function () {
+        var f = this.files && this.files[0]; if (!f) return;
+        var k = this.getAttribute("data-k");
+        spRead(f, k, function (ok, info) {
+          $("#spMsg").textContent = ok
+            ? (spArmName(k) + "：" + f.name + "（" + info + "），点「保存全部」全站生效")
+            : (f.name + " 读取失败，请换一张图");
+          spPaint(k);
+        });
+        this.value = "";
+      });
+    });
+    Array.prototype.forEach.call($("#spRows").querySelectorAll(".sp-reset"), function (btn) {
+      btn.addEventListener("click", function () {
+        var k = this.getAttribute("data-k");
+        spPend[k] = ""; spPaint(k);
+        $("#spMsg").textContent = spArmName(k) + " 已标记恢复默认，点「保存全部」生效";
+      });
+    });
+    spPaintAll();
+  }
+  function spArmName(k) { var a = SP_ARMS.filter(function (x) { return x[0] === k; })[0]; return a ? a[1] : k; }
+  /* 图片 → 高 96 WebP dataURL */
+  function spRead(file, k, cb) {
+    var rd = new FileReader();
+    rd.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var h = 96, w = Math.max(8, Math.round(img.width * h / img.height));
+        var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+        var cx = cv.getContext("2d");
+        try { cx.imageSmoothingQuality = "high"; } catch (e) {}
+        cx.drawImage(img, 0, 0, w, h);
+        var d;
+        try { d = cv.toDataURL("image/webp", 0.88); if (d.indexOf("image/webp") < 0) d = cv.toDataURL("image/png"); } catch (e) { d = cv.toDataURL("image/png"); }
+        spPend[k] = d;
+        if (cb) cb(true, w + "×" + h + "，约 " + Math.round(d.length * 3 / 4 / 1024) + " KB");
+      };
+      img.onerror = function () { if (cb) cb(false); };
+      img.src = rd.result;
+    };
+    rd.onerror = function () { if (cb) cb(false); };
+    rd.readAsDataURL(file);
+  }
+  function spLoad() {
+    $("#spUpdated").textContent = "";
+    spPend = {};
+    call("sg_cfg_get", { p_key: "sprites" }).then(function (r) {
+      var o = r && r.ok ? r.data : null;
+      if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+      spMap = {};
+      if (o && typeof o === "object") {
+        Object.keys(o).forEach(function (k) {
+          var d = o[k];
+          if (typeof d === "string" && d.indexOf("data:image") === 0) spMap[k] = d;
+        });
+      }
+      if (r && r.updated_at) $("#spUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      var n = Object.keys(spMap).length;
+      $("#spMsg").textContent = n ? ("已启用 " + n + " 个兵种的自定义小人图") : "当前全部兵种使用内置默认小人（可用旧版单张图作回落）";
+      spPaintAll();
+    });
+  }
+  $("#spReload").addEventListener("click", spLoad);
+  $("#spSave").addEventListener("click", function () {
+    var payload = {};
+    SP_ARMS.forEach(function (a) { var v = spVal(a[0]); if (v) payload[a[0]] = v; });
+    var total = 0;
+    Object.keys(payload).forEach(function (k) { total += payload[k].length; });
+    call("sg_cfg_set", { p_token: token(), p_key: "sprites", p_data: payload }).then(function (r) {
+      if (r && r.ok) {
+        spMap = payload; spPend = {}; spPaintAll();
+        $("#spMsg").textContent = "已保存 " + Object.keys(payload).length + " 个兵种（约 " + Math.round(total * 3 / 4 / 1024) + " KB），全站生效";
+      } else {
+        $("#spMsg").textContent = "保存失败" + (r && (r.err || r.error) ? "：" + (r.err || r.error) : "") + "，请重试";
+      }
+    });
+  });
+  $("#spResetAll").addEventListener("click", function () {
+    if (!confirm("确定把所有兵种恢复为内置默认小人？（保存后全站生效）")) return;
+    call("sg_cfg_set", { p_token: token(), p_key: "sprites", p_data: {} }).then(function (r) {
+      if (r && r.ok) { spMap = {}; spPend = {}; spPaintAll(); $("#spMsg").textContent = "已全部恢复默认"; }
+      else $("#spMsg").textContent = "操作失败，请重试";
+    });
+  });
+  /* 批量：按文件名匹配兵种 key 或中文名 */
+  $("#spBulk").addEventListener("change", function () {
+    var fs = Array.prototype.slice.call(this.files || []); this.value = "";
+    if (!fs.length) return;
+    var hit = [], miss = [], left = fs.length;
+    fs.forEach(function (f) {
+      var base = f.name.replace(/\.[^.]+$/, "").trim().toLowerCase();
+      var a = SP_ARMS.filter(function (x) { return x[0] === base || x[1] === base; })[0];
+      if (!a) { miss.push(f.name); if (!--left) done(); return; }
+      spRead(f, a[0], function (ok) {
+        if (ok) hit.push(a[1]); else miss.push(f.name);
+        if (!--left) done();
+      });
+    });
+    function done() {
+      spPaintAll();
+      $("#spMsg").textContent = "批量结果：匹配 " + hit.length + " 张" + (hit.length ? "（" + hit.join("、") + "）" : "") +
+        (miss.length ? "；未匹配 " + miss.length + " 张（" + miss.slice(0, 4).join("、") + (miss.length > 4 ? " 等" : "") + "，请按兵种 key/中文名命名）" : "") +
+        "。点「保存全部」生效";
+    }
+  });
+
+  /* ---------- 带兵成长曲线（V49）：云端 key = troopgrow，全站生效 ---------- */
+  var GW_DEF = {
+    base: 1000,
+    rows: [
+      { from: 1,  to: 20, add: 500 },
+      { from: 21, to: 40, add: 1000 },
+      { from: 41, to: 60, add: 2000 },
+      { from: 61, to: 70, add: 5000 }
+    ]
+  };
+  var gwRows = null, gwBase = 1000;
+  function gwDef() { return JSON.parse(JSON.stringify(GW_DEF)); }
+  /* 分段累加：与前端 troopRawAt 完全同式（Lv.1 = 起始 + 首段一级） */
+  function gwRawAt(lv, rows, base) {
+    lv = Math.max(1, Math.min(70, Math.round(lv || 1)));
+    var t = base || 1000;
+    for (var i = 0; i < rows.length; i++) {
+      var g = rows[i];
+      if (lv < g.from) break;
+      t += (Math.min(lv, g.to) - (g.from - 1)) * g.add;
+    }
+    return t;
+  }
+  function gwLoad() {
+    $("#gwUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "troopgrow" }).then(function (r) {
+      if (r && r.ok && r.data) {
+        var o = null;
+        try { o = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { o = null; }
+        if (o && Object.prototype.toString.call(o.rows).match(/Array/) && o.rows.length) {
+          gwRows = o.rows.map(function (x) { return { from: +x.from, to: +x.to, add: +x.add }; });
+          gwBase = isFinite(+o.base) && +o.base > 0 ? +o.base : 1000;
+        } else { gwRows = gwDef().rows; gwBase = 1000; }
+        if (r.updated_at) $("#gwUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else {
+        gwRows = gwDef().rows; gwBase = 1000;
+        $("#gwUpdated").textContent = "云端暂无带兵曲线，显示默认值";
+      }
+      gwPaint();
+    });
+  }
+  /* V51：分段归一化——无论增/删/改哪一段，都把曲线上限重新接成「从 1 起、连续、到 70」
+     原实现在删中间段时只补 from 不补 to，导致出现重叠/空洞，保存直接被校验拦下（看起来像「保存失败」） */
+  function gwNorm(prefer) {
+    gwRows.sort(function (a, b) { return a.from - b.from || a.to - b.to; });
+    if (!gwRows.length) gwRows.push({ from: 1, to: 70, add: 0 });
+    var cur = 1;
+    for (var i = 0; i < gwRows.length; i++) {
+      var g = gwRows[i];
+      g.from = cur;
+      g.to = Math.max(cur, Math.min(70, g.to));
+      /* 中间段一旦「吃」到 70，后面的段就没有容身之处，直接并入本段 */
+      if (g.to >= 70) { gwRows = gwRows.slice(0, i + 1); g.to = 70; cur = 71; break; }
+      cur = g.to + 1;
+    }
+    if (cur <= 70) gwRows[gwRows.length - 1].to = 70;   /* 兜底：最后一段吃掉尾巴 */
+    gwRows.forEach(function (g) { if (!(g.add >= 0)) g.add = 0; });
+    return gwRows;
+  }
+  function gwPaint() {
+    gwNorm();
+    var head = '<table><thead><tr><th>等级分段</th><th>每级增加兵力</th><th>该段新增兵力</th><th>段末带兵（未封顶）</th><th>操作</th></tr></thead><tbody>';
+    var body = gwRows.map(function (g, i) {
+      var span = g.to - g.from + 1;
+      var rng = '<input data-gwrange="' + i + '" data-f="from" type="number" min="1" max="70" value="' + g.from + '" style="width:56px;padding:2px 4px;border:1px solid var(--line);border-radius:5px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit"> – ' +
+        '<input data-gwrange="' + i + '" data-f="to" type="number" min="1" max="70" value="' + g.to + '" style="width:56px;padding:2px 4px;border:1px solid var(--line);border-radius:5px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit">';
+      return "<tr><td>" + rng + "</td>" +
+        '<td><input data-gw="' + i + '" type="number" min="0" max="1000000" step="100" value="' + g.add + '" style="width:110px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit"></td>' +
+        "<td>+" + (span * g.add).toLocaleString() + "</td>" +
+        "<td><b>" + gwRawAt(g.to, gwRows, gwBase).toLocaleString() + "</b></td>" +
+        '<td>' + (gwRows.length > 1 ? '<button class="btn" data-gwdel="' + i + '" style="padding:2px 8px">删除</button>' : "—") + "</td></tr>";
+    }).join("");
+    var tail = '<tr><td>起始兵力（Lv.1）</td><td><input id="gwBase" type="number" min="1" max="1000000" step="100" value="' + gwBase + '" style="width:110px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit"></td><td>—</td><td><b>' + gwRawAt(70, gwRows, gwBase).toLocaleString() + "</b></td><td>—</td></tr>" +
+      '<tr><td colspan="5" style="padding-top:8px"><button class="btn" id="gwAdd">＋ 新增分段</button> <small style="opacity:.6">新增后请编辑上下限，分段须从 Lv.1 起连续并覆盖到 Lv.70</small></td></tr>';
+    $("#gwTable").innerHTML = head + body + tail + "</tbody></table>";
+    /* 档位裁剪预览：各品级「最高上限」与 Lv.70 未封顶值对比 */
+    var prev = '<table style="margin-top:12px"><thead><tr><th>品级</th><th>带兵上限（卡牌配置）</th><th>Lv.70 未封顶值</th><th>预计封顶等级</th></tr></thead><tbody>';
+    (cfgRows || cfgDef()).forEach(function (t) {
+      var cap = +t.troop || 0, full = gwRawAt(70, gwRows, gwBase), capLv = "—";
+      if (cap > 0 && full > cap) {
+        for (var lv = 1; lv <= 70; lv++) { if (gwRawAt(lv, gwRows, gwBase) >= cap) { capLv = "Lv." + lv; break; } }
+      } else if (cap >= full) capLv = "70 级仍未封顶";
+      prev += "<tr><td>" + esc(t.n || "?") + "（" + esc(t.grade || "—") + "）</td><td>" + cap.toLocaleString() + "</td><td>" + full.toLocaleString() + "</td><td>" + capLv + "</td></tr>";
+    });
+    $("#gwTable").innerHTML += prev + "</tbody></table>";
+    document.querySelectorAll("[data-gw]").forEach(function (inp) {
+      inp.addEventListener("change", function () {
+        var i = +inp.getAttribute("data-gw"), v = parseFloat(inp.value);
+        if (isFinite(v) && v >= 0 && gwRows[i]) gwRows[i].add = v;
+        var b = $("#gwBase"); if (b) { var bv = parseFloat(b.value); if (isFinite(bv) && bv > 0) gwBase = bv; }
+        gwPaint();
+      });
+    });
+    document.querySelectorAll("[data-gwdel]").forEach(function (b2) {
+      b2.addEventListener("click", function () {
+        var i = +b2.getAttribute("data-gwdel");
+        if (gwRows.length <= 1) return;
+        /* V51：删掉一段后，把它的等级区间让给相邻段（后段优先，末段则给前段），
+           这样曲线仍连续覆盖 1..70，用户不用手动补区间，保存不会再被校验拦下 */
+        var gone = gwRows[i];
+        gwRows.splice(i, 1);
+        if (gone) {
+          if (gwRows[i]) {                       /* 有后继段：让后继段从被删段的起点开始 */
+            gwRows[i].from = gone.from;
+          } else if (gwRows[i - 1]) {            /* 删的是末段：前一段补到 70 */
+            gwRows[i - 1].to = 70;
+          }
+        }
+        gwRows = gwNorm();
+        gwPaint();
+      });
+    });
+    document.querySelectorAll("[data-gwrange]").forEach(function (inp) {
+      inp.addEventListener("change", function () {
+        var i = +inp.getAttribute("data-gwrange"), f = inp.getAttribute("data-f"), v = parseInt(inp.value, 10);
+        if (!isFinite(v) || !gwRows[i]) return;
+        if (f === "to") {
+          /* V51：改上界时把「下一段的起点」一起推过去，保持连续 */
+          gwRows[i].to = Math.max(gwRows[i].from, Math.min(69, v));
+          if (gwRows[i + 1]) gwRows[i + 1].from = gwRows[i].to + 1;
+        } else {
+          gwRows[i].from = Math.max(1, Math.min(gwRows[i].to, v));
+          if (i > 0) gwRows[i - 1].to = gwRows[i].from - 1;
+        }
+        gwRows = gwNorm();
+        gwPaint();
+      });
+    });
+    var addB = $("#gwAdd");
+    if (addB) addB.addEventListener("click", function () {
+      /* V51：新增分段 = 从末段里劈一半出来，末段仍收口到 70，无需手工改区间即可保存 */
+      var last = gwRows[gwRows.length - 1];
+      if (last.to - last.from + 1 >= 2) {
+        var mid = Math.floor((last.from + last.to) / 2);
+        var tailRow = { from: mid + 1, to: 70, add: last.add };
+        last.to = mid;
+        gwRows.push(tailRow);
+      } else {
+        /* 末段只剩 1 级：把它整体后移一级 */
+        if (last.from > 1) last.from = last.from + 1;
+        gwRows.push({ from: 70, to: 70, add: last.add });
+      }
+      gwRows = gwNorm();
+      gwPaint();
+    });
+    var bi = $("#gwBase");
+    if (bi) bi.addEventListener("change", function () {
+      var bv = parseFloat(bi.value);
+      if (isFinite(bv) && bv > 0) gwBase = bv;
+      gwPaint();
+    });
+  }
+  $("#gwReload").addEventListener("click", gwLoad);
+  $("#gwReset").addEventListener("click", function () {
+    var d = gwDef(); gwRows = d.rows; gwBase = d.base;
+    $("#gwUpdated").textContent = "已恢复默认值（尚未保存）";
+    gwPaint();
+  });
+  $("#gwSave").addEventListener("click", function () {
+    if (!gwRows) return;
+    gwNorm();   /* V51：保存前再归一化一次，用户即便没触发 change 也不会存出断档曲线 */
+    /* 校验：从 1 级起连续、覆盖到 70 级、数值非负 */
+    var rows = gwRows.slice().sort(function (a, b) { return a.from - b.from; });
+    var bad = "";
+    if (rows[0].from !== 1) bad = "首个分段必须从 Lv.1 开始";
+    for (var i = 1; i < rows.length && !bad; i++) if (rows[i].from !== rows[i - 1].to + 1) bad = "第 " + (i + 1) + " 段与前一段不连续（应从 Lv." + (rows[i - 1].to + 1) + " 开始）";
+    if (!bad && rows[rows.length - 1].to < 70) bad = "最后一段须覆盖到 Lv.70";
+    if (bad) return admTip(bad, true);
+    var btn = $("#gwSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "troopgrow", p_data: { base: gwBase, rows: rows } }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) { admTip("带兵曲线已保存（" + rows.length + " 段），全站将在用户下次打开时生效"); if (r.updated_at) $("#gwUpdated").textContent = "云端更新于 " + dt(r.updated_at); }
+      else if (r && r.err === "unauthorized") { logout(); }
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
+  /* 后台首次进入即加载：此前仅点「重新载入」才拉云端，导致「保存」在未加载时静默不生效
+     （V50.2 修复：troopgrow 云端一直是空，玩家端只能吃代码默认值） */
+  gwLoad();
+  spRows();
+  spLoad();
+
+  /* 启动即对账云端配置（只读）：缺项会在控制台告警，供运维发现「后台改了但从未落库」 */
+  (function cfgAudit() {
+    call("sg_cfg_get", { p_key: "troopgrow" }).then(function (r) {
+      var has = !!(r && r.ok && r.data && (typeof r.data === "string" ? r.data.length > 5 : true));
+      if (!has) console.warn("[sg-admin] 云端 troopgrow 缺失：玩家端将使用内置默认带兵曲线");
+    });
+  })();
+
+  $("#cfgReset").addEventListener("click", function () {
+    cfgRows = cfgDef();
+    $("#cfgUpdated").textContent = "已恢复默认值（尚未保存）";
+    cfgPaint();
+  });
+  $("#cfgSave").addEventListener("click", function () {
+    if (!cfgRows) return;
+    cfgCollect();
+    var btn = $("#cfgSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "tiers", p_data: cfgRows }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) { admTip("配置已保存，全站将在用户下次打开时生效"); if (r.updated_at) $("#cfgUpdated").textContent = "云端更新于 " + dt(r.updated_at); }
+      else if (r && r.err === "unauthorized") { logout(); }
+      else if (r && r.err === "bad_data") admTip("数据格式错误（须为 7 项数组）", true);
+      else admTip("保存失败，请重试", true);
+    });
+  });
+
+  /* ---------- 抽卡概率（V44）：每 100 张卡片的 S/A/B/C 张数，云端 key = gacha ---------- */
+  var GD_DEF = [
+    { k: "s", n: "紫 · S", c: "#9257e0", p: 1 },
+    { k: "a", n: "蓝 · A", c: "#3f7fe0", p: 2 },
+    { k: "b", n: "绿 · B", c: "#35b96e", p: 3 },
+    { k: "c", n: "黄 · C", c: "#e8c988", p: 5 }
+  ];
+  var gdRows = null, gdMode = 1;   /* V47：默认口径 = 卡面等级（1）——防止云端配置拉取失败时点保存把 mode 静默写回 0 */
+  var GD_MODES = [
+    { v: 1, n: "按卡面等级（推荐）", d: "S 档必出紫卡、A 档必出蓝卡……抽到什么颜色一眼可见，配额张数与卡面颜色严格对应；池子按卡面等级收窄，同名重复由防重复窗口与持有降权缓解" },
+    { v: 0, n: "按掉落档次", d: "S/A/B 档 = 从「武·统·智·政·魅各前 100 并集（约 280 人）」中出将，卡面颜色由武将五维决定——张数对应的是强将掉落，不保证卡面颜色" }
+  ];
+  function gdDef() { return JSON.parse(JSON.stringify(GD_DEF)); }
+  function gdLoad() {
+    $("#gdUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "gacha" }).then(function (r) {
+      var arr = null;
+      if (r && r.ok && r.data) {
+        try { arr = typeof r.data === "string" ? JSON.parse(r.data) : r.data; } catch (e) { arr = null; }
+        if (r.updated_at) $("#gdUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else {
+        $("#gdUpdated").textContent = "云端暂无抽卡配置，显示默认值";
+      }
+      gdRows = gdDef();
+      if (arr && Object.prototype.toString.call(arr).match(/Array/)) {
+        arr.forEach(function (x) {
+          var k = String((x && x.k) || "").toLowerCase(), p = x ? +x.p : NaN;
+          if (k === "mode") { gdMode = (isFinite(p) && p) ? 1 : 0; return; }
+          var row = gdRows.filter(function (y) { return y.k === k; })[0];
+          if (row && isFinite(p)) row.p = Math.max(0, Math.min(100, p));
+        });
+      }
+      gdPaint();
+    });
+  }
+  function gdPaint() {
+    if (!gdRows) gdRows = gdDef();
+    var head = '<table><thead><tr><th>等级</th><th>每 100 张卡片张数</th><th>折算概率</th><th>说明</th></tr></thead><tbody>';
+    var body = gdRows.map(function (t, i) {
+      return '<tr><td><span class="dot" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + esc(t.c) + ';margin-right:6px"></span>' + esc(t.n) + "</td>" +
+        '<td><input data-gd="' + i + '" type="number" min="0" max="100" step="0.1" value="' + (t.p != null ? t.p : 0) + '" style="width:96px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04);color:var(--txt);font-family:inherit"></td>' +
+        '<td class="mono">' + (Math.round((t.p || 0) * 100) / 100) + ' / 100 张 · ' + (Math.round((t.p || 0) * 100) / 100) + "%</td>" +
+        '<td class="muted">' + (i <= 2 ? "从武/统/智/政/魅各前 100 并集（约 280 人）中随机" : i === 3 ? "C 级全量随机" : "") + "</td></tr>";
+    }).join("");
+    var sum = gdRows.reduce(function (a, t) { return a + (+t.p || 0); }, 0);
+    var rest = Math.round((100 - sum) * 100) / 100;
+    var warn = sum > 100 ? '<span style="color:#e88c82">合计超过 100 张，请调整后再保存</span>'
+      : '<span style="color:#8fd0a0">其余 ' + rest + ' 张按 D 35% / E 35% / F 30% 随机</span>';
+    $("#gdTable").innerHTML = head + body + "</tbody></table>" +
+      '<div class="hint" style="margin-top:8px">当前合计：<b class="mono">' + (Math.round(sum * 100) / 100) + " / 100 张</b>　·　" + warn + "</div>";
+    document.querySelectorAll("[data-gd]").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var i2 = +inp.getAttribute("data-gd"), v = parseFloat(inp.value);
+        if (gdRows[i2]) gdRows[i2].p = isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+        gdPaint();
+      });
+    });
+    var md = document.getElementById("gdMode");
+    if (md) {
+      md.innerHTML = GD_MODES.map(function (m) {
+        return '<label style="display:inline-flex;align-items:flex-start;gap:7px;max-width:520px;font-size:12px;line-height:1.6;cursor:pointer">' +
+          '<input type="radio" name="gdmode" value="' + m.v + '"' + (gdMode === m.v ? " checked" : "") + ' style="margin-top:3px">' +
+          '<span><b>' + m.n + '</b><br><span class="muted">' + m.d + "</span></span></label>";
+      }).join("");
+      md.querySelectorAll('input[name="gdmode"]').forEach(function (r) {
+        r.addEventListener("change", function () { gdMode = +r.value; });
+      });
+    }
+  }
+  function gdCollect() {
+    document.querySelectorAll("[data-gd]").forEach(function (inp) {
+      var i = +inp.getAttribute("data-gd"), v = parseFloat(inp.value);
+      if (gdRows[i]) gdRows[i].p = isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
+    });
+  }
+  $("#gdReload").addEventListener("click", gdLoad);
+  $("#gdReset").addEventListener("click", function () {
+    gdRows = gdDef(); $("#gdUpdated").textContent = "已恢复默认值（尚未保存）"; gdPaint();
+  });
+  $("#gdSave").addEventListener("click", function () {
+    if (!gdRows) return;
+    gdCollect();
+    var sum = gdRows.reduce(function (a, t) { return a + (+t.p || 0); }, 0);
+    if (sum > 100) { admTip("四个等级的每 100 张张数合计不能超过 100", true); return; }
+    var payload = gdRows.map(function (t) { return { k: t.k, p: +t.p || 0 }; });
+    payload.push({ k: "mode", p: gdMode });
+    var btn = $("#gdSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "gacha", p_data: payload }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) { admTip("抽卡概率已保存，全站将在用户下次打开或刷新时生效"); if (r.updated_at) $("#gdUpdated").textContent = "云端更新于 " + dt(r.updated_at); }
+      else if (r && r.err === "unauthorized") { logout(); }
+      else admTip("保存失败，请重试", true);
+    });
+  });
+
+  /* ---------- 事件 ---------- */
+  function loadEvents(more) {
+    var t = token(); if (!t) return;
+    if (!more) { state.evtOff = 0; state.evtRows = []; }
+    call("sg_admin_events", { p_token: t, p_kind: state.evtKind, p_limit: 60, p_off: state.evtOff }).then(function (r) {
+      if (!r || r.ok === false) {
+        if (r && r.err === "unauthorized") { logout(); return; }
+        $("#evtTotal").textContent = "";
+        $("#evtTable").innerHTML = '<div class="empty">事件流水加载失败（云服务无响应，已自动重试）— 请点击「刷新」重试</div>';
+        return;
+      }
+      state.evtRows = state.evtRows.concat(r.rows || []);
+      state.evtOff = state.evtRows.length;
+      $("#evtTotal").textContent = "共 " + num(r.total) + " 条";
+      $("#evtTable").innerHTML = state.evtRows.length ? (
+        '<table><thead><tr><th>时间</th><th>事件</th><th>访问者</th><th>IP / UA</th><th>对象/目标</th><th>页面</th><th>地区</th><th>会话</th></tr></thead><tbody>' +
+        state.evtRows.map(function (e) {
+          return '<tr><td class="mono">' + dt(e.ts) + "</td>" +
+            '<td><span class="tag">' + esc(e.event) + "</span></td>" +
+            "<td>" + esc(e.who || "anybody") + "</td>" +
+            '<td class="mono muted" style="font-size:11px" title="' + esc(e.ua || "") + '">' +
+            (e.ip ? esc(e.ip) : (e.ua ? esc(String(e.ua).slice(0, 20)) + "…" : "—")) + "</td>" +
+            "<td>" + esc(e.target || "—") + "</td>" +
+            '<td class="mono muted" style="font-size:11px">' + esc(e.page || "—") + "</td>" +
+            '<td><span class="tag ' + esc(e.region || "") + '">' + (e.region === "intl" ? "海外" : e.region === "cn" ? "国内" : esc(e.region || "—")) + "</span></td>" +
+            '<td class="mono muted" style="font-size:11px">' + esc(String(e.sid || "—").slice(0, 10)) + "</td></tr>";
+        }).join("") + "</tbody></table>"
+      ) : '<div class="empty">暂无事件</div>';
+    });
+  }
+
+  /* ---------- CSV ---------- */
+  function exportCsv() {
+    var rows = state.accRows || [];
+    if (!rows.length) return;
+    var head = ["id", "email", "phone", "nick", "region", "source", "created_at", "last_login_at", "login_count"];
+    var lines = [head.join(",")].concat(rows.map(function (a) {
+      return head.map(function (k) {
+        var v = a[k] == null ? "" : String(a[k]);
+        return '"' + v.replace(/"/g, '""') + '"';
+      }).join(",");
+    }));
+    var blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "sanguo-accounts-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  /* ---------- V28 月度价格映射表（与游戏内 marketPrices 完全同源） ---------- */
+  function seasonFac(mo) { if (mo >= 7 && mo <= 9) return { g: 0.55, m: 1.6 }; if (mo >= 10) return { g: 1.7, m: 0.55 }; if (mo <= 3) return { g: 1.15, m: 0.9 }; return { g: 0.9, m: 1.15 }; }
+  function hashNum(s2) { var h = 0; for (var i = 0; i < s2.length; i++) h = (h * 31 + s2.charCodeAt(i)) % 99991; return h; }
+  function monthPrice(gm, base, f, seed) { var m = ((gm || 0) % 444 + 444) % 444; return Math.round(base * f * (0.9 + 0.2 * ((hashNum("mk" + seed + "_" + m) % 1000) / 1000)) * 10) / 10; }
+  function priceLoad() {
+    var rows = "";
+    for (var mo = 1; mo <= 12; mo++) {
+      var sf = seasonFac(mo), gm = mo - 1;
+      var rice = monthPrice(gm, 2, sf.g, "r"), copper = monthPrice(gm, 8, sf.m, "c"), iron = monthPrice(gm, 6, sf.m, "i");
+      var tag = mo >= 7 && mo <= 9 ? "秋收 · 粮贱铜铁贵" : mo >= 10 ? "冬 · 粮贵铜铁贱" : mo <= 3 ? "春" : "夏";
+      rows += '<tr><td>' + mo + ' 月</td><td class="n">' + rice.toFixed(1) + '</td><td class="n">' + copper.toFixed(1) + '</td><td class="n">' + iron.toFixed(1) + '</td><td class="muted">' + tag + '</td></tr>';
+    }
+    var el = document.getElementById("priceTable");
+    if (el) el.innerHTML = '<table><thead><tr><th>月份</th><th>粮 🌾（金币/单位）</th><th>铜 ⛏（金币/单位）</th><th>铁 🔩（金币/单位）</th><th>季节</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  $("#loginBtn").addEventListener("click", doLogin);
+  $("#pwd").addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+  $("#refreshBtn").addEventListener("click", function () {
+    loadOverview();
+    if (state.tab === "acc") loadAccounts(true);
+    if (state.tab === "evt") loadEvents(false);
+  });
+  $("#logoutBtn").addEventListener("click", logout);
+
+  $$(".tab").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$(".tab").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on");
+      state.tab = b.getAttribute("data-tab");
+      $("#tab-ov").hidden = state.tab !== "ov";
+      $("#tab-acc").hidden = state.tab !== "acc";
+      $("#tab-evt").hidden = state.tab !== "evt";
+      $("#tab-cfg").hidden = state.tab !== "cfg";
+      $("#tab-price").hidden = state.tab !== "price";
+      $("#tab-shop").hidden = state.tab !== "shop";
+      $("#tab-econ").hidden = state.tab !== "econ";
+      if (state.tab === "acc") loadAccounts(true);
+      if (state.tab === "evt") loadEvents(false);
+      if (state.tab === "cfg") { cfgLoad(); gdLoad(); gwLoad(); spRows(); spLoad(); }
+      if (state.tab === "price") priceLoad();
+      if (state.tab === "shop") shopLoad();
+      if (state.tab === "econ") ecoLoad();
+    });
+  });
+
+  $$("#seg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$("#seg button").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on");
+      state.range = b.getAttribute("data-k");
+      renderChart();
+    });
+  });
+
+  $("#accSearch").addEventListener("click", function () { state.accQ = $("#accQ").value.trim(); loadAccounts(true); });
+  $("#accQ").addEventListener("keydown", function (e) { if (e.key === "Enter") { state.accQ = $("#accQ").value.trim(); loadAccounts(true); } });
+  $("#accCsv").addEventListener("click", exportCsv);
+  $("#evtKind").addEventListener("change", function () { state.evtKind = this.value; loadEvents(false); });
+  $("#evtMore").addEventListener("click", function () { loadEvents(true); });
+
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest ? e.target.closest("[data-reveal]") : null;
+    if (!a) return;
+    e.preventDefault();
+    var i = +a.getAttribute("data-reveal");
+    var row = state.accRows[i];
+    var sp = a.parentNode.querySelector("[data-ph]");
+    if (row && sp) { sp.textContent = row.phone || "—"; a.remove(); }
+  });
+
+  /* ---------- 启动 ---------- */
+  /* 防旧缓存自愈：CDN 可能短时间仍回旧版 HTML，启动后比对线上最新版本标记，不一致自动刷新 */
+  try {
+    fetch("/admin/?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
+      var m = t.match(/verTag">([^<]*)</);
+      var cur = (document.getElementById("verTag") || {}).textContent || "";
+      if (m && m[1] && m[1] !== cur) { try { sessionStorage.removeItem(TOK_KEY); } catch (e) {} location.replace("/admin/?v=" + Date.now()); }
+    }).catch(function () {});
+  } catch (e) {}
+  $("#modeTag").textContent = SAME ? "同源直连" : "跨域中继";
+  svcTag();
+  if (SAME) { waitCli(); } else { svcTag(); }
+  if (token()) enterApp();
+})();
+</script>
+</body>
+</html>
