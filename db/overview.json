@@ -1,16 +1,1 @@
-{
- "ok": true,
- "totals": {
-  "visits_today": 0,
-  "visits_all": 0,
-  "uniq_today": 0,
-  "uniq_all": 0,
-  "logins_today": 0,
-  "regs_today": 0,
-  "regs_all": 0,
-  "events_all": 0
- },
- "daily": [],
- "regions": [],
- "events": []
-}
+{"ok":true,"totals":{"visits_today":0,"visits_all":0,"uniq_today":0,"uniq_all":0,"logins_today":0,"regs_today":0,"regs_all":0,"events_all":0},"daily":[],"regions":[],"events":[]}
