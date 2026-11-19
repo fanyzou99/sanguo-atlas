@@ -9837,6 +9837,7 @@ var BOTS = [
       try {
         if (!u || !u.email) return Promise.resolve(0);
         return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }).then(function (r) {
+          if (!(r && r.ok)) return ghGrantsPoll(u); /* V71：云库失败 → GitHub 发放队列兜底 */
           var n = (r && r.ok) ? (r.n || 0) : 0;
           var pts = (r && r.ok) ? (r.pts || 0) : 0;
           var cardGrants = (r && r.ok && r.cards) ? r.cards : [];
@@ -9859,13 +9860,64 @@ var BOTS = [
           }
           if (got) { save(); paintAcct(); rerender(); toast(n > 0 ? T("grantsGot", { n: n }) : T("grantsGotPts", { n: fmt(pts) }), "ok"); }
           return n;
-        });
+        })["catch"](function () { return ghGrantsPoll(u); });
+      } catch (e) { return Promise.resolve(0); }
+    }
+    /* V71：GitHub 发放队列兜底（同源 db/grants.json；按发放 id 本地去重防重复领取） */
+    function ghGrantsPoll(u) {
+      try {
+        return fetch("db/grants.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) {
+          if (!Array.isArray(list) || !list.length || !u || !u.email) return 0;
+          var email = String(u.email).toLowerCase();
+          var claimed = {};
+          try { claimed = JSON.parse(localStorage.getItem("sg_grants_claimed") || "{}") || {}; } catch (e) { claimed = {}; }
+          var fresh = list.filter(function (g) {
+            return g && g.id && !claimed[g.id] && String(g.email || "").toLowerCase() === email && (!g.site || g.site === SITE_ID);
+          });
+          if (!fresh.length) return 0;
+          var n = 0, pts = 0, cards = [], got = false;
+          fresh.forEach(function (g) {
+            if (g.kind === "draws") n += g.n || 0;
+            else if (g.kind === "points") pts += g.n || 0;
+            else if (g.kind === "cards") cards.push({ t: g.t, n: g.n || 1 });
+          });
+          if (n > 0 && me()) { me().draws = (me().draws || 0) + n; me().ledger = me().ledger || []; me().ledger.unshift({ t: Date.now(), d: 0, r: T("grantsGot", { n: n }) }); got = true; }
+          if (pts > 0 && me()) { addPoints(me(), pts, T("grantsGotPts", { n: fmt(pts) })); checkBadges(me()); got = true; }
+          if (cards.length && me() && claimCardGrants(me(), cards)) {
+            got = true;
+            toast(T("grantCardGot", { t: tierLabel(TIERS[parseInt(cards[0].t, 10)] || TIERS[0]), n: parseInt(cards[0].n, 10) || 0 }), "ok");
+          }
+          if (got) { save(); paintAcct(); rerender(); toast(n > 0 ? T("grantsGot", { n: n }) : (pts > 0 ? T("grantsGotPts", { n: fmt(pts) }) : ""), "ok"); }
+          fresh.forEach(function (g) { claimed[g.id] = 1; });
+          try { var ks = Object.keys(claimed); if (ks.length > 500) ks.slice(0, ks.length - 500).forEach(function (k) { delete claimed[k]; }); localStorage.setItem("sg_grants_claimed", JSON.stringify(claimed)); } catch (e) {}
+          return n + pts;
+        })["catch"](function () { return 0; });
       } catch (e) { return Promise.resolve(0); }
     }
     function cfgPull() {
       /* 后台卡牌配置表：启动拉取，覆盖本地七阶数值（积分/属性/触发率/带兵/职位/每10级），失败自动重试一次 */
-      var okT = false, okG = false, okW = false;
-      function retry() { if (!okT || !okG || !okW) setTimeout(cfgPull, 6000); }
+      var okT = false, okG = false, okW = false, ghTried = false;
+      /* V71：GitHub Pages 后台兜底（同源 db/cfg.json——后台 GH 模式写入仓库 db/ 目录） */
+      function ghCfgApply() {
+        return fetch("db/cfg.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (o) {
+          if (!o || typeof o !== "object") return false;
+          try { if (o.tiers && applyTierCfg(o.tiers)) { okT = true; if (me()) { save(); rerender(); } } } catch (e) {}
+          try { if (o.gacha && applyGachaCfg(o.gacha)) okG = true; } catch (e) {}
+          try { if (o.troopgrow && applyTroopCfg(o.troopgrow.rows || o.troopgrow)) { okW = true; if (me()) { save(); rerender(); } } } catch (e) {}
+          try {
+            if (o.sprites && typeof o.sprites === "object") { Object.keys(o.sprites).forEach(function (k) { var d = o.sprites[k]; if (typeof d === "string" && d.indexOf("data:image") === 0) SG_SPRITES[k] = d; }); }
+            if (o.sprite && typeof o.sprite === "string" && o.sprite.indexOf("data:image") === 0) SG_SPRITE = o.sprite;
+          } catch (e) {}
+          try { if (o.shop && applyShopCfg(o.shop) && me()) rerender(); } catch (e) {}
+          try { if (o.econ && applyEconCfg(o.econ) && me()) rerender(); } catch (e) {}
+          return okT || okG || okW;
+        })["catch"](function () { return false; });
+      }
+      function retry() {
+        if (okT && okG && okW) return;
+        if (!ghTried) { ghTried = true; ghCfgApply().then(function () { if (!(okT && okG && okW)) setTimeout(cfgPull, 6000); }); return; }
+        setTimeout(cfgPull, 6000);
+      }
       try {
         var p1 = rpcP("sg_cfg_get", { p_key: "tiers" }).then(function (r) {
           if (r && r.ok && r.data) {
