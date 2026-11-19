@@ -1928,7 +1928,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     function step() {
       var a = Object.assign({}, args); a.p_off = off; a.p_limit = 200;
       return call(name, a).then(function (r) {
-        if (!r || r.ok === false) throw new Error(name + " 拉取失败" + (r && r.err ? "：" + r.err : ""));
+        if (!r || r.ok === false) throw new Error(name + " 拉取失败" + (r && r.err ? "：" + r.err : "（无响应）"));
+        if (off === 0) migLog("   [" + name + " 原始响应] " + JSON.stringify(r).slice(0, 260));
         if (total === null) total = r.total;
         rows = rows.concat(r.rows || []);
         off = rows.length;
