@@ -505,11 +505,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           if (n < 1 || n > 999) return Promise.resolve({ ok: false, err: "bad_n" });
           if (a.p_site !== "cn" && a.p_site !== "intl") return Promise.resolve({ ok: false, err: "bad_site" });
           return G.read("db/accounts.json").then(function (ao) {
-            if (ao !== null) {
-              var acc = jget(ao.content, { rows: [] });
-              var has = (acc.rows || []).some(function (r) { return String(r.email || "").toLowerCase() === String(a.p_email || "").toLowerCase(); });
-              if (!has) return { ok: false, err: "no_account" };
-            }
+            /* GH 模式：快照可能滞后，不做账号强校验，按邮箱直发（游戏端按邮箱+站点领取） */
             return G.read("db/grants.json").then(function (go) {
               var list = go === null ? [] : jget(go.content, []);
               if (!Array.isArray(list)) list = [];
