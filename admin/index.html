@@ -128,6 +128,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <button class="tab" data-tab="price">价表</button>
     <button class="tab" data-tab="shop">商店配置</button>
     <button class="tab" data-tab="econ">经济模型</button>
+    <button class="tab" data-tab="mig">数据迁移</button>
   </div>
 
   <section id="tab-ov">
@@ -304,6 +305,20 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     监控范围：云端数据库全库 —— 概览统计、账号清单、事件流水均覆盖<b>所有账号与所有访客</b>（含国内站与海外站），与管理员本人的浏览行为无关<br>
     访问/点击由前端自动采集，登录与注册同时写入账号表；仅本控制台持有会话令牌，可直接读取；图鉴站点对这几张表无任何读取权限
   </div>
+  <section id="tab-mig" hidden>
+    <h2>数据迁移（云库 → GitHub）</h2>
+    <p class="muted" style="line-height:1.8">
+      把 WorkBuddy 云库中的<b>概览统计、账号清单、事件流水、全部配置、玩家云端存档</b>导出并写入 GitHub 仓库 <code>db/</code> 目录，
+      作为 GitHub 模式后台的正式数据库。迁移完成后 GitHub 模式登录即可查看账号与事件、发放也基于真实账号。<br>
+      前提：①已用「云库模式」登录；②浏览器可访问 api.github.com；③若尚未 GitHub 模式登录，点击按钮后按提示输入 PAT Token。
+      玩家存档逐个拉取，账号越多耗时越长，请勿关闭页面。
+    </p>
+    <div style="display:flex;gap:10px;align-items:center;margin:14px 0">
+      <button id="migRun" class="btn" style="padding:8px 18px;background:#2c5a38">开始同步到 GitHub</button>
+      <span id="migStat" class="muted"></span>
+    </div>
+    <pre id="migLog" style="background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:12px;max-height:420px;overflow:auto;font-size:12px;line-height:1.6;color:var(--txt);white-space:pre-wrap"></pre>
+  </section>
 </main>
 
 <script>
@@ -1861,6 +1876,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#tab-price").hidden = state.tab !== "price";
       $("#tab-shop").hidden = state.tab !== "shop";
       $("#tab-econ").hidden = state.tab !== "econ";
+      $("#tab-mig").hidden = state.tab !== "mig";
       if (state.tab === "acc") loadAccounts(true);
       if (state.tab === "evt") loadEvents(false);
       if (state.tab === "cfg") { cfgLoad(); gdLoad(); gwLoad(); spRows(); spLoad(); }
@@ -1884,6 +1900,131 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   $("#accCsv").addEventListener("click", exportCsv);
   $("#evtKind").addEventListener("change", function () { state.evtKind = this.value; loadEvents(false); });
   $("#evtMore").addEventListener("click", function () { loadEvents(true); });
+
+  /* ---------- 数据迁移：云库 → GitHub ---------- */
+  var migBusy = false;
+  function migLog(s, isErr) {
+    var el = $("#migLog");
+    el.textContent += (el.textContent ? "\n" : "") + (isErr ? "[!] " : "") + s;
+    el.scrollTop = el.scrollHeight;
+  }
+  function migStat(s) { $("#migStat").textContent = s; }
+  function pmap(items, n, fn) {
+    return new Promise(function (res) {
+      var i = 0, done = 0, out = new Array(items.length);
+      function next() {
+        if (i >= items.length) return;
+        var k = i++;
+        fn(items[k]).then(function (v) { out[k] = v; }, function () { out[k] = null; }).then(function () {
+          done++; if (done === items.length) res(out); else next();
+        });
+      }
+      if (!items.length) return res([]);
+      for (var j = 0; j < n; j++) next();
+    });
+  }
+  function migFetchAll(name, args, cap) {
+    var rows = [], off = 0, total = null;
+    function step() {
+      var a = Object.assign({}, args); a.p_off = off; a.p_limit = 200;
+      return call(name, a).then(function (r) {
+        if (!r || r.ok === false) throw new Error(name + " 拉取失败" + (r && r.err ? "：" + r.err : ""));
+        if (total === null) total = r.total;
+        rows = rows.concat(r.rows || []);
+        off = rows.length;
+        migStat(name + " 已拉取 " + rows.length + (total ? " / " + total : "") + " 条");
+        if ((r.rows || []).length >= 200 && rows.length < cap) return step();
+        return { rows: rows, total: total === null ? rows.length : total };
+      });
+    }
+    return step();
+  }
+  function migPut(path, txt, msg) {
+    return GH.read(path).then(function (o) { return GH.write(path, txt, msg, o ? o.sha : null); });
+  }
+  function migRun() {
+    if (migBusy) return;
+    var t = token();
+    if (!t) return admTip("请先用「云库模式」登录本管控台", true);
+    var gs = GH.sess();
+    var ready = gs ? Promise.resolve(gs.t) : new Promise(function (res, rej) {
+      var pat = prompt("请输入 GitHub PAT Token（fanyzou99 的、有 sanguo-atlas 仓库写权限）");
+      if (!pat) return rej("cancel");
+      pat = pat.trim();
+      GH.login("fanyzou99", pat).then(function (r) { r.ok ? res(pat) : rej(new Error(r.msg)); }, function () { rej(new Error("GitHub 验证失败")); });
+    });
+    ready.then(function () {
+      migBusy = true; $("#migRun").disabled = true;
+      $("#migLog").textContent = "";
+      migLog("== 云库 → GitHub 数据迁移开始 " + new Date().toLocaleString("zh-CN") + " ==");
+      migStat("拉取中…");
+      return call("sg_admin_overview", { p_token: t }).then(function (ov) {
+        if (!ov || ov.ok === false) throw new Error("overview 拉取失败");
+        migLog("① 概览统计 OK");
+        return migFetchAll("sg_admin_accounts", { p_token: t, p_q: "" }, 20000).then(function (acc) {
+          migLog("② 账号 " + acc.rows.length + " 条（total " + acc.total + "）");
+          return migFetchAll("sg_admin_events", { p_token: t, p_kind: "" }, 50000).then(function (evt) {
+            migLog("③ 事件 " + evt.rows.length + " 条（total " + evt.total + "）");
+            var keys = ["tiers", "gacha", "troopgrow", "econ", "shop", "sprites"];
+            return Promise.all(keys.map(function (k) {
+              return call("sg_cfg_get", { p_key: k }).then(function (r) { return [k, r && r.ok ? r.data : null]; });
+            })).then(function (prs) {
+              var cfg = {};
+              prs.forEach(function (p2) { if (p2[1] !== null && p2[1] !== undefined) cfg[p2[0]] = p2[1]; });
+              migLog("④ 云端配置键 " + (Object.keys(cfg).join(",") || "（无，将保留 GitHub 现有配置）"));
+              var emails = acc.rows.map(function (a) { return a.email; }).filter(Boolean);
+              migStat("拉取玩家云端存档 0/" + emails.length);
+              var cnt = 0;
+              return pmap(emails, 4, function (em) {
+                return Promise.all([
+                  call("sg_state_get", { p_email: em, p_site: "intl" }),
+                  call("sg_state_get", { p_email: em, p_site: "cn" })
+                ]).then(function (rs) {
+                  cnt++; migStat("拉取玩家云端存档 " + cnt + "/" + emails.length);
+                  return [em, { intl: parseState(rs[0]), cn: parseState(rs[1]) }];
+                });
+              }).then(function (sts) {
+                var states = {};
+                sts.forEach(function (p3) { if (p3) states[p3[0]] = p3[1]; });
+                migLog("⑤ 玩家云端存档 " + Object.keys(states).length + " 人");
+                migStat("写入 GitHub 仓库…");
+                return migPut("db/overview.json", JSON.stringify(ov), "data-sync: overview (admin migration)").then(function () {
+                  migLog("⑥ overview.json OK");
+                  return migPut("db/accounts.json", JSON.stringify({ ok: true, total: acc.total, rows: acc.rows }), "data-sync: accounts (admin migration)");
+                }).then(function () {
+                  migLog("⑥ accounts.json OK");
+                  return migPut("db/events.json", JSON.stringify({ ok: true, total: evt.total, rows: evt.rows }), "data-sync: events (admin migration)");
+                }).then(function () {
+                  migLog("⑥ events.json OK");
+                  return GH.read("db/cfg.json").then(function (o) {
+                    var cur = {};
+                    if (o) { try { cur = JSON.parse(o.content) || {}; } catch (e) {} }
+                    Object.keys(cur).forEach(function (k) { if (cfg[k] === undefined) cfg[k] = cur[k]; });
+                    return GH.write("db/cfg.json", JSON.stringify(cfg), "data-sync: cfg (admin migration)", o ? o.sha : null);
+                  });
+                }).then(function () {
+                  migLog("⑥ cfg.json OK（云端值覆盖，未设置的键保留 GitHub 现值）");
+                  return migPut("db/states.json", JSON.stringify(states), "data-sync: player states (admin migration)");
+                }).then(function () {
+                  migLog("⑥ states.json OK");
+                });
+              });
+            });
+          });
+        });
+      }).then(function () {
+        migLog("== 迁移完成 ==");
+        migStat("✅ 完成（GitHub Pages CDN 约 10 分钟后全站生效）");
+      })["catch"](function (e) {
+        migLog(String((e && e.message) || e), true);
+        migStat("❌ 失败");
+      }).then(function () { migBusy = false; $("#migRun").disabled = false; });
+    })["catch"](function (e) {
+      if (e === "cancel") return;
+      migLog(String((e && e.message) || e), true);
+    });
+  }
+  $("#migRun").addEventListener("click", migRun);
 
   document.addEventListener("click", function (e) {
     var a = e.target.closest ? e.target.closest("[data-reveal]") : null;
