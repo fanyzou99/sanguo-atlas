@@ -1903,6 +1903,23 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 
   /* ---------- 数据迁移：云库 → GitHub ---------- */
   var migBusy = false;
+  /* 迁移专用云库调用：即使 GH 模式已登录，也强制走 WorkBuddy 云库，绝不读 GitHub 快照 */
+  function migCall(name, args) {
+    if (SAME) {
+      return waitCli().then(function (c) {
+        if (!c) return null;
+        return Promise.resolve(c.database.rpc(name, args)).then(function (r) { return r && r.data; }, function () { return null; });
+      });
+    }
+    return new Promise(function (res) {
+      var id = ++seq;
+      waits[id] = res;
+      fq.push({ id: id, name: name, args: args });
+      ensureFrame();
+      flush();
+      setTimeout(function () { if (waits[id]) { delete waits[id]; res(null); } }, 12000);
+    });
+  }
   function migLog(s, isErr) {
     var el = $("#migLog");
     el.textContent += (el.textContent ? "\n" : "") + (isErr ? "[!] " : "") + s;
@@ -1927,8 +1944,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     var rows = [], off = 0, total = null;
     function step() {
       var a = Object.assign({}, args); a.p_off = off; a.p_limit = 200;
-      return call(name, a).then(function (r) {
-        if (!r || r.ok === false) throw new Error(name + " 拉取失败" + (r && r.err ? "：" + r.err : "（无响应）"));
+      return migCall(name, a).then(function (r) {
+        if (!r || r.ok === false) throw new Error(name + " 拉取失败" + (r && r.err ? "：" + r.err : "（云库无响应——若提示升级套餐，说明云库被平台套餐门禁限制）"));
         if (off === 0) migLog("   [" + name + " 原始响应] " + JSON.stringify(r).slice(0, 260));
         if (total === null) total = r.total;
         rows = rows.concat(r.rows || []);
@@ -1959,7 +1976,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#migLog").textContent = "";
       migLog("== 云库 → GitHub 数据迁移开始 " + new Date().toLocaleString("zh-CN") + " ==");
       migStat("拉取中…");
-      return call("sg_admin_overview", { p_token: t }).then(function (ov) {
+      return migCall("sg_admin_overview", { p_token: t }).then(function (ov) {
         if (!ov || ov.ok === false) throw new Error("overview 拉取失败");
         migLog("① 概览统计 OK");
         return migFetchAll("sg_admin_accounts", { p_token: t, p_q: "" }, 20000).then(function (acc) {
@@ -1968,7 +1985,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
             migLog("③ 事件 " + evt.rows.length + " 条（total " + evt.total + "）");
             var keys = ["tiers", "gacha", "troopgrow", "econ", "shop", "sprites"];
             return Promise.all(keys.map(function (k) {
-              return call("sg_cfg_get", { p_key: k }).then(function (r) { return [k, r && r.ok ? r.data : null]; });
+              return migCall("sg_cfg_get", { p_key: k }).then(function (r) { return [k, r && r.ok ? r.data : null]; });
             })).then(function (prs) {
               var cfg = {};
               prs.forEach(function (p2) { if (p2[1] !== null && p2[1] !== undefined) cfg[p2[0]] = p2[1]; });
@@ -1978,8 +1995,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
               var cnt = 0;
               return pmap(emails, 4, function (em) {
                 return Promise.all([
-                  call("sg_state_get", { p_email: em, p_site: "intl" }),
-                  call("sg_state_get", { p_email: em, p_site: "cn" })
+                  migCall("sg_state_get", { p_email: em, p_site: "intl" }),
+                  migCall("sg_state_get", { p_email: em, p_site: "cn" })
                 ]).then(function (rs) {
                   cnt++; migStat("拉取玩家云端存档 " + cnt + "/" + emails.length);
                   return [em, { intl: parseState(rs[0]), cn: parseState(rs[1]) }];
