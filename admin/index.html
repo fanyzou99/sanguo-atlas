@@ -115,7 +115,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <div class="err" id="gateErr"></div>
     <button class="btn gold" id="loginBtn" style="width:100%;padding:10px">云库模式登录</button>
     <button class="btn" id="ghBtn" style="width:100%;padding:10px;margin-top:8px">GitHub 模式登录（密码栏填 PAT Token）</button>
-    <div class="tip">云库模式：原管理员密码，数据=云端数据库。<br>GitHub 模式：用户名 fanyzou + GitHub PAT（需仓库写权限），配置与发放读写仓库 fanyzou99/sanguo-atlas 的 db/ 目录——适用于 GitHub Pages 发布平台。</div>
+    <div class="tip">云库模式：原管理员密码，数据=云端数据库。<br>GitHub 模式：用户名 fanyzou 或 fanyzou99 + GitHub PAT（需仓库写权限），配置与发放读写仓库 fanyzou99/sanguo-atlas 的 db/ 目录——适用于 GitHub Pages 发布平台。</div>
   </div>
 </section>
 
@@ -405,7 +405,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     KEY: "sg_gh_admin",
     REPO: "fanyzou99/sanguo-atlas",
     BRANCH: "main",
-    ADMIN: "fanyzou",
+    ADMIN: "fanyzou99",
     on: function () { try { return !!sessionStorage.getItem(this.KEY); } catch (e) { return false; } },
     sess: function () { try { var s = sessionStorage.getItem(this.KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } },
     auth: function () { var s = this.sess(); return { "Authorization": "Bearer " + (s ? s.t : ""), "Accept": "application/vnd.github+json" }; },
@@ -440,8 +440,9 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       return fetch("https://api.github.com/user", { headers: H }).then(function (r) {
         if (!r.ok) return { ok: false, msg: "GitHub Token 无效（HTTP " + r.status + "）" };
         return r.json().then(function (me) {
-          if (String(me.login || "").toLowerCase() !== user.toLowerCase()) return { ok: false, msg: "Token 属于 " + me.login + "，与输入用户名不符" };
-          if (String(me.login || "").toLowerCase() !== G.ADMIN.toLowerCase()) return { ok: false, msg: "仅管理员 " + G.ADMIN + " 可登录" };
+          var uIn = user.toLowerCase(), adm = G.ADMIN.toLowerCase();
+          if (uIn !== adm && uIn !== "fanyzou") return { ok: false, msg: "仅管理员 " + G.ADMIN + " 可登录" };
+          if (String(me.login || "").toLowerCase() !== adm) return { ok: false, msg: "Token 属于 " + me.login + "，非管理员 " + G.ADMIN + " 的 Token" };
           return fetch("https://api.github.com/repos/" + G.REPO, { headers: H }).then(function (r2) {
             if (!r2.ok) return { ok: false, msg: "Token 无权访问仓库 " + G.REPO };
             return r2.json().then(function (rp) {
