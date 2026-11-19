@@ -95,7 +95,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   <span class="pill" id="verTag">后台 V18</span>
   <div class="sp"></div>
   <span class="pill" id="whoTag">未登录</span>
-  <a class="btn" href="../" style="text-decoration:none">图鉴首页</a>
+  <a class="btn" href="/" style="text-decoration:none">图鉴首页</a>
   <button class="btn" id="refreshBtn" hidden>刷新</button>
   <button class="btn" id="logoutBtn" hidden>退出</button>
 </div>
@@ -113,8 +113,9 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <input id="pwd" type="password" autocomplete="current-password" placeholder="••••••••">
     </div>
     <div class="err" id="gateErr"></div>
-    <button class="btn gold" id="loginBtn" style="width:100%;padding:10px">登 录</button>
-    <div class="tip">数据存储于云端数据库；账号邮箱与手机号仅可在本控制台查询，前端页面对匿名访问完全不可读。<br>同源直连入口（推荐）：<a href="https://sanguo-atlas.app.workbuddy.host/admin/" target="_blank" rel="noopener">sanguo-atlas.app.workbuddy.host/admin/</a></div>
+    <button class="btn gold" id="loginBtn" style="width:100%;padding:10px">云库模式登录</button>
+    <button class="btn" id="ghBtn" style="width:100%;padding:10px;margin-top:8px">GitHub 模式登录（密码栏填 PAT Token）</button>
+    <div class="tip">云库模式：原管理员密码，数据=云端数据库。<br>GitHub 模式：用户名 fanyzou + GitHub PAT（需仓库写权限），配置与发放读写仓库 fanyzou99/sanguo-atlas 的 db/ 目录——适用于 GitHub Pages 发布平台。</div>
   </div>
 </section>
 
@@ -323,7 +324,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 
   /* ---------- 传输层：同源直连 / 跨源中继 ---------- */
   var cli = null, seq = 0, waits = {}, frame = null, fready = false, fq = [];
-  var sdkQ = [], sdkState = "idle", lastErr = "", lastRelayErr = "";
+  var sdkQ = [], sdkState = "idle", lastErr = "";
 
   function svcTag() {
     var el = document.getElementById("svcTag");
@@ -378,28 +379,17 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   }
   function ensureFrame() {
     if (frame) return frame;
-    var relayUrl = HOST + "/_relay.html?sharecode=AIH73JHA63";
-    var onMsg = function (e) {
-      if (e.origin !== HOST) return;
-      var d = e.data || {};
-      if (d && d.__sgrelay && d.id && waits[d.id]) { var fn = waits[d.id]; delete waits[d.id]; lastRelayErr = d.err ? String(d.err) : ""; fn(d.data); }
-    };
-    window.addEventListener("message", onMsg);
-    if (!SAME) {
-      /* 优先弹窗中继：第一方上下文 cookie 完整，绕开第三方 Cookie 拦截；
-         需在用户点击（如登录按钮）期间调用才不会被弹窗拦截。 */
-      try {
-        var w = window.open(relayUrl, "sg_relay", "width=460,height=340,left=40,top=40");
-        if (w) { frame = w; fready = true; return frame; }
-      } catch (e) {}
-    }
-    /* 回退：隐藏 iframe 中继（依赖第三方 Cookie，部分新浏览器可能 403 超时） */
     frame = document.createElement("iframe");
     frame.setAttribute("aria-hidden", "true");
     frame.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:0;opacity:0";
-    frame.src = relayUrl;
+    frame.src = HOST + "/_relay.html";
     frame.onload = function () { fready = true; flush(); };
     document.body.appendChild(frame);
+    window.addEventListener("message", function (e) {
+      if (e.origin !== HOST) return;
+      var d = e.data || {};
+      if (d && d.__sgrelay && d.id && waits[d.id]) { var fn = waits[d.id]; delete waits[d.id]; fn(d.data); }
+    });
     return frame;
   }
   function flush() {
@@ -409,8 +399,133 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       try { frame.contentWindow.postMessage({ __sg: 1, id: it.id, name: it.name, args: it.args }, HOST); } catch (e) {}
     }
   }
+
+  /* ---------- V71：GitHub 传输层（GH 模式：仓库 db/ 目录即数据库） ---------- */
+  var GH = {
+    KEY: "sg_gh_admin",
+    REPO: "fanyzou99/sanguo-atlas",
+    BRANCH: "main",
+    ADMIN: "fanyzou",
+    on: function () { try { return !!sessionStorage.getItem(this.KEY); } catch (e) { return false; } },
+    sess: function () { try { var s = sessionStorage.getItem(this.KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } },
+    auth: function () { var s = this.sess(); return { "Authorization": "Bearer " + (s ? s.t : ""), "Accept": "application/vnd.github+json" }; },
+    API: function (path) { return "https://api.github.com/repos/" + this.REPO + "/contents/" + path; },
+    _b64d: function (s) { s = s.replace(/\s/g, ""); var bin = atob(s); var u8 = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new TextDecoder("utf-8").decode(u8); },
+    _b64e: function (t) { return btoa(unescape(encodeURIComponent(t))); },
+    /* 读 db 文件：存在 → {sha, content}；不存在 → null */
+    read: function (path) {
+      var G = this;
+      return fetch(G.API(path) + "?ref=" + G.BRANCH, { headers: G.auth() }).then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("gh_read_" + r.status);
+        return r.json().then(function (j) { return { sha: j.sha, content: G._b64d(j.content || "") }; });
+      });
+    },
+    /* 写 db 文件（读改写提交） */
+    write: function (path, text, msg, sha) {
+      var G = this;
+      var body = { message: msg, content: G._b64e(text), branch: G.BRANCH };
+      if (sha) body.sha = sha;
+      return fetch(G.API(path), { method: "PUT", headers: Object.assign({}, G.auth(), { "Content-Type": "application/json" }), body: JSON.stringify(body) }).then(function (r) {
+        if (!r.ok) throw new Error("gh_write_" + r.status);
+        return true;
+      });
+    },
+    /* 登录校验：PAT → 用户匹配 → 仓库写权限 */
+    login: function (user, pat) {
+      var G = this;
+      user = (user || "").trim();
+      var H = { "Authorization": "Bearer " + pat, "Accept": "application/vnd.github+json" };
+      if (!pat) return Promise.resolve({ ok: false, msg: "请在密码栏输入 GitHub PAT Token" });
+      return fetch("https://api.github.com/user", { headers: H }).then(function (r) {
+        if (!r.ok) return { ok: false, msg: "GitHub Token 无效（HTTP " + r.status + "）" };
+        return r.json().then(function (me) {
+          if (String(me.login || "").toLowerCase() !== user.toLowerCase()) return { ok: false, msg: "Token 属于 " + me.login + "，与输入用户名不符" };
+          if (String(me.login || "").toLowerCase() !== G.ADMIN.toLowerCase()) return { ok: false, msg: "仅管理员 " + G.ADMIN + " 可登录" };
+          return fetch("https://api.github.com/repos/" + G.REPO, { headers: H }).then(function (r2) {
+            if (!r2.ok) return { ok: false, msg: "Token 无权访问仓库 " + G.REPO };
+            return r2.json().then(function (rp) {
+              if (!((rp.permissions || {}).push)) return { ok: false, msg: "Token 对仓库无写权限（需 push 权限的 PAT）" };
+              try { sessionStorage.setItem(G.KEY, JSON.stringify({ u: me.login, t: pat })); } catch (e) {}
+              return { ok: true, user: me.login };
+            });
+          });
+        });
+      })["catch"](function () { return { ok: false, msg: "GitHub 验证请求失败（网络或跨域限制）" }; });
+    },
+    /* RPC 路由：模拟云库函数的返回结构 */
+    rpc: function (name, a) {
+      var G = this;
+      function jget(s, def) { try { var v = JSON.parse(s); return v; } catch (e) { return def; } }
+      function route() {
+        if (name === "sg_cfg_get") {
+          return G.read("db/cfg.json").then(function (o) {
+            if (o === null) return { ok: true, data: null };
+            var c = jget(o.content, {});
+            return { ok: true, data: (c[a.p_key] === undefined ? null : c[a.p_key]) };
+          });
+        }
+        if (name === "sg_cfg_set") {
+          return G.read("db/cfg.json").then(function (o) {
+            var c = {}, sha = null;
+            if (o !== null) { sha = o.sha; c = jget(o.content, {}); }
+            c[a.p_key] = a.p_data;
+            if (c._meta) c._meta.updated = new Date().toISOString();
+            return G.write("db/cfg.json", JSON.stringify(c, null, 1), "admin(GH): set cfg " + a.p_key, sha).then(function () { return { ok: true }; });
+          });
+        }
+        if (name === "sg_admin_overview") {
+          return G.read("db/overview.json").then(function (o) {
+            if (o === null) return { ok: true, totals: {}, daily: [], regions: [], events: [] };
+            return jget(o.content, { ok: true, totals: {}, daily: [], regions: [], events: [] });
+          });
+        }
+        if (name === "sg_admin_accounts") {
+          return G.read("db/accounts.json").then(function (o) {
+            var d = o === null ? { ok: true, total: 0, rows: [] } : jget(o.content, { ok: true, total: 0, rows: [] });
+            var rows = d.rows || [];
+            var q = String(a.p_q || "").trim().toLowerCase();
+            if (q) rows = rows.filter(function (r) { return (String(r.email || "") + String(r.nick || "") + String(r.id || "")).toLowerCase().indexOf(q) >= 0; });
+            return { ok: true, total: rows.length, rows: rows.slice(0, a.p_limit || 200) };
+          });
+        }
+        if (name === "sg_admin_events") {
+          return G.read("db/events.json").then(function (o) {
+            var d = o === null ? { ok: true, total: 0, rows: [] } : jget(o.content, { ok: true, total: 0, rows: [] });
+            var rows = d.rows || [];
+            if (a.p_kind) rows = rows.filter(function (r) { return r.event === a.p_kind; });
+            var off = a.p_off || 0, lim = a.p_limit || 60;
+            return { ok: true, total: rows.length, rows: rows.slice(off, off + lim) };
+          });
+        }
+        if (name === "sg_admin_grant_draws" || name === "sg_admin_grant_points" || name === "sg_admin_grant_cards") {
+          var kind = name === "sg_admin_grant_draws" ? "draws" : (name === "sg_admin_grant_points" ? "points" : "cards");
+          var n = parseInt(a.p_n, 10) || 0;
+          if (n < 1 || n > 999) return Promise.resolve({ ok: false, err: "bad_n" });
+          if (a.p_site !== "cn" && a.p_site !== "intl") return Promise.resolve({ ok: false, err: "bad_site" });
+          return G.read("db/accounts.json").then(function (ao) {
+            if (ao !== null) {
+              var acc = jget(ao.content, { rows: [] });
+              var has = (acc.rows || []).some(function (r) { return String(r.email || "").toLowerCase() === String(a.p_email || "").toLowerCase(); });
+              if (!has) return { ok: false, err: "no_account" };
+            }
+            return G.read("db/grants.json").then(function (go) {
+              var list = go === null ? [] : jget(go.content, []);
+              if (!Array.isArray(list)) list = [];
+              list.push({ id: "g" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36), kind: kind, email: a.p_email, n: n, site: a.p_site, t: a.p_tier, ts: new Date().toISOString() });
+              return G.write("db/grants.json", JSON.stringify(list, null, 1), "admin(GH): grant " + kind + " -> " + a.p_email + " @" + a.p_site, go === null ? null : go.sha).then(function () { return { ok: true }; });
+            });
+          });
+        }
+        return Promise.resolve(null); /* 未支持的 RPC */
+      }
+      return route().then(function (r) { return r === undefined ? null : r; }, function () { lastErr = "gh_api"; return null; });
+    }
+  };
+
   function callOnce(name, args) {
     lastErr = "";
+    if (GH.on()) return GH.rpc(name, args || {});
     if (SAME) {
       return waitCli().then(function (c) {
         if (!c) { lastErr = "sdk"; return null; }
@@ -421,13 +536,13 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     }
     return new Promise(function (res) {
       var id = ++seq;
-      waits[id] = function (v) { if (!v && lastRelayErr) { lastErr = "rpc:" + lastRelayErr; } res(v); };
+      waits[id] = res;
       fq.push({ id: id, name: name, args: args });
       ensureFrame();
       flush();
       setTimeout(function () {
         if (waits[id]) { delete waits[id]; lastErr = "timeout"; sdkState = "fail"; svcTag(); res(null); }
-      }, 25000);
+      }, 12000);
     });
   }
   /* 平台偶发 5xx/超时（如 525）：自动重试 2 次，避免整块数据静默空白 */
@@ -477,8 +592,6 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     var err = $("#gateErr");
     err.textContent = "";
     if (!p) { err.textContent = "请输入密码"; return; }
-    /* 用户手势期间预建中继：弹窗在此刻打开才不会被浏览器拦截 */
-    if (!SAME) { try { ensureFrame(); } catch (e) {} }
     var btn = $("#loginBtn");
     btn.disabled = true; btn.textContent = "验证中…";
     sha256("sanguo|" + u + "|" + p).then(function (h) {
@@ -486,21 +599,11 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       return call("sg_admin_login", { p_hash: h, p_ua: (navigator.userAgent || "").slice(0, 180) }).then(function (r) {
         btn.disabled = false; btn.textContent = "登 录";
         if (!r) {
-          if (lastErr === "sdk") {
-            err.textContent = "后台脚本未能加载（/admin/sdk.js），请刷新页面或直接访问 " + HOST + "/admin/";
-          } else if (lastErr === "timeout") {
-            err.innerHTML = "中继不可达（隐藏 iframe 未能连上国内站中继页）。请按顺序操作：<br>" +
-              "1. 先在本浏览器打开 <a href='" + HOST + "/?sharecode=AIH73JHA63' target='_blank' rel='noopener'>国内站首页（获取访问资格）</a>，<br>" +
-              "2. 再回到本页刷新并重新登录。<br>" +
-              "也可直接使用同源直连的 <a href='" + HOST + "/admin/' target='_blank' rel='noopener'>国内站后台</a>（推荐）。";
-          } else if (lastErr === "rpc" || lastErr.indexOf("rpc:") === 0) {
-            var e2 = (lastRelayErr || "").toUpperCase();
-            err.innerHTML = e2.indexOf("ISOLATED") >= 0
-              ? "云数据库处于隔离状态（欠费或到期）：在腾讯云开发控制台完成续期后即自动恢复，数据不会丢失。"
-              : "云端接口返回错误（" + esc(lastRelayErr || "未知") + "），请稍后重试；持续出现请检查云环境状态。";
-          } else {
-            err.textContent = "云服务连接失败，请稍后重试";
-          }
+          err.textContent = lastErr === "sdk"
+            ? "后台脚本未能加载（/admin/sdk.js），请刷新页面或直接访问 " + HOST + "/admin/"
+            : lastErr === "timeout"
+              ? "云服务无响应（中继超时），请确认 " + HOST + " 可正常打开"
+              : "云服务连接失败，请稍后重试";
           return;
         }
         if (!r.ok) { err.textContent = "用户名或密码不正确"; return; }
@@ -514,17 +617,35 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
   }
 
+  /* ---------- V71：GitHub 模式登录 ---------- */
+  function doLoginGH() {
+    var u = ($("#user").value || "").trim();
+    var p = $("#pwd").value || "";
+    var err = $("#gateErr");
+    err.textContent = "";
+    if (!p) { err.textContent = "请在密码栏输入 GitHub PAT Token"; return; }
+    var btn = $("#ghBtn");
+    btn.disabled = true; btn.textContent = "验证 GitHub Token…";
+    GH.login(u, p).then(function (r) {
+      btn.disabled = false; btn.textContent = "GitHub 模式登录（密码栏填 PAT Token）";
+      if (!r || !r.ok) { err.textContent = (r && r.msg) || "GitHub Token 验证失败"; return; }
+      setToken("gh:" + (r.user || "fanyzou"));
+      enterApp();
+    });
+  }
+
   function enterApp() {
     $("#gate").hidden = true;
     $("#app").hidden = false;
     $("#refreshBtn").hidden = false;
     $("#logoutBtn").hidden = false;
-    $("#whoTag").textContent = "fanyzou · 管理员（数据=全库）";
+    $("#whoTag").textContent = GH.on() ? "fanyzou · GitHub 模式（数据库=仓库 db/）" : "fanyzou · 管理员（数据=全库）";
     loadOverview(); loadAccounts(true);
   }
 
   function logout() {
     setToken("");
+    try { sessionStorage.removeItem(GH.KEY); } catch (e) {}
     $("#app").hidden = true;
     $("#gate").hidden = false;
     $("#refreshBtn").hidden = true;
@@ -1720,8 +1841,10 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   }
 
   /* ---------- 事件绑定 ---------- */
-  $("#loginBtn").addEventListener("click", doLogin);
-  $("#pwd").addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+  var lastLoginMode = "cloud";
+  $("#loginBtn").addEventListener("click", function () { lastLoginMode = "cloud"; doLogin(); });
+  $("#ghBtn").addEventListener("click", function () { lastLoginMode = "gh"; doLoginGH(); });
+  $("#pwd").addEventListener("keydown", function (e) { if (e.key === "Enter") { if (lastLoginMode === "gh") doLoginGH(); else doLogin(); } });
   $("#refreshBtn").addEventListener("click", function () {
     loadOverview();
     if (state.tab === "acc") loadAccounts(true);
