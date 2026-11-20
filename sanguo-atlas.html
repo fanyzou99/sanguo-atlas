@@ -9417,19 +9417,21 @@ var BOTS = [
       var l = login(acc);
       if (l.err) {
         /* V13：本机无记录 → 查云端通用账号，跨站登录 */
-        SGCloud.lookup(acc).then(function (info) {
+        SGCloud.ghLookup(acc).then(function (ginfo) { return ginfo || SGCloud.lookup(acc); }).then(function (info) {
           if (!info) { errEl.textContent = l.err; return; }
           /* V39：云端账号若已设密码，需校验（取任一站点的档案） */
           var chk = function (obj) {
-            if (obj && obj.pw) {
+            var ph = (obj && obj.pw) || info.pw || "";
+            if (ph) {
               pwHash(pwL, info.email).then(function (h) {
-                if (h !== obj.pw) { errEl.textContent = T("authPwdBad"); return; }
+                if (h !== ph) { errEl.textContent = T("authPwdBad"); return; }
                 afterRemote();
               });
             } else afterRemote();
           };
           var afterRemote = function () {
             var r2 = registerRemote(info, acc);
+            if (info.gh && info.pw) { r2.user.pw = info.pw; save(); } /* V74：GH 账号库哈希落本机并立即存档，后续走本地快速校验 */
             SGCloud.stateGet(info.email, "intl").then(function (o1) {
               SGCloud.stateGet(info.email, "cn").then(function (o2) {
                 var pwH = (o1 && o1.pw) || (o2 && o2.pw) || "";
@@ -9441,6 +9443,7 @@ var BOTS = [
             toast(T("loggedIn", { n: r2.user.name }), "ok");
             showTick(r2.tick);
           };
+          if (info.gh) { chk(null); return; } /* V74：GH 账号库命中即校验，不等云库存档（云库挂起会拖 90s） */
           SGCloud.stateGet(info.email, "intl").then(function (o1) {
             if (o1 && o1.pw) { chk(o1); return; }
             SGCloud.stateGet(info.email, "cn").then(function (o2) { chk(o2); });
@@ -9836,7 +9839,7 @@ var BOTS = [
     function grantsPoll(u) {
       try {
         if (!u || !u.email) return Promise.resolve(0);
-        return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }).then(function (r) {
+        return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }, 8000).then(function (r) {
           if (!(r && r.ok)) return ghGrantsPoll(u); /* V71：云库失败 → GitHub 发放队列兜底 */
           var n = (r && r.ok) ? (r.n || 0) : 0;
           var pts = (r && r.ok) ? (r.pts || 0) : 0;
@@ -9872,7 +9875,7 @@ var BOTS = [
           var claimed = {};
           try { claimed = JSON.parse(localStorage.getItem("sg_grants_claimed") || "{}") || {}; } catch (e) { claimed = {}; }
           var fresh = list.filter(function (g) {
-            return g && g.id && !claimed[g.id] && String(g.email || "").toLowerCase() === email && (!g.site || g.site === SITE_ID);
+            return g && g.id && !claimed[g.id] && String(g.email || "").toLowerCase() === email && (!g.site || g.site === SITE_ID || g.site === "all");
           });
           if (!fresh.length) return 0;
           var n = 0, pts = 0, cards = [], got = false;
@@ -10263,6 +10266,27 @@ var BOTS = [
       return pushNow(true).then(function () { return statePull({ manual: true }); });
     }
 
+    function ghLookup(acc) {
+      /* V74：云库不可用时从同源 GitHub db/accounts.json 兜底查账号（跨站通用，仅登录已有账号） */
+      try {
+        var a = String(acc || "").trim().toLowerCase();
+        if (!a || a.length < 3) return Promise.resolve(null);
+        return fetch("db/accounts.json?v=" + Date.now()).then(function (r) {
+          return r.ok ? r.json() : null;
+        }).then(function (j) {
+          var rows = (j && j.rows) || [];
+          for (var i = 0; i < rows.length; i++) {
+            var w = rows[i] || {};
+            if (String(w.email || "").toLowerCase() === a || String(w.phone || "") === a ||
+                String(w.nick || w.name || "").toLowerCase() === a) {
+              return { exists: true, email: w.email, nick: w.nick || w.name || "",
+                       phone_masked: w.phone || "", pw: w.pw || "", gh: true };
+            }
+          }
+          return null;
+        })["catch"](function () { return null; });
+      } catch (e) { return Promise.resolve(null); }
+    }
     function confirmExists(em) {
       /* 只读确认：账号是否已在云端（用于"请求超时但可能已落库"的判定） */
       return rpcP("sg_account_lookup", { p_acc: String(em || "").slice(0, 120) }, 10000).then(function (r) {
@@ -10313,6 +10337,7 @@ var BOTS = [
         if (!u) return;
         /* V44：登录/注册后立即以云端档案为准——先拉取再放行推送，避免本机缓存把云端覆盖 */
         u._ready = false;
+        setTimeout(function () { try { grantsPoll(me()); } catch (e) {} }, 2500); /* V74：发放轮询独立触发，不排在 statePull 之后（云库挂起会拖 80s+） */
         setTimeout(function () {
           cfgPull();
           statePull().then(function () {
@@ -10342,7 +10367,7 @@ var BOTS = [
       fetchIP();
       setTimeout(warm, 900);
       trackEv("visit");
-      try { var bu = me(); if (bu && bu.email) { bu._ready = false; setTimeout(function () { cfgPull(); statePull().then(function () { grantsPoll(me()); }); }, 500); } } catch (e) {}
+      try { var bu = me(); if (bu && bu.email) { bu._ready = false; setTimeout(function () { try { grantsPoll(me()); } catch (e) {} }, 2500); setTimeout(function () { cfgPull(); statePull().then(function () { grantsPoll(me()); }); }, 500); } } catch (e) {}
       /* V44：云端为账号唯一真源——每 60s 主动拉一次（多设备同时在线也能收敛），离开页面时冲刷未推送改动 */
       try {
         setInterval(function () {
@@ -10377,7 +10402,7 @@ var BOTS = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
     else boot();
     return { rpc: rpc, rpcP: rpcP, sid: sid, account: account, grantsPoll: grantsPoll,
-             lookup: lookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, syncNow: syncNow, applyCloud: applyCloudSnapshot, stateGet: stateGet, statePut: statePut, snap: stateSnap, cfgPull: cfgPull, site: function () { return SITE_ID; },
+             lookup: lookup, ghLookup: ghLookup, registerAccount: registerAccount, warm: warm, confirmExists: confirmExists, pushSoon: pushSoon, pushNow: pushNow, statePull: statePull, syncNow: syncNow, applyCloud: applyCloudSnapshot, stateGet: stateGet, statePut: statePut, snap: stateSnap, cfgPull: cfgPull, site: function () { return SITE_ID; },
              ip: function () { return cip; }, fetchIP: fetchIP };
   })();
   try { window.SGCloud = SGCloud; } catch (e) {}
