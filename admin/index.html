@@ -902,7 +902,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       '<div style="font-size:13px;margin-bottom:8px">发放到站点：</div>' +
       '<div style="font-size:13px;margin-bottom:12px;display:flex;gap:18px">' +
       '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gsite" value="cn"' + (site === "cn" ? " checked" : "") + "> 国内站</label>" +
-      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gsite" value="intl"' + (site !== "cn" ? " checked" : "") + "> 海外站</label></div>" +
+      '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gsite" value="intl"' + (site !== "cn" ? " checked" : "") + "> 海外站</label>" + '<label style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap"><input type="radio" name="gsite" value="all"> 两站通用</label></div>' +
       '<div class="muted" style="font-size:12px;margin-bottom:14px">发放仅对该站点生效：用户在对应站点登录后自动到账，另一站点不受影响。</div>' +
       '<div style="display:flex;gap:8px;justify-content:flex-end">' +
       '<button id="gCancel" class="btn" style="padding:6px 14px">取消</button>' +
@@ -916,7 +916,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       ov.querySelector("#gOk").disabled = true;
       call("sg_admin_grant_draws", { p_token: token(), p_email: a.email, p_n: n2, p_site: site2 }).then(function (r) {
         document.body.removeChild(ov);
-        if (r && r.ok) admTip("已向 " + a.email + " 在" + (site2 === "cn" ? "国内站" : "海外站") + "发放 " + n2 + " 次抽卡");
+        if (r && r.ok) admTip("已向 " + a.email + " 在" + (site2 === "cn" ? "国内站" : site2 === "intl" ? "海外站" : "两站") + "发放 " + n2 + " 次抽卡");
         else if (r && r.err === "unauthorized") { logout(); }
         else if (r && r.err === "no_account") admTip("账号不存在（须已注册）", true);
         else if (r && r.err === "bad_n") admTip("次数需在 1~999 之间", true);

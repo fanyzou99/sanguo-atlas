@@ -1,1 +1,175 @@
-{"tiers":[{"n":"紫","grade":"S","star":7,"c":"#9257e0","min":88,"pts":1500,"stat":10,"rate":60,"troop":100000,"posb":60,"pts10":20,"kp":3.375,"skd":50},{"n":"蓝","grade":"A","star":6,"c":"#3f7fe0","min":85,"pts":800,"stat":6,"rate":30,"troop":30000,"posb":30,"pts10":10,"kp":2.25,"skd":30},{"n":"绿","grade":"B","star":5,"c":"#35b96e","min":82,"pts":500,"stat":5,"rate":20,"troop":20000,"posb":20,"pts10":8,"kp":1.5,"skd":18},{"n":"黄","grade":"C","star":4,"c":"#e8c988","min":78,"pts":300,"stat":4,"rate":10,"troop":10000,"posb":10,"pts10":6,"kp":1,"skd":10},{"n":"橙","grade":"D","star":3,"c":"#ff8f2d","min":72,"pts":200,"stat":3,"rate":5,"troop":5000,"posb":5,"pts10":4,"kp":0.7,"skd":5},{"n":"赤","grade":"E","star":2,"c":"#ff3054","min":65,"pts":100,"stat":2,"rate":2,"troop":2000,"posb":2,"pts10":2,"kp":0.5,"skd":2},{"n":"白","grade":"F","star":1,"c":"#c8d2dc","min":-1,"pts":20,"stat":1,"rate":1,"troop":1000,"posb":1,"pts10":1,"kp":0.35,"skd":0}],"gacha":[{"k":"s","p":1},{"k":"a","p":2},{"k":"b","p":3},{"k":"c","p":5},{"k":"mode","p":1}],"troopgrow":{"base":1000,"rows":[{"from":1,"to":20,"add":500},{"from":21,"to":40,"add":1000},{"from":41,"to":60,"add":2000},{"from":61,"to":70,"add":5000}]},"econ":{"perHouse":20,"hhCap":0,"grainYear":30,"grainSelf":24,"grainTax":6,"farmBonus":1,"wood":0.004,"copper":0.0015,"iron":0.0025,"coin":0.012},"shop":[],"sprites":{},"_meta":{"note":"后台配置数据库（GitHub 模式）。admin 页 GH 模式写入此文件；游戏端 GitHub Pages 同源兜底读取。","updated":"2026-11-19T07:03:11.803Z"},"sprite":""}
+{
+ "_meta": {
+  "note": "后台配置数据库（GitHub 模式）。admin 页 GH 模式写入此文件；游戏端 GitHub Pages 同源兜底读取。",
+  "updated": "2026-11-19T06:38:46.626Z"
+ },
+ "tiers": [
+  {
+   "n": "紫",
+   "grade": "S",
+   "star": 7,
+   "c": "#9257e0",
+   "min": 88,
+   "pts": 1500,
+   "stat": 10,
+   "rate": 60,
+   "troop": 100000,
+   "posb": 60,
+   "pts10": 20,
+   "kp": 3.375,
+   "skd": 50
+  },
+  {
+   "n": "蓝",
+   "grade": "A",
+   "star": 6,
+   "c": "#3f7fe0",
+   "min": 85,
+   "pts": 800,
+   "stat": 6,
+   "rate": 30,
+   "troop": 30000,
+   "posb": 30,
+   "pts10": 10,
+   "kp": 2.25,
+   "skd": 30
+  },
+  {
+   "n": "绿",
+   "grade": "B",
+   "star": 5,
+   "c": "#35b96e",
+   "min": 82,
+   "pts": 500,
+   "stat": 5,
+   "rate": 20,
+   "troop": 20000,
+   "posb": 20,
+   "pts10": 8,
+   "kp": 1.5,
+   "skd": 18
+  },
+  {
+   "n": "黄",
+   "grade": "C",
+   "star": 4,
+   "c": "#e8c988",
+   "min": 78,
+   "pts": 300,
+   "stat": 4,
+   "rate": 10,
+   "troop": 10000,
+   "posb": 10,
+   "pts10": 6,
+   "kp": 1,
+   "skd": 10
+  },
+  {
+   "n": "橙",
+   "grade": "D",
+   "star": 3,
+   "c": "#ff8f2d",
+   "min": 72,
+   "pts": 200,
+   "stat": 3,
+   "rate": 5,
+   "troop": 5000,
+   "posb": 5,
+   "pts10": 4,
+   "kp": 0.7,
+   "skd": 5
+  },
+  {
+   "n": "赤",
+   "grade": "E",
+   "star": 2,
+   "c": "#ff3054",
+   "min": 65,
+   "pts": 100,
+   "stat": 2,
+   "rate": 2,
+   "troop": 2000,
+   "posb": 2,
+   "pts10": 2,
+   "kp": 0.5,
+   "skd": 2
+  },
+  {
+   "n": "白",
+   "grade": "F",
+   "star": 1,
+   "c": "#c8d2dc",
+   "min": -1,
+   "pts": 20,
+   "stat": 1,
+   "rate": 1,
+   "troop": 1000,
+   "posb": 1,
+   "pts10": 1,
+   "kp": 0.35,
+   "skd": 0
+  }
+ ],
+ "gacha": [
+  {
+   "k": "s",
+   "p": 1
+  },
+  {
+   "k": "a",
+   "p": 2
+  },
+  {
+   "k": "b",
+   "p": 3
+  },
+  {
+   "k": "c",
+   "p": 5
+  },
+  {
+   "k": "mode",
+   "p": 1
+  }
+ ],
+ "troopgrow": {
+  "base": 1000,
+  "rows": [
+   {
+    "from": 1,
+    "to": 20,
+    "add": 500
+   },
+   {
+    "from": 21,
+    "to": 40,
+    "add": 1000
+   },
+   {
+    "from": 41,
+    "to": 60,
+    "add": 2000
+   },
+   {
+    "from": 61,
+    "to": 70,
+    "add": 5000
+   }
+  ]
+ },
+ "econ": {
+  "perHouse": 20,
+  "hhCap": 0,
+  "grainYear": 30,
+  "grainSelf": 24,
+  "grainTax": 6,
+  "farmBonus": 1,
+  "wood": 0.004,
+  "copper": 0.0015,
+  "iron": 0.0025,
+  "coin": 0.012
+ },
+ "sprites": {},
+ "sprite": "",
+ "shop": []
+}
