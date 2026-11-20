@@ -683,6 +683,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   }
 
   function enterAs(hit, withPat) {
+    var b = $("#accBtn");
+    if (b) { b.disabled = false; b.textContent = "账号密码登录（站长账号 fany）"; }
     var nm = hit.name || hit.user;
     try { sessionStorage.setItem(GH.KEY, JSON.stringify({ u: "fanyzou99", t: withPat ? getSavedPat() : "", name: nm })); } catch (e) {}
     setToken("gh:" + nm);
