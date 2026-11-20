@@ -96,6 +96,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   <div class="sp"></div>
   <span class="pill" id="whoTag">未登录</span>
   <a class="btn" href="/" style="text-decoration:none">图鉴首页</a>
+  <button class="btn" id="patBtn" hidden>绑定 PAT</button>
   <button class="btn" id="refreshBtn" hidden>刷新</button>
   <button class="btn" id="logoutBtn" hidden>退出</button>
 </div>
@@ -106,16 +107,17 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <p class="sub">唯一后台入口 · 账号数据、发放与访问日志仅在此处可查</p>
     <div class="field">
       <label>用户名</label>
-      <input id="user" value="fanyzou" autocomplete="username" spellcheck="false">
+      <input id="user" value="fany" placeholder="用户名 / 邮箱 / 手机号" autocomplete="username" spellcheck="false">
     </div>
     <div class="field">
       <label>密码</label>
       <input id="pwd" type="password" autocomplete="current-password" placeholder="••••••••">
     </div>
     <div class="err" id="gateErr"></div>
-    <button class="btn gold" id="loginBtn" style="width:100%;padding:10px">云库模式登录</button>
+    <button class="btn gold" id="accBtn" style="width:100%;padding:10px">账号密码登录（站长账号 fany）</button>
+    <button class="btn" id="loginBtn" style="width:100%;padding:10px;margin-top:8px">云库模式登录</button>
     <button class="btn" id="ghBtn" style="width:100%;padding:10px;margin-top:8px">GitHub 模式登录（密码栏填 PAT Token）</button>
-    <div class="tip">云库模式：原管理员密码，数据=云端数据库。<br>GitHub 模式：用户名 fanyzou 或 fanyzou99 + GitHub PAT（需仓库写权限），配置与发放读写仓库 fanyzou99/sanguo-atlas 的 db/ 目录——适用于 GitHub Pages 发布平台。</div>
+    <div class="tip">账号密码登录：fany / 邮箱 / 手机号 + 游戏密码，数据=GitHub 仓库 db/（首次保存或发放时需绑定一次 PAT，记住本机后续免输）。<br>云库模式：原管理员密码，数据=云端数据库（平台当前提示需升级套餐）。<br>GitHub 模式：fanyzou99 + PAT（管理员直连，全权限）。</div>
   </div>
 </section>
 
@@ -423,7 +425,12 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ADMIN: "fanyzou99",
     on: function () { try { return !!sessionStorage.getItem(this.KEY); } catch (e) { return false; } },
     sess: function () { try { var s = sessionStorage.getItem(this.KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } },
-    auth: function () { var s = this.sess(); return { "Authorization": "Bearer " + (s ? s.t : ""), "Accept": "application/vnd.github+json" }; },
+    auth: function () {
+      var s = this.sess();
+      var h = { "Accept": "application/vnd.github+json" };
+      if (s && s.t) h["Authorization"] = "Bearer " + s.t;
+      return h;
+    },
     API: function (path) { return "https://api.github.com/repos/" + this.REPO + "/contents/" + path; },
     _b64d: function (s) { s = s.replace(/\s/g, ""); var bin = atob(s); var u8 = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new TextDecoder("utf-8").decode(u8); },
     _b64e: function (t) { return btoa(unescape(encodeURIComponent(t))); },
@@ -439,6 +446,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     /* 写 db 文件（读改写提交） */
     write: function (path, text, msg, sha) {
       var G = this;
+      if (!((this.sess() || {}).t)) return Promise.reject(new Error("当前为只读模式：请点右上角「绑定 PAT」后再保存/发放"));
       var body = { message: msg, content: G._b64e(text), branch: G.BRANCH };
       if (sha) body.sha = sha;
       return fetch(G.API(path), { method: "PUT", headers: Object.assign({}, G.auth(), { "Content-Type": "application/json" }), body: JSON.stringify(body) }).then(function (r) {
@@ -646,12 +654,78 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
   }
 
+  /* ---------- 账号密码登录（站长账号，数据=GitHub 仓库） ---------- */
+  var PATKEY = "sg_gh_pat";
+  function getSavedPat() { try { return localStorage.getItem(PATKEY) || ""; } catch (e) { return ""; } }
+  function savePat(v) { try { v ? localStorage.setItem(PATKEY, v) : localStorage.removeItem(PATKEY); } catch (e) {} }
+
+  function accRaw() {   /* 校验账号库：用户名/邮箱/手机号 + 密码（哈希与游戏端同算法） */
+    var u = ($("#user").value || "").trim(), p = $("#pwd").value || "";
+    if (!u || !p) return Promise.reject(new Error("请输入用户名（或邮箱/手机号）和密码"));
+    return GH.read("db/admin_users.json").then(function (o) {
+      if (!o) throw new Error("账号库未部署（db/admin_users.json），请联系管理员");
+      var j = {};
+      try { j = JSON.parse(o.content) || {}; } catch (e) {}
+      var list = j.users || [], key = u.toLowerCase(), dg = u.replace(/[^\d]/g, ""), hit = null;
+      for (var i = 0; i < list.length; i++) {
+        var a = list[i];
+        if ((a.user || "").toLowerCase() === key || (a.email || "").toLowerCase() === key) { hit = a; break; }
+        var ph = String(a.phone || "").replace(/[^\d]/g, "");
+        if (dg.length >= 7 && ph.slice(-11) === dg.slice(-11)) { hit = a; break; }
+      }
+      if (!hit) throw new Error("账号不存在");
+      return sha256("sg:" + String(hit.email || "").toLowerCase() + "|" + p).then(function (h) {
+        if (!h) throw new Error("当前环境不支持加密（需 HTTPS）");
+        if (h !== String(hit.pw || "").replace(/^v1:/, "")) throw new Error("密码不正确");
+        return hit;
+      });
+    });
+  }
+
+  function enterAs(hit, withPat) {
+    var nm = hit.name || hit.user;
+    try { sessionStorage.setItem(GH.KEY, JSON.stringify({ u: "fanyzou99", t: withPat ? getSavedPat() : "", name: nm })); } catch (e) {}
+    setToken("gh:" + nm);
+    enterApp();
+  }
+
+  function doLoginAcc() {
+    var err = $("#gateErr"), btn = $("#accBtn");
+    err.textContent = "";
+    btn.disabled = true; btn.textContent = "校验账号…";
+    var done = function (m) { btn.disabled = false; btn.textContent = "账号密码登录（站长账号 fany）"; if (m) err.textContent = m; };
+    accRaw().then(function (hit) {
+      var pat = getSavedPat();
+      if (!pat) { enterAs(hit, false); return; }
+      return GH.login("fanyzou99", pat).then(function (r) {
+        if (r && r.ok) { enterAs(hit, true); return; }
+        savePat(""); enterAs(hit, false);
+      }, function () { enterAs(hit, false); });
+    })["catch"](function (e) { done((e && e.message) || "登录失败"); });
+  }
+
+  function bindPatUI() {
+    var pat = prompt("输入 GitHub PAT（fanyzou99 的、sanguo-atlas 仓库写权限），将记住在本机浏览器");
+    if (!pat) return;
+    pat = pat.trim();
+    GH.login("fanyzou99", pat).then(function (r) {
+      if (!r || !r.ok) return admTip((r && r.msg) || "PAT 校验失败", true);
+      savePat(pat);
+      var s = GH.sess() || {};
+      try { sessionStorage.setItem(GH.KEY, JSON.stringify({ u: "fanyzou99", t: pat, name: s.name || "fany" })); } catch (e) {}
+      admTip("PAT 已绑定，配置保存与发放现在可用");
+      enterApp();
+    });
+  }
+
   function enterApp() {
     $("#gate").hidden = true;
     $("#app").hidden = false;
     $("#refreshBtn").hidden = false;
     $("#logoutBtn").hidden = false;
-    $("#whoTag").textContent = GH.on() ? "fanyzou · GitHub 模式（数据库=仓库 db/）" : "fanyzou · 管理员（数据=全库）";
+    var gs = GH.sess();
+    $("#whoTag").textContent = gs ? ((gs.name || gs.u || "fany") + " · GitHub 模式（数据库=仓库 db/）" + (gs.t ? "" : " · 只读")) : "管理员（数据=全库）";
+    $("#patBtn").hidden = !(gs && !gs.t);
     loadOverview(); loadAccounts(true);
   }
 
@@ -662,6 +736,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     $("#gate").hidden = false;
     $("#refreshBtn").hidden = true;
     $("#logoutBtn").hidden = true;
+    $("#patBtn").hidden = true;
     $("#whoTag").textContent = "未登录";
     $("#pwd").value = "";
   }
@@ -1853,10 +1928,17 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   }
 
   /* ---------- 事件绑定 ---------- */
-  var lastLoginMode = "cloud";
+  var lastLoginMode = "acc";
+  $("#accBtn").addEventListener("click", function () { lastLoginMode = "acc"; doLoginAcc(); });
   $("#loginBtn").addEventListener("click", function () { lastLoginMode = "cloud"; doLogin(); });
   $("#ghBtn").addEventListener("click", function () { lastLoginMode = "gh"; doLoginGH(); });
-  $("#pwd").addEventListener("keydown", function (e) { if (e.key === "Enter") { if (lastLoginMode === "gh") doLoginGH(); else doLogin(); } });
+  $("#patBtn").addEventListener("click", bindPatUI);
+  $("#pwd").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    if (lastLoginMode === "gh") doLoginGH();
+    else if (lastLoginMode === "cloud") doLogin();
+    else doLoginAcc();
+  });
   $("#refreshBtn").addEventListener("click", function () {
     loadOverview();
     if (state.tab === "acc") loadAccounts(true);
