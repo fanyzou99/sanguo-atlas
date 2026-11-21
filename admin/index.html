@@ -595,17 +595,27 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           if (!_sess.t) return Promise.resolve({ ok: false, err: "no_write", msg: "账号密码登录为只读：请点右上角「绑定 PAT」获得写权限后重新发放" });
           return G.read("db/accounts.json").then(function (ao) {
             /* GH 模式：快照可能滞后，不做账号强校验，按邮箱直发（游戏端按邮箱+站点领取） */
-            return G.read("db/grants.json").then(function (go) {
-              var list = go === null ? [] : jget(go.content, []);
-              if (!Array.isArray(list)) list = [];
-              list.push({ id: "g" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36), kind: kind, email: a.p_email, n: n, site: a.p_site, t: a.p_tier, ts: new Date().toISOString() });
-              return G.write("db/grants.json", JSON.stringify(list, null, 1), "admin(GH): grant " + kind + " -> " + a.p_email + " @" + a.p_site, go === null ? null : go.sha).then(function () { return { ok: true }; });
-            });
+            var entry = { id: "g" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36), kind: kind, email: a.p_email, n: n, site: a.p_site, t: a.p_tier, ts: new Date().toISOString() };
+            /* V77：每次 attempt 重读最新 sha；409 冲突（并发写/缓存旧 sha）自动重试 1 次 */
+            function attempt(retryLeft) {
+              return G.read("db/grants.json").then(function (go) {
+                var list = go === null ? [] : jget(go.content, []);
+                if (!Array.isArray(list)) list = [];
+                list.push(entry);
+                return G.write("db/grants.json", JSON.stringify(list, null, 1), "admin(GH): grant " + kind + " -> " + a.p_email + " @" + a.p_site, go === null ? null : go.sha).then(function () {
+                  return { ok: true };
+                }, function (e) {
+                  if (retryLeft > 0 && String((e && e.message) || "").indexOf("409") >= 0) return attempt(retryLeft - 1);
+                  throw e;
+                });
+              });
+            }
+            return attempt(1);
           });
         }
         return Promise.resolve(null); /* 未支持的 RPC */
       }
-      return route().then(function (r) { return r === undefined ? null : r; }, function () { lastErr = "gh_api"; return null; });
+      return route().then(function (r) { return r === undefined ? null : r; }, function (e) { lastErr = (e && e.message) || "gh_api"; return null; });
     }
   };
 
@@ -640,6 +650,20 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       }
       return r;
     });
+  }
+  /* V77：写操作专用——失败不自动重试（append 类写操作重试会产生重复发放），错误直接呈现给用户 */
+  function call1(name, args) { return callOnce(name, args); }
+  /* V77：把 lastErr 翻译成可读原因，发放失败时直接告诉用户怎么办 */
+  function ghErrText() {
+    var m = String(lastErr || "");
+    if (!m) return "未知原因，请重试";
+    if (m.indexOf("gh_write_403") >= 0) return "GitHub 拒绝写入(403)：PAT 失效/权限不足/触发速率限制——请右上角重新绑定 PAT，或 10 分钟后再试";
+    if (m.indexOf("gh_write_409") >= 0) return "内容冲突(409)：已自动重试仍失败，请稍后再点一次";
+    if (m.indexOf("gh_write_") >= 0) return "GitHub 写入失败(" + m.replace("gh_write_", "") + ")";
+    if (m.indexOf("gh_read_") >= 0) return "GitHub 读取失败(" + m.replace("gh_read_", "") + ")";
+    if (m.indexOf("Abort") >= 0 || m.indexOf("timeout") >= 0) return "网络超时：本机代理/网络波动导致请求未完成，请重试";
+    if (m.indexOf("fetch") >= 0 || m.indexOf("Network") >= 0 || m.indexOf("network") >= 0) return "网络异常：请检查本机代理/网络后重试";
+    return m;
   }
 
   /* ---------- 工具 ---------- */
@@ -989,7 +1013,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (r && r.err === "bad_n") admTip("次数需在 1~999 之间", true);
         else if (r && r.err === "bad_site") admTip("发放站点无效", true);
         else if (r && r.err === "no_write") admTip(r.msg || "无写权限：请绑定 PAT", true);
-        else admTip("发放失败，请重试", true);
+        else admTip("发放失败：" + ghErrText(), true);
       });
     };
   }
@@ -1047,7 +1071,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (r && r.err === "bad_n") admTip("积分需在 1~1000000 之间", true);
         else if (r && r.err === "bad_site") admTip("发放站点无效", true);
         else if (r && r.err === "no_write") admTip(r.msg || "无写权限：请绑定 PAT", true);
-        else admTip("发放失败，请重试", true);
+        else admTip("发放失败：" + ghErrText(), true);
       });
     };
   }
@@ -1167,7 +1191,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       var n2 = parseInt(ov.querySelector("#gcN").value, 10) || 0;
       if (n2 < 1 || n2 > 10) { admTip("发卡数量需在 1~10 之间", true); return; }
       ov.querySelector("#gcOk").disabled = true;
-      call("sg_admin_grant_cards", { p_token: token(), p_email: a.email, p_tier: t2, p_n: n2, p_site: site2 }).then(function (r) {
+      call1("sg_admin_grant_cards", { p_token: token(), p_email: a.email, p_tier: t2, p_n: n2, p_site: site2 }).then(function (r) {
         document.body.removeChild(ov);
         if (r && r.ok) admTip("已向 " + a.email + " 发放 " + TIER_NAMES[t2] + " 卡 ×" + n2 + "（" + (site2 === "cn" ? "国内站" : site2 === "intl" ? "海外站" : "两站通用") + "）");
         else if (r && r.err === "unauthorized") { logout(); }
@@ -1176,7 +1200,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (r && r.err === "bad_tier") admTip("品级无效", true);
         else if (r && r.err === "bad_site") admTip("发放站点无效", true);
         else if (r && r.err === "no_write") admTip(r.msg || "无写权限：请绑定 PAT", true);
-        else admTip("发卡失败，请重试", true);
+        else admTip("发卡失败：" + ghErrText(), true);
       });
     };
   }
