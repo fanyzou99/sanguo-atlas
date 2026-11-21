@@ -1,14 +1,17 @@
 {
  "note": "GitHub 模式后台账号库（仅存密码哈希，算法 v1:sha256(\"sg:\"+email+\"|\"+pw)；用户名/邮箱/手机号均可登录）",
- "updated": "2026-11-20T04:46:55.656Z",
+ "updated": "2026-11-20T09:53:20.672Z",
  "users": [
   {
    "user": "fany",
-   "email": "smartzhzou6@126.com",
+   "email": "smartzhzou@126.com",
    "phone": "13911644365",
-   "pw": "v1:30c2fe35d4f9dc036f8b5ceb96bae28a5978036fd96ca495fc47352800b6e713",
+   "pw": "v1:5cec45fbde20a524a769df72fe839a57876abf05e9eed87e0bf209a244a7b56e",
    "role": "owner",
-   "name": "fany"
+   "name": "fany",
+   "alias_emails": [
+    "smartzhzou6@126.com"
+   ]
   }
  ]
 }

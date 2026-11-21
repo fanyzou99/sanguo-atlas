@@ -9431,7 +9431,7 @@ var BOTS = [
           };
           var afterRemote = function () {
             var r2 = registerRemote(info, acc);
-            if (info.gh && info.pw) { r2.user.pw = info.pw; save(); } /* V74：GH 账号库哈希落本机并立即存档，后续走本地快速校验 */
+            if (info.gh) { r2.user.gh = true; if (info.aliases && info.aliases.length) r2.user.aliases = info.aliases; if (info.pw) r2.user.pw = info.pw; save(); } /* V74/V75：GH 账号库命中——哈希落本机、gh 标记使发放/存档跳过云库、旧邮箱别名随行保存 */
             SGCloud.stateGet(info.email, "intl").then(function (o1) {
               SGCloud.stateGet(info.email, "cn").then(function (o2) {
                 var pwH = (o1 && o1.pw) || (o2 && o2.pw) || "";
@@ -9839,6 +9839,7 @@ var BOTS = [
     function grantsPoll(u) {
       try {
         if (!u || !u.email) return Promise.resolve(0);
+        if (u.gh) return ghGrantsPoll(u); /* V75：GH 账号库账号不在云库，直接走 GitHub 发放队列，不等云库 RPC 挂起 */
         return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }, 8000).then(function (r) {
           if (!(r && r.ok)) return ghGrantsPoll(u); /* V71：云库失败 → GitHub 发放队列兜底 */
           var n = (r && r.ok) ? (r.n || 0) : 0;
@@ -9871,11 +9872,12 @@ var BOTS = [
       try {
         return fetch("db/grants.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) {
           if (!Array.isArray(list) || !list.length || !u || !u.email) return 0;
-          var email = String(u.email).toLowerCase();
+          /* V75：主邮箱 + 旧邮箱别名集合匹配（后台可能按任一历史邮箱发放） */
+          var ems = [String(u.email).toLowerCase()].concat((u.aliases || []).map(function (x) { return String(x).toLowerCase(); }));
           var claimed = {};
           try { claimed = JSON.parse(localStorage.getItem("sg_grants_claimed") || "{}") || {}; } catch (e) { claimed = {}; }
           var fresh = list.filter(function (g) {
-            return g && g.id && !claimed[g.id] && String(g.email || "").toLowerCase() === email && (!g.site || g.site === SITE_ID || g.site === "all");
+            return g && g.id && !claimed[g.id] && ems.indexOf(String(g.email || "").toLowerCase()) >= 0 && (!g.site || g.site === SITE_ID || g.site === "all");
           });
           if (!fresh.length) return 0;
           var n = 0, pts = 0, cards = [], got = false;
@@ -10277,10 +10279,12 @@ var BOTS = [
           var rows = (j && j.rows) || [];
           for (var i = 0; i < rows.length; i++) {
             var w = rows[i] || {};
-            if (String(w.email || "").toLowerCase() === a || String(w.phone || "") === a ||
+            var als = (w.alias_emails || []).map(function (x) { return String(x).toLowerCase(); });
+            if (String(w.email || "").toLowerCase() === a || als.indexOf(a) >= 0 || String(w.phone || "") === a ||
                 String(w.nick || w.name || "").toLowerCase() === a) {
               return { exists: true, email: w.email, nick: w.nick || w.name || "",
-                       phone_masked: w.phone || "", pw: w.pw || "", gh: true };
+                       phone_masked: w.phone || "", pw: w.pw || "", gh: true,
+                       aliases: (w.alias_emails || []).slice() }; /* V75：旧邮箱别名一并带回，登录与发放领取共用 */
             }
           }
           return null;

@@ -525,8 +525,11 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (name === "sg_admin_grant_draws" || name === "sg_admin_grant_points" || name === "sg_admin_grant_cards") {
           var kind = name === "sg_admin_grant_draws" ? "draws" : (name === "sg_admin_grant_points" ? "points" : "cards");
           var n = parseInt(a.p_n, 10) || 0;
-          if (n < 1 || n > 999) return Promise.resolve({ ok: false, err: "bad_n" });
-          if (a.p_site !== "cn" && a.p_site !== "intl") return Promise.resolve({ ok: false, err: "bad_site" });
+          if (n < 1 || (name === "sg_admin_grant_points" ? n > 1000000 : n > 999)) return Promise.resolve({ ok: false, err: "bad_n" });
+          /* V75：接受 cn/intl/all（UI「两站通用」选项此前被这里误拒导致发放静默失败） */
+          if (a.p_site !== "cn" && a.p_site !== "intl" && a.p_site !== "all") return Promise.resolve({ ok: false, err: "bad_site" });
+          var _sess = G.sess() || {};
+          if (!_sess.t) return Promise.resolve({ ok: false, err: "no_write", msg: "账号密码登录为只读：请点右上角「绑定 PAT」获得写权限后重新发放" });
           return G.read("db/accounts.json").then(function (ao) {
             /* GH 模式：快照可能滞后，不做账号强校验，按邮箱直发（游戏端按邮箱+站点领取） */
             return G.read("db/grants.json").then(function (go) {
@@ -669,7 +672,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       var list = j.users || [], key = u.toLowerCase(), dg = u.replace(/[^\d]/g, ""), hit = null;
       for (var i = 0; i < list.length; i++) {
         var a = list[i];
-        if ((a.user || "").toLowerCase() === key || (a.email || "").toLowerCase() === key) { hit = a; break; }
+        var als = (a.alias_emails || []).map(function (x) { return String(x).toLowerCase(); });
+        if ((a.user || "").toLowerCase() === key || (a.email || "").toLowerCase() === key || als.indexOf(key) >= 0) { hit = a; break; }
         var ph = String(a.phone || "").replace(/[^\d]/g, "");
         if (dg.length >= 7 && ph.slice(-11) === dg.slice(-11)) { hit = a; break; }
       }
@@ -921,6 +925,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (r && r.err === "no_account") admTip("账号不存在（须已注册）", true);
         else if (r && r.err === "bad_n") admTip("次数需在 1~999 之间", true);
         else if (r && r.err === "bad_site") admTip("发放站点无效", true);
+        else if (r && r.err === "no_write") admTip(r.msg || "无写权限：请绑定 PAT", true);
         else admTip("发放失败，请重试", true);
       });
     };
@@ -978,6 +983,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (r && r.err === "no_account") admTip("账号不存在（须已注册）", true);
         else if (r && r.err === "bad_n") admTip("积分需在 1~1000000 之间", true);
         else if (r && r.err === "bad_site") admTip("发放站点无效", true);
+        else if (r && r.err === "no_write") admTip(r.msg || "无写权限：请绑定 PAT", true);
         else admTip("发放失败，请重试", true);
       });
     };
@@ -1106,6 +1112,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (r && r.err === "bad_n") admTip("发卡数量需在 1~10 之间", true);
         else if (r && r.err === "bad_tier") admTip("品级无效", true);
         else if (r && r.err === "bad_site") admTip("发放站点无效", true);
+        else if (r && r.err === "no_write") admTip(r.msg || "无写权限：请绑定 PAT", true);
         else admTip("发卡失败，请重试", true);
       });
     };
