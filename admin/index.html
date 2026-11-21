@@ -296,6 +296,9 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           <option value="draw">抽卡 draw</option>
           <option value="post">发帖 post</option>
           <option value="admin_login">后台登录 admin_login</option>
+          <option value="grant_draws">发放抽卡 grant_draws</option>
+          <option value="grant_points">发放积分 grant_points</option>
+          <option value="grant_cards">发放卡牌 grant_cards</option>
         </select>
         <button class="btn" id="evtMore">加载更多</button>
       </div>
@@ -304,14 +307,15 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   </section>
 
   <div class="foot">
-    监控范围：云端数据库全库 —— 概览统计、账号清单、事件流水均覆盖<b>所有账号与所有访客</b>（含国内站与海外站），与管理员本人的浏览行为无关<br>
-    访问/点击由前端自动采集，登录与注册同时写入账号表；仅本控制台持有会话令牌，可直接读取；图鉴站点对这几张表无任何读取权限
+    GitHub 模式（当前主模式）：数据=仓库 db/ 目录 —— 账号清单读 accounts.json、事件流水由<b>注册快照 + 发放记录 + 静态 events.json 实时合并</b>、概览统计同步派生；发放/配置保存经 Contents API 直接写仓库<br>
+    访问/点击等玩家实时埋点仍上报云库（当前通道停用中，恢复后自动回补）；玩家注册走账号库，运营操作（发放、改配置）全部进入事件流水留痕
   </div>
   <section id="tab-mig" hidden>
     <h2>数据迁移（云库 → GitHub）</h2>
     <p class="muted" style="line-height:1.8">
       把 WorkBuddy 云库中的<b>概览统计、账号清单、事件流水、全部配置、玩家云端存档</b>导出并写入 GitHub 仓库 <code>db/</code> 目录，
       作为 GitHub 模式后台的正式数据库。迁移完成后 GitHub 模式登录即可查看账号与事件、发放也基于真实账号。<br>
+      <b style="color:#e05b4b">注意：WorkBuddy 云库通道当前已停用（平台 401/402 门禁），本页签暂时不可用，待云库恢复或更换新后端后再执行迁移。</b><br>
       前提：①已用「云库模式」登录；②浏览器可访问 api.github.com；③若尚未 GitHub 模式登录，点击按钮后按提示输入 PAT Token。
       玩家存档逐个拉取，账号越多耗时越长，请勿关闭页面。
     </p>
@@ -434,14 +438,25 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     API: function (path) { return "https://api.github.com/repos/" + this.REPO + "/contents/" + path; },
     _b64d: function (s) { s = s.replace(/\s/g, ""); var bin = atob(s); var u8 = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new TextDecoder("utf-8").decode(u8); },
     _b64e: function (t) { return btoa(unescape(encodeURIComponent(t))); },
-    /* 读 db 文件：存在 → {sha, content}；不存在 → null */
+    /* V76：带超时的 fetch（此前网络抖动时请求永久挂起——登录卡住、发放无任何提示的根源） */
+    fetchT: function (url, opt, ms) {
+      var ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+      var t = setTimeout(function () { if (ctl) ctl.abort(); }, ms || 20000);
+      return fetch(url, Object.assign({}, opt, ctl ? { signal: ctl.signal } : {})).then(function (r) {
+        clearTimeout(t); return r;
+      }, function (e) { clearTimeout(t); throw e; });
+    },
+    /* 读 db 文件：存在 → {sha, content}；不存在 → null；超时/5xx 自动重试 1 次 */
     read: function (path) {
       var G = this;
-      return fetch(G.API(path) + "?ref=" + G.BRANCH, { headers: G.auth() }).then(function (r) {
-        if (r.status === 404) return null;
-        if (!r.ok) throw new Error("gh_read_" + r.status);
-        return r.json().then(function (j) { return { sha: j.sha, content: G._b64d(j.content || "") }; });
-      });
+      function once() {
+        return G.fetchT(G.API(path) + "?ref=" + G.BRANCH + "&t=" + Date.now(), { headers: G.auth() }, 20000).then(function (r) {
+          if (r.status === 404) return null;
+          if (!r.ok) throw new Error("gh_read_" + r.status);
+          return r.json().then(function (j) { return { sha: j.sha, content: G._b64d(j.content || "") }; });
+        });
+      }
+      return once()["catch"](function () { return once(); });
     },
     /* 写 db 文件（读改写提交） */
     write: function (path, text, msg, sha) {
@@ -449,7 +464,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       if (!((this.sess() || {}).t)) return Promise.reject(new Error("当前为只读模式：请点右上角「绑定 PAT」后再保存/发放"));
       var body = { message: msg, content: G._b64e(text), branch: G.BRANCH };
       if (sha) body.sha = sha;
-      return fetch(G.API(path), { method: "PUT", headers: Object.assign({}, G.auth(), { "Content-Type": "application/json" }), body: JSON.stringify(body) }).then(function (r) {
+      return G.fetchT(G.API(path), { method: "PUT", headers: Object.assign({}, G.auth(), { "Content-Type": "application/json" }), body: JSON.stringify(body) }, 30000).then(function (r) {
         if (!r.ok) throw new Error("gh_write_" + r.status);
         return true;
       });
@@ -460,13 +475,13 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       user = (user || "").trim();
       var H = { "Authorization": "Bearer " + pat, "Accept": "application/vnd.github+json" };
       if (!pat) return Promise.resolve({ ok: false, msg: "请在密码栏输入 GitHub PAT Token" });
-      return fetch("https://api.github.com/user", { headers: H }).then(function (r) {
+      return G.fetchT("https://api.github.com/user", { headers: H }, 20000).then(function (r) {
         if (!r.ok) return { ok: false, msg: "GitHub Token 无效（HTTP " + r.status + "）" };
         return r.json().then(function (me) {
           var uIn = user.toLowerCase(), adm = G.ADMIN.toLowerCase();
           if (uIn !== adm && uIn !== "fanyzou") return { ok: false, msg: "仅管理员 " + G.ADMIN + " 可登录" };
           if (String(me.login || "").toLowerCase() !== adm) return { ok: false, msg: "Token 属于 " + me.login + "，非管理员 " + G.ADMIN + " 的 Token" };
-          return fetch("https://api.github.com/repos/" + G.REPO, { headers: H }).then(function (r2) {
+          return G.fetchT("https://api.github.com/repos/" + G.REPO, { headers: H }, 20000).then(function (r2) {
             if (!r2.ok) return { ok: false, msg: "Token 无权访问仓库 " + G.REPO };
             return r2.json().then(function (rp) {
               if (!((rp.permissions || {}).push)) return { ok: false, msg: "Token 对仓库无写权限（需 push 权限的 PAT）" };
@@ -476,6 +491,28 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           });
         });
       })["catch"](function () { return { ok: false, msg: "GitHub 验证请求失败（网络或跨域限制）" }; });
+    },
+    /* V76：GH 模式没有玩家埋点写入通道（玩家侧事件仍上报已停用的云库），
+       事件流水与概览统计由仓库数据实时派生：静态 events.json + grants.json（发放记录）+ accounts.json（注册快照），按时间倒序合并 */
+    derive: function (evO, grO, acO) {
+      function pj(o, def) { if (o === null) return def; try { return JSON.parse(o.content) || def; } catch (e) { return def; } }
+      var rows = [];
+      ((pj(evO, {}) || {}).rows || []).forEach(function (r) { if (r && r.ts) rows.push(r); });
+      var gs = pj(grO, []); if (!Array.isArray(gs)) gs = [];
+      gs.forEach(function (g) {
+        if (!g || !g.ts) return;
+        rows.push({ ts: g.ts, event: "grant_" + (g.kind || "draws"), who: g.email || "—",
+          target: (g.kind || "draws") + "×" + (g.n || 0) + " @" + (g.site || "all"),
+          page: "admin/grants", region: g.site === "intl" ? "intl" : g.site === "cn" ? "cn" : "unknown",
+          sid: "admin", ua: "运营管控台发放" });
+      });
+      ((pj(acO, {}) || {}).rows || []).forEach(function (w) {
+        if (!w || !w.created_at) return;
+        rows.push({ ts: w.created_at, event: "register", who: w.email || "—", target: w.nick || w.name || "—",
+          page: "accounts", region: w.region === "intl" ? "intl" : "cn", sid: "acc" + (w.id || ""), ua: w.source || "gh_accounts" });
+      });
+      rows.sort(function (x, y) { return String(y.ts || "").localeCompare(String(x.ts || "")); });
+      return rows;
     },
     /* RPC 路由：模拟云库函数的返回结构 */
     rpc: function (name, a) {
@@ -499,9 +536,36 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           });
         }
         if (name === "sg_admin_overview") {
-          return G.read("db/overview.json").then(function (o) {
-            if (o === null) return { ok: true, totals: {}, daily: [], regions: [], events: [] };
-            return jget(o.content, { ok: true, totals: {}, daily: [], regions: [], events: [] });
+          return Promise.all([G.read("db/overview.json"), G.read("db/events.json"), G.read("db/grants.json"), G.read("db/accounts.json")]).then(function (rs) {
+            var o = rs[0] === null ? { ok: true, totals: {}, daily: [], regions: [], events: [] } : jget(rs[0].content, { ok: true, totals: {}, daily: [], regions: [], events: [] });
+            /* V76：派生真实统计（注册/发放/事件），访问类指标仍以静态快照为准 */
+            var rows = G.derive(rs[1], rs[2], rs[3]);
+            var t = o.totals = o.totals || {};
+            var today = new Date().toISOString().slice(0, 10);
+            var regs = rows.filter(function (r) { return r.event === "register"; });
+            t.regs_all = Math.max(t.regs_all || 0, regs.length);
+            t.regs_today = regs.filter(function (r) { return String(r.ts || "").slice(0, 10) === today; }).length;
+            t.events_all = Math.max(t.events_all || 0, rows.length);
+            if (!(o.daily || []).length) {
+              var byDay = {};
+              rows.forEach(function (r) {
+                var k = String(r.ts || "").slice(0, 10); if (!k) return;
+                byDay[k] = byDay[k] || { day: k, visits: 0, regs: 0, events: 0 };
+                byDay[k].events++; if (r.event === "register") byDay[k].regs++;
+              });
+              o.daily = Object.keys(byDay).sort().slice(-30).map(function (k) { return byDay[k]; });
+            }
+            if (!(o.events || []).length) {
+              var byEv = {};
+              rows.forEach(function (r) { byEv[r.event] = (byEv[r.event] || 0) + 1; });
+              o.events = Object.keys(byEv).map(function (k) { return { event: k, cnt: byEv[k] }; }).sort(function (x, y) { return y.cnt - x.cnt; }).slice(0, 6);
+            }
+            if (!(o.regions || []).length) {
+              var byRg = {};
+              rows.forEach(function (r) { var k = r.region === "intl" ? "intl" : "cn"; byRg[k] = (byRg[k] || 0) + 1; });
+              o.regions = Object.keys(byRg).map(function (k) { return { region: k, cnt: byRg[k] }; });
+            }
+            return o;
           });
         }
         if (name === "sg_admin_accounts") {
@@ -514,12 +578,11 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           });
         }
         if (name === "sg_admin_events") {
-          return G.read("db/events.json").then(function (o) {
-            var d = o === null ? { ok: true, total: 0, rows: [] } : jget(o.content, { ok: true, total: 0, rows: [] });
-            var rows = d.rows || [];
+          var _off = a.p_off || 0, _lim = a.p_limit || 60;
+          return Promise.all([G.read("db/events.json"), G.read("db/grants.json"), G.read("db/accounts.json")]).then(function (rs) {
+            var rows = G.derive(rs[0], rs[1], rs[2]);
             if (a.p_kind) rows = rows.filter(function (r) { return r.event === a.p_kind; });
-            var off = a.p_off || 0, lim = a.p_limit || 60;
-            return { ok: true, total: rows.length, rows: rows.slice(off, off + lim) };
+            return { ok: true, total: rows.length, rows: rows.slice(_off, _off + _lim) };
           });
         }
         if (name === "sg_admin_grant_draws" || name === "sg_admin_grant_points" || name === "sg_admin_grant_cards") {
@@ -837,7 +900,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 
   function renderTopEvents(list) {
     var max = Math.max.apply(null, list.map(function (r) { return r.cnt || 0; }).concat([1]));
-    var lbl = { visit: "访问", click: "点击", login: "登录", register: "注册", draw: "抽卡", post: "发帖", admin_login: "后台登录" };
+    var lbl = { visit: "访问", click: "点击", login: "登录", register: "注册", draw: "抽卡", post: "发帖", admin_login: "后台登录", grant_draws: "发抽卡", grant_points: "发积分", grant_cards: "发卡牌" };
     $("#topEv").innerHTML = list.length ? list.map(function (r) {
       return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">' +
         '<span style="width:76px;font-size:12px">' + (lbl[r.event] || esc(r.event)) + '<span class="muted mono" style="font-size:10px"> ' + esc(r.event) + "</span></span>" +
