@@ -7628,7 +7628,7 @@ html[data-lang="en"]{letter-spacing:.01em}
     } catch (e) { return false; }
   }
   function gachaHist(u) {
-    u.gh = u.gh || [];
+    if (!Array.isArray(u.gh)) u.gh = []; /* V75：兜底——V74 曾误把布尔 GH 标记写进 u.gh，存量脏数据在此重置 */
     if (u.gh.length > 1000) u.gh = u.gh.slice(u.gh.length - 1000);
     return u.gh;
   }
@@ -9431,7 +9431,7 @@ var BOTS = [
           };
           var afterRemote = function () {
             var r2 = registerRemote(info, acc);
-            if (info.gh) { r2.user.gh = true; if (info.aliases && info.aliases.length) r2.user.aliases = info.aliases; if (info.pw) r2.user.pw = info.pw; save(); } /* V74/V75：GH 账号库命中——哈希落本机、gh 标记使发放/存档跳过云库、旧邮箱别名随行保存 */
+            if (info.gh) { r2.user.ghacct = true; if (info.aliases && info.aliases.length) r2.user.aliases = info.aliases; if (info.pw) r2.user.pw = info.pw; if (r2.user.gh === true) { r2.user.gh = []; } save(); } /* V75：标记改名 ghacct（V74 误用 u.gh 覆盖抽卡历史数组），存量 gh=true 一并迁移 */
             SGCloud.stateGet(info.email, "intl").then(function (o1) {
               SGCloud.stateGet(info.email, "cn").then(function (o2) {
                 var pwH = (o1 && o1.pw) || (o2 && o2.pw) || "";
@@ -9839,7 +9839,7 @@ var BOTS = [
     function grantsPoll(u) {
       try {
         if (!u || !u.email) return Promise.resolve(0);
-        if (u.gh) return ghGrantsPoll(u); /* V75：GH 账号库账号不在云库，直接走 GitHub 发放队列，不等云库 RPC 挂起 */
+        if (u.ghacct) return ghGrantsPoll(u); /* V75：GH 账号库账号不在云库，直接走 GitHub 发放队列，不等云库 RPC 挂起（字段 ghacct，勿用 u.gh=抽卡历史） */
         return rpcP("sg_grants_fetch", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }, 8000).then(function (r) {
           if (!(r && r.ok)) return ghGrantsPoll(u); /* V71：云库失败 → GitHub 发放队列兜底 */
           var n = (r && r.ok) ? (r.n || 0) : 0;
@@ -10145,7 +10145,7 @@ var BOTS = [
         loginDays: (u.loginDays || []).slice(-150), notifs: (u.notifs || []).slice(0, 50),
         d20: u.d20 || 0, testDrawQuota: u.testDrawQuota || 0,
         /* 账号密码哈希 / 邮箱验证标记 / 抽卡计数随档同步（后台可改密，跨设备一致） */
-        pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (u.gh || []).slice(-1000), gd: (u.gd || []).slice(-100),
+        pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (Array.isArray(u.gh) ? u.gh : []).slice(-1000), gd: (u.gd || []).slice(-100),
         gb: u.gb || null,                       /* V44 抽卡配额袋：换设备续抽，100 张配额不断档 */
         skn: u.skn || null,
         bat: u.bat || null, shards: u.shards || {}, eqs: u.eqs || [], mts: u.mts || [], res: u.res || null };
