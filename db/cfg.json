@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "后台配置数据库（GitHub 模式）。admin 页 GH 模式写入此文件；游戏端 GitHub Pages 同源兜底读取。",
-  "updated": "2026-11-19T06:38:46.626Z"
+  "updated": "2026-11-21T13:42:19.506Z"
  },
  "tiers": [
   {
