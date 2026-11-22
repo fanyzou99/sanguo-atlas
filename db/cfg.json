@@ -13,7 +13,7 @@
    "skd": 150,
    "star": 7,
    "stat": 10,
-   "troop": 50000
+   "troop": 60000
   },
   {
    "c": "#3f7fe0",
@@ -205,6 +205,6 @@
  ],
  "_meta": {
   "note": "后台配置数据库（GitHub 模式）。admin 页 GH 模式写入此文件；游戏端 GitHub Pages 同源兜底读取。V78 自云库迁移覆盖 tiers/gacha/troopgrow/shop/sprites。",
-  "updated": "2026-11-22T12:21:52.721Z"
+  "updated": "2026-11-22T12:49:19.951Z"
  }
 }
