@@ -10971,13 +10971,15 @@ var BOTS = [
     }
     ensureRes(u);
     /* V81：点数改为「每张卡独立」——老存档把全局待分配点数平均分给现有卡，避免资产丢失 */
-    if (!u.bat.spMig) {
+    if (!u.bat.spMig || (u.bat.sp || 0) > 0) {
       var _cs = u.cards || [], _lf = Math.max(0, Math.round(u.bat.sp || 0));
       if (_lf > 0 && _cs.length) {
         var _bs = Math.floor(_lf / _cs.length), _rm = _lf - _bs * _cs.length;
         _cs.forEach(function (c2, i2) { c2.sp = cardSp(c2) + _bs + (i2 === 0 ? _rm : 0); });
+        u.bat.spMig = 1; u.bat.spU = u.bat.spG || 0; u.bat.sp = 0;
+      } else if (!_lf) {
+        u.bat.spMig = 1; u.bat.spU = u.bat.spG || 0;
       }
-      u.bat.spMig = 1; u.bat.spU = u.bat.spG || 0; u.bat.sp = 0;
     }
     /* V81：后台「重置全部加点」——时间戳推进后清空所有卡加点，并把已分配点数退回本卡 */
     if (u.bat.spResetTs == null) u.bat.spResetTs = 0;
