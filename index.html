@@ -9916,6 +9916,7 @@ var BOTS = [
           try { if (o.shop && applyShopCfg(o.shop) && me()) rerender(); } catch (e) {}
           try { if (o.econ && applyEconCfg(o.econ) && me()) rerender(); } catch (e) {}
           try { if (o.military && applyMilCfg(o.military)) { if (me()) { save(); rerender(); } } } catch (e) {}
+          try { if (o.popmodel && applyPopModelCfg(o.popmodel)) { if (me()) { save(); rerender(); } } } catch (e) {}
           return okT || okG || okW;
         })["catch"](function () { return false; });
       }
@@ -10007,7 +10008,12 @@ var BOTS = [
           if (r && r.ok && r.data) { applySpResetCfg(r.data); return true; }
           return false;
         })["catch"](function () { return false; });
-        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]).then(function () { retry(); return okT || okG || okW; });
+        /* V82：人口增长 / 天灾 / 国策三维模型 */
+        var p11 = rpcP("sg_cfg_get", { p_key: "popmodel" }).then(function (r) {
+          if (r && r.ok && r.data) { return applyPopModelCfg(r.data); }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]).then(function () { retry(); return okT || okG || okW; });
       } catch (e) { return Promise.resolve(false); }
     }
 
@@ -11612,7 +11618,16 @@ var BOTS = [
     { k: "war",   n: "强兵", nen: "強兵", en: "Militarist", dzh: "出战经验 +10% · 募兵成本 -15%", den: "Battle EXP +10% · Recruit -15%" }
   ];
   function polName(p) { var l = lang(); return l === "zh" ? p.n : l === "ja" ? p.nen : p.en; }
-  function polDesc(p) { return (lang() === "en") ? p.den : p.dzh; }
+  /* V82：国策描述改为按云端系数实时生成（资源 / 人口增速 / 募兵成本 / 经验 四维） */
+  function polPctTxt(x) { var d = Math.round(((x == null ? 1 : x) - 1) * 100); return (d >= 0 ? "+" : "") + d + "%"; }
+  function polDesc(p) {
+    var f = popPolicyOf({ pol: p.k }), en = lang() === "en";
+    var parts = en
+      ? ["Grain " + polPctTxt(f.rice), "Coins " + polPctTxt(f.coin), "Pop growth " + polPctTxt(f.pop), "Recruit cost " + polPctTxt(f.rec)]
+      : ["粮产 " + polPctTxt(f.rice), "钱收 " + polPctTxt(f.coin), "人口增速 " + polPctTxt(f.pop), "募兵成本 " + polPctTxt(f.rec)];
+    if (Math.abs((f.exp || 1) - 1) > 0.001) parts.push((en ? "Battle EXP " : "出战经验 ") + polPctTxt(f.exp));
+    return parts.join(" · ");
+  }
   /* ---------- V27 多城池 / 编队 ---------- */
   var CITY_SLOTS = ["洛阳", "长安", "襄阳", "成都", "建业"];
   var CITY_UNLOCK_PTS = 1000, CITY_UNLOCK_RES = 1000;
@@ -11731,9 +11746,10 @@ var BOTS = [
     var mp = marketPrices(gMonth(u)), mm = merchantOf(u);
     return { buy: Math.max(1, Math.round(mp[key] * mm.bp * 10) / 10), sell: Math.round(mp[key] * mm.sp * 10) / 10 };
   }
-  function polFac(u) {
-    var p = (u.bat.city && u.bat.city.pol) || "farm";
-    return { rice: p === "farm" ? 1.2 : p === "trade" ? 0.9 : 1, coin: p === "trade" ? 1.2 : p === "farm" ? 0.9 : 1 };
+  /* V82：国策系数改为读云端 popmodel.policy（默认重农/重商/强兵 四维），可后台调 */
+  function polFac(u, cObj) {
+    var c = cObj || (u && u.bat && u.bat.city) || null;
+    return popPolicyOf(c);
   }
   function offEff(u, key) {
     var o = OFFICES.filter(function (x) { return x.k === key; })[0];
@@ -11792,6 +11808,8 @@ var BOTS = [
     gain.rice += Math.round(cityTroopTotal(u, c) * (MIL.farmRice || 0));
     /* V26：城内有野怪劫掠时月产出 -40% */
     if ((c.mobs || []).some(function (m) { return m.inCity && !m.dead; })) Object.keys(gain).forEach(function (rk) { gain[rk] = Math.round(gain[rk] * 0.6); });
+    /* V82：当年遭灾 → 粮产按 disFarm% 折损 */
+    if (c.disYear === gameDate(gMonth(u)).y && (POPM.disFarm || 0) > 0) gain.rice = Math.round(gain.rice * (1 - POPM.disFarm / 100));
     addRes(u, gain);
     return gain;
   }
@@ -11909,6 +11927,136 @@ var BOTS = [
   /* ================= V81：城市人口上限（后台「人口上限」页签，云端 key = popcap） =================
      洛阳上限最高（默认 100 万）；其余按城市资源推导：都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3（以基础人口为基数），
      且一律不高于洛阳上限。云端 popcap 表按城名覆盖（后台可逐城改）。人口超过上限时按上限计（不再增长）。 */
+  /* ================= V82：人口增长 · 天灾 · 国策三维模型 =================
+     口径（云端 key = popmodel，后台「人口·政策」页签可调）：
+     ① 人口基数取城市数据（洛阳 42 万 / 邺 36 万 / 成都 34 万 / 许昌 32 万 / 长安 30 万 …），
+        建筑加成后乘「增长系数」c.popMul；卸甲归田 / 放归田野带来的人口记 c.popAdd（不复利），
+        天灾损失记 c.popLoss。
+     ② 城池安定（城内无贼寇劫掠、当年未遭灾）时每年人口 +growYear%（默认 10%）复利累积；
+        城内有贼寇时增速打 chaos 折（默认 0.3）；灾年 disGrowthOff=1 则当年不增长。
+     ③ 每年按 disRate% 概率触发一次天灾（旱/水/蝗/疫/兵），损失 disLoss% 人口，当年粮产 -disFarm%。
+     ④ 国策三选一：重农 / 重商 / 强兵，每项同时影响资源（rice/coin）、人口增速（pop）、
+        募兵成本（rec）、战斗经验（exp）四个维度。 */
+  var POPM_DEF = {
+    growYear: 10, chaos: 0.3, disRate: 12, disLoss: 6, disFarm: 25, disGrowthOff: 1,
+    disKinds: { drought: 30, flood: 25, locust: 20, plague: 15, war: 10 },
+    policy: {
+      farm:  { rice: 1.2, coin: 0.9, pop: 1.25, rec: 1.0,  exp: 1.0 },
+      trade: { rice: 0.9, coin: 1.2, pop: 0.95, rec: 0.95, exp: 1.0 },
+      war:   { rice: 1.0, coin: 1.0, pop: 0.8,  rec: 0.85, exp: 1.1 }
+    }
+  };
+  var POP_KINDS = ["drought", "flood", "locust", "plague", "war"];
+  function popmNum(v, d, lo, hi) { var x = Number(v); if (v == null || v === "" || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
+  function popmPolicyNorm(o) {
+    var d = POPM_DEF.policy, out = {};
+    ["farm", "trade", "war"].forEach(function (k) {
+      var src = (o && o[k]) || {}, dd = d[k];
+      out[k] = {
+        rice: popmNum(src.rice, dd.rice, 0, 10), coin: popmNum(src.coin, dd.coin, 0, 10),
+        pop: popmNum(src.pop, dd.pop, 0, 10), rec: popmNum(src.rec, dd.rec, 0, 10),
+        exp: popmNum(src.exp, dd.exp, 0, 10)
+      };
+    });
+    return out;
+  }
+  function popmNorm(o) {
+    o = (o && typeof o === "object") ? o : {};
+    var d = POPM_DEF, kinds = {};
+    var src = (o.disKinds && typeof o.disKinds === "object") ? o.disKinds : d.disKinds;
+    POP_KINDS.forEach(function (k) { kinds[k] = Math.round(popmNum(src[k], d.disKinds[k], 0, 1000)); });
+    return {
+      growYear: popmNum(o.growYear, d.growYear, 0, 100),
+      chaos: popmNum(o.chaos, d.chaos, 0, 1),
+      disRate: popmNum(o.disRate, d.disRate, 0, 100),
+      disLoss: popmNum(o.disLoss, d.disLoss, 0, 100),
+      disFarm: popmNum(o.disFarm, d.disFarm, 0, 100),
+      disGrowthOff: (o.disGrowthOff == null ? d.disGrowthOff : (o.disGrowthOff ? 1 : 0)),
+      disKinds: kinds,
+      policy: popmPolicyNorm(o.policy)
+    };
+  }
+  var POPM = popmNorm(null);
+  function applyPopModelCfg(o) {
+    if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { return false; } }
+    if (!o || typeof o !== "object") return false;
+    POPM = popmNorm(o);
+    return true;
+  }
+  function popPolicyOf(c) {
+    var k = (c && c.pol) || "farm";
+    var p = (POPM.policy && POPM.policy[k]) || (POPM.policy && POPM.policy.farm);
+    return p || { rice: 1, coin: 1, pop: 1, rec: 1, exp: 1 };
+  }
+  function cityDataOf(u, cObj) {
+    var c = cObj || (u && u.bat && u.bat.city) || null;
+    var name = (c && c.name) || (u && (u.bat.cur || u.bat.spawn)) || "洛阳";
+    return ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === name; })[0] || null;
+  }
+  function popAllCities(u) {
+    ensureCity(u);
+    var list = [], seen = {};
+    (u.bat.owned || []).forEach(function (cn) {
+      if (seen[cn]) return;
+      var c = (u.bat.cur === cn) ? u.bat.city : ((u.bat.cities || {})[cn]);
+      if (c) { seen[cn] = 1; list.push(c); }
+    });
+    if (!list.length && u.bat.city) list.push(u.bat.city);
+    return list;
+  }
+  function popStableInfo(u, c) {
+    var yr = gameDate(gMonth(u)).y;
+    if (c.disYear === yr && c.disKind) return { stable: false, why: "dis" };
+    if ((c.mobs || []).some(function (m) { return m.inCity && !m.dead; })) return { stable: false, why: "raid" };
+    return { stable: true, why: "" };
+  }
+  function popKindPick() {
+    var k = POPM.disKinds || {}, tot = 0, acc = 0;
+    POP_KINDS.forEach(function (x) { tot += (k[x] || 0); });
+    if (tot <= 0) return "drought";
+    var r = Math.random() * tot, pick = "drought";
+    POP_KINDS.forEach(function (x) { if (acc < r && (k[x] || 0) > 0) { acc += k[x]; pick = x; } });
+    return pick;
+  }
+  function popDisasterRoll(u, c) {
+    var yr = gameDate(gMonth(u)).y;
+    if (c.disYear === yr) return null;
+    if (Math.random() * 100 >= (POPM.disRate || 0)) return null;
+    var kind = popKindPick();
+    var loss = Math.round(cityPop(u, c) * (POPM.disLoss || 0) / 100);
+    c.popLoss = (c.popLoss || 0) + loss;
+    c.disYear = yr; c.disKind = kind; c.disLoss = loss;
+    return { kind: kind, loss: loss, y: yr };
+  }
+  function popGrowOnce(u, c) {
+    var dis = popDisasterRoll(u, c);
+    if (dis && POPM.disGrowthOff) return dis;
+    if (c.popMul == null) c.popMul = 1;
+    var st = popStableInfo(u, c), pf = popPolicyOf(c);
+    var rate = (POPM.growYear || 0) / 100 * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0));
+    if (rate > 0) c.popMul = Math.max(0.2, Math.min(6, c.popMul * (1 + rate)));
+    return dis;
+  }
+  function popYearly(u) {
+    var yr = gameDate(gMonth(u)).y;
+    popAllCities(u).forEach(function (c) {
+      if (c.popMul == null) c.popMul = 1;
+      if (c.popYear == null) { c.popYear = yr; return; }
+      if (yr <= c.popYear) return;
+      var steps = Math.min(5, yr - c.popYear);
+      c.popYear = yr;
+      for (var i = 0; i < steps; i++) popGrowOnce(u, c);
+    });
+  }
+  function popYearInfo(u, cObj) {
+    var c = cObj || ensureCity(u), st = popStableInfo(u, c), pf = popPolicyOf(c);
+    var rate = Math.round((POPM.growYear || 0) * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0)) * 10) / 10;
+    var cur = cityPop(u, c), cap = cityPopCap(u, c);
+    return { rate: rate, stable: st.stable, why: st.why, cur: cur, cap: cap,
+      next: Math.min(cap, Math.round(cur * (1 + rate / 100))), mul: c.popMul || 1,
+      loss: c.popLoss || 0, disYear: c.disYear, disKind: c.disKind, disLoss: c.disLoss || 0, pol: pf };
+  }
+  function applyPopModelCfgPull(o) { return applyPopModelCfg(o); }
   var POPCAP = null;
   function popCapLuoYang() {
     var v = POPCAP && POPCAP["洛阳"] ? Math.round(POPCAP["洛阳"]) : 1000000;
@@ -11940,16 +12088,18 @@ var BOTS = [
     POPCAP = m;
     return true;
   }
-  function cityPopRaw(u) {
-    var c = ensureCity(u), cityName = u.bat.cur || u.bat.spawn || "洛阳";
-    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
+  function cityPopRaw(u, cObj) {
+    var c = cObj || ensureCity(u);
+    var cd = cityDataOf(u, c);
     var base = (cd ? cd.pop : 20) * 10000;
-    /* V66：放归田野的兵员转为常驻人口（c.popAdd） */
-    return Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0))) + (c.popAdd || 0);
+    var mul = 1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0);
+    /* V82：base×建筑×增长系数（复利）+ 卸甲归田/放归人口 − 天灾损失 */
+    return Math.max(0, Math.round(base * mul * (c.popMul || 1)) + (c.popAdd || 0) - (c.popLoss || 0));
   }
-  function cityPop(u) {
-    var raw = cityPopRaw(u);
-    var cap = cityPopCap(u);
+  function cityPop(u, cObj) {
+    var c = cObj || ensureCity(u);
+    var raw = cityPopRaw(u, c);
+    var cap = cityPopCap(u, c);
     return Math.max(0, Math.min(raw, cap));
   }
   /* V66：人口对资源产出的高额加成（10 万人口 +60%，上限 +160%） */
@@ -12003,7 +12153,8 @@ var BOTS = [
      ③ 募兵只在招募处进行：新兵先入预备役（兵池）；编队补兵、自动补兵、卡牌取兵一律只消耗预备役。
      ④ 特种兵训练同样由预备役转换（每次消耗 eliteCost 名预备役转 1 名特种兵）。
      ⑤ 城外盗贼兵力上限 mobCap，无论级别多高。 */
-  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, eliteCost: 10 };
+  /* V82：募兵消耗扩展为「粮 / 钱 / 铜 / 铁」四资源（每兵单价，可后台调） */
+  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10 };
   function milNum(v, d, lo, hi) { var x = Number(v); if (v == null || v === "" || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function milNorm(o) {
     o = o || {}; var d = MIL_DEF;
@@ -12014,6 +12165,8 @@ var BOTS = [
       farmRice: milNum(o.farmRice, d.farmRice, 0, 10),
       recRice: milNum(o.recRice, d.recRice, 0, 100),
       recCoin: milNum(o.recCoin, d.recCoin, 0, 1000),
+      recCopper: milNum(o.recCopper, d.recCopper, 0, 100),
+      recIron: milNum(o.recIron, d.recIron, 0, 100),
       eliteCost: Math.round(milNum(o.eliteCost, d.eliteCost, 1, 10000))
     };
   }
@@ -12041,9 +12194,8 @@ var BOTS = [
   function cityRecLimitInfo(u, cObj) {
     var c = cObj || ensureCity(u);
     var cityName = (c && c.name) || u.bat.cur || u.bat.spawn || "洛阳";
-    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
-    var base = (cd ? cd.pop : 20) * 10000;
-    var pop = Math.min(Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0))) + (c.popAdd || 0), cityPopCap(u, c));
+    var cityName = (c && c.name) || u.bat.cur || u.bat.spawn || "洛阳";
+    var pop = Math.max(0, Math.min(cityPopRaw(u, c), cityPopCap(u, c)));
     var lim = Math.min(Math.floor(pop * (MIL.popPct || 10) / 100), MIL.cityCap || 1000000);
     return { pop: pop, lim: lim, tot: cityTroopTotal(u, c) };
   }
@@ -12055,19 +12207,29 @@ var BOTS = [
     var room = info.lim - info.tot;
     if (room <= 0) return { err: gt("milCapHitT", { m: fmt(info.lim) }), full: 1 };
     var take = Math.min(n, room);
-    var rf = (1 - offEff(u, "dw")) * (c.pol === "war" ? 0.85 : 1);
-    var needR = Math.ceil(take * (MIL.recRice || 0) * rf), needC = Math.round(take * (MIL.recCoin || 0) * rf);
-    if ((u.res.rice || 0) < needR || (u.res.coin || 0) < needC) return { err: gt("gsResLack") };
-    u.res.rice -= needR; u.res.coin -= needC;
+    var cost = milRecCost(u, take);                       /* V82：粮 / 钱 / 铜 / 铁 */
+    var lack = Object.keys(cost).filter(function (k) { return (u.res[k] || 0) < cost[k]; });
+    if (lack.length) return { err: gt("gsResLack"), lack: lack };
+    Object.keys(cost).forEach(function (k) { u.res[k] -= cost[k]; });
     c.pool = (c.pool || 0) + take;
-    return { ok: 1, n: take, cut: n - take, lim: info.lim };
+    return { ok: 1, n: take, cut: n - take, lim: info.lim, cost: cost };
+  }
+  /* V82：募兵单价（粮/钱/铜/铁），吃度支官折扣与国策 rec 系数 */
+  function milRecUnit(u) {
+    var rf = (1 - offEff(u, "dw")) * (polFac(u).rec || 1);
+    return { rice: (MIL.recRice || 0) * rf, coin: (MIL.recCoin || 0) * rf, copper: (MIL.recCopper || 0) * rf, iron: (MIL.recIron || 0) * rf };
+  }
+  function milRecCost(u, n) {
+    var per = milRecUnit(u), out = {};
+    Object.keys(per).forEach(function (k) { out[k] = Math.ceil(n * per[k]); });
+    return out;
   }
   function milMaxAfford(u) {
     var c = ensureCity(u), info = cityRecLimitInfo(u, c);
     var room = Math.max(0, info.lim - info.tot);
-    var rr = (MIL.recRice || 0) > 0 ? Math.floor((u.res.rice || 0) / MIL.recRice) : room;
-    var rc = (MIL.recCoin || 0) > 0 ? Math.floor((u.res.coin || 0) / MIL.recCoin) : room;
-    return Math.max(0, Math.min(room, rr, rc));
+    var per = milRecUnit(u), best = room;
+    Object.keys(per).forEach(function (k) { if (per[k] > 0) best = Math.min(best, Math.floor((u.res[k] || 0) / per[k])); });
+    return Math.max(0, best);
   }
   function econGet() { return ECON; }
   function econDef() { return econNorm(null); }
@@ -12103,6 +12265,8 @@ var BOTS = [
     if (c.incGm !== gm) {
       c.incGm = gm;
       var inc = cityMonthly(u);
+      /* V82：人口年度增长 + 天灾（所有城池，跨年时结算一次） */
+      try { popYearly(u); } catch (eP82) {}
       /* V37：伤兵痊愈 + 兵耗（所有城池，每月结算一次） */
       troopMonthlyAll(u, gm);
       /* V79：敌城自主发展 + 归降府邸俸禄 */
@@ -12341,6 +12505,43 @@ var BOTS = [
         popCapT: "人口上限", popFullT: "人口が上限 {m} に達しました", popGrowT: "人口 {a} / 上限 {b}",
         spCardT: "このカードのポイント", spCardAuditT: "累計 {g} 点 · 配分済 {u} 点",
         rankAutoHintT: "爵位は史実の地位で自動授与され、帯兵上限は爵位で決まります"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
+
+  /* ================= V82 三语词条（卸甲归田 / 人口增长 / 天灾 / 四资源募兵） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        recPopTabT: "人口", gotoRecPopT: "前往招募处", popOnlyExitT: "募兵处是「人口 ↔ 士兵」转换的唯一出口：募兵＝人口→预备役，卸甲归田＝预备役/伤兵→人口。",
+        popStableT: "城池安定", popChaosT: "城池动荡（贼寇在城）", popNoDisT: "本年无灾",
+        popDisT: "本年灾情：{k} · 人口 -{n}", popGrowYearT: "人口年增 {p}%（次年约 {n}）", popPolicyT: "当前国策：{k}",
+        popLossT: "天灾累计减员 {n}", popMovedT: "人口与卸甲归田已迁至「招募处」",
+        discT: "卸甲归田", discGoT: "卸甲", discDockT: "卸甲归田 · 兵转民", discHintT: "预备役 {n} 人可转为城市人口（1:1），转为人口后重新计入人口红利与募兵基数",
+        milCost4T: "粮 {r} · 钱 {c} · 铜 {p} · 铁 {i} /兵",
+        dis_drought: "旱灾", dis_flood: "水患", dis_locust: "蝗灾", dis_plague: "瘟疫", dis_war: "兵灾"
+      },
+      en: {
+        recPopTabT: "People", gotoRecPopT: "Go to Recruit Office", popOnlyExitT: "The Recruit Office is the only place converting between people and soldiers: recruit = people -> reserve; disband = reserve/wounded -> people.",
+        popStableT: "City is stable", popChaosT: "City is unstable (raiders inside)", popNoDisT: "No disaster this year",
+        popDisT: "Disaster: {k} · population -{n}", popGrowYearT: "Population +{p}% per year (next ~{n})", popPolicyT: "Policy: {k}",
+        popLossT: "Total disaster loss {n}", popMovedT: "Population and disbanding moved to the Recruit Office",
+        discT: "Disband to fields", discGoT: "Disband", discDockT: "Disband · soldiers to people", discHintT: "{n} reserves can be converted into city population (1:1)",
+        milCost4T: "Grain {r} · Coins {c} · Copper {p} · Iron {i} per soldier",
+        dis_drought: "Drought", dis_flood: "Flood", dis_locust: "Locusts", dis_plague: "Plague", dis_war: "War"
+      },
+      ja: {
+        recPopTabT: "人口", gotoRecPopT: "募兵所へ", popOnlyExitT: "募兵所は「人口 ↔ 兵士」変換の唯一の窓口です。",
+        popStableT: "城は安定", popChaosT: "城は動揺（賊寇が城内）", popNoDisT: "本年は災害なし",
+        popDisT: "本年災害：{k} · 人口 -{n}", popGrowYearT: "人口年増 {p}%（翌年 {n}）", popPolicyT: "現在の国策：{k}",
+        popLossT: "災害累計減員 {n}", popMovedT: "人口と兵士の帰農は「募兵所」へ移しました",
+        discT: "兵を帰農", discGoT: "帰農", discDockT: "帰農 · 兵から民へ", discHintT: "予備兵 {n} を人口に転換できます（1:1）",
+        milCost4T: "糧 {r} · 銭 {c} · 銅 {p} · 鉄 {i} /兵",
+        dis_drought: "旱魃", dis_flood: "水害", dis_locust: "蝗害", dis_plague: "疫病", dis_war: "兵災"
       }
     };
     Object.keys(ADD).forEach(function (lg) {
@@ -12866,7 +13067,7 @@ var BOTS = [
       } else { out.loot.coin = Math.round((30 + stage * 6) * rf); out.loot.rice = Math.round((15 + stage * 3) * rf); }
     }
     /* V23 加成：校尉（出战经验 +10%）与 强兵政策（经验 +10%） */
-    if (out.exp) { var xwF = 1 + offEff(u, "xw") + (ensureCity(u).pol === "war" ? 0.10 : 0); if (xwF > 1) out.exp = Math.round(out.exp * xwF); }
+    if (out.exp) { var xwF = 1 + offEff(u, "xw") + Math.max(0, (polFac(u).exp || 1) - 1); if (xwF > 1) out.exp = Math.round(out.exp * xwF); }
     out.inc = monthInc;
     addRes(u, out.loot);
     /* V41：武将升级增量点数——每升 1 级 +3 待分配点数，走台账（spG）并计入结算展示 */
@@ -13811,8 +14012,9 @@ var BOTS = [
       "<span><b>" + gt("taxBtn") + "</b> <small style='color:var(--ink-3)'>" + gt("taxGain", { n: fmt(taxAmount(u)) }) + "</small></span><span class=\"sp\"></span>" +
       '<button class="sgbtn sm primary" data-bat="tax"' + (taxOk ? "" : " disabled") + ">" + gt("taxBtn") + "</button>" +
       (taxOk ? "" : '<small style="color:var(--ink-3)">' + gt("taxCd") + "</small>") + "</div>";
+    var yp = popYearInfo(u);
     var incLine = '<div class="sg-note" style="margin:4px 0 8px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) +
-      '<br>👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + gt("popCapT") + " " + fmt(cityPopCap(u)) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
+      "　·　👥 " + gt("popGrowYearT", { p: yp.rate, n: fmt(yp.next) }) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
     var offN = OFFICES.filter(function (o) { return !!u.bat.off[o.k]; }).length;
     var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")], ["houses", "🏛 " + gt("warHouseTabT")]]
       .map(function (t) {
@@ -13824,7 +14026,11 @@ var BOTS = [
     else if (tk === "city") body = cityUpHTML(u, true);
     /* V80：特种兵页签已迁移至招募处 */
     else if (tk === "houses") body = housesTabHTML(u);
-    else body = polRow + incLine + taxHTML + popPanelHTML(u);
+    else body = polRow + incLine + taxHTML +
+      /* V82：人口与卸甲归田统一迁至招募处（兵民互转唯一出口） */
+      '<div class="sg-note" style="margin:6px 0 0;display:flex;gap:9px;align-items:center;flex-wrap:wrap">' +
+      "<span>👥 " + gt("popMovedT") + "</span>" +
+      '<button class="sgbtn sm primary" data-bat="rec-pop">' + gt("gotoRecPopT") + "</button></div>";
     modal('<style>' +
       '.sg-modal.sg-palacemodal{background-image:linear-gradient(180deg,rgba(8,10,16,.86),rgba(8,10,16,.92)),url(' + SG_IMG_NIGHT_WALL + ');background-size:cover;background-position:center 28%;' +
       'padding:0;display:flex;flex-direction:column;max-height:calc(100vh - 48px);overflow:hidden}' +
@@ -13906,10 +14112,10 @@ var BOTS = [
     ensureCity(u);
     var lv = u.bat.city.bld.recruit || 0;
     var tab = BATUI.recTab || "hero";
-    var tabs = [["hero", "🎖 " + gt("recruitHeroT")], ["sold", "🪖 " + gt("recruitSoldT2")], ["mil", "🎯 " + gt("eliteTabT")]];
+    var tabs = [["hero", "🎖 " + gt("recruitHeroT")], ["sold", "🪖 " + gt("recruitSoldT2")], ["mil", "🎯 " + gt("eliteTabT")], ["pop", "👥 " + gt("recPopTabT")]];
     if (!tabs.some(function (x) { return x[0] === tab; })) tab = "hero";
     var tabBtns = tabs.map(function (x) { return '<button class="sgchip' + (tab === x[0] ? " on" : "") + '" data-bat="rec-tab" data-v="' + x[0] + '">' + x[1] + "</button>"; }).join("");
-    var body = tab === "sold" ? milTabHTML(u) : tab === "mil" ? eliteTabHTML(u) : heroRecBody(u, lv);
+    var body = tab === "sold" ? milTabHTML(u) : tab === "mil" ? eliteTabHTML(u) : tab === "pop" ? popTabHTML(u) : heroRecBody(u, lv);
     modal("<h3>🎖 " + gt("recruitT") + (lv > 0 ? " · Lv." + lv : "") + "</h3>" +
       '<div class="sgchips" style="margin:0 0 10px">' + tabBtns + "</div>" + body, "wide");
   }
@@ -13941,12 +14147,62 @@ var BOTS = [
       '<div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap">' +
       '<input id="sgMilN" type="number" min="1" step="1" value="1000" style="width:110px;padding:6px 8px;border-radius:8px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.05);color:inherit;text-align:center;font-size:14px">' +
       '<button class="sgbtn sm primary" data-bat="rec-sold">🪖 ' + gt("milGoT") + "</button>" +
-      '<small style="color:var(--ink-3)">' + gt("milCostT", { r: MIL.recRice, c: MIL.recCoin }) + "</small></div>" +
+      '<small style="color:var(--ink-3)">' + gt("milCost4T", { r: MIL.recRice, c: MIL.recCoin, p: MIL.recCopper, i: MIL.recIron }) + "</small></div>" +
       '<div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap">' +
       [100, 1000, 10000, 100000].map(function (n9) { return '<button class="sgchip" data-bat="rec-milset" data-n="' + n9 + '">' + fmt(n9) + "</button>"; }).join("") +
       '<button class="sgchip" data-bat="rec-milset" data-n="max">' + gt("milMaxT") + "（" + fmt(milMaxAfford(u)) + "）</button></div>" +
       '<div class="sg-note" style="margin-top:8px;opacity:.8"><small>🌾 ' + gt("milFarmT", { n: MIL.farmRice }) + "</small></div>" +
+      /* V82：卸甲归田入口（人口 ↔ 士兵唯一出口都在招募处） */
+      '<div class="sg-rankline" style="margin-top:9px;border-top:1px solid rgba(201,164,92,.22);padding-top:9px">' +
+      '<span class="i" style="background:#3a6b5b;color:#dff5ea">田</span>' +
+      "<span><b>" + gt("discT") + "</b><br><small style='color:var(--ink-3)'>" + gt("discHintT", { n: fmt(c.pool || 0) }) + "</small></span>" +
+      '<span class="sp"></span><button class="sgbtn sm" data-bat="rec-pop">👥 ' + gt("gotoRecPopT") + "</button></div>" +
       "</div>";
+  }
+
+  /* ================= V82：招募处「人口」页签 =================
+     人口 → 预备役（募兵）与 预备役/伤兵 → 人口（卸甲归田）都在此处完成，
+     这是兵民互转的唯一出口；大殿不再提供放归操作。 */
+  function popTabHTML(u) {
+    var c = ensureCity(u), info = cityRecLimitInfo(u, c);
+    var pop = cityPop(u, c), cap = cityPopCap(u, c);
+    var pool = c.pool || 0, wN = cityWoundN(c), yInfo = popYearInfo(u, c);
+    var yr = gameDate(gMonth(u)).y;
+    var barPct = cap > 0 ? Math.min(100, Math.round(pop / cap * 1000) / 10) : 100;
+    var disNow = (c.disYear === yr && c.disKind);
+    var disLine = disNow
+      ? '<span style="color:#ff9a8a">🔥 ' + gt("popDisT", { k: gt("dis_" + c.disKind), n: fmt(c.disLoss || 0) }) + "</span>"
+      : '<span style="color:#8fd694">☀ ' + gt("popNoDisT") + "</span>";
+    var stableLine = yInfo.stable
+      ? '<span style="color:#8fd694">✔ ' + gt("popStableT") + "</span>"
+      : '<span style="color:#e8c988">⚠ ' + gt("popChaosT") + "</span>";
+    function row(k, icon, bg, label, now) {
+      return '<div class="sg-rankline"><span class="i" style="background:' + bg + ';color:#eef">' + icon + "</span>" +
+        "<span><b>" + label + " " + fmt(now) + "</b></span><span class=\"sp\"></span>" +
+        '<input class="sg-relin" type="number" inputmode="numeric" min="1" step="1" max="' + Math.max(1, now) + '" placeholder="' + esc(gt("relQtyT")) + '" data-k="' + k + '"' +
+        (now > 0 ? "" : " disabled") + ' style="width:84px;padding:4px 7px;border-radius:7px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit;text-align:center;font-size:12px">' +
+        '<button class="sgbtn sm' + (now > 0 ? " primary" : "") + '" data-bat="rel" data-k="' + k + '" data-src="rec"' + (now > 0 ? "" : " disabled") + ">🪖 " + gt("discGoT") + "</button>" +
+        (now > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="' + k + '" data-src="rec" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>";
+    }
+    var eco = cityEcoOut(u), inc2 = cityPreview(u);
+    return '<div class="sg-note" style="margin:4px 0 10px;line-height:1.8">' + gt("popOnlyExitT") + "</div>" +
+      '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.3);border-radius:10px;padding:9px 11px;background:rgba(0,0,0,.42)">' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">👥 ' + esc(c.name || "") + " · " + gt("popT") + '</b><span style="flex:1"></span><small style="color:var(--ink-3)">' + fmt(pop) + " / " + fmt(cap) + "</small></div>" +
+      '<div style="height:9px;border-radius:99px;background:#232733;margin:7px 0 3px;overflow:hidden"><div style="height:100%;width:' + barPct + '%;background:#6b9fe8"></div></div>' +
+      '<div class="sg-note" style="line-height:1.9"><small>' + stableLine + "　·　" + disLine + "</small><br>" +
+      "<small>" + gt("popGrowYearT", { p: yInfo.rate, n: fmt(yInfo.next) }) + "　·　" + gt("popPolicyT", { k: polName(POLICIES.filter(function (x) { return x.k === ((c.pol) || "farm"); })[0] || POLICIES[0]) }) + "</small>" +
+      (yInfo.loss > 0 ? '<br><small style="color:#ff9a8a">' + gt("popLossT", { n: fmt(yInfo.loss) }) + "</small>" : "") +
+      "</div></div>" +
+      '<div class="sg-panel-hd" style="margin:13px 0 4px"><h3><i>·</i>🪖 ' + gt("discDockT") + "</h3></div>" +
+      '<div class="sg-note" style="margin:0 0 8px">' + gt("discHintT", { n: fmt(pool) }) + "</div>" +
+      row("pool", "备", "#3a6b5b", gt("poolT"), pool) +
+      row("wound", "伤", "#6b3a3a", gt("woundT"), wN) +
+      '<div class="sg-panel-hd" style="margin:13px 0 4px"><h3><i>·</i>🏘 ' + gt("ecoHhT") + "</h3></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#3f5b6b;color:#dbeef7">户</span><span><b>' + gt("ecoHhT") + " " + fmt(eco.hh) + " " + gt("ecoHhUnit") + "</b>" +
+      "　<small style='color:var(--ink-3)'>" + gt("ecoPerT", { n: fmt(eco.perHouse) }) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b6b3a;color:#f0f7db">粮</span><span><b>' + gt("ecoYearT", { a: fmt2(eco.year), b: fmt2(eco.self), c: fmt2(eco.tax) }) + "</b><br>" +
+      "<small style='color:#e8c988'>" + gt("ecoMonthT", { n: fmt2(eco.per) }) + "　·　" + gt("ecoGrossT", { n: fmt(Math.round(eco.res.rice)) }) + "</small></span></div>" +
+      '<div class="sg-note" style="margin:6px 0 0">' + gt("ecoTipT") + "</div>";
   }
 
   function cellOpen(x, y) {
@@ -17897,6 +18153,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       case "recruit-build": closeModal(); bldOpen("recruit"); return;
       /* V80：招募处页签切换与募兵 */
       case "rec-tab": BATUI.recTab = t.getAttribute("data-v") || "hero"; recruitOpen(); return;
+      /* V82：大殿「人口」引导 → 招募处人口页签 */
+      case "rec-pop": BATUI.recTab = "pop"; recruitOpen(); return;
       case "rec-milset": { var mv80 = t.getAttribute("data-n"), inp80 = document.getElementById("sgMilN"); if (inp80) inp80.value = (mv80 === "max") ? String(milMaxAfford(u) || "") : mv80; return; }
       case "rec-sold": { var in2_80 = document.getElementById("sgMilN"), n80 = in2_80 ? Math.floor(+in2_80.value || 0) : 0; var r80 = recruitSoldiers(u, n80); if (r80 && r80.err) toast(r80.err, "err", 6000); else if (r80 && r80.ok) { toast(gt("milOkT", { n: fmt(r80.n) }) + (r80.cut ? "　⚠ " + gt("milCutT", { n: fmt(r80.cut), m: fmt(r80.lim) }) : ""), r80.cut ? "err" : "ok", 6200); save(); } recruitOpen(); return; }
       case "gslink": closeModal(); location.hash = "#/gs"; return;
@@ -18496,7 +18754,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var rr3 = releaseToField(u, rk2, raw2);
         if (rr3.err) return toast(rr3.err === "none" ? gt("relNoneT") : gt("relBadT"), "err");
         toast(gt("relOkT", { n: fmt(rr3.n), k: rk2 === "wound" ? gt("woundT") : gt("poolT"), p: fmt(rr3.pop) }), "ok");
-        refreshBattle(); palaceOpen(); return;
+        refreshBattle();
+        if (t.getAttribute("data-src") === "rec") recruitOpen(); else palaceOpen();
+        return;
       }
       case "rank-up": {
         var cru = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cru) return;

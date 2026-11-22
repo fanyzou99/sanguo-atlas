@@ -131,6 +131,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <button class="tab" data-tab="shop">商店配置</button>
     <button class="tab" data-tab="econ">经济模型</button>
     <button class="tab" data-tab="mil">军事模型</button>
+    <button class="tab" data-tab="popm">人口·政策</button>
     <button class="tab" data-tab="mig">数据迁移</button>
   </div>
 
@@ -278,7 +279,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div class="hint">
         计算链路：<b>城市人口 ÷ 户均人口 = 户数</b>；<b>户数 × 每户每月上缴 = 本月官府实收粮食</b>；木/铜/铁/钱按「每户每月」产出同比例增长。<b>农田及各类建筑产出是附加收入</b>，在户口上缴之外叠加（粮再乘「农田附加系数」）。<br>
         默认口径：一户农家一年产 30 石、自留 24 石、上缴 6 石 —— 即每户每月上缴 0.5 石。改这里即改全站所有城市的产出，玩家端下次打开或刷新后生效。<br>
-        放归田野（城内政务页）每放归 1 名兵员就 +1 人口，人口增长会直接变成新的纳税户，因此「放归」现在是增产手段。
+        <b>卸甲归田</b>（玩家端 招募处 → 人口）每归田 1 名兵员就 +1 人口，人口增长会直接变成新的纳税户，因此「归田」现在是增产手段；人口年增长率与天灾见「人口·政策」页签。
       </div>
     </div>
   </section>
@@ -317,8 +318,35 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         <span class="muted" id="spResetMsg"></span>
       </div>
       <div class="hint">
-        计算链路：<b>募兵限额 = 城市人口 × popPct%</b>，同时受<b>单城总募兵上限 cityCap</b> 约束；人口总数涵盖士兵数（募兵即编户从军，不增加人口）。<b>farmRice</b>：在城士兵参与农业生产，每名士兵每月加产粮；<b>recRice / recCoin</b>：招募处每募 1 兵的粮/钱消耗；<b>eliteCost</b>：每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵 → 1 名特种兵）；<b>mobCap</b>：城外盗贼/贼寇兵力上限，无论级别多高一律封顶。<br>
+        计算链路：<b>募兵限额 = 城市人口 × popPct%</b>，同时受<b>单城总募兵上限 cityCap</b> 约束；人口总数涵盖士兵数（募兵即编户从军，不增加人口）。<b>farmRice</b>：在城士兵参与农业生产，每名士兵每月加产粮；<b>recRice / recCoin / recCopper / recIron</b>：招募处每募 1 兵消耗的粮/钱/铜/铁（四项同时校验，缺一不可）；<b>eliteCost</b>：每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵 → 1 名特种兵）；<b>mobCap</b>：城外盗贼/贼寇兵力上限，无论级别多高一律封顶。<br>
         募兵只在玩家端「招募处 → 募兵」页签进行，新兵先入本城预备役；编队补兵、自动补兵、卡牌取兵全部只消耗预备役。保存后玩家端刷新或下次打开生效。
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-popm" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">人口增长 · 天灾 · 国策模型（全站生效） <span class="muted" id="popmUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="popmReload">刷新</button>
+        <button class="btn" id="popmReset">恢复默认</button>
+        <button class="btn gold" id="popmSave">保存并全站生效</button>
+      </div>
+      <div style="font-weight:600;margin:4px 0 6px">① 人口增长与天灾</div>
+      <div id="popmBase"></div>
+      <div style="font-weight:600;margin:16px 0 6px">② 灾种权重（相对值，填 0 表示不会触发该灾）</div>
+      <div id="popmKind"></div>
+      <div style="font-weight:600;margin:16px 0 6px">③ 国策三维系数（资源 / 人口 / 募兵 / 经验）</div>
+      <div id="popmPol"></div>
+      <div style="font-weight:600;margin:16px 0 6px">④ 试算（42 万人口大城市）</div>
+      <div id="popmPreview"></div>
+      <div class="hint">
+        人口链路：<b>城市人口基数（洛阳 42 万 / 邺 36 万 / 成都 34 万 / 许昌 32 万 / 长安 30 万 …）× 建筑加成 × 增长系数</b>，再受「军事模型 → 城市人口上限」约束。<br>
+        人口在<b>城池安定</b>（城内无贼寇、当年未遭灾）时按 <b>growYear%</b> 复利增长；城内有贼寇时增速 × <b>chaos</b>；遭灾当年按 <b>disGrowthOff</b> 决定是否停止增长。<br>
+        天灾每年判定一次（disRate%），损失 disLoss% 人口，并让当年粮产 -disFarm%。<br>
+        国策三选一（玩家端 大殿 → 政务）：<b>重农</b> 粮产↑ / 人口增速↑；<b>重商</b> 钱收↑ / 募兵略便宜；<b>强兵</b> 募兵成本↓↓ / 战斗经验↑、人口增速↓。系数直接乘在对应产出与成本上，保存后全站生效。<br>
+        兵民转换只在玩家端「招募处」完成：<b>募兵</b>（人口 → 预备役，消耗粮/钱/铜/铁）与<b>卸甲归田</b>（预备役/伤兵 → 人口，1:1）。
       </div>
     </div>
   </section>
@@ -1487,7 +1515,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   });
 
   /* ---------- V80 军事模型（募兵限制）：参数 CRUD，云端 key = military ---------- */
-  var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, eliteCost: 10 };
+  var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10 };
   var MIL_COLS = [
     ["popPct", "募兵比例（人口%，士兵计入人口）", 1, 100, "募兵限额 = 城市人口 × 该百分比；人口总数涵盖士兵数，募兵不增加人口"],
     ["cityCap", "单城总募兵上限（人）", 1000, 100000000, "该城所有兵力（预备役 + 编队武将带兵 + 特种兵）合计不得超过此值"],
@@ -1495,6 +1523,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ["farmRice", "士兵务农产粮（粮/月·人）", 0, 10, "在城士兵参与农业生产，每名士兵每月额外产粮（计入月收入）"],
     ["recRice", "募兵粮耗（粮/兵）", 0, 100, "招募处每募 1 名士兵消耗的粮草（享受都尉/重商等折扣加成）"],
     ["recCoin", "募兵钱耗（钱/兵）", 0, 1000, "招募处每募 1 名士兵消耗的铜钱"],
+    ["recCopper", "募兵铜耗（铜/兵）", 0, 100, "招募处每募 1 名士兵消耗的铜（兵器原料），默认 0.003"],
+    ["recIron", "募兵铁耗（铁/兵）", 0, 100, "招募处每募 1 名士兵消耗的铁（甲胄原料），默认 0.004"],
     ["eliteCost", "特种兵训练消耗（预备役/名）", 1, 10000, "每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵训练为 1 名特种兵）"]
   ];
   var milRows = null;
@@ -1684,6 +1714,136 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
     });
   });
+  /* ---------- V82 人口增长 · 天灾 · 国策模型（云端 key = popmodel） ---------- */
+  var POPM_DEF_A = {
+    growYear: 10, chaos: 0.3, disRate: 12, disLoss: 6, disFarm: 25, disGrowthOff: 1,
+    disKinds: { drought: 30, flood: 25, locust: 20, plague: 15, war: 10 },
+    policy: {
+      farm:  { rice: 1.2, coin: 0.9, pop: 1.25, rec: 1.0,  exp: 1.0 },
+      trade: { rice: 0.9, coin: 1.2, pop: 0.95, rec: 0.95, exp: 1.0 },
+      war:   { rice: 1.0, coin: 1.0, pop: 0.8,  rec: 0.85, exp: 1.1 }
+    }
+  };
+  var POPM_COLS = [
+    ["growYear", "人口年增长率（%/年，安定）", 0, 100, "城池安定时每年人口增长百分比，按复利累积；默认 10%"],
+    ["chaos", "动荡系数（0~1）", 0, 1, "城内有贼寇劫掠时，增长率乘以该系数（默认 0.3）"],
+    ["disRate", "天灾概率（%/年）", 0, 100, "每年判定一次，命中则该城发生一次天灾"],
+    ["disLoss", "天灾人口损失（%）", 0, 100, "每次天灾损失当前人口的比例（默认 6%）"],
+    ["disFarm", "灾年粮产损失（%）", 0, 100, "发生天灾的当年，该城粮食产出按此比例折损（默认 25%）"],
+    ["disGrowthOff", "灾年停止增长（1=是 / 0=否）", 0, 1, "为 1 时，遭灾当年不再增长人口"]
+  ];
+  var KIND_COLS = [["drought", "旱灾"], ["flood", "水患"], ["locust", "蝗灾"], ["plague", "瘟疫"], ["war", "兵灾"]];
+  var POL_COLS = [["rice", "粮产"], ["coin", "钱收"], ["pop", "人口增速"], ["rec", "募兵成本"], ["exp", "战斗经验"]];
+  var POL_NAMES = { farm: "重农", trade: "重商", war: "强兵" };
+  var popmRows = null;
+  function popmDefA() { return JSON.parse(JSON.stringify(POPM_DEF_A)); }
+  function popmNumA(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
+  function popmLoad() {
+    $("#popmUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "popmodel" }).then(function (r) {
+      var o = null;
+      if (r && r.ok && r.data) {
+        o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        if (r.updated_at) $("#popmUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      }
+      popmRows = popmDefA();
+      if (o && typeof o === "object") {
+        POPM_COLS.forEach(function (col) { if (o[col[0]] != null) popmRows[col[0]] = Number(o[col[0]]); });
+        if (o.disKinds && typeof o.disKinds === "object") KIND_COLS.forEach(function (k) { if (o.disKinds[k[0]] != null) popmRows.disKinds[k[0]] = Number(o.disKinds[k[0]]); });
+        if (o.policy && typeof o.policy === "object") Object.keys(POL_NAMES).forEach(function (pk) {
+          var src = o.policy[pk] || {};
+          POL_COLS.forEach(function (c2) { if (src[c2[0]] != null) popmRows.policy[pk][c2[0]] = Number(src[c2[0]]); });
+        });
+      }
+      popmPaint();
+    })["catch"](function () { popmRows = popmDefA(); popmPaint(); });
+  }
+  function popmPaint() {
+    if (!popmRows) popmRows = popmDefA();
+    function f(n) { return (+n || 0).toLocaleString("en-US", { maximumFractionDigits: 3 }); }
+    $("#popmBase").innerHTML = '<table style="width:100%"><thead><tr><th style="width:260px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' +
+      POPM_COLS.map(function (col) {
+        var k = col[0], step = (k === "chaos" || k === "growYear" || k === "disLoss" || k === "disFarm") ? "0.1" : "1";
+        return '<tr><td><b>' + esc(col[1]) + '</b><div class="muted" style="font-size:11px">' + k + "</div></td>" +
+          '<td><input class="btn pm-in" data-grp="base" data-k="' + k + '" type="number" step="' + step + '" min="' + col[2] + '" max="' + col[3] + '" value="' + popmRows[k] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+          '<td class="muted" style="font-size:12px">' + esc(col[4]) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    var kindTot = 0;
+    KIND_COLS.forEach(function (k) { kindTot += (+popmRows.disKinds[k[0]] || 0); });
+    $("#popmKind").innerHTML = '<table style="width:100%"><thead><tr><th>灾种</th><th style="width:150px">权重</th><th style="width:120px">占比</th></tr></thead><tbody>' +
+      KIND_COLS.map(function (k) {
+        var v = +popmRows.disKinds[k[0]] || 0;
+        var pct = kindTot > 0 ? (v / kindTot * 100).toFixed(1) + "%" : "—";
+        return '<tr><td><b>' + esc(k[1]) + '</b><div class="muted" style="font-size:11px">' + k[0] + "</div></td>" +
+          '<td><input class="btn pm-in" data-grp="kind" data-k="' + k[0] + '" type="number" step="1" min="0" max="1000" value="' + v + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+          '<td class="muted">' + pct + "</td></tr>";
+      }).join("") + "</tbody></table>" +
+      '<div class="muted" style="font-size:12px;margin-top:6px">当前灾害总权重 <b>' + f(kindTot) + "</b>；占比即各灾种被抽中的概率。</div>";
+    $("#popmPol").innerHTML = '<table style="width:100%"><thead><tr><th style="width:120px">国策</th>' +
+      POL_COLS.map(function (c2) { return "<th>" + esc(c2[1]) + "<div class=\"muted\" style=\"font-size:11px\">" + c2[0] + "</div></th>"; }).join("") +
+      "</tr></thead><tbody>" +
+      Object.keys(POL_NAMES).map(function (pk) {
+        return '<tr><td><b>' + esc(POL_NAMES[pk]) + '</b><div class="muted" style="font-size:11px">' + pk + "</div></td>" +
+          POL_COLS.map(function (c2) {
+            return '<td><input class="btn pm-in" data-grp="pol" data-pol="' + pk + '" data-k="' + c2[0] + '" type="number" step="0.01" min="0" max="10" value="' + popmRows.policy[pk][c2[0]] + '" style="width:96px;text-align:right;padding:6px 8px"></td>';
+          }).join("") + "</tr>";
+      }).join("") + "</tbody></table>" +
+      '<div class="muted" style="font-size:12px;margin-top:6px">1.00 = 无变化；1.20 = +20%；0.85 = -15%。「募兵成本」系数越小越便宜（乘在粮/钱/铜/铁四项上）。</div>';
+    popmPreview();
+    $$("#popmBase .pm-in, #popmKind .pm-in, #popmPol .pm-in").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k"), v = Number(this.value);
+        if (!isFinite(v)) return;
+        if (grp === "base") {
+          var col = POPM_COLS.filter(function (x) { return x[0] === k; })[0];
+          popmRows[k] = popmNumA(v, POPM_DEF_A[k], col[2], col[3]);
+        } else if (grp === "kind") {
+          popmRows.disKinds[k] = Math.max(0, Math.min(1000, Math.round(v)));
+        } else if (grp === "pol") {
+          popmRows.policy[this.getAttribute("data-pol")][k] = Math.max(0, Math.min(10, v));
+        }
+        popmPreview();
+      });
+    });
+  }
+  function popmPreview() {
+    if (!popmRows) return;
+    function f(n) { return Math.round(+n || 0).toLocaleString("en-US"); }
+    var base = 420000, yr = Math.round(popmRows.growYear || 0);
+    var rows = Object.keys(POL_NAMES).map(function (pk) {
+      var g = yr * (+popmRows.policy[pk].pop || 1);
+      var y1 = base * (1 + g / 100), y5 = base * Math.pow(1 + g / 100, 5), y10 = base * Math.pow(1 + g / 100, 10);
+      return "<tr><td><b>" + esc(POL_NAMES[pk]) + "</b></td><td>" + g.toFixed(1) + "%</td><td>" + f(y1) + "</td><td>" + f(y5) + "</td><td>" + f(y10) + "</td></tr>";
+    }).join("");
+    $("#popmPreview").innerHTML = '<table style="width:100%"><thead><tr><th>国策</th><th>实际年增速</th><th>1 年后</th><th>5 年后</th><th>10 年后</th></tr></thead><tbody>' + rows + "</tbody></table>" +
+      '<div class="muted" style="font-size:12px;margin-top:6px">基准 42 万人口、城池安定（未遭灾）。天灾概率 ' + (popmRows.disRate || 0) + '%/年、每次损失 ' + (popmRows.disLoss || 0) + "% 人口、当年粮产 -" + (popmRows.disFarm || 0) + "%。</div>";
+  }
+  $("#popmReload").addEventListener("click", popmLoad);
+  $("#popmReset").addEventListener("click", function () {
+    popmRows = popmDefA(); $("#popmUpdated").textContent = "已恢复默认值（尚未保存）"; popmPaint();
+  });
+  $("#popmSave").addEventListener("click", function () {
+    if (!popmRows) return;
+    var out = { disKinds: {}, policy: {} };
+    POPM_COLS.forEach(function (col) { out[col[0]] = popmNumA(popmRows[col[0]], POPM_DEF_A[col[0]], col[2], col[3]); });
+    KIND_COLS.forEach(function (k) { out.disKinds[k[0]] = Math.round(popmNumA(popmRows.disKinds[k[0]], POPM_DEF_A.disKinds[k[0]], 0, 1000)); });
+    Object.keys(POL_NAMES).forEach(function (pk) {
+      out.policy[pk] = {};
+      POL_COLS.forEach(function (c2) { out.policy[pk][c2[0]] = popmNumA(popmRows.policy[pk][c2[0]], POPM_DEF_A.policy[pk][c2[0]], 0, 10); });
+    });
+    var btn = $("#popmSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "popmodel", p_data: out }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        admTip("人口·政策模型已保存，全站生效（玩家端刷新或下次打开拉取）");
+        if (r.updated_at) $("#popmUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
   $("#spResetBtn").addEventListener("click", function () {
     if (!confirm("确定重置全站所有玩家的加点分配？已分配点数会退回各自卡牌，属性加点清零。")) return;
     var btn = $("#spResetBtn");
@@ -2310,6 +2470,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#tab-shop").hidden = state.tab !== "shop";
       $("#tab-econ").hidden = state.tab !== "econ";
       $("#tab-mil").hidden = state.tab !== "mil";
+      $("#tab-popm").hidden = state.tab !== "popm";
       $("#tab-mig").hidden = state.tab !== "mig";
       if (state.tab === "acc") loadAccounts(true);
       if (state.tab === "evt") loadEvents(false);
@@ -2318,6 +2479,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       if (state.tab === "shop") shopLoad();
       if (state.tab === "econ") ecoLoad();
       if (state.tab === "mil") milLoad();
+      if (state.tab === "popm") popmLoad();
     });
   });
 
