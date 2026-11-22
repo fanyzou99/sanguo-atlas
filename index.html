@@ -9998,7 +9998,16 @@ var BOTS = [
           }
           return false;
         })["catch"](function () { return false; });
-        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8]).then(function () { retry(); return okT || okG || okW; });
+        /* V81：城市人口上限（key = popcap）与「重置全部加点」时间戳（key = spreset） */
+        var p9 = rpcP("sg_cfg_get", { p_key: "popcap" }).then(function (r) {
+          if (r && r.ok && r.data) { if (applyPopCapCfg(r.data) && me()) { save(); rerender(); } return true; }
+          return false;
+        })["catch"](function () { return false; });
+        var p10 = rpcP("sg_cfg_get", { p_key: "spreset" }).then(function (r) {
+          if (r && r.ok && r.data) { applySpResetCfg(r.data); return true; }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]).then(function () { retry(); return okT || okG || okW; });
       } catch (e) { return Promise.resolve(false); }
     }
 
@@ -10961,6 +10970,24 @@ var BOTS = [
       if ((u.bat.sp || 0) !== _spd) u.bat.sp = _spd;
     }
     ensureRes(u);
+    /* V81：点数改为「每张卡独立」——老存档把全局待分配点数平均分给现有卡，避免资产丢失 */
+    if (!u.bat.spMig) {
+      var _cs = u.cards || [], _lf = Math.max(0, Math.round(u.bat.sp || 0));
+      if (_lf > 0 && _cs.length) {
+        var _bs = Math.floor(_lf / _cs.length), _rm = _lf - _bs * _cs.length;
+        _cs.forEach(function (c2, i2) { c2.sp = cardSp(c2) + _bs + (i2 === 0 ? _rm : 0); });
+      }
+      u.bat.spMig = 1; u.bat.spU = u.bat.spG || 0; u.bat.sp = 0;
+    }
+    /* V81：后台「重置全部加点」——时间戳推进后清空所有卡加点，并把已分配点数退回本卡 */
+    if (u.bat.spResetTs == null) u.bat.spResetTs = 0;
+    if (SP_RESET_TS > (u.bat.spResetTs || 0)) {
+      (u.cards || []).forEach(function (c3) {
+        var used3 = spUsedOf(c3);
+        if (used3 > 0) { c3.spa = {}; c3.sp = cardSp(c3) + used3; }
+      });
+      u.bat.spResetTs = SP_RESET_TS;
+    }
     return u.bat;
   }
   function addShards(u, gid, n) { ensureBat(u); u.shards[gid] = (u.shards[gid] || 0) + n; }
@@ -11877,12 +11904,51 @@ var BOTS = [
     for (var i = 0; i < n; i++) { var j = Math.max(0, bi - 1 - i); var mlv = Math.max(1, mob.lv - 1); arr.push({ gid: pool[j].id, lv: mlv, m: 0.75, ti: Math.max(0, bti - 1 - (i % 2)), rk: Math.min(RANKS.length - 1, Math.floor(mlv / 3)), tm: 0.3 }); }
     return arr;
   }
-  function cityPop(u) {
+  /* ================= V81：城市人口上限（后台「人口上限」页签，云端 key = popcap） =================
+     洛阳上限最高（默认 100 万）；其余按城市资源推导：都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3（以基础人口为基数），
+     且一律不高于洛阳上限。云端 popcap 表按城名覆盖（后台可逐城改）。人口超过上限时按上限计（不再增长）。 */
+  var POPCAP = null;
+  function popCapLuoYang() {
+    var v = POPCAP && POPCAP["洛阳"] ? Math.round(POPCAP["洛阳"]) : 1000000;
+    return Math.max(100000, v);
+  }
+  function popCapDefaultOf(name, popWan, lvName) {
+    var hi = popCapLuoYang();
+    if (name === "洛阳") return hi;
+    var f = lvName === "都城" ? 2.4 : lvName === "州治" ? 2.0 : lvName === "郡城" ? 1.6 : 1.3;
+    var cap = Math.round((+popWan || 20) * 10000 * f / 5000) * 5000;
+    return Math.max(20000, Math.min(hi, cap));
+  }
+  function cityPopCap(u, cObj) {
+    var c = cObj || ensureCity(u);
+    var cityName = (c && c.name) || (u && (u.bat.cur || u.bat.spawn)) || "洛阳";
+    if (POPCAP && POPCAP[cityName] > 0) return Math.round(POPCAP[cityName]);
+    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
+    return popCapDefaultOf(cityName, cd ? cd.pop : 20, cd ? cd.lv : "郡城");
+  }
+  function applyPopCapCfg(o) {
+    if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { return false; } }
+    if (!o || typeof o !== "object") return false;
+    var m = {}, n = 0;
+    Object.keys(o).forEach(function (k) {
+      var v = Math.round(+o[k]);
+      if (isFinite(v) && v > 0) { m[k] = v; n++; }
+    });
+    if (!n) return false;
+    POPCAP = m;
+    return true;
+  }
+  function cityPopRaw(u) {
     var c = ensureCity(u), cityName = u.bat.cur || u.bat.spawn || "洛阳";
     var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
     var base = (cd ? cd.pop : 20) * 10000;
     /* V66：放归田野的兵员转为常驻人口（c.popAdd） */
     return Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0))) + (c.popAdd || 0);
+  }
+  function cityPop(u) {
+    var raw = cityPopRaw(u);
+    var cap = cityPopCap(u);
+    return Math.max(0, Math.min(raw, cap));
   }
   /* V66：人口对资源产出的高额加成（10 万人口 +60%，上限 +160%） */
   function popMulOf(u) { return Math.min(2.6, 1 + 0.6 * Math.pow(Math.max(0, cityPop(u)) / 100000, 0.65)); }
@@ -11975,7 +12041,7 @@ var BOTS = [
     var cityName = (c && c.name) || u.bat.cur || u.bat.spawn || "洛阳";
     var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
     var base = (cd ? cd.pop : 20) * 10000;
-    var pop = Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0))) + (c.popAdd || 0);
+    var pop = Math.min(Math.round(base * (1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0))) + (c.popAdd || 0), cityPopCap(u, c));
     var lim = Math.min(Math.floor(pop * (MIL.popPct || 10) / 100), MIL.cityCap || 1000000);
     return { pop: pop, lim: lim, tot: cityTroopTotal(u, c) };
   }
@@ -12166,14 +12232,36 @@ var BOTS = [
     var el = document.querySelector('input.sg-spin[data-st="' + st + '"]');
     return el ? el.value : "";
   }
+  /* ================= V81：加点点数「每张卡独立」 =================
+     升级只给该卡积点（SP_PER_LV/级），加点只能加在本卡；后台可全站重置（清空加点并退回点数）。 */
+  var SP_PER_LV = 3;
+  var SP_RESET_TS = 0;
+  function cardSp(c) { if (!c) return 0; if (c.sp == null) c.sp = 0; return Math.max(0, Math.round(c.sp)); }
+  function spGiveCard(c, n) {
+    n = Math.max(0, Math.round(n || 0));
+    if (!c || !n) return 0;
+    c.sp = cardSp(c) + n;
+    c.spG = (c.spG || 0) + n;
+    return n;
+  }
+  function spUsedOf(c) {
+    var s = 0, o = (c && c.spa) || {};
+    for (var k in o) s += Math.max(0, Math.round(+o[k] || 0));
+    return s;
+  }
+  function applySpResetCfg(v) {
+    var t = Math.round(+(v && v.ts != null ? v.ts : v) || 0);
+    if (t > 0) SP_RESET_TS = t;
+    return true;
+  }
   function allocSp(u, c, st, raw) {
-    var left = u.bat.sp || 0;
+    if (!c) return { err: "none" };
+    var left = cardSp(c);
     if (left <= 0) return { err: "none" };
     var n = parseInt(String(raw == null ? "" : raw).replace(/[^0-9]/g, ""), 10);
     if (!isFinite(n) || n <= 0) return { err: "bad" };
     if (n > left) return { err: "bad" };
-    u.bat.spU = (u.bat.spU || 0) + n;
-    u.bat.sp = Math.max(0, (u.bat.spG || 0) - u.bat.spU);
+    c.sp = left - n;
     c.spa = c.spa || {};
     c.spa[st] = (c.spa[st] || 0) + n;
     return { ok: true, n: n };
@@ -12234,30 +12322,91 @@ var BOTS = [
   /* 从 a 级升到 b 级的累计增长（用于升级提示） */
   function troopGainLv(a, b) { return Math.max(0, troopRawAt(b) - troopRawAt(a)); }
 
-  /* ================= V66 爵位体系（参考三国志9/11 官爵，带兵等比放大，最高 60000） =================
-     爵位由主公在大殿「爵位」页任命；每级带兵上限 +2500（末级补足 60000）。 */
+  /* ================= V81 三语词条（爵位带兵 / 卡内点数 / 人口上限） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        popCapT: "人口上限", popFullT: "人口已达上限 {m}", popGrowT: "人口 {a} / 上限 {b}",
+        spCardT: "本卡可加点", spCardAuditT: "本卡累计 {g} 点 · 已分配 {u} 点",
+        rankAutoHintT: "爵位按史实地位自动授予，带兵上限由爵位决定；可用军功积分继续晋爵"
+      },
+      en: {
+        popCapT: "Pop cap", popFullT: "Population cap {m} reached", popGrowT: "Population {a} / cap {b}",
+        spCardT: "Points on this card", spCardAuditT: "{g} earned · {u} spent on this card",
+        rankAutoHintT: "Rank is granted by historical standing; troop cap follows rank. Spend merit points to promote further"
+      },
+      ja: {
+        popCapT: "人口上限", popFullT: "人口が上限 {m} に達しました", popGrowT: "人口 {a} / 上限 {b}",
+        spCardT: "このカードのポイント", spCardAuditT: "累計 {g} 点 · 配分済 {u} 点",
+        rankAutoHintT: "爵位は史実の地位で自動授与され、帯兵上限は爵位で決まります"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
+
+  /* ================= V81 爵位体系（参考《三国志9》官爵：带兵上限只由爵位决定，最高 6 万） =================
+     爵位 0~16 共 17 级，逐级递增；新卡按武将史实地位自动封爵（rankAutoCalc），
+     玩家在大殿「爵位」页仍可用军功积分继续晋爵 / 降爵。 */
   var RANKS = [
-    { n: "无爵",        ja: "無爵",            en: "No Rank",        troop: 20000 },
-    { n: "都尉",        ja: "都尉",            en: "Commandant",     troop: 22500 },
-    { n: "校尉",        ja: "校尉",            en: "Colonel",        troop: 25000 },
-    { n: "中郎将",      ja: "中郎将",          en: "General of the Household", troop: 27500 },
-    { n: "杂号将军",    ja: "雑号将軍",        en: "General",        troop: 30000 },
-    { n: "四平将军",    ja: "四平将軍",        en: "General of the Four Pacifications", troop: 32500 },
-    { n: "四安将军",    ja: "四安将軍",        en: "General of the Four Comforts", troop: 35000 },
-    { n: "四镇将军",    ja: "四鎮将軍",        en: "General of the Four Garrisons", troop: 37500 },
+    { n: "无爵",        ja: "無爵",            en: "No Rank",        troop: 8000 },
+    { n: "都尉",        ja: "都尉",            en: "Commandant",     troop: 12000 },
+    { n: "校尉",        ja: "校尉",            en: "Colonel",        troop: 16000 },
+    { n: "中郎将",      ja: "中郎将",          en: "General of the Household", troop: 20000 },
+    { n: "杂号将军",    ja: "雑号将軍",        en: "General",        troop: 24000 },
+    { n: "四平将军",    ja: "四平将軍",        en: "General of the Four Pacifications", troop: 28000 },
+    { n: "四安将军",    ja: "四安将軍",        en: "General of the Four Comforts", troop: 32000 },
+    { n: "四镇将军",    ja: "四鎮将軍",        en: "General of the Four Garrisons", troop: 36000 },
     { n: "四征将军",    ja: "四征将軍",        en: "General of the Four Expeditions", troop: 40000 },
-    { n: "前后左右将军", ja: "前後左右将軍",   en: "General of the Front/Rear/Left/Right", troop: 42500 },
-    { n: "卫将军",      ja: "衛将軍",          en: "General of the Guards", troop: 45000 },
-    { n: "车骑将军",    ja: "車騎将軍",        en: "General of Chariots and Cavalry", troop: 47500 },
-    { n: "骠骑将军",    ja: "驃騎将軍",        en: "General of Agile Cavalry", troop: 50000 },
-    { n: "大将军",      ja: "大将軍",          en: "Grand General",  troop: 52500 },
+    { n: "前后左右将军", ja: "前後左右将軍",   en: "General of the Front/Rear/Left/Right", troop: 44000 },
+    { n: "卫将军",      ja: "衛将軍",          en: "General of the Guards", troop: 47000 },
+    { n: "车骑将军",    ja: "車騎将軍",        en: "General of Chariots and Cavalry", troop: 49000 },
+    { n: "骠骑将军",    ja: "驃騎将軍",        en: "General of Agile Cavalry", troop: 51000 },
+    { n: "大将军",      ja: "大将軍",          en: "Grand General",  troop: 53000 },
     { n: "大司马",      ja: "大司馬",          en: "Grand Marshal",  troop: 55000 },
     { n: "公",          ja: "公",              en: "Duke",           troop: 57500 },
     { n: "王",          ja: "王",              en: "King",           troop: 60000 }
   ];
+  /* 史实特授：按人物直接定爵（覆盖公式结果），只列地位与公式差异较大者 */
+  var RANK_FIX = {
+    "曹操": 16, "刘备": 16, "孙权": 16, "曹丕": 15, "司马炎": 15, "袁绍": 15, "董卓": 15,
+    "吕布": 14, "袁术": 14, "刘表": 14, "刘焉": 14, "公孙瓒": 13, "马腾": 13, "张鲁": 13,
+    "刘璋": 13, "陶谦": 12, "孔融": 12, "张绣": 12, "韩遂": 12, "孟获": 12, "士燮": 12,
+    "关羽": 14, "张飞": 13, "赵云": 13, "马超": 13, "黄忠": 12, "魏延": 12, "张辽": 13,
+    "夏侯惇": 13, "夏侯渊": 12, "曹仁": 13, "曹洪": 12, "张郃": 12, "徐晃": 12, "于禁": 12,
+    "乐进": 11, "典韦": 11, "许褚": 12, "庞德": 11, "邓艾": 13, "钟会": 12, "姜维": 13,
+    "周瑜": 14, "鲁肃": 13, "吕蒙": 13, "陆逊": 14, "陆抗": 12, "甘宁": 12, "太史慈": 12,
+    "黄盖": 11, "程普": 11, "韩当": 11, "周泰": 11, "丁奉": 11, "徐盛": 11, "诸葛瑾": 11,
+    "诸葛亮": 14, "司马懿": 14, "荀彧": 12, "荀攸": 11, "郭嘉": 11, "贾诩": 12, "程昱": 11,
+    "陈群": 11, "钟繇": 11, "华歆": 11, "王朗": 10
+  };
+  /* 史实爵位推导：以「统/武为主」的军功指数定档，君主保底、谋士封顶、特授覆盖 */
+  function rankAutoCalc(g) {
+    if (!g || !g.name) return 0;
+    if (RANK_FIX[g.name] != null) return RANK_FIX[g.name];
+    var st = +g.st || 0, wu = +g.wu || 0, it = +g.in || 0, po = +g.po || 0, ch = +g.ch || 0;
+    var idx = st * 0.34 + wu * 0.30 + it * 0.16 + po * 0.10 + ch * 0.10;
+    var r = idx >= 88 ? 16 : idx >= 84 ? 15 : idx >= 80 ? 14 : idx >= 76 ? 13 : idx >= 72 ? 12
+      : idx >= 68 ? 11 : idx >= 64 ? 10 : idx >= 60 ? 9 : idx >= 56 ? 8 : idx >= 52 ? 7
+      : idx >= 48 ? 6 : idx >= 44 ? 5 : idx >= 40 ? 4 : idx >= 34 ? 3 : idx >= 26 ? 2 : idx >= 18 ? 1 : 0;
+    if (g.type === "君主") r = Math.max(r, idx >= 70 ? 13 : idx >= 50 ? 12 : 11);
+    else if (g.type === "谋士") r = Math.min(r, 12);
+    if (g.type !== "君主") r = Math.min(r, 14);
+    return Math.max(0, Math.min(RANKS.length - 1, r));
+  }
+
   function rankOf(c) {
     if (!c) return 0;
-    var r = (c.rk == null) ? 0 : parseInt(c.rk, 10);      /* V66：新卡默认无爵，需在大殿任命 */
+    /* V81：未封爵的卡按史实地位自动封爵（玩家手动晋/降爵后以 c.rk 为准） */
+    if (c.rk == null) {
+      var g0 = null;
+      try { g0 = gById(c.gid); } catch (e) { g0 = null; }
+      c.rk = rankAutoCalc(g0 || {});
+      c.rkAuto = c.rk;
+    }
+    var r = parseInt(c.rk, 10);
     if (!isFinite(r)) r = 0;
     return Math.max(0, Math.min(RANKS.length - 1, r));
   }
@@ -12268,31 +12417,31 @@ var BOTS = [
   }
   function rankCost(n) { return 10 * n; }                 /* 晋升到第 n 级所需积分 */
   function rankNeedLv(n) { return n * 3; }                /* 晋升到第 n 级所需武将等级 */
-  function troopCapOf(c) { return Math.min(TIERS[cardTier(c)].troop, rankTroop(c)); }
+  function troopCapOf(c) { return rankTroop(c); }   /* V81：带兵上限只由爵位决定 */
   /* 关卡守军总兵力（与 stageEnemies 同口径，仅用于展示） */
   function stageGuardN(n) {
     var lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
     var cnt = n <= 5 ? 1 : n <= 15 ? 2 : 3;
     var ti = stageTierOf(n, 0);
     var c = { gid: "stage", lv: lv, t: ti, rk: Math.min(RANKS.length - 1, Math.floor(lv / 3)) };
-    return Math.round(Math.min(troopRawAt(lv), TIERS[ti].troop, rankTroop(c)) * 0.6) * cnt;
+    return Math.round(Math.min(troopRawAt(lv), rankTroop(c)) * 0.6) * cnt;
   }
   function mobTroopOf(lv, ti) {
     var c = { gid: "mob", lv: lv, t: ti, rk: Math.min(RANKS.length - 1, Math.floor(lv / 3)) };
-    return Math.max(200, Math.min(MIL.mobCap || 50000, Math.round(Math.min(troopRawAt(lv), (TIERS[ti] || TIERS[6]).troop, rankTroop(c)) * 0.3)));
+    return Math.max(200, Math.min(MIL.mobCap || 50000, Math.round(Math.min(troopRawAt(lv), rankTroop(c)) * 0.3)));
   }
   function troopOfCard(c, g) {
     var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
     /* V49：按等级分段累加（不再线性 1000×lv），再乘星级与装备加成，最后受品级最高上限约束 */
     var t = troopRawAt(cardLv(c));
     t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
-    return Math.min(t, tr.troop, rankTroop(c));   /* V66：再受爵位带兵上限约束 */
+    return Math.min(t, rankTroop(c));   /* V81：上限只由爵位决定，品级不再压低带兵 */
   }
   /* V49：该卡在当前等级下是否已顶到品级上限（升级不再涨兵）——用于升级提示 */
   function troopCapInfo(c, g) {
     var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
     var mul = (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0));
-    var raw = Math.round(troopRawAt(cardLv(c)) * mul), cap = Math.min(tr.troop, rankTroop(c));
+    var raw = Math.round(troopRawAt(cardLv(c)) * mul), cap = rankTroop(c);
     return { raw: raw, cap: cap, capped: raw >= cap, nextAdd: Math.max(0, Math.min(cap, Math.round(troopRawAt(cardLv(c) + 1) * mul)) - Math.min(cap, raw)) };
   }
   /* V33 装备耐久：高级装备（品阶 S/A/B/C = ti 0~3）永久有效；低级装备（D/E/F = ti 4~6）作战 10 次自动损毁 */
@@ -12581,6 +12730,7 @@ var BOTS = [
     if (upN > 0) {
       var cap1 = cardTroopCap(c), add = cap1 - cap0;
       c._troopDelta = add;   /* 供武将详情页提示 */
+      c._spGain = spGiveCard(c, upN * SP_PER_LV);   /* V81：升级只给本卡加点 */
       if (ups) {
         var head = T("lvUp", { n: g.name, m: c.lv }) + (add > 0 ? "　" + T("gsSoldAdd", { n: fmt(add), b: fmt(cap1) }) : "　" + T("gsSoldCapMax", { b: fmt(TIERS[cardTier(c)].troop) }));
         ups.push(head);
@@ -12654,7 +12804,7 @@ var BOTS = [
       out.exp = res.win ? baseExp : Math.round(baseExp * 0.3);
       out.pts = res.win ? 10 + stage * 10 : stage * 2;
       var first = !u.bat.hist[stage] && res.win;
-      if (first) { u.bat.hist[stage] = res.stars; spGrant(u, 5); out.sp = 5; out.pts += 20 + stage * 5; }
+      if (first) { u.bat.hist[stage] = res.stars; var _fcSp = 0; (squad || []).forEach(function (c) { _fcSp += spGiveCard(c, 1); }); out.sp = _fcSp; out.pts += 20 + stage * 5; }
       else if (res.win) u.bat.hist[stage] = Math.max(u.bat.hist[stage] || 0, res.stars);
       if (res.win) {
         if (u.bat.stage <= stage) u.bat.stage = Math.min(30, stage + 1);
@@ -12718,9 +12868,9 @@ var BOTS = [
     out.inc = monthInc;
     addRes(u, out.loot);
     /* V41：武将升级增量点数——每升 1 级 +3 待分配点数，走台账（spG）并计入结算展示 */
-    var _lvUps = 0;
-    squad.forEach(function (c) { _lvUps += gainExp(c, out.exp, out.ups) || 0; });
-    if (_lvUps > 0) { spGrant(u, _lvUps * 3); out.sp = (out.sp || 0) + _lvUps * 3; out.lvUps = _lvUps; }
+    var _lvUps = 0, _spNew = 0;
+    squad.forEach(function (c) { c._spGain = 0; var _u1 = gainExp(c, out.exp, out.ups) || 0; _lvUps += _u1; _spNew += (c._spGain || 0); });
+    if (_lvUps > 0) { out.sp = (out.sp || 0) + _spNew; out.lvUps = _lvUps; }
     /* V36 兵种熟悉度：出战武将（有当前兵种者）按战果累积——胜 +50 / 险胜 +20 / 负 +5 */
     var pGain = armProfGain(res) + ((ensureCity(u).bld && ensureCity(u).bld.train) || 0) * 10;
     out.profGain = [];
@@ -12797,7 +12947,7 @@ var BOTS = [
     return '<div class="sg-resrow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
       resPill(u, "rice") + resPill(u, "wood") + resPill(u, "copper") + resPill(u, "iron") +
       resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") +
-      '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
+      '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + fmt(cityPopCap(u)) + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("upNoteT")) + '">⚔ ' + gt("poolT") + " " + fmt(c.pool || 0) + "</span>" +
       '<span style="border:1px solid ' + (wN ? "#e07f7f88" : "var(--line-2)") + ';border-radius:999px;padding:4px 11px;color:' + (wN ? "#ffb3b3" : "var(--ink-2)") + '" title="' + esc(gt("infT") + " · " + gt("upNoteT")) + '">⚕ ' + gt("woundT") + " " + fmt(wN) + "</span>" +
       '<style>' +
@@ -13660,7 +13810,7 @@ var BOTS = [
       '<button class="sgbtn sm primary" data-bat="tax"' + (taxOk ? "" : " disabled") + ">" + gt("taxBtn") + "</button>" +
       (taxOk ? "" : '<small style="color:var(--ink-3)">' + gt("taxCd") + "</small>") + "</div>";
     var incLine = '<div class="sg-note" style="margin:4px 0 8px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) +
-      '<br>👥 ' + gt("popT") + " " + fmt(cityPop(u)) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
+      '<br>👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + gt("popCapT") + " " + fmt(cityPopCap(u)) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
     var offN = OFFICES.filter(function (o) { return !!u.bat.off[o.k]; }).length;
     var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")], ["houses", "🏛 " + gt("warHouseTabT")]]
       .map(function (t) {
@@ -17218,7 +17368,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var stTarget = (c.stars || 0);
     var starCost = stTarget < 5 ? STAR_COST[stTarget] : 0;
     var lvNeed = (stTarget + 1) * 10;
-    var spa = c.spa || {}; var spLeft = u.bat.sp || 0;
+    var spa = c.spa || {}, spLeft = cardSp(c);   /* V81：本卡点数 */
     var statDefs = [["wu", "武"], ["st", "统"], ["in", "智"], ["ch", "魅"], ["po", "政"]];
     var spHTML = statDefs.map(function (sd) {
       return '<span class="sgchip">' + sd[1] + " " + (g[sd[0]] || 0) + (spa[sd[0]] ? '<b style="color:#e8c988"> +' + spa[sd[0]] + "</b>" : "") + " " +
@@ -17248,7 +17398,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       (stTarget >= 5 ? T("starMax") : lv < lvNeed ? T("starLvNeed", { n: lvNeed }) : T("starUpCost", { n: starCost }) + "（" + T("shardsOf", { n: g.name, a: have, b: starCost }) + "）") + "</small></span><span class=\"sp\"></span>" +
       '<button class="sgbtn sm primary" data-bat="starup" data-id="' + c.id + '"' + (stTarget >= 5 || lv < lvNeed || have < starCost ? " disabled" : "") + ">" + T("starUp") + "</button></div>" +
       '<div class="sg-note" style="margin:10px 0 4px">' + T("spAlloc", { n: spLeft }) +
-      (u.bat.spG != null ? ' <small style="color:var(--ink-3)">' + T("spAudit", { g: u.bat.spG, u: u.bat.spU || 0 }) + "</small>" : "") + "</div><div style='display:flex;flex-wrap:wrap;gap:6px'>" + spHTML + "</div>" +
+      (c.spG ? ' <small style="color:var(--ink-3)">' + gt("spCardAuditT", { g: c.spG, u: spUsedOf(c) }) + "</small>" : "") + "</div><div style='display:flex;flex-wrap:wrap;gap:6px'>" + spHTML + "</div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("equipT") + " · " + T("eqWpn") + "：" + wtypeOf(g) + "</div>" + eqHTML +
       '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">爵</span><span><b>🏅 ' + rankName(rankOf(c)) + "</b> <small>" + gt("rankCapT") + " " + fmt(RANKS[rankOf(c)].troop) + " · " + gt("lbTroop") + " " + fmt(troopOfCard(c, g)) + "</small></span></div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
@@ -17408,7 +17558,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var tr = TIERS[cardTier(c)];
     var lv = cardLv(c), cap = troopCapEff(c, g), sold = (c.sold == null ? cap : Math.min(c.sold, cap));
     var gd = gameDate(gMonth(u)), mp = marketPrices(gMonth(u));
-    var spa = c.spa || {}, spLeft = u.bat.sp || 0;
+    var spa = c.spa || {}, spLeft = cardSp(c);   /* V81：本卡点数 */
     var art = "";
     try { art = window.__SGAtlas && window.__SGAtlas.artFor ? window.__SGAtlas.artFor(g) : ""; } catch (e) {}
     var statDefs = [["wu", "武"], ["st", "统"], ["in", "智"], ["ch", "魅"], ["po", "政"]];
@@ -17508,7 +17658,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="gs-duo">' +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("gsCardData") + " · " + T("gsPoints").replace("{n}", spLeft) + "</h3></div>" +
       '<div class="sg-note" style="margin-bottom:8px">' + (spLeft > 0 ? T("spAlloc", { n: spLeft }) : T("gsNoSp")) +
-      (u.bat.spG != null ? ' <small style="color:var(--ink-3)">' + T("spAudit", { g: u.bat.spG, u: u.bat.spU || 0 }) + "</small>" : "") + "</div>" + spHTML +
+      (c.spG ? ' <small style="color:var(--ink-3)">' + gt("spCardAuditT", { g: c.spG, u: spUsedOf(c) }) + "</small>" : "") + "</div>" + spHTML +
       '<div class="sg-note" style="margin-top:10px">' + T("gsCapNote") + "</div></div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>✨ ' + T("skillUpT") + " · " + T("skPointT") + ' <span style="color:#e8c988">' + skp + "</span></h3></div>" +
       spRow + skHTML + dupRow +
@@ -17616,13 +17766,13 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       }
       case "sp": {
         /* V39：按输入数量加点，校验剩余点数 */
-        var leftS = u.bat.sp || 0;
+        var leftS = cardSp(c);
         if (leftS <= 0) return toast(T("gsNoSp"), "err");
         var stS = t.getAttribute("data-st");
         var rS = allocSp(u, c, stS, spInputOf(stS));
         if (rS.err === "bad") return toast(T("spBadT", { n: leftS }), "err");
         if (!rS.ok) return;
-        save(); toast(T("spOkT", { s: stName(stS), n: rS.n, l: u.bat.sp || 0 }), "ok");
+        save(); toast(T("spOkT", { s: stName(stS), n: rS.n, l: cardSp(c) }), "ok");
         rg(); return;
       }
       case "arm": {
@@ -18391,12 +18541,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         /* V39：按输入数量加点，校验剩余点数 */
         var c5 = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!c5) return;
         var st5 = t.getAttribute("data-st");
-        var left5 = u.bat.sp || 0;
+        var left5 = cardSp(c5);
         if (left5 <= 0) return toast(T("gsNoSp"), "err");
         var r5 = allocSp(u, c5, st5, spInputOf(st5));
         if (r5.err === "bad") return toast(T("spBadT", { n: left5 }), "err");
         if (!r5.ok) return;
-        save(); toast(T("spOkT", { s: stName(st5), n: r5.n, l: u.bat.sp || 0 }), "ok");
+        save(); toast(T("spOkT", { s: stName(st5), n: r5.n, l: cardSp(c5) }), "ok");
         growOpen(id); return;
       }
       case "eq-pick": eqPicker(id, t.getAttribute("data-slot")); return;

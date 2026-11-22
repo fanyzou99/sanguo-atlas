@@ -295,6 +295,27 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div id="milTable"></div>
       <div style="margin:16px 0 6px;font-weight:600">试算（默认参数）</div>
       <div id="milPreview"></div>
+
+      <div style="margin:22px 0 6px;font-weight:600">城市人口上限（逐城可改，洛阳最高）</div>
+      <div class="muted" style="font-size:12px;margin-bottom:6px">
+        格式：每行「城名=上限」。默认值按城市资源推导：都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3（以基础人口为基数），洛阳固定为 100 万，其余一律不高于洛阳。
+        人口达到上限后不再增长（募兵限额 = 人口 × 募兵比例，同步受限）。
+      </div>
+      <textarea id="popcapText" spellcheck="false" style="width:100%;height:320px;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.7;padding:8px;border-radius:8px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit"></textarea>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="btn" id="popcapDefault">重新生成默认值</button>
+        <button class="btn gold" id="popcapSave">保存人口上限</button>
+        <span class="muted" id="popcapMsg"></span>
+      </div>
+
+      <div style="margin:22px 0 6px;font-weight:600">加点分配（每张卡独立点数）</div>
+      <div class="muted" style="font-size:12px;margin-bottom:6px">
+        V81 起武将从「升级」获得的加点只属于该卡，不再全卡共用。<b>重置全部加点</b>会清空所有玩家的属性加点，并把已分配的点数退回各自卡牌（玩家下次打开或刷新生效）。
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="spResetBtn" style="color:#ff9a9a;border-color:#a94a4a">重置全部加点</button>
+        <span class="muted" id="spResetMsg"></span>
+      </div>
       <div class="hint">
         计算链路：<b>募兵限额 = 城市人口 × popPct%</b>，同时受<b>单城总募兵上限 cityCap</b> 约束；人口总数涵盖士兵数（募兵即编户从军，不增加人口）。<b>farmRice</b>：在城士兵参与农业生产，每名士兵每月加产粮；<b>recRice / recCoin</b>：招募处每募 1 兵的粮/钱消耗；<b>eliteCost</b>：每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵 → 1 名特种兵）；<b>mobCap</b>：城外盗贼/贼寇兵力上限，无论级别多高一律封顶。<br>
         募兵只在玩家端「招募处 → 募兵」页签进行，新兵先入本城预备役；编队补兵、自动补兵、卡牌取兵全部只消耗预备役。保存后玩家端刷新或下次打开生效。
@@ -1490,6 +1511,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (r.updated_at) $("#milUpdated").textContent = "云端更新于 " + dt(r.updated_at);
       } else milRows = milDef();
       milPaint();
+      try { popcapLoad(); } catch (e) {}
     });
   }
   function milPaint() {
@@ -1539,6 +1561,142 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (r.updated_at) $("#milUpdated").textContent = "云端更新于 " + dt(r.updated_at);
       } else if (r && r.err === "unauthorized") logout();
       else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
+  /* ---------- V81 城市人口上限（云端 key = popcap）+ 全站重置加点（云端 key = spreset） ---------- */
+  var POP_CITIES = [
+    ["洛阳", 42, "都城"],
+    ["长安", 30, "都城"],
+    ["许昌", 32, "都城"],
+    ["邺", 36, "都城"],
+    ["成都", 34, "都城"],
+    ["建业", 26, "都城"],
+    ["襄阳", 24, "州治"],
+    ["江陵", 22, "州治"],
+    ["宛", 20, "郡城"],
+    ["寿春", 20, "州治"],
+    ["汝南", 19, "郡城"],
+    ["下邳", 18, "州治"],
+    ["吴", 18, "郡城"],
+    ["濮阳", 17, "州治"],
+    ["陈留", 16, "郡城"],
+    ["临淄", 16, "州治"],
+    ["晋阳", 16, "州治"],
+    ["会稽", 16, "郡城"],
+    ["长沙", 15, "郡城"],
+    ["蓟", 14, "州治"],
+    ["汉中", 14, "州治"],
+    ["北海", 14, "郡城"],
+    ["江夏", 14, "郡城"],
+    ["南皮", 13, "郡城"],
+    ["庐江", 13, "郡城"],
+    ["江州", 13, "郡城"],
+    ["平原", 12, "郡城"],
+    ["合肥", 12, "郡城"],
+    ["柴桑", 12, "郡城"],
+    ["上党", 11, "郡城"],
+    ["广陵", 11, "郡城"],
+    ["天水", 10, "郡城"],
+    ["武威", 9, "州治"],
+    ["武陵", 9, "郡城"],
+    ["梓潼", 9, "郡城"],
+    ["交趾", 9, "郡城"],
+    ["新野", 8, "郡城"],
+    ["桂阳", 8, "郡城"],
+    ["零陵", 8, "郡城"],
+    ["永安", 8, "关城"],
+    ["番禺", 8, "州治"],
+    ["襄平", 7, "郡城"],
+    ["北平", 7, "郡城"],
+    ["安定", 7, "郡城"],
+    ["建宁", 6, "郡城"],
+    ["云南", 6, "郡城"],
+    ["上庸", 6, "郡城"],
+    ["敦煌", 5, "郡城"],
+    ["平城", 5, "塞"],
+    ["朔方", 4, "塞"],
+    ["柳城", 4, "塞"],
+    ["伊吾", 3, "塞"]
+  ];
+  function popDefCap(name, pop, lv) {
+    if (name === "洛阳") return 1000000;
+    var f = lv === "都城" ? 2.4 : lv === "州治" ? 2.0 : lv === "郡城" ? 1.6 : 1.3;
+    var cap = Math.round((+pop || 20) * 10000 * f / 5000) * 5000;
+    return Math.max(20000, Math.min(1000000, cap));
+  }
+  var popcapCfg = null;
+  function popcapPaint() {
+    var o = popcapCfg || {};
+    $("#popcapText").value = POP_CITIES.map(function (c) {
+      var v = (o[c[0]] != null && +o[c[0]] > 0) ? Math.round(+o[c[0]]) : popDefCap(c[0], c[1], c[2]);
+      return c[0] + "=" + v;
+    }).join("\n");
+    var tot = 0, mx = 0;
+    POP_CITIES.forEach(function (c) { var v = (o[c[0]] != null && +o[c[0]] > 0) ? Math.round(+o[c[0]]) : popDefCap(c[0], c[1], c[2]); tot += v; mx = Math.max(mx, v); });
+    $("#popcapMsg").textContent = "共 " + POP_CITIES.length + " 城 · 上限合计 " + tot.toLocaleString("en-US") + " · 最高 " + mx.toLocaleString("en-US");
+  }
+  function popcapParse() {
+    var out = {}, bad = [];
+    String($("#popcapText").value || "").split(/\r?\n/).forEach(function (ln) {
+      ln = ln.trim();
+      if (!ln || ln.charAt(0) === "#") return;
+      var i = ln.indexOf("=");
+      if (i < 0) { bad.push(ln); return; }
+      var k = ln.slice(0, i).trim(), v = Math.round(+ln.slice(i + 1).replace(/[^0-9]/g, ""));
+      if (!k || !isFinite(v) || v <= 0) { bad.push(ln); return; }
+      out[k] = v;
+    });
+    return { data: out, bad: bad };
+  }
+  function popcapLoad() {
+    call("sg_cfg_get", { p_key: "popcap" }).then(function (r) {
+      var o = null;
+      if (r && r.ok && r.data) {
+        o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+      }
+      popcapCfg = (o && typeof o === "object") ? o : null;
+      popcapPaint();
+    })["catch"](function () { popcapCfg = null; popcapPaint(); });
+  }
+  $("#popcapDefault").addEventListener("click", function () {
+    popcapCfg = null; popcapPaint(); $("#popcapMsg").textContent += "　（已生成默认值，尚未保存）";
+  });
+  $("#popcapSave").addEventListener("click", function () {
+    var p = popcapParse();
+    if (p.bad.length) return admTip("有 " + p.bad.length + " 行格式不对：" + p.bad.slice(0, 3).join(" / "), true);
+    var keys = Object.keys(p.data);
+    if (!keys.length) return admTip("没有可保存的内容（每行格式：城名=上限）", true);
+    var lv = 0, over = [];
+    keys.forEach(function (k) {
+      POP_CITIES.forEach(function (c) { if (c[0] === k) lv = Math.max(lv, p.data[k]); });
+    });
+    var luo = p.data["洛阳"] || 1000000;
+    keys.forEach(function (k) { if (p.data[k] > luo) over.push(k); });
+    if (over.length && !confirm("这些城的上限高于洛阳（" + over.slice(0, 5).join("、") + "），仍要保存？")) return;
+    var btn = $("#popcapSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "popcap", p_data: p.data }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) { popcapCfg = p.data; popcapPaint(); admTip("人口上限已保存，全站生效（玩家端刷新或下次打开拉取）"); }
+      else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+  $("#spResetBtn").addEventListener("click", function () {
+    if (!confirm("确定重置全站所有玩家的加点分配？已分配点数会退回各自卡牌，属性加点清零。")) return;
+    var btn = $("#spResetBtn");
+    btn.disabled = true;
+    $("#spResetMsg").textContent = "正在提交…";
+    var ts = Date.now();
+    call("sg_cfg_set", { p_token: token(), p_key: "spreset", p_data: { ts: ts } }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        $("#spResetMsg").textContent = "已下发重置（" + dt(r.updated_at || ts) + "），玩家下次打开生效";
+        admTip("全站加点重置已下发");
+      } else if (r && r.err === "unauthorized") logout();
+      else { $("#spResetMsg").textContent = "提交失败，请重试"; admTip("重置失败：" + ((r && (r.err || r.msg)) || "网络异常"), true); }
     });
   });
 
