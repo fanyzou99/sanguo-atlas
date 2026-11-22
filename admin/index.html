@@ -130,6 +130,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <button class="tab" data-tab="price">价表</button>
     <button class="tab" data-tab="shop">商店配置</button>
     <button class="tab" data-tab="econ">经济模型</button>
+    <button class="tab" data-tab="mil">军事模型</button>
     <button class="tab" data-tab="mig">数据迁移</button>
   </div>
 
@@ -278,6 +279,25 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         计算链路：<b>城市人口 ÷ 户均人口 = 户数</b>；<b>户数 × 每户每月上缴 = 本月官府实收粮食</b>；木/铜/铁/钱按「每户每月」产出同比例增长。<b>农田及各类建筑产出是附加收入</b>，在户口上缴之外叠加（粮再乘「农田附加系数」）。<br>
         默认口径：一户农家一年产 30 石、自留 24 石、上缴 6 石 —— 即每户每月上缴 0.5 石。改这里即改全站所有城市的产出，玩家端下次打开或刷新后生效。<br>
         放归田野（城内政务页）每放归 1 名兵员就 +1 人口，人口增长会直接变成新的纳税户，因此「放归」现在是增产手段。
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-mil" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">军事模型 · 募兵限制（全站生效） <span class="muted" id="milUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="milReload">刷新</button>
+        <button class="btn" id="milReset">恢复默认</button>
+        <button class="btn gold" id="milSave">保存并全站生效</button>
+      </div>
+      <div id="milTable"></div>
+      <div style="margin:16px 0 6px;font-weight:600">试算（默认参数）</div>
+      <div id="milPreview"></div>
+      <div class="hint">
+        计算链路：<b>募兵限额 = 城市人口 × popPct%</b>，同时受<b>单城总募兵上限 cityCap</b> 约束；人口总数涵盖士兵数（募兵即编户从军，不增加人口）。<b>farmRice</b>：在城士兵参与农业生产，每名士兵每月加产粮；<b>recRice / recCoin</b>：招募处每募 1 兵的粮/钱消耗；<b>eliteCost</b>：每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵 → 1 名特种兵）；<b>mobCap</b>：城外盗贼/贼寇兵力上限，无论级别多高一律封顶。<br>
+        募兵只在玩家端「招募处 → 募兵」页签进行，新兵先入本城预备役；编队补兵、自动补兵、卡牌取兵全部只消耗预备役。保存后玩家端刷新或下次打开生效。
       </div>
     </div>
   </section>
@@ -1445,6 +1465,83 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
   });
 
+  /* ---------- V80 军事模型（募兵限制）：参数 CRUD，云端 key = military ---------- */
+  var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, eliteCost: 10 };
+  var MIL_COLS = [
+    ["popPct", "募兵比例（人口%，士兵计入人口）", 1, 100, "募兵限额 = 城市人口 × 该百分比；人口总数涵盖士兵数，募兵不增加人口"],
+    ["cityCap", "单城总募兵上限（人）", 1000, 100000000, "该城所有兵力（预备役 + 编队武将带兵 + 特种兵）合计不得超过此值"],
+    ["mobCap", "城外盗贼兵力上限（人）", 100, 100000000, "无论级别多高，单个盗贼/贼寇驻点兵力一律封顶"],
+    ["farmRice", "士兵务农产粮（粮/月·人）", 0, 10, "在城士兵参与农业生产，每名士兵每月额外产粮（计入月收入）"],
+    ["recRice", "募兵粮耗（粮/兵）", 0, 100, "招募处每募 1 名士兵消耗的粮草（享受都尉/重商等折扣加成）"],
+    ["recCoin", "募兵钱耗（钱/兵）", 0, 1000, "招募处每募 1 名士兵消耗的铜钱"],
+    ["eliteCost", "特种兵训练消耗（预备役/名）", 1, 10000, "每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵训练为 1 名特种兵）"]
+  ];
+  var milRows = null;
+  function milDef() { return JSON.parse(JSON.stringify(MIL_DEF_A)); }
+  function milNumA(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
+  function milLoad() {
+    $("#milUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "military" }).then(function (r) {
+      if (r && r.ok && r.data) {
+        var o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        milRows = milDef();
+        if (o && typeof o === "object") MIL_COLS.forEach(function (col) { if (o[col[0]] != null) milRows[col[0]] = Number(o[col[0]]); });
+        if (r.updated_at) $("#milUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else milRows = milDef();
+      milPaint();
+    });
+  }
+  function milPaint() {
+    if (!milRows) milRows = milDef();
+    $("#milTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' +
+      MIL_COLS.map(function (col) {
+        var k = col[0];
+        return '<tr><td><b>' + esc(col[1]) + '</b><div class="muted" style="font-size:11px">' + k + "</div></td>" +
+          '<td><input class="btn mil-in" data-k="' + k + '" type="number" step="' + (k === "farmRice" ? "0.005" : "1") + '" min="' + col[2] + '" max="' + col[3] + '" value="' + milRows[k] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+          "<td class=\"muted\" style=\"font-size:12px\">" + esc(col[4]) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    $$("#milTable .mil-in").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var k = this.getAttribute("data-k"), col = MIL_COLS.filter(function (x) { return x[0] === k; })[0];
+        milRows[k] = milNumA(this.value, MIL_DEF_A[k], col[2], col[3]);
+        milPreview();
+      });
+    });
+    milPreview();
+  }
+  function milPreview() {
+    if (!milRows) return;
+    function f(n) { return (+n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }); }
+    var cities = [["洛阳（约 59 万人口·建筑加成后）", 590000], ["州治（约 28 万人口）", 280000], ["小城（约 11 万人口）", 110000]];
+    var pct = milNumA(milRows.popPct, 10, 1, 100), cap = milNumA(milRows.cityCap, 1000000, 1000, 100000000);
+    var rows = cities.map(function (c) {
+      var lim = Math.min(Math.floor(c[1] * pct / 100), cap);
+      return "<tr><td>" + esc(c[0]) + "</td><td>" + f(lim) + "</td><td>" + f(lim * (milRows.recRice || 0)) + " / " + f(lim * (milRows.recCoin || 0)) + "</td><td>" + f(lim * (milRows.farmRice || 0)) + "</td></tr>";
+    }).join("");
+    $("#milPreview").innerHTML = '<table style="width:100%"><thead><tr><th>城市规模</th><th>募兵限额（人）</th><th>募满消耗 粮 / 钱</th><th>满兵月加产粮</th></tr></thead><tbody>' + rows + "</tbody></table>" +
+      '<div class="muted" style="font-size:12px;margin-top:6px">盗贼兵力上限 <b>' + f(milRows.mobCap || 0) + "</b> · 特种兵训练消耗 <b>" + f(milRows.eliteCost || 0) + "</b> 预备役/名。</div>";
+  }
+  $("#milReload").addEventListener("click", milLoad);
+  $("#milReset").addEventListener("click", function () {
+    milRows = milDef(); $("#milUpdated").textContent = "已恢复默认值（尚未保存）"; milPaint();
+  });
+  $("#milSave").addEventListener("click", function () {
+    if (!milRows) return;
+    var out = {};
+    MIL_COLS.forEach(function (col) { out[col[0]] = milNumA(milRows[col[0]], MIL_DEF_A[col[0]], col[2], col[3]); });
+    var btn = $("#milSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "military", p_data: out }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        admTip("军事模型已保存，全站生效（玩家端刷新或下次打开拉取）");
+        if (r.updated_at) $("#milUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
   /* ---------- 卡牌配置表（V20）：七阶品级数值云端管理，保存后全站生效 ---------- */
   var CFG_DEF = [
     { n: "紫", grade: "S", star: 7, c: "#9257e0", min: 88, pts: 1500, stat: 10, rate: 60, troop: 100000, posb: 60, pts10: 20, kp: 3.375, skd: 50 },
@@ -2054,6 +2151,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#tab-price").hidden = state.tab !== "price";
       $("#tab-shop").hidden = state.tab !== "shop";
       $("#tab-econ").hidden = state.tab !== "econ";
+      $("#tab-mil").hidden = state.tab !== "mil";
       $("#tab-mig").hidden = state.tab !== "mig";
       if (state.tab === "acc") loadAccounts(true);
       if (state.tab === "evt") loadEvents(false);
@@ -2061,6 +2159,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       if (state.tab === "price") priceLoad();
       if (state.tab === "shop") shopLoad();
       if (state.tab === "econ") ecoLoad();
+      if (state.tab === "mil") milLoad();
     });
   });
 
@@ -2161,7 +2260,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           migLog("② 账号 " + acc.rows.length + " 条（total " + acc.total + "）");
           return migFetchAll("sg_admin_events", { p_token: t, p_kind: "" }, 50000).then(function (evt) {
             migLog("③ 事件 " + evt.rows.length + " 条（total " + evt.total + "）");
-            var keys = ["tiers", "gacha", "troopgrow", "econ", "shop", "sprites"];
+            var keys = ["tiers", "gacha", "troopgrow", "econ", "military", "shop", "sprites"];
             return Promise.all(keys.map(function (k) {
               return migCall("sg_cfg_get", { p_key: k }).then(function (r) { return [k, r && r.ok ? r.data : null]; });
             })).then(function (prs) {
