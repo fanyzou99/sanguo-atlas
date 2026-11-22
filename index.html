@@ -10996,6 +10996,11 @@ var BOTS = [
       });
       u.bat.spResetTs = SP_RESET_TS;
     }
+    /* V83：全将带兵数初始化（一次性；日后升级/晋爵由读取时动态计算，cap 仅作缓存） */
+    if (u.bat.capVer !== 83) {
+      try { u.bat.capInit = initCardCaps(u); } catch (e83) {}
+      u.bat.capVer = 83;
+    }
     return u.bat;
   }
   function addShards(u, gid, n) { ensureBat(u); u.shards[gid] = (u.shards[gid] || 0) + n; }
@@ -11667,6 +11672,7 @@ var BOTS = [
     u.res = c.res;
     if (!c.teams || c.teams.length !== 5) c.teams = defaultTeams(c.teams);
     if (!c.roster) c.roster = [];
+    if (!c.armies) c.armies = [];   /* V83 点将台：部队编成 */
     /* V37 伤兵系统：正常兵储备池 + 伤兵疗养批次（rec = 痊愈的日历月） */
     if (c.pool == null) c.pool = 0;
     if (!c.wounded) c.wounded = [];
@@ -11699,7 +11705,7 @@ var BOTS = [
   function newCityObj(name) {
     return { name: name, bld: { farm: 1, lumber: 1, market: 1, smith: 1, camp: 1, wall: 1 }, pol: "farm", taxGm: -1,
       plots: defaultPlots(), wallMat: 0, incGm: -1, mobsGm: -1, mobs: [], pool: 0, wounded: [],
-      res: { rice: 0, wood: 0, copper: 0, iron: 0, coin: 0 }, teams: defaultTeams(), roster: [] };
+      res: { rice: 0, wood: 0, copper: 0, iron: 0, coin: 0 }, teams: defaultTeams(), roster: [], armies: [] };
   }
   function unlockCity(u, name) {
     ensureCity(u);
@@ -12154,7 +12160,10 @@ var BOTS = [
      ④ 特种兵训练同样由预备役转换（每次消耗 eliteCost 名预备役转 1 名特种兵）。
      ⑤ 城外盗贼兵力上限 mobCap，无论级别多高。 */
   /* V82：募兵消耗扩展为「粮 / 钱 / 铜 / 铁」四资源（每兵单价，可后台调） */
-  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10 };
+  /* V83：新增点将台与带兵能力参数
+     armyCap 单支部队带兵上限（默认 10 万）/ armyMax 部队数 / armySlot 单部队武将数 /
+     lvBase  Lv.1 时「带兵能力」兑现颜色天赋的百分比（升到 Lv.70 兑现 100%） */
+  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30 };
   function milNum(v, d, lo, hi) { var x = Number(v); if (v == null || v === "" || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function milNorm(o) {
     o = o || {}; var d = MIL_DEF;
@@ -12167,7 +12176,11 @@ var BOTS = [
       recCoin: milNum(o.recCoin, d.recCoin, 0, 1000),
       recCopper: milNum(o.recCopper, d.recCopper, 0, 100),
       recIron: milNum(o.recIron, d.recIron, 0, 100),
-      eliteCost: Math.round(milNum(o.eliteCost, d.eliteCost, 1, 10000))
+      eliteCost: Math.round(milNum(o.eliteCost, d.eliteCost, 1, 10000)),
+      armyCap: Math.round(milNum(o.armyCap, d.armyCap, 10000, 1000000)),
+      armyMax: Math.round(milNum(o.armyMax, d.armyMax, 1, 10)),
+      armySlot: Math.round(milNum(o.armySlot, d.armySlot, 1, 10)),
+      lvBase: milNum(o.lvBase, d.lvBase, 0, 100)
     };
   }
   var MIL = milNorm(null);
@@ -12378,10 +12391,47 @@ var BOTS = [
   /* V49：带兵上限（卡牌本身，不含兵营加成）——统一封装，便于升级前后对比 */
   function cardTroopCap(c) { return troopOfCard(c, gById(c.gid)); }
   /* V58：有效带兵上限 = 基础上限 × 兵营加成——与 unitOf 显示口径一致，补兵/进度条统一用 */
-  function troopCapEff(c, g) {
+  function troopCapEff(c, g, cityObj) {
     var cap = troopOfCard(c, g);
-    try { var cu = me(); if (cu && cu.bat && cu.bat.city && cu.bat.city.bld) cap = Math.round(cap * (1 + 0.02 * (cu.bat.city.bld.camp || 0))); } catch (e) {}
+    try {
+      var cu = me(), ct = cityObj || (cu && cu.bat && cu.bat.city);
+      if (ct && ct.bld) cap = Math.round(cap * (1 + 0.02 * (ct.bld.camp || 0)));
+    } catch (e) {}
     return cap;
+  }
+  /* ================= V83：全将带兵数初始化 =================
+     为每张卡写入 cap（实际带兵上限）/ capA（带兵能力）/ capR（爵位上限）；
+     旧档兵力若高于新上限，差额退回该卡所在城预备役（不吞兵）。 */
+  function cardCityOf(u, cid) {
+    if (!u || !u.bat) return null;
+    var names = (u.bat.owned || []).slice();
+    if (u.bat.cur && names.indexOf(u.bat.cur) < 0) names.push(u.bat.cur);
+    for (var i = 0; i < names.length; i++) {
+      var oc = names[i] === u.bat.cur ? u.bat.city : u.bat.cities[names[i]];
+      if (oc && (oc.roster || []).indexOf(cid) >= 0) return oc;
+    }
+    return null;
+  }
+  function initCardCaps(u) {
+    if (!u || !u.cards) return { n: 0, cut: 0 };
+    var n = 0, cut = 0;
+    u.cards.forEach(function (c) {
+      var cap = troopCapOf(c);
+      c.cap = cap; c.capA = troopAbilityOf(c); c.capR = rankTroop(c); c.capAt = 83;
+      if (c.sold == null) c.sold = cap;
+      else if (c.sold > cap) {
+        var over = c.sold - cap;
+        c.sold = cap;
+        try {
+          var cty = cardCityOf(u, c.id);
+          if (!cty) { ensureCity(u); cty = u.bat.city; }
+          cty.pool = (cty.pool || 0) + over;
+        } catch (e) {}
+        cut += over;
+      }
+      n++;
+    });
+    return { n: n, cut: cut };
   }
   /* V41 点数台账：所有增量发放统一走 spGrant（累计获得 spG），消耗走 spU（累计分配），
      待分配点数 sp = spG - spU 派生并实时回写；两个计数器单调递增，随云端存档持久化 */
@@ -12550,6 +12600,70 @@ var BOTS = [
     });
   })();
 
+  /* ================= V83 三语词条（带兵能力 / 点将台 / 部队编成） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        phT: "点将台", phSubT: "部队编成", phCntT: "部队 {a}/{b}",
+        phAutoT: "一键编成", phNewT: "组建部队", phEmptyT: "点将台尚无部队：点「组建部队」手动编成，或「一键编成」按带兵能力自动分配驻城武将。",
+        phAddT: "编入", phFillT: "集结补兵", phClearT: "解编", phNameT: "部队改名", phNameOkT: "已改名",
+        phRuleT: "每支部队最多 {s} 名武将、总带兵上限 {n}；同一武将不可同时进入点将台与武将编队。",
+        phPickHintT: "仅列出未编入其它部队 / 武将编队的驻城武将；本部队上限 {n}。",
+        phNoneT: "没有可编入的驻城武将（先去「驻城」派驻，或从武将编队中撤下）",
+        phAddOkT: "已编入 {n}", phSlotFullT: "单支部队最多 {n} 名武将", phCapFullT: "本部队已达 {n} 带兵上限，无法再编入",
+        phUsedT: "该武将已编入其它部队", phInArmyT: "该武将已在点将台中编队，请先解编", phInTeamT: "该武将已在武将编队中，请先撤下",
+        phFillOkT: "集结 {n} 名预备役", phFillNoneT: "预备役不足，或全员已满编",
+        phAutoOkT: "已编成 {n} 支部队", phDelOkT: "已移出部队", phClearOkT: "部队已解编",
+        phAbilityT: "带兵能力", phRankCapT: "爵位上限", phArmyCapT: "部队上限",
+        phCapLineT: "带兵 {c} = min（能力 {a} · 爵位 {b}）",
+        phCapShortT: "带兵 {a} · 能力 {b}",
+        phOverT: "已达 10 万上限", phMemT: "武将 {a}/{b}", phPowerT: "战力 {n}",
+        phClearAskT: "确定解编「{n}」？武将回到驻城待命，兵力保留。", phNoRoomT: "部队数已达上限 {n}",
+        phInitT: "已按颜色·等级·爵位重算 {n} 名武将的带兵数"
+      },
+      en: {
+        phT: "Command Platform", phSubT: "Unit formation", phCntT: "Units {a}/{b}",
+        phAutoT: "Auto-form", phNewT: "New unit", phEmptyT: "No units yet. Tap “New unit” to form one, or “Auto-form” to assign garrisoned generals by troop ability.",
+        phAddT: "Assign", phFillT: "Muster", phClearT: "Disband", phNameT: "Rename unit", phNameOkT: "Renamed",
+        phRuleT: "Up to {s} generals per unit and {n} troops in total; a general cannot be in both a unit and a battle formation.",
+        phPickHintT: "Only garrisoned generals not assigned elsewhere are listed. Unit ceiling {n}.",
+        phNoneT: "No garrisoned general available (station some first, or free them from battle formations)",
+        phAddOkT: "Assigned {n}", phSlotFullT: "A unit holds at most {n} generals", phCapFullT: "This unit already reaches its {n} troop ceiling",
+        phUsedT: "Already in another unit", phInArmyT: "This general is in a unit — disband it first", phInTeamT: "This general is in a battle formation — remove it first",
+        phFillOkT: "Mustered {n} reserves", phFillNoneT: "Not enough reserves, or everyone is full",
+        phAutoOkT: "Formed {n} unit(s)", phDelOkT: "Removed from unit", phClearOkT: "Unit disbanded",
+        phAbilityT: "Ability", phRankCapT: "Rank cap", phArmyCapT: "Unit cap",
+        phCapLineT: "Troops {c} = min(ability {a}, rank {b})",
+        phCapShortT: "Troops {a} · ability {b}",
+        phOverT: "100k ceiling reached", phMemT: "Generals {a}/{b}", phPowerT: "Power {n}",
+        phClearAskT: "Disband “{n}”? Generals return to garrison and keep their troops.", phNoRoomT: "Unit limit {n} reached",
+        phInitT: "Recalculated troop capacity for {n} generals by color, level and rank"
+      },
+      ja: {
+        phT: "点将台", phSubT: "部隊編成", phCntT: "部隊 {a}/{b}",
+        phAutoT: "一括編成", phNewT: "部隊を編成", phEmptyT: "部隊がありません。「部隊を編成」で手動編成、または「一括編成」で帯兵能力順に自動配分します。",
+        phAddT: "編入", phFillT: "集結補兵", phClearT: "解散", phNameT: "部隊名変更", phNameOkT: "変更しました",
+        phRuleT: "1 部隊あたり最大 {s} 名、総帯兵上限 {n}。同じ武将を点将台と武将編成の両方には置けません。",
+        phPickHintT: "他の部隊・武将編成に未編入の駐城武将のみ表示。上限 {n}。",
+        phNoneT: "編入できる駐城武将がいません（先に駐城させるか、武将編成から外してください）",
+        phAddOkT: "{n} を編入", phSlotFullT: "1 部隊は最大 {n} 名まで", phCapFullT: "この部隊は帯兵上限 {n} に達しています",
+        phUsedT: "他の部隊に編入済みです", phInArmyT: "点将台に編成済みです。先に解散してください", phInTeamT: "武将編成にいます。先に外してください",
+        phFillOkT: "予備兵 {n} を集結", phFillNoneT: "予備兵不足、または全員満編",
+        phAutoOkT: "{n} 部隊を編成しました", phDelOkT: "部隊から外しました", phClearOkT: "部隊を解散しました",
+        phAbilityT: "帯兵能力", phRankCapT: "爵位上限", phArmyCapT: "部隊上限",
+        phCapLineT: "帯兵 {c} = min（能力 {a}・爵位 {b}）",
+        phCapShortT: "帯兵 {a}・能力 {b}",
+        phOverT: "10 万上限に到達", phMemT: "武将 {a}/{b}", phPowerT: "戦力 {n}",
+        phClearAskT: "「{n}」を解散しますか？武将は駐城に戻り、兵力は保持されます。", phNoRoomT: "部隊数が上限 {n} に達しました",
+        phInitT: "色・レベル・爵位で {n} 名の帯兵数を再計算しました"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
+
   /* ================= V81 爵位体系（参考《三国志9》官爵：带兵上限只由爵位决定，最高 6 万） =================
      爵位 0~16 共 17 级，逐级递增；新卡按武将史实地位自动封爵（rankAutoCalc），
      玩家在大殿「爵位」页仍可用军功积分继续晋爵 / 降爵。 */
@@ -12620,7 +12734,30 @@ var BOTS = [
   }
   function rankCost(n) { return 10 * n; }                 /* 晋升到第 n 级所需积分 */
   function rankNeedLv(n) { return n * 3; }                /* 晋升到第 n 级所需武将等级 */
-  function troopCapOf(c) { return rankTroop(c); }   /* V81：带兵上限只由爵位决定 */
+  /* ================= V83：带兵数重估（颜色×等级＝带兵能力，爵位＝实际可掌兵额） =================
+     能力：卡牌颜色（TIERS[].troop，后台「卡牌配置」可调）是武将的天赋基准，等级把天赋兑现：
+           Lv.1 兑现 lvBase%（默认 30%），Lv.70 兑现 100%；星级 / 装备 / 坐骑在此之上再加成。
+     爵位：RANKS[].troop 是朝廷允许他掌多少兵；能力再高也不能越过爵位。
+     实际带兵上限 = min(带兵能力, 爵位上限)。 */
+  var CAP_VER = 83;
+  function tierTroopOf(ti) {
+    var t = TIERS[Math.max(0, Math.min(TIERS.length - 1, ti | 0))];
+    return Math.max(1000, +t.troop || 20000);
+  }
+  function lvTroopFactor(lv) {
+    lv = Math.max(1, Math.min(70, Math.round(lv || 1)));
+    var b = Math.max(0, Math.min(100, +MIL.lvBase || 30)) / 100;
+    return b + (1 - b) * (lv - 1) / 69;
+  }
+  function troopAbilityOf(c) {
+    if (!c) return 0;
+    var base = tierTroopOf(cardTier(c));
+    var t = Math.round(base * lvTroopFactor(cardLv(c)) / 100) * 100;
+    var mt = mountOf(c), eq = eqOf(c);
+    t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
+    return Math.max(1000, t);
+  }
+  function troopCapOf(c) { return c ? Math.min(troopAbilityOf(c), rankTroop(c)) : 0; }
   /* 关卡守军总兵力（与 stageEnemies 同口径，仅用于展示） */
   function stageGuardN(n) {
     var lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
@@ -12634,18 +12771,26 @@ var BOTS = [
     return Math.max(200, Math.min(MIL.mobCap || 50000, Math.round(Math.min(troopRawAt(lv), rankTroop(c)) * 0.3)));
   }
   function troopOfCard(c, g) {
-    var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
-    /* V49：按等级分段累加（不再线性 1000×lv），再乘星级与装备加成，最后受品级最高上限约束 */
+    if (!c) return 0;
+    /* V83：能力（颜色×等级×星级/装备/坐骑）与爵位上限取小 */
+    return Math.min(troopAbilityOf(c), rankTroop(c));
+  }
+  /* V83：敌方旧口径——关卡守军 / 贼寇 / 攻城守军仍用「等级累加 + 爵位封顶」，不改既有战平衡 */
+  function troopOfCardLegacy(c) {
+    if (!c) return 0;
+    var mt = mountOf(c), eq = eqOf(c);
     var t = troopRawAt(cardLv(c));
     t = Math.round(t * (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0)));
-    return Math.min(t, rankTroop(c));   /* V81：上限只由爵位决定，品级不再压低带兵 */
+    return Math.min(t, rankTroop(c));
   }
   /* V49：该卡在当前等级下是否已顶到品级上限（升级不再涨兵）——用于升级提示 */
   function troopCapInfo(c, g) {
-    var ti = cardTier(c), tr = TIERS[ti], mt = mountOf(c), eq = eqOf(c);
-    var mul = (1 + 0.10 * (c.stars || 0)) * (1 + eq.hp) * (1 + (mt ? mt.hp : 0));
-    var raw = Math.round(troopRawAt(cardLv(c)) * mul), cap = rankTroop(c);
-    return { raw: raw, cap: cap, capped: raw >= cap, nextAdd: Math.max(0, Math.min(cap, Math.round(troopRawAt(cardLv(c) + 1) * mul)) - Math.min(cap, raw)) };
+    var ability = troopAbilityOf(c), cap = rankTroop(c);
+    var c2 = { gid: c.gid, lv: Math.min(70, cardLv(c) + 1), t: c.t, rk: c.rk, rkAuto: c.rkAuto,
+      stars: c.stars, eq: c.eq, mt: c.mt };
+    var ab2 = troopAbilityOf(c2);
+    return { raw: ability, cap: cap, ability: ability, rankCap: cap, eff: Math.min(ability, cap),
+      capped: ability >= cap, nextAdd: Math.max(0, Math.min(cap, ab2) - Math.min(cap, ability)) };
   }
   /* V33 装备耐久：高级装备（品阶 S/A/B/C = ti 0~3）永久有效；低级装备（D/E/F = ti 4~6）作战 10 次自动损毁 */
   var EQ_LO_USES = 10;
@@ -12814,7 +12959,8 @@ var BOTS = [
     def = Math.round(def * (1 + eqsk.def / 100) * cDef * fD);
     var atk0 = Math.round(atk / mf);            /* 不含士气系数：simulate 按实时士气结算 */
     var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd + (form ? form.spd : 0);
-    var cap = troopOfCard(c, g);
+    /* V83：己方（玩家卡）走「颜色×等级 vs 爵位」新口径；敌方保持旧口径 */
+    var cap = side === "A" ? troopOfCard(c, g) : troopOfCardLegacy(c);
     if (side === "A") { try { var cu = me(); if (cu && cu.bat && cu.bat.city && cu.bat.city.bld) cap = Math.round(cap * (1 + 0.02 * (cu.bat.city.bld.camp || 0))); } catch (e) {} }
     /* V67：兵力口径落地——旧档 sold 为空（旧逻辑=永久满员）时，按当前有效上限写实一次，
        之后升级/升爵/升兵营抬高的上限不再自动变成兵力，进度条如实显示招募缺口 */
@@ -13238,6 +13384,7 @@ var BOTS = [
       if (!oc) return;
       oc.roster = (oc.roster || []).filter(function (x) { return x !== cid; });
       (oc.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) t.slots[p.k] = null; }); });
+      (oc.armies || []).forEach(function (a) { a.mem = (a.mem || []).filter(function (x) { return x !== cid; }); });
     });
     var c = ensureCity(u);   /* 不在此清 u.bat.off：官职是全卡池任命，与驻城无关 */
     c.roster = (c.roster || []).filter(function (x) { return x !== cid; });
@@ -13250,6 +13397,7 @@ var BOTS = [
       if (!oc) return;
       oc.roster = (oc.roster || []).filter(function (x) { return x !== cid; });
       (oc.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) t.slots[p.k] = null; }); });
+      (oc.armies || []).forEach(function (a) { a.mem = (a.mem || []).filter(function (x) { return x !== cid; }); });
     });
     Object.keys(u.bat.off || {}).forEach(function (k) { if (u.bat.off[k] === cid) delete u.bat.off[k]; }); /* V28：off 未初始化时兜底 */
   }
@@ -13259,6 +13407,7 @@ var BOTS = [
     var card = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
     if (!card) return { ok: false, err: "card" };
     if ((c.roster || []).indexOf(cid) < 0) return { ok: false, err: "roster" };
+    if (cardInArmy(u, cid)) return { ok: false, err: "army" };   /* V83：点将台 / 武将编队互斥 */
     if (pos === "cav" && !cardCav(card)) return { ok: false, err: "cav" };
     if (pos === "front" && !cardInf(card)) return { ok: false, err: "front" };
     var used = false;
@@ -13967,7 +14116,7 @@ var BOTS = [
     var why = nx >= RANKS.length ? gt("rankMaxT") : cardLv(c) < rankNeedLv(nx) ? gt("rankLvT", { n: rankNeedLv(nx) }) : (u.points || 0) < rankCost(nx) ? T("eqLack") : "";
     return '<div class="sg-rankline sg-palrow">' +
       '<span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
-      "<span><b>" + esc(g.name) + "</b> <small>Lv." + cardLv(c) + " · " + gt("lbTroop") + " " + fmt(troopOfCard(c, g)) + "</small><br>" +
+      "<span><b>" + esc(g.name) + "</b> <small>Lv." + cardLv(c) + " · " + gt("phCapShortT", { a: fmt(troopOfCard(c, g)), b: fmt(troopAbilityOf(c)) }) + "</small><br>" +
       '<small style="color:#e8c988">🏅 ' + rankName(rk) + " · " + gt("rankCapT") + " " + fmt(RANKS[rk].troop) + "</small>" +
       (why ? ' <small style="color:var(--ink-3)">' + esc(why) + "</small>" : "") + "</span>" +
       '<span class="sp"></span>' +
@@ -16109,6 +16258,218 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-idle-av svg,.sg-idle-av img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}" +
       "@media(max-width:640px){.sg-slots{grid-template-columns:repeat(3,1fr)}}</style>";
   }
+  /* ================= V83：点将台（驻城武将编成部队，单部队 10 万上限） =================
+     数据：city.armies = [{ nm, mem:[cardId...], f }]
+     规则：① 只能编入本城驻城武将；② 单部队最多 armySlot 名（默认 5）；
+           ③ 部队带兵上限 = min(armyCap, Σ成员带兵上限)，默认 10 万；
+           ④ 同一武将不可同时在点将台与「武将编队」出战。 */
+  function armyCapMax() { return Math.max(10000, Math.round(+MIL.armyCap || 100000)); }
+  function armySlotMax() { return Math.max(1, Math.min(10, Math.round(+MIL.armySlot || 5))); }
+  function armyNumMax() { return Math.max(1, Math.min(10, Math.round(+MIL.armyMax || 5))); }
+  function armyNameOf(a, ai) {
+    if (a && a.nm) return a.nm;
+    var l = lang();
+    return l === "en" ? "Unit " + (ai + 1) : l === "ja" ? "第" + (ai + 1) + "部隊" : "第" + (ai + 1) + "部队";
+  }
+  function armyCards(u, ai) {
+    var c = ensureCity(u), a = (c.armies || [])[ai];
+    if (!a) return [];
+    var has = {};
+    (u.cards || []).forEach(function (x) { has[x.id] = x; });
+    var out = [];
+    (a.mem || []).forEach(function (id) { if (has[id]) out.push(has[id]); });
+    return out;
+  }
+  function cardInTeam(u, cid) {
+    var c = ensureCity(u), hit = false;
+    (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) hit = true; }); });
+    return hit;
+  }
+  function cardInArmy(u, cid, skipAi) {
+    var c = ensureCity(u), hit = false;
+    (c.armies || []).forEach(function (a, ai) {
+      if (skipAi != null && ai === skipAi) return;
+      if ((a.mem || []).indexOf(cid) >= 0) hit = true;
+    });
+    return hit;
+  }
+  /* 部队口径：cap = min(10万, Σ成员上限)；troop 按成员顺序吃满 10 万为止 */
+  function armyStat(u, ai) {
+    var c = ensureCity(u), list = armyCards(u, ai), max = armyCapMax();
+    var capSum = 0, troop = 0, power = 0, left = max, fullN = 0;
+    list.forEach(function (cd) {
+      var g = gById(cd.gid) || {};
+      var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
+      capSum += cap;
+      var take = Math.min(cur, Math.max(0, left));
+      left -= take; troop += take;
+      if (cur >= cap) fullN++;
+      var kp = (TIERS[cardTier(cd)] || {}).kp || 1;
+      power += Math.round(take * (1 + (g.st || 0) / 100) * kp);
+    });
+    var cap = Math.min(max, capSum);
+    return { n: list.length, cap: cap, capSum: capSum, troop: troop, power: power,
+      pct: cap ? Math.min(100, Math.round(troop / cap * 100)) : 0,
+      over: capSum >= max, full: fullN, max: max, slot: armySlotMax() };
+  }
+  /* 一键编成：把「驻城且未出战」的武将按带兵能力从高到低填进部队 */
+  function armyInitCity(u, c) {
+    if (!c) return 0;
+    if (c.armies && c.armies.length) return 0;
+    c.armies = [];
+    var used = {};
+    (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) used[t.slots[p.k]] = 1; }); });
+    var pool = cityRoster(u).filter(function (cd) { return !used[cd.id]; })
+      .sort(function (a, b) { return troopCapEff(b, gById(b.gid), c) - troopCapEff(a, gById(a.gid), c); });
+    var max = armyCapMax(), slot = armySlotMax(), made = 0;
+    for (var ai = 0; ai < armyNumMax() && pool.length; ai++) {
+      var mem = [], capSum = 0, scan = 0, total = pool.length;
+      while (pool.length && mem.length < slot && capSum < max && scan < total) {
+        scan++;
+        var cd = pool.shift(), cp = troopCapEff(cd, gById(cd.gid), c);
+        if (capSum + cp > max) { pool.push(cd); continue; }
+        mem.push(cd.id); capSum += cp;
+      }
+      if (!mem.length) break;
+      c.armies.push({ nm: "", mem: mem, f: "yulin" });
+      made++;
+    }
+    c.armiesAt = 83;
+    return made;
+  }
+  function armyAutoAll(u) {
+    var c = ensureCity(u);
+    c.armies = [];
+    c.armiesAt = 83;
+    return armyInitCity(u, c);
+  }
+  function armyAdd(u, ai, cid) {
+    var c = ensureCity(u), a = (c.armies || [])[ai];
+    if (!a) return { ok: false, err: "army" };
+    if ((a.mem || []).indexOf(cid) >= 0) return { ok: false, err: "in" };
+    if ((a.mem || []).length >= armySlotMax()) return { ok: false, err: "slot" };
+    var card = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    if (!card) return { ok: false, err: "card" };
+    if ((c.roster || []).indexOf(cid) < 0) return { ok: false, err: "roster" };
+    if (cardInTeam(u, cid)) return { ok: false, err: "team" };
+    if (cardInArmy(u, cid)) return { ok: false, err: "used" };
+    var st = armyStat(u, ai);
+    if (st.cap >= armyCapMax()) return { ok: false, err: "cap" };
+    a.mem.push(cid);
+    return { ok: true, cap: troopCapEff(card, gById(card.gid), c) };
+  }
+  /* 集结补兵：只用本城预备役，按成员顺序补到各自上限或部队 10 万上限 */
+  function armyFill(u, ai) {
+    var c = ensureCity(u), st = armyStat(u, ai);
+    var left = Math.max(0, armyCapMax() - st.troop);
+    if (!left || !st.n) return { ok: false, err: "cap" };
+    var got = 0;
+    armyCards(u, ai).forEach(function (cd) {
+      if (left <= 0) return;
+      var g = gById(cd.gid); if (!g) return;
+      var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
+      var need = Math.min(cap - cur, left);
+      if (need <= 0) return;
+      var from = Math.min(need, c.pool || 0);
+      if (from <= 0) return;
+      c.pool -= from; cd.sold = cur + from;
+      got += from; left -= from;
+    });
+    if (!got) return { ok: false, err: "pool" };
+    return { ok: true, n: got };
+  }
+  function armyPickOpen(ai) {
+    var u = me(); if (!u) return;
+    var c = ensureCity(u), a = (c.armies || [])[ai];
+    if (!a) return;
+    if ((a.mem || []).length >= armySlotMax()) return toast(gt("phSlotFullT", { n: armySlotMax() }), "err");
+    var cand = cityRoster(u).filter(function (cd) {
+      return (a.mem || []).indexOf(cd.id) < 0 && !cardInArmy(u, cd.id, ai) && !cardInTeam(u, cd.id);
+    }).sort(function (x, y) { return troopCapEff(y, gById(y.gid), c) - troopCapEff(x, gById(x.gid), c); });
+    var rows = cand.map(function (cd) {
+      var g = gById(cd.gid) || {}, ti = cardTier(cd), cap = troopCapEff(cd, g, c);
+      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
+        "<span><b>" + esc(g.name || "?") + "</b> <small>Lv." + cardLv(cd) + " · " + gt("phAbilityT") + " " + fmt(troopAbilityOf(cd)) +
+        " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) + "</small></span><span class=\"sp\"></span>" +
+        '<small style="color:#e8c988">' + gt("lbTroop") + " " + fmt(cap) + "</small>" +
+        '<button class="sgbtn sm primary" data-bat="army-add-go" data-t="' + ai + '" data-id="' + cd.id + '">' + gt("phAddT") + "</button></div>";
+    }).join("");
+    var st = armyStat(u, ai);
+    modal("<h3>🏯 " + gt("phAddT") + " · " + esc(armyNameOf(a, ai)) + "</h3>" +
+      '<div class="sg-note">' + gt("phPickHintT", { n: troopTxt(armyCapMax()) }) + "　·　" +
+      gt("phArmyCapT") + " " + troopTxt(st.cap) + " / " + troopTxt(armyCapMax()) + "</div>" +
+      (rows || '<div class="sg-note">' + gt("phNoneT") + "</div>") +
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
+  }
+  function pointHallHTML(u) {
+    var c = ensureCity(u);
+    if (!c.armies) c.armies = [];
+    /* 首次进入：把现有驻城（未出战）武将自动编成部队，之后以玩家编成为准 */
+    if (c.armiesAt !== 83) {
+      try { armyInitCity(u, c); } catch (e) {}
+      c.armiesAt = 83;
+      try { save(); } catch (e) {}
+    }
+    var list = c.armies || [], maxC = armyCapMax(), slotN = armySlotMax();
+    var units = list.map(function (a, ai) {
+      var st = armyStat(u, ai), members = armyCards(u, ai);
+      var memHTML = members.map(function (cd) {
+        var g = gById(cd.gid) || {}, ti = cardTier(cd);
+        var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
+        var tip = (g.name || "?") + " Lv." + cardLv(cd) + " · " + gt("phAbilityT") + " " + fmt(troopAbilityOf(cd)) + " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd));
+        return '<div class="sg-armymem" title="' + esc(tip) + '">' +
+          '<button class="sg-armymem-av" data-sgact="grow-open" data-id="' + cd.id + '" style="border-color:' + TIERS[ti].c + '">' + styledArtSVG(g, null, true) + "</button>" +
+          "<b>" + esc(g.name || "?") + "</b>" +
+          '<span style="color:' + TIERS[ti].c + '">' + esc(TIERS[ti].grade) + " · Lv." + cardLv(cd) + "</span>" +
+          "<i>" + troopTxt(cur) + " / " + troopTxt(cap) + "</i>" +
+          '<button class="sg-armymem-x" data-bat="army-del" data-t="' + ai + '" data-id="' + cd.id + '" title="' + esc(gt("phDelOkT")) + '">×</button></div>';
+      }).join("");
+      var empt = "";
+      for (var k = members.length; k < slotN; k++) empt += '<button class="sg-armymem add" data-bat="army-add" data-t="' + ai + '"><span style="font-size:17px;line-height:1">＋</span><b>' + gt("phAddT") + "</b></button>";
+      var fullBar = st.cap > 0 && st.troop >= st.cap;
+      return '<div class="sg-army">' +
+        '<div class="sg-army-hd"><b>⚔ ' + esc(armyNameOf(a, ai)) + "</b>" +
+        "<small>" + gt("phMemT", { a: members.length, b: slotN }) + "</small>" +
+        '<small class="pw" title="' + esc(gt("phPowerT", { n: fmt(st.power) })) + '">⚡' + fmt(st.power) + "</small>" +
+        '<button class="sgbtn sm ghost" data-bat="army-name" data-t="' + ai + '" title="' + esc(gt("phNameT")) + '">✏</button>' +
+        '<button class="sgbtn sm ghost" data-bat="army-clear" data-t="' + ai + '" title="' + esc(gt("phClearT")) + '">✕</button></div>' +
+        '<div class="sg-army-bar' + (fullBar ? " full" : "") + '"><i style="width:' + st.pct + '%"></i><em>' +
+        troopTxt(st.troop) + " / " + troopTxt(st.cap) + (st.over ? " · " + gt("phOverT") : "") + "</em></div>" +
+        '<div class="sg-army-mem">' + memHTML + empt + "</div>" +
+        '<div class="sg-army-ft"><span>' + gt("phArmyCapT") + ' <b style="color:#e8c988">' + troopTxt(maxC) + "</b></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm' + (fullBar ? " ghost" : "") + '" data-bat="army-fill" data-t="' + ai + '"' + (fullBar ? " disabled" : "") + ">🩹 " + gt("phFillT") + "</button></div></div>";
+    }).join("");
+    return '<div class="sg-panel" style="margin-top:12px"><div class="sg-panel-hd"><h3><i>·</i>🏯 ' + gt("phT") +
+      ' <small style="font-weight:400;color:var(--ink-3)">' + gt("phSubT") + "</small></h3><span class=\"sp\"></span>" +
+      '<small style="color:var(--ink-3)">' + gt("phCntT", { a: list.length, b: armyNumMax() }) + "</small>" +
+      '<button class="sgbtn sm ghost" data-bat="army-auto" style="margin-left:8px">⚡ ' + gt("phAutoT") + "</button>" +
+      '<button class="sgbtn sm" data-bat="army-new" style="margin-left:6px">＋ ' + gt("phNewT") + "</button></div>" +
+      (list.length ? '<div class="sg-phgrid">' + units + "</div>" : '<div class="sg-note" style="padding:10px 0">' + gt("phEmptyT") + "</div>") +
+      '<div class="sg-note" style="margin-top:7px;font-size:11px;line-height:1.7">' + gt("phRuleT", { n: troopTxt(maxC), s: slotN }) + "</div>" +
+      "<style>" +
+      ".sg-phgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}" +
+      "@media(max-width:900px){.sg-phgrid{grid-template-columns:1fr}}" +
+      ".sg-army{border:1px solid rgba(201,164,92,.35);border-radius:11px;background:linear-gradient(180deg,rgba(201,164,92,.07),rgba(0,0,0,.18));padding:8px 10px;min-width:0}" +
+      ".sg-army-hd{display:flex;align-items:center;gap:6px;font-size:12px;color:#e8c988}" +
+      ".sg-army-hd small{color:var(--ink-3);font-size:10px}" +
+      ".sg-army-hd .pw{margin-left:auto;color:#ffd76a;font-weight:700}" +
+      ".sg-army-bar{position:relative;height:9px;border-radius:5px;background:rgba(0,0,0,.45);margin:6px 0;overflow:hidden}" +
+      ".sg-army-bar i{display:block;height:100%;background:linear-gradient(90deg,#a8842f,#e8c988);transition:width .3s}" +
+      ".sg-army-bar.full i{background:linear-gradient(90deg,#4fae7c,#8fd6a2)}" +
+      ".sg-army-bar em{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:8.5px;color:#f2f6fa;text-shadow:0 1px 2px rgba(0,0,0,.95)}" +
+      ".sg-army-mem{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}" +
+      ".sg-armymem{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);padding:4px 2px 5px;font-size:9px;color:var(--ink-3);min-width:0}" +
+      ".sg-armymem.add{border-style:dashed;cursor:pointer;justify-content:center;min-height:76px;color:#8b93a3}" +
+      ".sg-armymem-av{width:36px;height:36px;border-radius:7px;overflow:hidden;border:1.5px solid #c9a45c;background:#0d1117;padding:0;cursor:pointer;display:block}" +
+      ".sg-armymem-av img,.sg-armymem-av svg,.sg-armymem-av .sg-artwrap{width:100%;height:100%;object-fit:cover;object-position:top;display:block}" +
+      ".sg-armymem b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:10px}" +
+      ".sg-armymem i{font-style:normal;font-size:8.5px;color:#e8c988}" +
+      ".sg-armymem-x{position:absolute;top:1px;right:2px;border:0;background:rgba(0,0,0,.55);color:#e07f7f;border-radius:50%;width:14px;height:14px;line-height:1;font-size:10px;cursor:pointer;padding:0}" +
+      ".sg-army-ft{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10.5px;color:var(--ink-3)}" +
+      ".sg-army-ft .sp{flex:1}" +
+      "</style></div>";
+  }
+
   function merchantPanelHTML(u) {
     var mm = merchantOf(u), keys = ["rice", "copper", "iron"];
     var rows = keys.map(function (k) {
@@ -16346,6 +16707,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div style="margin:8px 0 4px">' + homeResBar(u) + "</div>" +
       '<div class="sg-note" style="margin:6px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b></div>" +
       raidBar + mapTog + mapBlock +
+      pointHallHTML(u) +
       teamPanelHTML(u) +
       defLogHTML(u);   /* V61：按需求移除「胡商来市 · 丝路胡商」板块 */
     return '<div style="display:grid;grid-template-columns:1fr 252px;gap:16px;align-items:start" class="bat-grid"><div>' + main +
@@ -17658,7 +18020,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-note" style="margin:10px 0 4px">' + T("spAlloc", { n: spLeft }) +
       (c.spG ? ' <small style="color:var(--ink-3)">' + gt("spCardAuditT", { g: c.spG, u: spUsedOf(c) }) + "</small>" : "") + "</div><div style='display:flex;flex-wrap:wrap;gap:6px'>" + spHTML + "</div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("equipT") + " · " + T("eqWpn") + "：" + wtypeOf(g) + "</div>" + eqHTML +
-      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">爵</span><span><b>🏅 ' + rankName(rankOf(c)) + "</b> <small>" + gt("rankCapT") + " " + fmt(RANKS[rankOf(c)].troop) + " · " + gt("lbTroop") + " " + fmt(troopOfCard(c, g)) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">爵</span><span><b>🏅 ' + rankName(rankOf(c)) + "</b> <small>" + gt("lbTroop") + " " + gt("phCapLineT", { c: fmt(troopOfCard(c, g)), a: fmt(troopAbilityOf(c)), b: fmt(RANKS[rankOf(c)].troop) }) + "</small></span></div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
       '<div style="text-align:center;margin-top:14px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
   }
@@ -18522,6 +18884,74 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (!trz.ok) return toast(trz.err === "same" ? T("transSame") : T("transEmpty"), "err");
         save(); closeModal(); toast(T("transOk", { n: tfrom, m: tto }), "ok"); refreshBattle(); return;
       }
+      /* ---------- V83 点将台：部队编成 ---------- */
+      case "army-new": {
+        var cAN = ensureCity(u);
+        if (!cAN.armies) cAN.armies = [];
+        if (cAN.armies.length >= armyNumMax()) return toast(gt("phNoRoomT", { n: armyNumMax() }), "err");
+        cAN.armies.push({ nm: "", mem: [], f: "yulin" });
+        cAN.armiesAt = 83;
+        save(); refreshBattle(); toast("🏯 " + gt("phNewT"), "ok"); return;
+      }
+      case "army-auto": {
+        var nAA = armyAutoAll(u);
+        save(); refreshBattle();
+        toast("⚡ " + gt("phAutoOkT", { n: nAA }), nAA ? "ok" : "err"); return;
+      }
+      case "army-add": armyPickOpen(+t.getAttribute("data-t")); return;
+      case "army-add-go": {
+        var aiAG = +t.getAttribute("data-t"), rAG = armyAdd(u, aiAG, t.getAttribute("data-id"));
+        if (!rAG.ok) {
+          var mA = rAG.err === "cap" ? gt("phCapFullT", { n: troopTxt(armyCapMax()) })
+            : rAG.err === "slot" ? gt("phSlotFullT", { n: armySlotMax() })
+            : rAG.err === "team" ? gt("phInTeamT")
+            : rAG.err === "used" ? gt("phUsedT") : gt("phNoneT");
+          return toast(mA, "err", 4200);
+        }
+        save(); toast(gt("phAddOkT", { n: 1 }), "ok");
+        refreshBattle(); armyPickOpen(aiAG); return;
+      }
+      case "army-del": {
+        var aiAD = +t.getAttribute("data-t"), cAD = ensureCity(u), aAD = (cAD.armies || [])[aiAD];
+        if (!aAD) return;
+        aAD.mem = (aAD.mem || []).filter(function (x) { return x !== t.getAttribute("data-id"); });
+        save(); refreshBattle(); toast(gt("phDelOkT"), "ok"); return;
+      }
+      case "army-clear": {
+        var aiAC = +t.getAttribute("data-t"), aAC = (ensureCity(u).armies || [])[aiAC];
+        if (!aAC) return;
+        modal("<h3>🏯 " + gt("phClearT") + " · " + esc(armyNameOf(aAC, aiAC)) + "</h3>" +
+          '<div class="sg-note">' + esc(gt("phClearAskT", { n: armyNameOf(aAC, aiAC) })) + "</div>" +
+          '<div style="text-align:center;margin-top:12px"><button class="sgbtn primary" data-bat="army-clear-go" data-t="' + aiAC + '">' + gt("phClearT") + "</button> " +
+          '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+        return;
+      }
+      case "army-clear-go": {
+        var aiCG = +t.getAttribute("data-t"), aCG = (ensureCity(u).armies || [])[aiCG];
+        if (aCG) aCG.mem = [];
+        save(); closeModal(); refreshBattle(); toast(gt("phClearOkT"), "ok"); return;
+      }
+      case "army-fill": {
+        var rAF = armyFill(u, +t.getAttribute("data-t"));
+        if (!rAF.ok) return toast(gt("phFillNoneT"), "err", 4200);
+        save(); refreshBattle(); toast("🩹 " + gt("phFillOkT", { n: fmt(rAF.n) }), "ok"); return;
+      }
+      case "army-name": {
+        var aiAN = +t.getAttribute("data-t"), aAN = (ensureCity(u).armies || [])[aiAN];
+        if (!aAN) return;
+        modal("<h3>✏ " + gt("phNameT") + "</h3>" +
+          '<div style="display:flex;gap:8px;align-items:center">' +
+          '<input id="sgArmyNm" maxlength="12" value="' + esc(aAN.nm || "") + '" style="flex:1;padding:7px 10px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit">' +
+          '<button class="sgbtn primary" data-bat="army-name-go" data-t="' + aiAN + '">' + T("bulkOk") + "</button></div>");
+        return;
+      }
+      case "army-name-go": {
+        var aiNG = +t.getAttribute("data-t"), aNG = (ensureCity(u).armies || [])[aiNG];
+        if (!aNG) return;
+        var aInp = document.getElementById("sgArmyNm");
+        aNG.nm = (aInp ? aInp.value : "").trim().slice(0, 12);
+        save(); closeModal(); refreshBattle(); toast(gt("phNameOkT"), "ok"); return;
+      }
       case "slot": {
         ensureCity(u);
         var tiS = +t.getAttribute("data-t"), posS = t.getAttribute("data-p");
@@ -18575,7 +19005,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (pkA.mode === "slot") {
           ensureCity(u);
           var szA = slotSet(u, pkA.ti, pkA.pos, idsA[0]);
-          if (!szA.ok) return toast(szA.err === "cav" ? T("cavNeed") : szA.err === "front" ? T("frontNeed") : szA.err === "used" ? T("teamUsed") : T("noRoster"), "err");
+          if (!szA.ok) return toast(szA.err === "cav" ? T("cavNeed") : szA.err === "front" ? T("frontNeed") : szA.err === "used" ? T("teamUsed") : szA.err === "army" ? gt("phInArmyT") : T("noRoster"), "err");
           BATUI.pk = null; save(); closeModal(); toast(T("pkOk"), "ok"); refreshBattle(); return;
         }
         if (pkA.mode === "roster") {
@@ -18951,6 +19381,11 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       /* V66 探针导出：爵位 / 带兵上限 / 放归 / 人口产出 */
       rankOf: rankOf, ranks: function () { return RANKS.map(function (r) { return { n: r.n, troop: r.troop }; }); },
       rankTroop: rankTroop, rankName: rankName, rankCost: rankCost, rankNeedLv: rankNeedLv, troopCapOf: troopCapOf,
+      /* V83 探针：带兵能力 / 初始化 / 点将台 */
+      troopAbilityOf: troopAbilityOf, lvTroopFactor: lvTroopFactor, tierTroopOf: tierTroopOf, initCardCaps: initCardCaps,
+      pointHallHTML: pointHallHTML, armyStat: armyStat, armyAdd: armyAdd, armyFill: armyFill, armyAutoAll: armyAutoAll,
+      armyPickOpen: armyPickOpen, armyCapMax: armyCapMax, armySlotMax: armySlotMax, armyNumMax: armyNumMax,
+      armyCards: armyCards, cardInArmy: cardInArmy, cardInTeam: cardInTeam,
       stageGuardN: stageGuardN, mobTroopOf: mobTroopOf, popMulOf: popMulOf, popBonusPct: popBonusPct,
       /* V67 探针导出：招募进度条口径 + 兵力口径迁移 */
       recBarOf: recBarOf, slotRecHTML: slotRecHTML,

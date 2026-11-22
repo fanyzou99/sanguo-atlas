@@ -38,9 +38,13 @@
     }
   ],
   "military": {
+    "armyCap": 100000,
+    "armyMax": 5,
+    "armySlot": 5,
     "cityCap": 1000000,
     "eliteCost": 10,
     "farmRice": 0.02,
+    "lvBase": 30,
     "mobCap": 50000,
     "popPct": 10,
     "recCoin": 2,
