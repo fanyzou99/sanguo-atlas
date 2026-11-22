@@ -1,0 +1,48 @@
+{
+ "total": 4,
+ "rows": [
+  {
+   "device": "dbg1",
+   "event_cursor": 2,
+   "scopes": [
+    "boss:b1"
+   ],
+   "site": "cn",
+   "uid": "smartzhzou6@126.com",
+   "updated_at": "2026-10-31T13:33:04.419839+08:00"
+  },
+  {
+   "device": "devA",
+   "event_cursor": 6,
+   "scopes": [
+    "boss:b1",
+    "guild:g1",
+    "world"
+   ],
+   "site": "cn",
+   "uid": "smartzhzou6@126.com",
+   "updated_at": "2026-10-31T13:38:43.216538+08:00"
+  },
+  {
+   "device": "devFresh",
+   "event_cursor": 6,
+   "scopes": [
+    "boss:b1"
+   ],
+   "site": "cn",
+   "uid": "smartzhzou6@126.com",
+   "updated_at": "2026-10-31T13:38:43.355753+08:00"
+  },
+  {
+   "device": "devB",
+   "event_cursor": 6,
+   "scopes": [
+    "world"
+   ],
+   "site": "cn",
+   "uid": "smartzhzou6@126.com",
+   "updated_at": "2026-10-31T13:38:43.506475+08:00"
+  }
+ ],
+ "exported": "2026-11-22T00:40:00.000Z"
+}

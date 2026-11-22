@@ -1,0 +1,12 @@
+{
+ "total": 1,
+ "rows": [
+  {
+   "id": 1,
+   "pwd_hash": "872dc94c5948932c8806b5f9a1704486822df81609f3afcb4d66ee28d78ac8e1",
+   "updated_at": "2026-10-20T13:57:21.370097+08:00",
+   "username": "fanyzou"
+  }
+ ],
+ "exported": "2026-11-22T00:40:00.000Z"
+}

@@ -1,6 +1,6 @@
 {
  "ok": true,
- "total": 1,
+ "total": 9,
  "rows": [
   {
    "id": 1,
@@ -11,15 +11,120 @@
    "region": "cn",
    "source": "workbuddy.host",
    "created_at": "2026-11-20T05:00:00Z",
-   "last_login_at": null,
-   "login_count": 0,
+   "last_login_at": "2026-11-01T11:19:10.631779+08:00",
+   "login_count": 15,
    "pw": "v1:5cec45fbde20a524a769df72fe839a57876abf05e9eed87e0bf209a244a7b56e",
    "role": "owner",
    "note": "站长账号（V74 预置，双站通用）",
    "alias_emails": [
     "smartzhzou6@126.com"
    ]
+  },
+  {
+   "id": 2,
+   "email": "fany@atlas.sg",
+   "phone": "13900000001",
+   "nick": "fany",
+   "name": "fany",
+   "region": "cn",
+   "source": "127.0.0.1:8080",
+   "created_at": "2026-10-20T15:43:20.457365+08:00",
+   "last_login_at": "2026-10-20T15:47:59.150937+08:00",
+   "login_count": 2,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 8,
+   "email": "123@126.com",
+   "phone": "54654321654",
+   "nick": "23",
+   "name": "23",
+   "region": "cn",
+   "source": "sanguo-atlas.app.workbuddy.host",
+   "created_at": "2026-10-22T12:38:55.844058+08:00",
+   "last_login_at": "2026-10-22T13:19:46.073549+08:00",
+   "login_count": 1,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 29,
+   "email": "111@qq.com",
+   "phone": "18609246656",
+   "nick": "中华龙",
+   "name": "中华龙",
+   "region": "cn",
+   "source": "sanguo-atlas.app.workbuddy.host",
+   "created_at": "2026-10-22T19:09:32.538027+08:00",
+   "last_login_at": "2026-10-31T10:17:36.594728+08:00",
+   "login_count": 1,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 31,
+   "email": "456@126.com",
+   "phone": "132021216412",
+   "nick": "456",
+   "name": "456",
+   "region": "cn",
+   "source": "sanguo-atlas.app.workbuddy.host",
+   "created_at": "2026-10-23T08:36:40.620707+08:00",
+   "last_login_at": null,
+   "login_count": 0,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 32,
+   "email": "13@126.com",
+   "phone": "564654112",
+   "nick": "43545",
+   "name": "43545",
+   "region": "cn",
+   "source": "fanyzou99.github.io",
+   "created_at": "2026-10-23T08:37:50.86686+08:00",
+   "last_login_at": null,
+   "login_count": 0,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 42,
+   "email": "zaoyang2006@163.com",
+   "phone": "18611528652",
+   "nick": "懒人",
+   "name": "懒人",
+   "region": "cn",
+   "source": "admin-manual",
+   "created_at": "2026-10-24T11:15:23.777106+08:00",
+   "last_login_at": "2026-10-24T12:36:26.449246+08:00",
+   "login_count": 2,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 49,
+   "email": "1119080789@qq.com",
+   "phone": "13078654366",
+   "nick": "青柠小武官",
+   "name": "青柠小武官",
+   "region": "cn",
+   "source": "sanguo-atlas.app.workbuddy.host",
+   "created_at": "2026-10-25T21:47:11.496673+08:00",
+   "last_login_at": null,
+   "login_count": 0,
+   "note": "云库迁移（V78）"
+  },
+  {
+   "id": 50,
+   "email": "piliyouxialdw@163.com",
+   "phone": "13800138000",
+   "nick": "叁國",
+   "name": "叁國",
+   "region": "cn",
+   "source": "sanguo-atlas.app.workbuddy.host",
+   "created_at": "2026-10-30T14:55:49.418701+08:00",
+   "last_login_at": "2026-11-01T21:15:10.570501+08:00",
+   "login_count": 1,
+   "note": "云库迁移（V78）"
   }
  ],
- "updated": "2026-11-20T09:53:20.609Z"
+ "updated": "2026-11-22T00:40:00.000Z",
+ "migrated": "workbuddy cloud sg_accounts (V78)"
 }

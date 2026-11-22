@@ -1,0 +1,16 @@
+{
+ "total": 1,
+ "rows": [
+  {
+   "guild_id": "8b809285-2f19-40d4-8314-c73f79cdd22c",
+   "id": 7,
+   "kind": "create",
+   "payload": {
+    "name": "gamefirst"
+   },
+   "ts": "2026-10-31T18:21:07.801205+08:00",
+   "uid": "smartzhzou6@126.com"
+  }
+ ],
+ "exported": "2026-11-22T00:40:00.000Z"
+}

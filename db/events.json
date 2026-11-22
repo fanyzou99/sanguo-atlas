@@ -1,5 +1,5008 @@
 {
  "ok": true,
- "total": 0,
- "rows": []
+ "total": 10944,
+ "rows": [
+  {
+   "event": "click",
+   "page": "#/g/a%E9%99%88%E5%BA%86%E4%B9%8B",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "wall",
+   "ts": "2026-11-08T10:32:31.561994+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/g/a%E9%99%88%E5%BA%86%E4%B9%8B",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "关闭",
+   "ts": "2026-11-08T10:32:20.800416+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/wall",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "显示更多（还有 441 位）",
+   "ts": "2026-11-08T10:31:05.481925+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-08T10:30:49.43932+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "wall",
+   "ts": "2026-11-08T10:18:20.729139+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": null,
+   "ts": "2026-11-08T10:16:27.882862+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "卡牌墙23",
+   "ts": "2026-11-08T10:10:53.40009+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "Ffany1,158,497 积分",
+   "ts": "2026-11-08T10:10:52.570907+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/wall",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "battle",
+   "ts": "2026-11-08T10:10:49.960364+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/wall",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-08T10:10:46.181003+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "wall",
+   "ts": "2026-11-08T10:10:43.341404+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/wall",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-08T10:10:42.237879+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-08T10:10:38.790038+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "wall",
+   "ts": "2026-11-08T10:10:33.675044+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-08T10:10:32.385347+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/wall",
+   "region": "cn",
+   "sid": "smw74w1iz71g9tz",
+   "target": null,
+   "ts": "2026-11-08T09:08:46.340121+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T22:55:38.739905+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1000★ → 10万 🌾",
+   "ts": "2026-11-07T22:55:37.956154+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1000★ → 10万 🌾",
+   "ts": "2026-11-07T22:55:36.386084+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1000★ → 10万 🌾",
+   "ts": "2026-11-07T22:55:34.848591+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-07T22:55:33.448697+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:55:29.008776+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "放归",
+   "ts": "2026-11-07T22:55:27.32518+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T22:55:18.125725+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:55:17.091343+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎖 前往招募",
+   "ts": "2026-11-07T22:55:15.632922+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎖 招募处 Lv.21🪙 +315/月",
+   "ts": "2026-11-07T22:55:13.248004+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T22:55:12.056747+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚔ 主线关卡",
+   "ts": "2026-11-07T22:55:10.542066+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:55:00.834479+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T22:54:58.568587+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:54:51.569051+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "放归",
+   "ts": "2026-11-07T22:54:48.765276+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T22:54:34.63292+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "×",
+   "ts": "2026-11-07T22:54:18.201367+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "全部",
+   "ts": "2026-11-07T22:54:15.868045+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "📜 政策调整",
+   "ts": "2026-11-07T22:54:13.572746+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T22:54:12.312736+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "battle",
+   "ts": "2026-11-07T22:54:10.303707+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-07T22:35:40.610768+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-07T22:30:27.45287+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "battle",
+   "ts": "2026-11-07T22:30:25.065528+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-07T22:30:04.489303+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:30:03.062414+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 补满兵力 1,920（备兵直接补充（免费） 1,920）",
+   "ts": "2026-11-07T22:30:00.554358+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "中军曹操 Lv.70适水军 86598%9.4万 / 9.6万🩹缺 1920",
+   "ts": "2026-11-07T22:29:58.93373+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T22:29:53.774679+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1蒯越 Lv.43100%✅ 满兵 2.9万",
+   "ts": "2026-11-07T22:29:53.04378+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1郭淮 Lv.70100%✅ 满兵 9.6万",
+   "ts": "2026-11-07T22:29:52.688391+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1曹彰 Lv.70100%✅ 满兵 9.6万",
+   "ts": "2026-11-07T22:29:51.893012+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1夏侯渊 Lv.70100%✅ 满兵 9.6万",
+   "ts": "2026-11-07T22:29:51.67958+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1曹操 Lv.7098%9.4万 / 9.6万🩹缺 1920",
+   "ts": "2026-11-07T22:29:51.269507+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T22:29:45.089402+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T22:29:43.08383+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:29:38.549418+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:35.994233+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:29:35.153193+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:33.035148+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "骑乘",
+   "ts": "2026-11-07T22:29:32.136185+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:27.820594+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:29:24.945925+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:21.651927+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T22:29:17.879978+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany429,778 积分",
+   "ts": "2026-11-07T22:29:16.933729+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:29:12.078581+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:10.764068+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:29:09.807069+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:07.326576+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "骑乘",
+   "ts": "2026-11-07T22:29:06.713035+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:04.055006+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:29:03.16128+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:29:00.385814+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T22:28:55.450861+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany429,778 积分",
+   "ts": "2026-11-07T22:28:54.57109+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T22:28:52.561465+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:28:48.320113+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:28:46.653763+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:28:45.813611+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:28:43.230612+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "骑乘",
+   "ts": "2026-11-07T22:28:41.755469+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:28:35.038738+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "穿戴",
+   "ts": "2026-11-07T22:28:34.002967+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:28:30.970363+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T22:28:27.834526+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany429,778 积分",
+   "ts": "2026-11-07T22:28:26.745964+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T22:28:24.859552+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "坐骑（S级·紫） · 2,250",
+   "ts": "2026-11-07T22:28:21.74694+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "装备箱（S级·紫） · 1,500",
+   "ts": "2026-11-07T22:28:20.92729+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "装备箱（S级·紫） · 1,500",
+   "ts": "2026-11-07T22:28:14.237103+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "坐骑（S级·紫） · 2,250",
+   "ts": "2026-11-07T22:28:11.886381+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "8,000★",
+   "ts": "2026-11-07T22:28:07.915637+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "8,000★",
+   "ts": "2026-11-07T22:28:06.07285+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-07T22:28:04.576407+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T22:28:03.263534+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "关闭",
+   "ts": "2026-11-07T22:27:58.753229+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋ 添加",
+   "ts": "2026-11-07T22:27:55.349901+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "+2000",
+   "ts": "2026-11-07T22:27:48.340008+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "加点",
+   "ts": "2026-11-07T22:27:45.130047+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "加点",
+   "ts": "2026-11-07T22:27:40.33713+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T22:26:29.283665+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany498,372 积分",
+   "ts": "2026-11-07T22:26:28.380083+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:26:25.999583+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "中军曹操 Lv.70适水军 865100%✅ 满兵 9.6万",
+   "ts": "2026-11-07T22:26:23.596564+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T22:26:08.202384+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "全部",
+   "ts": "2026-11-07T22:26:04.66934+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "📜 政策调整",
+   "ts": "2026-11-07T22:26:03.028415+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T22:26:02.071075+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T22:25:55.926134+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T22:25:54.5924+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "▶ 开始",
+   "ts": "2026-11-07T22:25:22.920222+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🤖 自动刷本",
+   "ts": "2026-11-07T22:25:19.069661+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🤖 自动刷本",
+   "ts": "2026-11-07T22:25:15.407205+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T22:25:10.574657+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-07T22:25:08.794686+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1＋空缺",
+   "ts": "2026-11-07T22:24:31.714817+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T22:24:30.952989+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T22:24:29.348154+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-07T22:24:28.079999+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T22:24:25.283923+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6gwfhrwa2578",
+   "target": null,
+   "ts": "2026-11-07T21:57:09.349186+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6gt9dzaeej1c",
+   "target": null,
+   "ts": "2026-11-07T21:54:42.140202+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6gpzlviin9xb",
+   "target": null,
+   "ts": "2026-11-07T21:52:09.274004+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "map",
+   "ts": "2026-11-07T21:51:23.786595+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "Ffany1,127,241 积分",
+   "ts": "2026-11-07T21:51:21.994289+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/g/a%E9%A1%B9%E7%B1%8D",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "卡牌墙23",
+   "ts": "2026-11-07T21:51:15.408918+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/g/a%E9%A1%B9%E7%B1%8D",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "Ffany1,127,241 积分",
+   "ts": "2026-11-07T21:51:14.531771+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T21:51:11.624157+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany493,554 积分",
+   "ts": "2026-11-07T21:51:10.959962+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/g/a%E9%A1%B9%E7%B1%8D",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "关闭",
+   "ts": "2026-11-07T21:46:14.874035+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/alist",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "agens",
+   "ts": "2026-11-07T21:45:56.241309+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "agens",
+   "ts": "2026-11-07T21:41:30.571013+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T21:35:06.840558+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1夏侯渊 Lv.705.8万/9.6万",
+   "ts": "2026-11-07T21:35:04.885191+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "5＋空缺",
+   "ts": "2026-11-07T21:35:04.854378+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-07T21:29:42.130507+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "5＋空缺",
+   "ts": "2026-11-07T21:29:37.929563+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "2曹操 Lv.705.8万/9.6万",
+   "ts": "2026-11-07T21:29:36.968609+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/s28",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "返回游戏",
+   "ts": "2026-11-07T20:55:45.556341+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/s28",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "开战",
+   "ts": "2026-11-07T20:55:22.922112+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "28★★★",
+   "ts": "2026-11-07T20:55:19.812332+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚔ 主线关卡",
+   "ts": "2026-11-07T20:55:17.140992+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T20:55:15.366809+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T20:55:14.016857+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T20:55:11.692413+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚔ 主线关卡",
+   "ts": "2026-11-07T20:55:09.989277+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-07T20:54:54.804495+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-07T20:54:47.406253+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "洛阳 Lv.3🛡 541,50025/25",
+   "ts": "2026-11-07T20:54:45.603388+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-07T20:54:42.358605+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T20:54:39.563632+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T20:54:36.97282+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "▶ 开始",
+   "ts": "2026-11-07T20:54:16.751703+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🤖 自动刷本",
+   "ts": "2026-11-07T20:54:11.313152+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T20:54:09.144723+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🤖 自动刷本",
+   "ts": "2026-11-07T20:54:04.866908+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T20:54:01.066887+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T20:53:59.368692+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-07T20:53:57.16965+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1＋空缺",
+   "ts": "2026-11-07T20:53:46.383706+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚔ 主线关卡",
+   "ts": "2026-11-07T20:53:44.458308+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T20:53:42.369233+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12480",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-07T20:53:39.151532+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-07T20:53:31.325905+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12421",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-07T20:53:26.329608+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c2791",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-07T20:53:21.666718+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-07T20:53:16.91738+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "加点",
+   "ts": "2026-11-07T20:53:12.718407+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "加点",
+   "ts": "2026-11-07T20:53:07.423432+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-07T20:52:47.29768+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c10981",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚡ 批量吞噬",
+   "ts": "2026-11-07T20:52:40.274581+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙 ›",
+   "ts": "2026-11-07T20:52:17.716556+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "襄阳 Lv.1🛡 5,4005/25",
+   "ts": "2026-11-07T20:52:11.055868+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T20:52:09.739578+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏅 一键晋爵",
+   "ts": "2026-11-07T20:52:07.149199+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏅 爵位",
+   "ts": "2026-11-07T20:52:05.93727+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T20:52:04.6835+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "长安 Lv.1🛡 128,0005/25 · ⚕9,538",
+   "ts": "2026-11-07T20:52:03.453911+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "洛阳 Lv.3🛡 492,00025/25",
+   "ts": "2026-11-07T20:52:00.736063+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "长安 Lv.1🛡 128,0005/25 · ⚕9,538",
+   "ts": "2026-11-07T20:51:58.627627+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T20:51:56.852621+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎖 政治任命",
+   "ts": "2026-11-07T20:51:52.039617+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "托管升级",
+   "ts": "2026-11-07T20:51:50.721803+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏰 城市升级",
+   "ts": "2026-11-07T20:51:48.164211+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏅 一键晋爵",
+   "ts": "2026-11-07T20:51:35.333625+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⬆ 晋爵 10",
+   "ts": "2026-11-07T20:51:32.648002+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⬆ 晋爵 10",
+   "ts": "2026-11-07T20:51:30.730016+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⬆ 晋爵 10",
+   "ts": "2026-11-07T20:51:28.113949+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⬆ 晋爵 10",
+   "ts": "2026-11-07T20:51:25.967169+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⬆ 晋爵 10",
+   "ts": "2026-11-07T20:51:24.035385+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⬆ 晋爵 10",
+   "ts": "2026-11-07T20:51:19.638604+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏅 爵位",
+   "ts": "2026-11-07T20:51:15.395398+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T20:51:11.327301+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "关闭",
+   "ts": "2026-11-07T20:51:10.366899+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏯 城墙 Lv.10镶铁",
+   "ts": "2026-11-07T20:51:08.749898+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "收税",
+   "ts": "2026-11-07T20:51:05.762821+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T20:51:03.448362+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "洛阳 Lv.3🛡 349,00025/25",
+   "ts": "2026-11-07T20:51:02.032084+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏙 城内",
+   "ts": "2026-11-07T20:51:00.3169+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎨 示意",
+   "ts": "2026-11-07T20:50:59.007234+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎨 实景",
+   "ts": "2026-11-07T20:50:58.155519+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏙 城内",
+   "ts": "2026-11-07T20:50:56.765096+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🗺 城外地图",
+   "ts": "2026-11-07T20:50:56.05635+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎨 示意",
+   "ts": "2026-11-07T20:50:55.405967+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎨 实景",
+   "ts": "2026-11-07T20:50:54.638613+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🗺 城外地图",
+   "ts": "2026-11-07T20:50:52.861915+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏙 城内",
+   "ts": "2026-11-07T20:50:51.830402+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🗺 城外地图",
+   "ts": "2026-11-07T20:50:50.608382+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎨 示意",
+   "ts": "2026-11-07T20:50:49.012612+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🗺 城外地图",
+   "ts": "2026-11-07T20:50:47.892737+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🗺 城外地图",
+   "ts": "2026-11-07T20:50:45.985306+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎨 实景",
+   "ts": "2026-11-07T20:50:43.785541+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T20:50:42.865974+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏳 同盟",
+   "ts": "2026-11-07T20:50:40.552713+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T20:50:36.062617+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "全部",
+   "ts": "2026-11-07T20:50:34.110009+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "放归",
+   "ts": "2026-11-07T20:50:28.150574+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "📜 政策调整",
+   "ts": "2026-11-07T20:50:25.64374+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 大殿大殿理政",
+   "ts": "2026-11-07T20:50:24.47556+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T20:50:22.417003+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany522,134 积分",
+   "ts": "2026-11-07T20:50:21.583313+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T20:50:20.422729+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany522,134 积分",
+   "ts": "2026-11-07T20:50:19.403214+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-07T20:49:45.643466+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6e7ro0l9q7of",
+   "target": null,
+   "ts": "2026-11-07T20:41:59.543023+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6e1bvi7h75aa",
+   "target": null,
+   "ts": "2026-11-07T20:36:59.101564+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6dtzitfvkbim",
+   "target": null,
+   "ts": "2026-11-07T20:31:16.512626+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw6dnfaz0k9k9l",
+   "target": null,
+   "ts": "2026-11-07T20:26:11.028701+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T19:37:13.649033+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany522,134 积分",
+   "ts": "2026-11-07T19:37:12.616689+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/p0",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T19:37:09.06785+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/p0",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "开战",
+   "ts": "2026-11-07T19:36:53.564747+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "3",
+   "ts": "2026-11-07T19:36:51.567191+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T19:36:47.657272+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany522,094 积分",
+   "ts": "2026-11-07T19:36:47.392631+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-07T19:36:47.382514+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "卡牌墙23",
+   "ts": "2026-11-07T19:22:47.823625+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "Ffany1,127,241 积分",
+   "ts": "2026-11-07T19:22:46.814801+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "battle",
+   "ts": "2026-11-07T19:22:44.20921+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-07T19:22:36.414198+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🤖 自动刷本",
+   "ts": "2026-11-07T19:22:34.894844+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T19:22:33.987487+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T19:22:32.584503+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-07T19:22:31.972893+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T19:22:31.067715+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏛 主页",
+   "ts": "2026-11-07T19:22:28.121032+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T19:22:26.731119+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-07T19:22:23.221924+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T19:14:02.421214+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/s30",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "返回游戏",
+   "ts": "2026-11-07T19:14:00.986278+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/s30",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "开战",
+   "ts": "2026-11-07T19:13:45.555017+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "30★★★",
+   "ts": "2026-11-07T19:13:44.069628+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T19:13:41.965868+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚔ 主线关卡",
+   "ts": "2026-11-07T19:13:40.351683+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/p0",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "返回游戏",
+   "ts": "2026-11-07T19:13:37.796812+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle/f/p0",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "开战",
+   "ts": "2026-11-07T19:13:27.082614+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "5",
+   "ts": "2026-11-07T19:13:24.696423+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 出战补兵",
+   "ts": "2026-11-07T19:13:19.94651+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-07T19:13:18.412567+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "1＋空缺",
+   "ts": "2026-11-07T19:12:59.531624+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T19:12:57.315505+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-07T19:12:54.816467+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-07T19:12:52.92611+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-07T19:12:52.829319+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61gvq61dv1n8",
+   "target": null,
+   "ts": "2026-11-07T14:45:22.562257+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61gt8vpr4jo5",
+   "target": null,
+   "ts": "2026-11-07T14:45:06.603504+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61gfy8gcxq2q",
+   "target": null,
+   "ts": "2026-11-07T14:44:49.313444+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61fr5030357x",
+   "target": null,
+   "ts": "2026-11-07T14:44:27.453832+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61fuactqycyb",
+   "target": null,
+   "ts": "2026-11-07T14:44:21.379538+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61fek7nsp2l2",
+   "target": null,
+   "ts": "2026-11-07T14:44:12.738272+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61f0yg8m496n",
+   "target": null,
+   "ts": "2026-11-07T14:43:43.104155+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61ew95p7wtqc",
+   "target": null,
+   "ts": "2026-11-07T14:43:36.999986+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61eizxdvyy1m",
+   "target": null,
+   "ts": "2026-11-07T14:43:19.892447+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61efqd8j5d0y",
+   "target": null,
+   "ts": "2026-11-07T14:43:15.690867+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61e69it1cuhx",
+   "target": null,
+   "ts": "2026-11-07T14:43:03.801393+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61dr51x2xmzl",
+   "target": null,
+   "ts": "2026-11-07T14:42:57.585659+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61dn0vkbvng5",
+   "target": null,
+   "ts": "2026-11-07T14:42:38.506959+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61dc9rre2n38",
+   "target": null,
+   "ts": "2026-11-07T14:42:37.493531+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw61dboxsfal8j",
+   "target": null,
+   "ts": "2026-11-07T14:42:23.714179+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "▶ 开始",
+   "ts": "2026-11-07T14:16:55.393961+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🤖 自动刷本",
+   "ts": "2026-11-07T14:16:51.658789+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "确认",
+   "ts": "2026-11-07T14:16:49.99546+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "1＋空缺",
+   "ts": "2026-11-07T14:16:26.396403+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T14:16:22.425406+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "8,000★",
+   "ts": "2026-11-07T14:16:15.36432+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "8,000★",
+   "ts": "2026-11-07T14:16:10.089746+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "1000★ → 10万 🪙",
+   "ts": "2026-11-07T14:16:08.63624+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "1000★ → 10万 🪙",
+   "ts": "2026-11-07T14:16:07.009767+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "1000★ → 10万 🌾",
+   "ts": "2026-11-07T14:16:05.414771+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "1000★ → 10万 🌾",
+   "ts": "2026-11-07T14:16:03.803144+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-07T14:16:02.92595+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-07T14:16:01.182713+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "battle",
+   "ts": "2026-11-07T14:15:56.765051+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "卡牌墙113",
+   "ts": "2026-11-07T14:13:57.889424+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "Ffany933,280 积分",
+   "ts": "2026-11-07T14:13:56.450436+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-07T14:11:02.324664+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": null,
+   "ts": "2026-11-07T14:07:17.704541+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-06T14:55:59.260243+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c13179",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:32:34.77067+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:32:19.438818+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12738",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "加点",
+   "ts": "2026-11-05T22:32:16.670221+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12697",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:31:48.015852+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12697",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚡ 批量吞噬",
+   "ts": "2026-11-05T22:31:46.580055+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c522",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:31:37.114109+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c522",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚡ 批量吞噬",
+   "ts": "2026-11-05T22:31:36.315922+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c522",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:31:32.783156+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c2791",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:31:30.871708+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12545",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:31:28.877828+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c12593",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "‹ 返回",
+   "ts": "2026-11-05T22:31:20.682178+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "我的主页›",
+   "ts": "2026-11-05T22:30:53.449027+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "我的主页›",
+   "ts": "2026-11-05T22:30:49.575263+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "Ffany1,126,023 积分",
+   "ts": "2026-11-05T22:30:46.393534+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany520,526 积分",
+   "ts": "2026-11-05T22:30:41.909481+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "×",
+   "ts": "2026-11-05T22:30:37.546832+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "批量抽卡",
+   "ts": "2026-11-05T22:30:35.34978+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "关闭",
+   "ts": "2026-11-05T22:30:09.414427+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:30:07.295553+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:30:06.518525+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:30:06.509601+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:30:04.849713+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:30:03.951148+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:30:03.939306+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:30:02.191616+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:30:01.751698+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:30:01.717847+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:59.996777+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:59.528519+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:29:59.513872+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:57.69853+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:57.123151+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:29:57.114921+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:55.073253+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:54.33834+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "抽取武将卡 ×6",
+   "ts": "2026-11-05T22:29:54.312285+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:52.821223+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:52.000354+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "抽取武将卡 ×7",
+   "ts": "2026-11-05T22:29:51.975449+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "关闭",
+   "ts": "2026-11-05T22:29:51.166209+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "🎲 开始抽卡",
+   "ts": "2026-11-05T22:29:47.637349+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_batch",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:47.617521+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "▶ 下一步确认",
+   "ts": "2026-11-05T22:29:46.834903+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "20",
+   "ts": "2026-11-05T22:29:45.814714+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "10✓",
+   "ts": "2026-11-05T22:29:45.34448+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "批量抽卡",
+   "ts": "2026-11-05T22:29:44.42708+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:42.005107+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "抽取武将卡 ×27",
+   "ts": "2026-11-05T22:29:41.969443+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "关闭",
+   "ts": "2026-11-05T22:29:41.011354+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "🎲 开始抽卡",
+   "ts": "2026-11-05T22:29:39.607375+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_batch",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:29:39.596406+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "▶ 下一步确认",
+   "ts": "2026-11-05T22:29:38.28839+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "20",
+   "ts": "2026-11-05T22:29:37.15051+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "批量抽卡",
+   "ts": "2026-11-05T22:29:34.971808+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "卡牌墙13",
+   "ts": "2026-11-05T22:29:33.280223+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": "Ffany1,123,843 积分",
+   "ts": "2026-11-05T22:29:31.992578+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany520,526 积分",
+   "ts": "2026-11-05T22:29:26.362888+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "⚔ 主线关卡",
+   "ts": "2026-11-05T22:29:21.307715+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-05T22:29:19.38407+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-05T22:29:16.768673+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🏹 演武 · 挑战诸侯",
+   "ts": "2026-11-05T22:29:15.716461+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-05T22:29:14.638521+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎒 背包",
+   "ts": "2026-11-05T22:29:13.732996+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "×",
+   "ts": "2026-11-05T22:29:06.00147+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "✏",
+   "ts": "2026-11-05T22:29:04.269607+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-05T22:28:59.158686+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "驻城",
+   "ts": "2026-11-05T22:28:42.52755+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-05T22:28:35.488911+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "驻城",
+   "ts": "2026-11-05T22:28:24.726395+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "关闭",
+   "ts": "2026-11-05T22:28:22.79551+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋中军空缺",
+   "ts": "2026-11-05T22:28:16.964755+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认",
+   "ts": "2026-11-05T22:28:14.946911+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "驻城",
+   "ts": "2026-11-05T22:28:08.742514+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "关闭",
+   "ts": "2026-11-05T22:28:06.044733+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "＋中军空缺",
+   "ts": "2026-11-05T22:28:00.295478+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-05T22:27:59.104709+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-05T22:27:57.465508+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🩹 一键补兵",
+   "ts": "2026-11-05T22:27:54.820771+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "battle",
+   "ts": "2026-11-05T22:27:52.067742+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-05T22:27:44.362173+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "recycle_bulk",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:37.978651+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "确认回收",
+   "ts": "2026-11-05T22:27:37.914626+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "按分类回收",
+   "ts": "2026-11-05T22:27:34.767662+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "关闭",
+   "ts": "2026-11-05T22:27:32.497432+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:30.265386+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:29.818836+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:29.775592+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:27.89314+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:27.470747+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:27.455844+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:25.739902+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:25.205251+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:25.183038+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:23.293488+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:22.732502+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:22.718222+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:20.646825+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:20.106457+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:20.100013+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:17.694421+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:17.245195+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:17.194025+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:15.598174+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:15.053318+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:15.046975+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:13.142729+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:12.571429+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:12.559918+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:10.465544+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:09.881565+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:09.868045+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:07.483327+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "再抽一次",
+   "ts": "2026-11-05T22:27:06.900257+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:06.894428+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:04.554925+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "抽取武将卡 ×11",
+   "ts": "2026-11-05T22:27:03.351472+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_open",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:27:03.345625+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "关闭",
+   "ts": "2026-11-05T22:27:02.428964+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "收入袋中",
+   "ts": "2026-11-05T22:26:58.599054+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "draw_batch",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:26:56.825334+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "🎲 开始抽卡",
+   "ts": "2026-11-05T22:26:56.732716+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "▶ 下一步确认",
+   "ts": "2026-11-05T22:26:55.816098+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "20",
+   "ts": "2026-11-05T22:26:54.959117+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "批量抽卡",
+   "ts": "2026-11-05T22:26:53.424552+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "卡牌墙154",
+   "ts": "2026-11-05T22:26:32.674178+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": "Ffany516,096 积分",
+   "ts": "2026-11-05T22:26:31.570128+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvnwi441hz09j9",
+   "target": null,
+   "ts": "2026-11-05T22:26:30.551352+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "创建账号",
+   "ts": "2026-11-05T22:00:50.757884+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "还没有账号？去注册",
+   "ts": "2026-11-05T22:00:11.169223+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "登录 / 注册",
+   "ts": "2026-11-05T22:00:01.687918+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "登录 / 注册",
+   "ts": "2026-11-05T21:59:54.470627+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": null,
+   "ts": "2026-11-05T21:59:52.310292+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "登录 / 注册",
+   "ts": "2026-11-05T21:59:33.380968+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": null,
+   "ts": "2026-11-05T21:59:30.222669+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-05T21:58:46.717787+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw235vgb2yhgm7",
+   "target": null,
+   "ts": "2026-11-04T20:21:31.342724+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1xn4ai89587x",
+   "target": null,
+   "ts": "2026-11-04T17:46:59.207251+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1sy98lfr85u1",
+   "target": null,
+   "ts": "2026-11-04T15:35:40.090929+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/forum",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "创建账号",
+   "ts": "2026-11-04T12:20:05.543607+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/forum",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "注册账号",
+   "ts": "2026-11-04T12:19:16.669853+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/forum",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "登录 / 注册",
+   "ts": "2026-11-04T12:19:10.723674+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "forum",
+   "ts": "2026-11-04T12:18:44.802494+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/alist",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "battle",
+   "ts": "2026-11-04T12:18:43.61537+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/agens",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "alist",
+   "ts": "2026-11-04T12:18:32.979943+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/wall",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "agens",
+   "ts": "2026-11-04T12:18:30.957189+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/list",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "wall",
+   "ts": "2026-11-04T12:18:28.925873+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/gens",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "list",
+   "ts": "2026-11-04T12:17:58.302172+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/cities",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "gens",
+   "ts": "2026-11-04T12:17:48.176947+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "cities",
+   "ts": "2026-11-04T12:17:39.456828+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/cities",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "map",
+   "ts": "2026-11-04T12:17:32.87484+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": "cities",
+   "ts": "2026-11-04T12:17:30.283372+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1lvddxzpctr2",
+   "target": null,
+   "ts": "2026-11-04T12:17:28.507766+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 16; 25102RKBEC Build/BP2A.250605",
+   "who": null
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-04T10:47:34.300447+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1fn2mabnjvye",
+   "target": null,
+   "ts": "2026-11-04T09:23:05.571515+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-04T08:25:01.135045+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw16uz2z5blgi0",
+   "target": null,
+   "ts": "2026-11-04T05:17:17.052799+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw1564jcj5owde",
+   "target": null,
+   "ts": "2026-11-04T04:29:56.24077+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw152y5ndp2c27",
+   "target": null,
+   "ts": "2026-11-04T04:27:31.229506+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0xhzpbdga4uq",
+   "target": null,
+   "ts": "2026-11-04T00:55:13.085431+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0s4jw5hmdjcp",
+   "target": null,
+   "ts": "2026-11-03T22:24:47.287862+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0qfsxx0ogbph",
+   "target": null,
+   "ts": "2026-11-03T21:37:33.942347+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0qd84v5egaob",
+   "target": "×",
+   "ts": "2026-11-03T21:36:20.824523+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0qd84v5egaob",
+   "target": "注册账号",
+   "ts": "2026-11-03T21:36:17.748084+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0qd84v5egaob",
+   "target": "登录 / 注册",
+   "ts": "2026-11-03T21:36:15.567918+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smw0qd84v5egaob",
+   "target": null,
+   "ts": "2026-11-03T21:35:31.862955+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": null
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-03T20:51:27.891548+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvnwhuxydzvqeh",
+   "target": null,
+   "ts": "2026-11-03T20:50:57.615945+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": "u58368"
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-03T17:00:56.028875+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "admin_login",
+   "page": null,
+   "region": "cn",
+   "sid": null,
+   "target": "admin",
+   "ts": "2026-11-03T17:00:06.648784+08:00",
+   "ua": "",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "Ffany1,393,379 积分",
+   "ts": "2026-11-03T16:42:26.516146+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "确认回收",
+   "ts": "2026-11-03T16:41:56.139692+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "recycle_bulk",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": null,
+   "ts": "2026-11-03T16:41:56.099861+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/me",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "按分类回收",
+   "ts": "2026-11-03T16:41:51.919966+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1293",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "卡牌墙117",
+   "ts": "2026-11-03T16:41:23.873946+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1293",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "Ffany1,379,379 积分",
+   "ts": "2026-11-03T16:41:22.96469+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1293",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "关闭",
+   "ts": "2026-11-03T16:41:21.253245+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1293",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "＋ 添加",
+   "ts": "2026-11-03T16:41:19.757393+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "卡牌墙117",
+   "ts": "2026-11-03T16:41:06.149685+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "Ffany1,379,379 积分",
+   "ts": "2026-11-03T16:41:04.992003+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "穿戴",
+   "ts": "2026-11-03T16:41:00.866053+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "＋ 添加",
+   "ts": "2026-11-03T16:40:59.507409+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "穿戴",
+   "ts": "2026-11-03T16:40:58.871169+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "＋ 添加",
+   "ts": "2026-11-03T16:40:57.095261+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "骑乘",
+   "ts": "2026-11-03T16:40:55.809605+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "＋ 添加",
+   "ts": "2026-11-03T16:40:54.035632+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "穿戴",
+   "ts": "2026-11-03T16:40:52.543252+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/gs/c1469",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "＋ 添加",
+   "ts": "2026-11-03T16:40:50.530946+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "卡牌墙117",
+   "ts": "2026-11-03T16:40:22.825874+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": "Ffany1,379,379 积分",
+   "ts": "2026-11-03T16:40:20.633939+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9dwkme31v5o",
+   "target": null,
+   "ts": "2026-11-03T16:39:23.934627+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": null,
+   "ts": "2026-11-03T10:20:38.557581+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvzshmjwn9d98x",
+   "target": null,
+   "ts": "2026-11-03T05:47:11.209492+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvzogjgu629g83",
+   "target": null,
+   "ts": "2026-11-03T03:54:22.110816+08:00",
+   "ua": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvzef6a3zwco7v",
+   "target": null,
+   "ts": "2026-11-02T23:13:22.369844+08:00",
+   "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) Apple",
+   "who": null
+  },
+  {
+   "event": "visit",
+   "page": "#/map",
+   "region": "cn",
+   "sid": "smvzef4r6h487ic",
+   "target": null,
+   "ts": "2026-11-02T23:13:20.450922+08:00",
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/",
+   "who": null
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🛒 积分商店",
+   "ts": "2026-11-02T22:31:17.01356+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "关闭",
+   "ts": "2026-11-02T22:31:11.916127+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "×",
+   "ts": "2026-11-02T22:31:08.572953+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🗺 城外地图",
+   "ts": "2026-11-02T22:30:56.006403+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "长安 Lv.1🛡 466,0005/25",
+   "ts": "2026-11-02T22:30:47.127708+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "×",
+   "ts": "2026-11-02T22:30:41.294026+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "🏳 同盟",
+   "ts": "2026-11-02T22:30:38.341501+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  },
+  {
+   "event": "click",
+   "page": "#/battle",
+   "region": "cn",
+   "sid": "smvx9fs3srj9nke",
+   "target": "📜 政策调整",
+   "ts": "2026-11-02T22:30:35.154019+08:00",
+   "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+   "who": "u58368"
+  }
+ ],
+ "note": "V78 云库迁移：最近 500 条完整明细，全量见 archive/cloud_visits_*.json",
+ "exported": "2026-11-22T00:40:00.000Z"
 }
