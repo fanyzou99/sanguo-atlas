@@ -9989,7 +9989,16 @@ var BOTS = [
           if (r && r.ok && r.data) { if (applyEconCfg(r.data) && me()) rerender(); return true; }
           return false;
         })["catch"](function () { return false; });
-        return Promise.all([p1, p2, p3, p4, p5, p6, p7]).then(function () { retry(); return okT || okG || okW; });
+        /* V80：军事模型（后台「军事模型」保存，key = military）—— 国内站无 GH Pages 兜底，必须走云端 RPC */
+        var p8 = rpcP("sg_cfg_get", { p_key: "military" }).then(function (r) {
+          if (r && r.ok && r.data) {
+            var mo = r.data;
+            if (typeof mo === "string") { try { mo = JSON.parse(mo); } catch (e) { mo = null; } }
+            if (mo && applyMilCfg(mo)) { if (me()) rerender(); return true; }
+          }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8]).then(function () { retry(); return okT || okG || okW; });
       } catch (e) { return Promise.resolve(false); }
     }
 
