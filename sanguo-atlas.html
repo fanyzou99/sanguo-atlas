@@ -11941,6 +11941,8 @@ var BOTS = [
       var inc = cityMonthly(u);
       /* V37：伤兵痊愈 + 兵耗（所有城池，每月结算一次） */
       troopMonthlyAll(u, gm);
+      /* V79：敌城自主发展 + 归降府邸俸禄 */
+      try { warMonthly(u, gm); } catch (eW79) {}
       return inc;
     }
     return null;
@@ -13546,7 +13548,7 @@ var BOTS = [
     var c = u.bat.city, cards = u.cards || [], inc = cityPreview(u);
     /* V64：三页签，避免整页过长把底部按钮顶出屏幕 */
     var tk = BATUI.palTab || "off";
-    if (["off", "city", "gov", "rank", "mil"].indexOf(tk) < 0) tk = "off";
+    if (["off", "city", "gov", "rank", "mil", "houses"].indexOf(tk) < 0) tk = "off";
     var offRows = OFFICES.map(function (o) {
       var cid = u.bat.off[o.k], holder = null, hg = null;
       if (cid) holder = cards.filter(function (x) { return x.id === cid; })[0];
@@ -13569,7 +13571,7 @@ var BOTS = [
     var incLine = '<div class="sg-note" style="margin:4px 0 8px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) +
       '<br>👥 ' + gt("popT") + " " + fmt(cityPop(u)) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
     var offN = OFFICES.filter(function (o) { return !!u.bat.off[o.k]; }).length;
-    var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")], ["mil", "🎯 " + gt("eliteTabT")]]
+    var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")], ["mil", "🎯 " + gt("eliteTabT")], ["houses", "🏛 " + gt("warHouseTabT")]]
       .map(function (t) {
         return '<button class="sgchip' + (tk === t[0] ? " on" : "") + '" data-bat="pal-tab" data-k="' + t[0] + '">' + t[1] + "</button>";
       }).join("");
@@ -13578,6 +13580,7 @@ var BOTS = [
     else if (tk === "rank") body = rankBodyHTML(u);
     else if (tk === "city") body = cityUpHTML(u, true);
     else if (tk === "mil") body = eliteTabHTML(u);
+    else if (tk === "houses") body = housesTabHTML(u);
     else body = polRow + incLine + taxHTML + popPanelHTML(u);
     modal('<style>' +
       '.sg-modal.sg-palacemodal{background-image:linear-gradient(180deg,rgba(8,10,16,.86),rgba(8,10,16,.92)),url(' + SG_IMG_NIGHT_WALL + ');background-size:cover;background-position:center 28%;' +
@@ -13828,7 +13831,1056 @@ var BOTS = [
     s += "</svg>";
     return s;
   }
+  /* ================= V79 词条（注入 GT，随语言切换） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        warListT: "天下城池", warHeldT: "已据 {a} / {b} 城", warAllT: "全部", warMineT: "己方", warWeakT: "可图",
+        warSelfT: "我方", warHomeT: "主城", warCurT: "当前", warOwnedT: "此城已归我方",
+        warGuardT: "守军兵力", warWoundT: "城中伤兵", warWallT: "城防等级", warMoraleT: "士气 / 熟练",
+        warDefT: "守城将领", warGensT: "员", warMineArmyT: "我军出战", warNoSquadT: "本城尚无上阵武将，请先在大殿编队中布阵。",
+        warRuleT: "攻城规则：把守军兵力打空即破城（敌军伤亡不计伤兵）；城破后城中伤兵尽归我有，可放归田野或编入我军。",
+        warAttackT: "出阵攻城", warNoGuardT: "守军已溃，无可战之敌",
+        warAdvT: "我军占优，可一战而下", warEvenT: "势均力敌，胜负难料", warRiskT: "守军势大，强攻恐折兵",
+        warOurArmyT: "我军", warDefArmyT: "守军", warRoundT: "第 {n} 回合", warSkipT: "跳过战斗",
+        warStageT: "⚔ 兵临 {n} 城下……",
+        warVicT: "城 池 攻 陷", warKillT: "歼敌", warLossT: "我军折损", warCaptT: "俘获伤兵", warLootT: "缴获",
+        warNextT: "处置降卒", warNextHintT: "城中伤兵已尽在掌握",
+        warCaptKickT: "俘 虏 处 置", warCaptOwnT: " 城中伤兵尽数归我", warRelT: "放归田野",
+        warRelHintT: "人口 +{p}　民望 +{n}", warEnlT: "编入我军", warEnlHintT: "该城可得兵员 +{n}",
+        warRelReasonT: "放归降卒 · {n}",
+        warPrisonerT: "阶 下 之 囚", warQuoteT: "「将军天威，{n}愿举城归降，执鞭随镫，效犬马之劳。」",
+        warAskT: "是否允其归降？", warYesT: "允其归降",
+        warYesHintT: "于{c}立归降武将府邸 · 月俸 20,000 钱 + 10,000 石粮",
+        warNoT: "满门抄斩", warNoHintT: "{n}一族尽诛 · 该势力余城军心涣散",
+        warExecT: "满 门 抄 斩", warExecQuoteT: "{n}一族尽诛于{c}市，血溅阶前。",
+        warExecEffT: "该势力余城", warExecEff2T: "士气 -18 · 兵力 -10%", warCityOwnT: "所得城池", warBackT: "返回天下",
+        warBackHintT: "继续择城而攻",
+        warHouseT: "归 降 府 邸 已 立", warHouseSfxT: " 府", warHouseCityT: "府邸立于城中",
+        warSalT: "每月俸禄", warSalFromT: "支出来源", warSalFrom2T: "日常开支（每月结算自动扣除）",
+        warHouseCntT: "府邸", warHouseUnitT: "座", warSalSumT: "钱 {c} · 粮 {r}",
+        warHouseTipT: "「单独列于大殿 · 降将府邸」，俸禄不足则欠俸，忠诚下降。",
+        warFailT: "攻 城 不 克", warFoeLeftT: "守军余部", warRetreatT: "撤兵", warFailHintT: "守军未灭，城池未下；我军折损已按伤兵计入本城。",
+        warHouseTabHintT: "君主归降后于其城立府，按月支给俸禄——这是独立的常年开支，单独在此结算与查看。",
+        warStockT: "本城库存", warLastPayT: "上次支俸", warArrearT: "欠俸 {n}",
+        warNoHouseT: "尚无归降府邸", warNoHouseHintT: "攻破敌城后，若允其君主归降，即于该城立府。",
+        warHouseAtT: "府在 {n}", warHeldTagT: "在握", warLostTagT: "已失", warPaidT: "已支 {n} 月", warLoyalT: "忠诚",
+        warMonthT: "月", warSinceT: "立于 {n}", warExecListT: "抄斩记录", warExecRowT: "满门抄斩于 {n}",
+        warHouseRuleT: "俸禄每月自当前城池的钱粮中扣除；钱粮不足则记为欠俸，府中忠诚随之下降。",
+        warHouseTabT: "降将府邸"
+      },
+      en: {
+        warListT: "Cities of the Realm", warHeldT: "{a} / {b} held", warAllT: "All", warMineT: "Mine", warWeakT: "Feasible",
+        warSelfT: "Our side", warHomeT: "Capital", warCurT: "current", warOwnedT: "Already ours",
+        warGuardT: "Garrison", warWoundT: "Wounded", warWallT: "Fortification", warMoraleT: "Morale / Drill",
+        warDefT: "Defenders", warGensT: "generals", warMineArmyT: "Our host", warNoSquadT: "No general is deployed in this city's squads yet.",
+        warRuleT: "Siege rule: wipe out the garrison to take the city (enemy losses never become wounded). All wounded in the city fall to us — release them to the fields or enlist them.",
+        warAttackT: "March to siege", warNoGuardT: "No defenders left",
+        warAdvT: "We hold the advantage", warEvenT: "Evenly matched", warRiskT: "The garrison is strong — costly",
+        warOurArmyT: "Our host", warDefArmyT: "Garrison", warRoundT: "Round {n}", warSkipT: "Skip",
+        warStageT: "⚔ Before the walls of {n}…",
+        warVicT: "CITY  TAKEN", warKillT: "Slain", warLossT: "Our losses", warCaptT: "Wounded taken", warLootT: "Seized",
+        warNextT: "Deal with the captives", warNextHintT: "The city's wounded are in our hands",
+        warCaptKickT: "C A P T I V E S", warCaptOwnT: " — all wounded now ours", warRelT: "Release to the fields",
+        warRelHintT: "Population +{p} · Prestige +{n}", warEnlT: "Enlist into our army", warEnlHintT: "City gains {n} troops",
+        warRelReasonT: "Released captives · {n}",
+        warPrisonerT: "T H E   L O R D   Y I E L D S", warQuoteT: "\"Your lordship's might is heaven-sent. {n} will yield the city and serve at your stirrup.\"",
+        warAskT: "Accept his surrender?", warYesT: "Accept surrender",
+        warYesHintT: "A surrendered-lord mansion rises in {c} · stipend 20,000 coins + 10,000 grain monthly",
+        warNoT: "Exterminate his house", warNoHintT: "The {n} clan is wiped out · remaining cities lose heart",
+        warExecT: "H O U S E   E X T E R M I N A T E D", warExecQuoteT: "The {n} clan was executed in {c}; blood stained the steps.",
+        warExecEffT: "Remaining cities", warExecEff2T: "Morale -18 · Troops -10%", warCityOwnT: "City gained", warBackT: "Back to the realm",
+        warBackHintT: "Choose the next target",
+        warHouseT: "S U R R E N D E R E D   M A N S I O N", warHouseSfxT: " Manor", warHouseCityT: "Mansion established in the city",
+        warSalT: "Monthly stipend", warSalFromT: "Paid from", warSalFrom2T: "Daily expenses (deducted each month)",
+        warHouseCntT: "Mansions", warHouseUnitT: "", warSalSumT: "{c} coins · {r} grain",
+        warHouseTipT: "Listed separately under the Hall — Surrendered Mansions. Short payment creates arrears and lowers loyalty.",
+        warFailT: "S I E G E   R E P U L S E D", warFoeLeftT: "Garrison left", warRetreatT: "Withdrawn", warFailHintT: "The garrison survived; the city holds. Our losses were recorded as wounded in this city.",
+        warHouseTabHintT: "When a lord surrenders, a mansion is founded in his city and a stipend is paid monthly — a separate standing expense, settled and shown here.",
+        warStockT: "City stores", warLastPayT: "Last payment", warArrearT: "Arrears {n}",
+        warNoHouseT: "No surrendered mansions yet", warNoHouseHintT: "Take an enemy city and accept its lord's surrender to found one.",
+        warHouseAtT: "Mansion at {n}", warHeldTagT: "held", warLostTagT: "lost", warPaidT: "{n} months paid", warLoyalT: "Loyalty",
+        warMonthT: "mo", warSinceT: "Founded {n}", warExecListT: "Executions", warExecRowT: "House exterminated at {n}",
+        warHouseRuleT: "Stipends are deducted from the current city's coins and grain each month; shortfalls become arrears and erode loyalty.",
+        warHouseTabT: "Surrendered Mansions"
+      },
+      ja: {
+        warListT: "天下の城", warHeldT: "{a} / {b} 城を領有", warAllT: "全て", warMineT: "自軍", warWeakT: "可攻",
+        warSelfT: "我方", warHomeT: "本城", warCurT: "現在", warOwnedT: "既に我方の城",
+        warGuardT: "守備兵", warWoundT: "城内傷兵", warWallT: "城防", warMoraleT: "士気 / 錬度",
+        warDefT: "守将", warGensT: "名", warMineArmyT: "我が軍", warNoSquadT: "この城には出陣武将がありません。大殿で編成してください。",
+        warRuleT: "攻城の規則：守備兵を全滅させれば落城（敵の損害は傷兵にならない）。落城後、城内の傷兵は全て我方に帰し、帰農させるか我が軍に編入できる。",
+        warAttackT: "攻城に出撃", warNoGuardT: "守兵は既に壊滅",
+        warAdvT: "我が軍が優勢", warEvenT: "互角、勝敗は未知数", warRiskT: "守兵強く、損害が大きい",
+        warOurArmyT: "我が軍", warDefArmyT: "守備兵", warRoundT: "第 {n} 合", warSkipT: "戦闘を飛ばす",
+        warStageT: "⚔ {n} 城下に兵を進める……",
+        warVicT: "落 城", warKillT: "討取", warLossT: "我が損害", warCaptT: "俘獲傷兵", warLootT: "鹵獲",
+        warNextT: "捕虜の処置", warNextHintT: "城内の傷兵は全て手中にある",
+        warCaptKickT: "捕 虜 処 置", warCaptOwnT: " の傷兵は全て我方に", warRelT: "田野へ帰す",
+        warRelHintT: "人口 +{p}　民望 +{n}", warEnlT: "我が軍に編入", warEnlHintT: "この城の兵員 +{n}",
+        warRelReasonT: "降卒を帰農 · {n}",
+        warPrisonerT: "階 下 の 囚", warQuoteT: "「将軍の天威、{n}は城を挙げて降り、鞭を執りて馳走仕えん。」",
+        warAskT: "降伏を許すか？", warYesT: "降伏を許す",
+        warYesHintT: "{c}に降将の屋敷を構える · 月俸 20,000 銭 + 10,000 石",
+        warNoT: "一族皆殺し", warNoHintT: "{n}一族を誅す · 残る城の士気は崩れる",
+        warExecT: "一 族 皆 殺 し", warExecQuoteT: "{n}一族は{c}の市に誅され、階に血が飛んだ。",
+        warExecEffT: "残る城", warExecEff2T: "士気 -18 · 兵力 -10%", warCityOwnT: "得た城", warBackT: "天下に戻る",
+        warBackHintT: "次の城を選ぶ",
+        warHouseT: "降 将 の 屋 敷 を 構 え た", warHouseSfxT: " 邸", warHouseCityT: "城内に屋敷を構える",
+        warSalT: "月俸", warSalFromT: "支給元", warSalFrom2T: "日常支出（毎月自動で差し引く）",
+        warHouseCntT: "屋敷", warHouseUnitT: "軒", warSalSumT: "銭 {c} · 糧 {r}",
+        warHouseTipT: "「大殿 · 降将の屋敷」に別掲。俸禄不足は欠俸となり忠誠が下がる。",
+        warFailT: "攻 城 失 敗", warFoeLeftT: "守兵残存", warRetreatT: "撤退", warFailHintT: "守兵は残り、城は落ちなかった。我が損害は傷兵として本城に計上。",
+        warHouseTabHintT: "君主が降ればその城に屋敷を構え、月ごとに俸禄を支給する——独立した常設支出としてここで精算・確認する。",
+        warStockT: "城内庫", warLastPayT: "前回支給", warArrearT: "欠俸 {n}",
+        warNoHouseT: "降将の屋敷はまだ無い", warNoHouseHintT: "敵城を破り、その君主の降伏を許せば屋敷を構える。",
+        warHouseAtT: "屋敷は {n}", warHeldTagT: "領有", warLostTagT: "喪失", warPaidT: "{n} か月支給", warLoyalT: "忠誠",
+        warMonthT: "月", warSinceT: "{n} 建立", warExecListT: "誅殺の記録", warExecRowT: "{n} にて一族皆殺し",
+        warHouseRuleT: "俸禄は毎月、現在の城の銭糧から差し引く。不足は欠俸として記録され、屋敷の忠誠が下がる。",
+        warHouseTabT: "降将の屋敷"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
+  /* ================= V79：天下城池 · 攻城略地 =================
+     需求要点：
+     ① 右侧清单列出天下所有城池：洛阳为玩家主城，其余按汉末群雄分属（张绣 / 张鲁 / 刘璋 / 刘表…）；
+     ② 各城独立发展：每月募兵、练兵、修复伤兵、城防升级，玩家可随时查看；
+     ③ 从己方城池出征攻城：把守军兵力打空即破城，敌方伤亡不计伤兵；
+     ④ 破城后敌城伤兵自动归我方，可选「放归田野」或「编入我军」；
+     ⑤ 破城胜利画面 + 原君主归降抉择：允降则于该城立「归降武将府邸」，月俸 20000 钱 + 10000 石粮
+        （计入月度日常开支、单独展示）；不允则满门抄斩。
+  */
+  var HOUSE_SAL = { coin: 20000, rice: 10000 };
+  var WARLORDS = [
+    { k: "lijue",      lord: "李傕",   color: "#8a5a5a", title: "董卓余党",  cities: ["长安"], act: "祸乱关中，胁帝西迁" },
+    { k: "caocao",     lord: "曹操",   color: "#4f74a8", title: "兖州牧",    cities: ["许昌", "陈留", "濮阳", "汝南"], act: "奉天子以令不臣" },
+    { k: "yuanshao",   lord: "袁绍",   color: "#7d63a8", title: "冀州牧",    cities: ["邺", "南皮", "平原", "晋阳", "上党", "临淄", "北海"], act: "四世三公，虎踞河北" },
+    { k: "yuanshu",    lord: "袁术",   color: "#b08a4a", title: "僭号仲家",  cities: ["寿春", "庐江"], act: "僭号称帝，众叛亲离" },
+    { k: "lvbu",       lord: "吕布",   color: "#a8544a", title: "温侯",      cities: ["下邳", "广陵"], act: "人中吕布，马中赤兔" },
+    { k: "liubiao",    lord: "刘表",   color: "#5b8fbf", title: "荆州牧",    cities: ["襄阳", "江陵", "江夏", "新野", "长沙", "武陵", "零陵", "桂阳"], act: "坐守八郡，自保一方" },
+    { k: "zhangxiu",   lord: "张绣",   color: "#c2635a", title: "北地枪王",  cities: ["宛"], act: "据南阳以自守" },
+    { k: "zhanglu",    lord: "张鲁",   color: "#8a6ec4", title: "师君",      cities: ["汉中", "上庸"], act: "五斗米道，政教合一" },
+    { k: "liuzhang",   lord: "刘璋",   color: "#c9a45c", title: "益州牧",    cities: ["成都", "梓潼", "江州", "永安", "建宁", "云南"], act: "承父之业，暗弱寡断" },
+    { k: "mateng",     lord: "马腾",   color: "#c48a5a", title: "征西将军",  cities: ["天水", "武威", "安定", "敦煌", "朔方", "伊吾"], act: "西凉铁骑，雄踞陇右" },
+    { k: "gongsunzan", lord: "公孙瓒", color: "#a8b0b8", title: "前将军",    cities: ["蓟", "北平"], act: "白马义从，威震北边" },
+    { k: "gongsundu",  lord: "公孙度", color: "#6a8a7a", title: "辽东太守",  cities: ["襄平"], act: "三世割据，海东自王" },
+    { k: "sunce",      lord: "孙策",   color: "#c05840", title: "讨逆将军",  cities: ["建业", "吴", "会稽", "柴桑", "合肥"], act: "江东小霸王" },
+    { k: "shixie",     lord: "士燮",   color: "#4f9a8a", title: "交州太守",  cities: ["交趾", "番禺"], act: "境内安宁，商旅往还" },
+    { k: "zhangyang",  lord: "张杨",   color: "#8a8a5a", title: "河内太守",  cities: ["平城"], act: "并州塞上，胡汉杂处" },
+    { k: "tadun",      lord: "蹋顿",   color: "#7a7a6a", title: "乌桓单于",  cities: ["柳城"], act: "控弦塞外，为北边患" }
+  ];
+  var _CITYMETA = null;
+  function cityMetaMap() {
+    if (_CITYMETA) return _CITYMETA;
+    var m = {};
+    try {
+      var arr = (window.__SGAtlas && window.__SGAtlas.cityData) || [];
+      arr.forEach(function (d) { m[d.n] = d; });
+    } catch (e) {}
+    _CITYMETA = m;
+    return m;
+  }
+  function cityMetaOf(cn) { return cityMetaMap()[cn] || { n: cn, f: "群", pop: 10, lv: "郡城", who: [] }; }
+  function warLvNum(m) {
+    var t = (m && m.lv) || "";
+    if (t === "都城") return 9;
+    if (t === "州治") return 7;
+    if (t === "关城") return 6;
+    if (t === "郡城") return 5;
+    return 3;
+  }
+  function warlordOf(cn) {
+    for (var i = 0; i < WARLORDS.length; i++) if (WARLORDS[i].cities.indexOf(cn) >= 0) return WARLORDS[i];
+    return null;
+  }
+  function warCityCap(c) {
+    var m = cityMetaOf(c.cn), pop = m.pop || 10;
+    return Math.round((2500 + (c.lv || 5) * 900 + pop * 220) * (0.94 + (hashNum(c.cn) % 13) / 100));
+  }
+  function warCityNew(cn, wl) {
+    var m = cityMetaOf(cn), lv = warLvNum(m);
+    var cap = warCityCap({ cn: cn, lv: lv });
+    return {
+      cn: cn, lord: wl.lord, wlk: wl.k, color: wl.color,
+      lv: lv, pop: m.pop || 10, cap: cap,
+      troops: Math.round(cap * 0.72), pool: Math.round(cap * 0.28), wounded: Math.round(cap * 0.12),
+      dev: 0, morale: 54 + (hashNum(cn + "m") % 22), prof: 40 + (hashNum(cn + "p") % 26),
+      gm: 0
+    };
+  }
+  /* ---------- 战争状态（存档于 u.war） ---------- */
+  function warState(u) {
+    ensureCity(u);
+    if (!u.war || typeof u.war !== "object") u.war = {};
+    var w = u.war;
+    if (!w.cities) w.cities = {};
+    if (!w.houses) w.houses = [];
+    if (!w.executed) w.executed = [];
+    if (!w.news) w.news = [];
+    if (w.gm == null) w.gm = -1;
+    var owned = u.bat.owned || [];
+    /* 已归我方的城从敌籍剔除 */
+    Object.keys(w.cities).forEach(function (cn) { if (owned.indexOf(cn) >= 0) delete w.cities[cn]; });
+    /* 补齐所有敌方城（洛阳及己方城不在其中） */
+    WARLORDS.forEach(function (wl) {
+      wl.cities.forEach(function (cn) {
+        if (owned.indexOf(cn) >= 0) return;
+        if (!w.cities[cn]) w.cities[cn] = warCityNew(cn, wl);
+      });
+    });
+    return w;
+  }
+  function warNews(u, txt, kind) {
+    var w = warState(u);
+    w.news.unshift({ t: Date.now(), txt: txt, kind: kind || "" });
+    if (w.news.length > 40) w.news.length = 40;
+  }
+  function warEnemyCity(u, cn) { var w = warState(u); return w.cities[cn] || null; }
+  /* ---------- 月度：敌城自主发展 + 归降府邸俸禄 ---------- */
+  function warMonthly(u, gm) {
+    var w = warState(u);
+    if (w.gm === gm) return null;
+    var from = w.gm < 0 ? gm : w.gm;
+    var steps = Math.max(1, Math.min(18, gm - from));
+    w.gm = gm;
+    for (var s = 0; s < steps; s++) {
+      Object.keys(w.cities).forEach(function (cn) {
+        var c = w.cities[cn];
+        c.cap = warCityCap(c);
+        var grow = Math.round(c.cap * (0.012 + (c.lv || 5) * 0.0009));
+        c.troops = Math.min(c.cap, (c.troops || 0) + grow);
+        c.pool = Math.min(Math.round(c.cap * 0.5), (c.pool || 0) + Math.round(c.cap * 0.006));
+        if (c.wounded > 0) {
+          var heal = Math.round(c.wounded * 0.3);
+          c.wounded -= heal;
+          c.troops = Math.min(c.cap, c.troops + heal);
+        }
+        c.dev = (c.dev || 0) + 1;
+        if (c.dev >= 14 && c.lv < 10) { c.dev = 0; c.lv++; c.cap = warCityCap(c); }
+      });
+    }
+    return housePay(u, steps);
+  }
+  function housePay(u, months) {
+    var w = warState(u), n = (w.houses || []).length;
+    var out = { n: n, coin: 0, rice: 0, short: 0 };
+    if (!n) { w.lastPay = null; return out; }
+    var c = ensureCity(u), pool = c.res || u.res;
+    months = Math.max(1, months || 1);
+    w.houses.forEach(function (h) {
+      for (var i = 0; i < months; i++) {
+        var pc = Math.min(pool.coin || 0, HOUSE_SAL.coin), pr = Math.min(pool.rice || 0, HOUSE_SAL.rice);
+        pool.coin = Math.max(0, (pool.coin || 0) - pc);
+        pool.rice = Math.max(0, (pool.rice || 0) - pr);
+        out.coin += pc; out.rice += pr;
+        var sh = (HOUSE_SAL.coin - pc) + (HOUSE_SAL.rice - pr);
+        if (sh) {
+          out.short += sh;
+          h.arrears = (h.arrears || 0) + sh;
+          h.loyal = Math.max(20, (h.loyal == null ? 78 : h.loyal) - 5);
+        } else {
+          h.loyal = Math.min(100, (h.loyal == null ? 78 : h.loyal) + 1);
+        }
+        h.paid = (h.paid || 0) + 1;
+      }
+    });
+    w.lastPay = { gm: w.gm, coin: out.coin, rice: out.rice, short: out.short, n: n };
+    if (out.short) warNews(u, "归降府邸俸禄不足，欠俸 " + fmt(out.short) + "（钱粮合计）", "warn");
+    return out;
+  }
+  function houseMonthlyCost(u) {
+    var w = warState(u), n = (w.houses || []).length;
+    return { n: n, coin: HOUSE_SAL.coin * n, rice: HOUSE_SAL.rice * n };
+  }
+  /* ---------- 守将：按史实人物（CITY_DATA.who）取，兵力按统武分配 ---------- */
+  function warArmOf(g) {
+    var best = "dao", bv = -1;
+    GS_ARMS.forEach(function (a) {
+      var apt = armApt(g, a.k);
+      var v = apt === "S" ? 4 : apt === "A" ? 3 : apt === "B" ? 2 : 1;
+      if (v > bv) { bv = v; best = a.k; }
+    });
+    return best;
+  }
+  function warDefenderList(cn, u) {
+    u = u || me();
+    if (!u) return [];
+    var w = warState(u), ec = w.cities[cn];
+    if (!ec) return [];
+    var m = cityMetaOf(cn), pool = GENS() || [], cands = [];
+    var names = [];
+    if (ec.lord) names.push(ec.lord);
+    (m.who || []).forEach(function (nm) { if (names.indexOf(nm) < 0) names.push(nm); });
+    names.forEach(function (nm) {
+      var g = pool.filter(function (x) { return x.name === nm; })[0];
+      if (g && cands.indexOf(g) < 0) cands.push(g);
+    });
+    if (!cands.length) {
+      var fac = m.f || "群";
+      var list = pool.filter(function (x) { return x.faction === fac && x.era !== "古代"; });
+      if (!list.length) list = pool.filter(function (x) { return x.era !== "古代"; });
+      for (var i = 0; i < Math.min(3, list.length); i++) {
+        var g2 = list[(hashNum(cn) + i * 17) % list.length];
+        if (g2 && cands.indexOf(g2) < 0) cands.push(g2);
+      }
+    }
+    if (!cands.length) return [];
+    cands = cands.slice(0, 5);
+    var ws = cands.map(function (g) { return Math.max(30, (g.st || 50) + (g.wu || 50)); });
+    var sum = ws.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var lv = Math.max(6, Math.round((ec.lv || 5) * 4.0));
+    return cands.map(function (g, i) {
+      return { g: g, troop: Math.max(200, Math.round((ec.troops || 0) * ws[i] / sum)), lv: lv, arm: warArmOf(g), lead: i === 0 };
+    });
+  }
+  function warDefenderUnits(cn, u) {
+    u = u || me();
+    if (!u) return [];
+    var w = warState(u), ec = w.cities[cn];
+    if (!ec) return [];
+    var wallF = 1 + (ec.lv || 5) * 0.032;
+    var sword = 0.86 + (ec.prof || 50) / 420;
+    return warDefenderList(cn, u).map(function (d, i) {
+      var cd = { id: "w79_" + cn + "_" + i, gid: d.g.id, sold: d.troop, lv: d.lv, exp: 0, arm: d.arm, stars: 0, rk: RANKS.length - 1 };
+      var un = unitOf(cd, "B", {});
+      if (!un) return null;
+      un.troop = d.troop;
+      un.troopMax = Math.max(d.troop, 1);
+      un.def = Math.round(un.def * wallF);
+      un.atk = Math.round(un.atk * sword);
+      un.morale = ec.morale || 60;
+      un.moraleMax = 100;
+      un.name = d.g.name;
+      un.gid = d.g.id;
+      un.cityGuard = true;
+      return un;
+    }).filter(Boolean);
+  }
+  /* ---------- 我方可战之兵：当前城各编队上阵武将 ---------- */
+  function warSquad(u) {
+    var c = ensureCity(u), seen = {}, out = [];
+    (c.teams || []).forEach(function (t) {
+      TEAM_POS.forEach(function (p) {
+        var id = t.slots[p.k];
+        if (!id || seen[id]) return;
+        seen[id] = 1;
+        var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0];
+        if (cd) out.push(cd);
+      });
+    });
+    if (!out.length) {
+      (u.cards || []).slice(0, 5).forEach(function (cd) { out.push(cd); });
+    }
+    return out.slice(0, 10);
+  }
+  function warSquadPower(u) {
+    var sq = warSquad(u), p = 0;
+    sq.forEach(function (cd) {
+      var g = gById(cd.gid); if (!g) return;
+      var sold = cd.sold == null ? troopOfCard(cd, g) : cd.sold;
+      p += sold;
+    });
+    return { n: sq.length, power: p };
+  }
+  /* ---------- 右侧：天下城池清单（V79 替换原「我的城市」） ---------- */
+  function warListRowOwn(u, cn) {
+    var c = (u.bat.cur === cn) ? u.bat.city : u.bat.cities[cn];
+    if (!c) return "";
+    var on = cn === u.bat.cur;
+    var tcnt = 0;
+    (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) tcnt++; }); });
+    var troopTotal = 0;
+    (c.teams || []).forEach(function (t) {
+      TEAM_POS.forEach(function (p) {
+        var cid = t.slots[p.k]; if (!cid) return;
+        var cd = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+        if (cd) troopTotal += troopOfCard(cd, gById(cd.gid) || {});
+      });
+    });
+    var house = !!c.house;
+    return '<button' + (on ? "" : ' data-bat="cityswitch" data-n="' + esc(cn) + '"') +
+      ' class="sg-wrow own' + (on ? " on" : "") + '" title="' + esc(gt("poolT") + " " + fmt(c.pool || 0) + " · " + gt("infT") + " " + fmt(cityWoundN(c))) + '">' +
+      '<span class="sg-wbar"></span>' +
+      '<span class="sg-wmain"><b>' + esc(cn) + (house ? ' <i class="sg-whouse">🏛</i>' : "") +
+      ' <i class="sg-wlv">Lv.' + (c.lv || 1) + "</i></b>" +
+      '<small><span>🛡 ' + fmt(troopTotal) + "</span><span>" + (on ? "● " + gt("warCurT") : tcnt + "/25") +
+      (cityWoundN(c) ? ' · <em class="bad">⚕' + fmt(cityWoundN(c)) + "</em>" : "") + "</span></small></span></button>";
+  }
+  function warListRowFoe(u, cn) {
+    var w = warState(u), c = w.cities[cn];
+    if (!c) return "";
+    var wl = warlordOf(cn) || { lord: c.lord || "?", color: "#8a8a8a", title: "" };
+    var mor = c.morale || 60;
+    return '<button class="sg-wrow foe" data-bat="siege-open" data-n="' + esc(cn) + '" style="--wc:' + wl.color + '">' +
+      '<span class="sg-wbar"></span>' +
+      '<span class="sg-wmain"><b>' + esc(cn) + ' <i class="sg-wlv">Lv.' + (c.lv || 5) + "</i></b>" +
+      '<small><span>⚔ ' + fmt(c.troops || 0) + "</span><span>" + esc(wl.lord) +
+      (c.wounded ? ' · <em class="bad">⚕' + fmt(c.wounded) + "</em>" : "") +
+      "</span></small></span></button>";
+  }
+  function warCityListHTML(u) {
+    ensureCity(u);
+    var w = warState(u), owned = (u.bat.owned || []).slice();
+    var flt = BATUI.warFilter || "all";
+    var total = 1 + Object.keys(w.cities).length;
+    var mine = warSquadPower(u).power || 1;
+    var groups = [];
+    groups.push({ key: "self", lord: gt("warSelfT"), color: "#c9a45c", title: gt("warHomeT"), rows: owned });
+    WARLORDS.forEach(function (wl) {
+      var rows = wl.cities.filter(function (cn) { return owned.indexOf(cn) < 0 && w.cities[cn]; });
+      if (rows.length) groups.push({ key: wl.k, lord: wl.lord, color: wl.color, title: wl.title, rows: rows, wl: wl });
+    });
+    if (flt === "self") groups = groups.filter(function (g) { return g.key === "self"; });
+    else if (flt === "weak") {
+      groups = groups.filter(function (g) {
+        if (g.key === "self") return true;
+        var keep = g.rows.filter(function (cn) { var c = w.cities[cn]; return c && c.troops <= mine * 1.35; });
+        g.rows = keep;
+        return keep.length > 0;
+      });
+    }
+    var body = groups.map(function (g) {
+      var rows;
+      if (g.key === "self") rows = g.rows.map(function (cn) { return warListRowOwn(u, cn); }).join("");
+      else rows = g.rows.map(function (cn) { return warListRowFoe(u, cn); }).join("");
+      var foeTotal = 0;
+      if (g.key !== "self") g.rows.forEach(function (cn) { foeTotal += (w.cities[cn] || {}).troops || 0; });
+      return '<div class="sg-wgrp"><div class="sg-wghd"><span class="dt" style="background:' + g.color + '"></span>' +
+        "<b>" + esc(g.lord) + "</b>" + (g.title ? '<em>' + esc(g.title) + "</em>" : "") +
+        '<span class="sp"></span><small>' + (g.key === "self" ? g.rows.length + " / " + total : fmt(foeTotal)) + "</small></div>" +
+        rows + "</div>";
+    }).join("");
+    var chip = function (k, txt) {
+      return '<button class="sgchip' + (flt === k ? " on" : "") + '" data-bat="war-filter" data-k="' + k + '" style="font-size:11px;padding:3px 9px">' + txt + "</button>";
+    };
+    var hc = houseMonthlyCost(u);
+    return '<div class="sg-warhd"><b>🗺 ' + gt("warListT") + "</b>" +
+      '<small>' + gt("warHeldT", { a: owned.length, b: total }) + "</small></div>" +
+      '<div class="sgchips" style="margin:0 0 7px">' + chip("all", gt("warAllT")) + chip("self", gt("warMineT")) + chip("weak", gt("warWeakT")) +
+      '<button class="sgchip" data-bat="war-houses" style="font-size:11px;padding:3px 9px;border-color:#c9a45c88">🏛 ' + (hc.n || 0) + "</button></div>" +
+      '<div class="sg-wlist">' + body + "</div>" +
+      '<style>' +
+      '.sg-warhd{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0 0 7px}' +
+      '.sg-warhd b{font-size:12.5px;color:#e8c988;letter-spacing:.05em}' +
+      '.sg-warhd small{font-size:10.5px;color:var(--ink-3,#8b93a3)}' +
+      '.sg-wlist{max-height:calc(100vh - 268px);overflow-y:auto;overflow-x:hidden;padding-right:2px;scrollbar-width:thin}' +
+      '.sg-wlist::-webkit-scrollbar{width:5px}.sg-wlist::-webkit-scrollbar-thumb{background:rgba(201,164,92,.4);border-radius:99px}' +
+      '.sg-wgrp{margin-bottom:9px}' +
+      '.sg-wghd{display:flex;align-items:center;gap:5px;padding:3px 2px 4px;font-size:11px;color:var(--ink-2,#c8d0dc)}' +
+      '.sg-wghd .dt{width:7px;height:7px;border-radius:2px;flex:none;box-shadow:0 0 6px currentColor}' +
+      '.sg-wghd b{font-size:11.5px;font-weight:600;letter-spacing:.04em}' +
+      '.sg-wghd em{font-style:normal;font-size:9.5px;color:var(--ink-3,#8b93a3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78px}' +
+      '.sg-wghd .sp{flex:1}' +
+      '.sg-wghd small{font-size:10px;color:#c9a45c}' +
+      '.sg-wrow{width:100%;display:flex;align-items:stretch;gap:0;text-align:left;padding:0;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(0,0,0,.26);color:var(--ink-2,#c8d0dc);margin-bottom:4px;cursor:pointer;overflow:hidden;font-family:inherit}' +
+      '.sg-wrow:hover{border-color:#c9a45c;background:rgba(201,164,92,.09)}' +
+      '.sg-wrow.on{border-color:#c9a45c;background:rgba(201,164,92,.14);cursor:default}' +
+      '.sg-wbar{width:3px;flex:none;background:var(--wc,#c9a45c);opacity:.9}' +
+      '.sg-wrow.own .sg-wbar{background:linear-gradient(180deg,#e8c988,#b98d3e)}' +
+      '.sg-wmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:5px 7px}' +
+      '.sg-wmain b{font-size:11.8px;color:var(--ink-1,#e8dfc8);display:flex;align-items:center;gap:4px;font-weight:600}' +
+      '.sg-wmain small{display:flex;justify-content:space-between;gap:6px;font-size:9.8px;color:#a9b2c0}' +
+      '.sg-wrow.own .sg-wmain small{color:#c9a45c}' +
+      '.sg-wmain em.bad{font-style:normal;color:#ff9b9b}' +
+      '.sg-wlv{font-style:normal;font-size:9px;color:#0f1218;background:linear-gradient(180deg,#e8c988,#b98d3e);border-radius:7px;padding:0 5px;font-weight:700;line-height:13px}' +
+      '.sg-whouse{font-style:normal;font-size:9.5px}' +
+      "</style>";
+  }
+  /* ---------- 攻城：战前详情 ---------- */
+  function siegeOpen(cn) {
+    var u = me(); if (!u) return;
+    ensureCity(u);
+    var w = warState(u), ec = w.cities[cn];
+    if (!ec) return toast(gt("warOwnedT"), "err");
+    var wl = warlordOf(cn) || { lord: ec.lord || "?", color: ec.color || "#888", title: "", act: "" };
+    var sq = warSquad(u), sp = warSquadPower(u);
+    var defs = warDefenderList(cn);
+    var myP = sp.power || 0, foeP = ec.troops || 0;
+    var ratio = foeP > 0 ? myP / foeP : 9;
+    var hint = ratio >= 1.3 ? ['#8fd694', gt("warAdvT")] : ratio >= 0.8 ? ['#e8c988', gt("warEvenT")] : ['#e79a9a', gt("warRiskT")];
+    var m = cityMetaOf(cn);
+    var defRows = defs.map(function (d) {
+      var g = d.g, gid = g.id;
+      var av = "";
+      try { av = window.__SGAtlas && window.__SGAtlas.avFor ? window.__SGAtlas.avFor(g) : ""; } catch (e) {}
+      return '<div class="sg-dgc"><span class="av">' + av + "</span><span class=\"nm\"><b>" + esc(g.name) + "</b><small>统 " + (g.st || 0) + " · 武 " + (g.wu || 0) + " · " + armName(d.arm) + "</small></span>" +
+        '<span class="tp">' + fmt(d.troop) + (d.lead ? ' <i class="lead">主</i>' : "") + "</span></div>";
+    }).join("");
+    var myRows = sq.slice(0, 10).map(function (cd) {
+      var g = gById(cd.gid) || {}; var gid = cd.gid;
+      var av = "";
+      try { av = window.__SGAtlas && window.__SGAtlas.avFor ? window.__SGAtlas.avFor(g) : ""; } catch (e) {}
+      var sold = cd.sold == null ? troopOfCard(cd, g) : cd.sold;
+      return '<div class="sg-dgc my"><span class="av">' + av + "</span><span class=\"nm\"><b>" + esc(g.name || "?") + "</b><small>Lv." + cardLv(cd) + " · " + fmt(sold) + "</small></span></div>";
+    }).join("");
+    modal('<style>' +
+      '.sg-siegeinfo{--wc:' + wl.color + '}' +
+      '.sg-sbanner{position:relative;border-radius:12px;padding:12px 15px;margin-bottom:10px;background:linear-gradient(100deg,rgba(0,0,0,.62),rgba(0,0,0,.34)),linear-gradient(120deg,' + wl.color + '44,rgba(0,0,0,.2));border:1px solid ' + wl.color + '66}' +
+      '.sg-sbanner b{font-size:20px;letter-spacing:.12em;color:#f3e6c8;text-shadow:0 2px 10px rgba(0,0,0,.9)}' +
+      '.sg-sbanner .fw{display:inline-flex;align-items:center;gap:6px;margin-left:9px;font-size:11px;color:#e8dfc8;background:' + wl.color + '55;border:1px solid ' + wl.color + '99;border-radius:99px;padding:2px 9px;vertical-align:middle}' +
+      '.sg-sbanner small{display:block;color:#c8bfa8;font-size:11px;margin-top:3px;line-height:1.6}' +
+      '.sg-sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}' +
+      '.sg-scell{border:1px solid rgba(201,164,92,.22);border-radius:9px;background:rgba(0,0,0,.34);padding:7px 9px}' +
+      '.sg-scell small{display:block;font-size:9.5px;color:var(--ink-3,#8b93a3);margin-bottom:2px}' +
+      '.sg-scell b{font-size:14px;color:#e8c988}' +
+      '.sg-dglist{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;margin:4px 0 10px}' +
+      '.sg-dgc{display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.1);border-radius:9px;background:rgba(0,0,0,.3);padding:5px 7px}' +
+      '.sg-dgc .av{width:30px;height:30px;border-radius:7px;overflow:hidden;flex:none;background:#1a1f28;display:block}' +
+      '.sg-dgc .av img{width:100%;height:100%;object-fit:cover;object-position:center 18%}' +
+      '.sg-dgc .nm{flex:1;min-width:0;display:flex;flex-direction:column}' +
+      '.sg-dgc .nm b{font-size:11.5px;color:#e8dfc8}.sg-dgc .nm small{font-size:9.5px;color:var(--ink-3,#8b93a3)}' +
+      '.sg-dgc .tp{font-size:11px;color:#c9a45c;white-space:nowrap}' +
+      '.sg-dgc .lead{font-style:normal;background:#c9a45c;color:#1a1206;border-radius:5px;padding:0 4px;font-size:9px}' +
+      '.sg-dgc.my{border-color:rgba(201,164,92,.3)}' +
+      '@media(max-width:720px){.sg-sgrid{grid-template-columns:repeat(2,1fr)}}' +
+      '</style>' +
+      '<div class="sg-siegeinfo">' +
+      '<div class="sg-sbanner"><b>' + esc(cn) + '</b><span class="fw">' + esc(wl.lord) + " · " + esc(wl.title || "") + "</span>" +
+      "<small>" + esc(wl.act || "") + "　·　" + esc(m.py || "") + " " + esc(m.lv || "") + "</small></div>" +
+      '<div class="sg-sgrid">' +
+      '<div class="sg-scell"><small>' + gt("warGuardT") + "</small><b>⚔ " + fmt(foeP) + "</b></div>" +
+      '<div class="sg-scell"><small>' + gt("warWoundT") + "</small><b style=\"color:#e79a9a\">⚕ " + fmt(ec.wounded || 0) + "</b></div>" +
+      '<div class="sg-scell"><small>' + gt("warWallT") + "</small><b>Lv." + (ec.lv || 5) + "</b></div>" +
+      '<div class="sg-scell"><small>' + gt("warMoraleT") + "</small><b>" + fmt(ec.morale || 60) + " / 熟练 " + fmt(ec.prof || 50) + "</b></div>" +
+      "</div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>' + gt("warDefT") + "</h3><span class=\"sp\"></span><small style=\"color:var(--ink-3)\">" + defs.length + " " + gt("warGensT") + "</small></div>" +
+      '<div class="sg-dglist">' + defRows + "</div>" +
+      '<div class="sg-panel-hd"><h3><i>·</i>' + gt("warMineArmyT") + "</h3><span class=\"sp\"></span><small style=\"color:" + hint[0] + "\">" + hint[1] + "</small></div>" +
+      '<div class="sg-dglist">' + (myRows || '<div class="sg-note">' + gt("warNoSquadT") + "</div>") + "</div>" +
+      '<div class="sg-note" style="line-height:1.9">' + gt("warRuleT") + "</div>" +
+      '<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">' +
+      '<button class="sgbtn primary" data-bat="siege-go" data-n="' + esc(cn) + '"' + (sq.length ? "" : " disabled") + ">⚔ " + gt("warAttackT") + "</button>" +
+      '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div></div>", "wide");
+  }
+  /* ---------- 攻城战：开战 ---------- */
+  function siegeGo(cn) {
+    var u = me(); if (!u) return;
+    ensureCity(u);
+    var w = warState(u), ec = w.cities[cn];
+    if (!ec) return toast(gt("warOwnedT"), "err");
+    var sq = warSquad(u);
+    if (!sq.length) return toast(T("needCard"), "err");
+    var ctx = { mates: sq };
+    var A = sq.map(function (c) { return unitOf(c, "A", ctx); }).filter(Boolean);
+    if (!A.length) return toast(T("needCard"), "err");
+    try { eliteAttachSquad(A, u); } catch (e) {}
+    var B = warDefenderUnits(cn);
+    if (!B.length) return toast(gt("warNoGuardT"), "err");
+    var res = simulate(A, B, null);
+    SGS = { cn: cn, lord: ec.lord, wl: warlordOf(cn), ec: ec, A: A, B: B, res: res, i: 0, fin: false, step: 1, squad: sq };
+    siegeStage();
+  }
+  var SGS = null;
+  function siegeAvOf(gid) {
+    var g = gById(gid), s = "";
+    try { s = (window.__SGAtlas && window.__SGAtlas.avFor && g) ? window.__SGAtlas.avFor(g) : ""; } catch (e) {}
+    return s;
+  }
+  function siegeStageHTML() {
+    var S = SGS, u = me();
+    var wl = S.wl || { lord: S.lord, color: "#a8544a", title: "" };
+    var colA = S.A.map(function (un, i) {
+      return '<div class="sg-sgcard a" data-side="A" data-ix="' + i + '"><span class="av">' + siegeAvOf(un.gid) + "</span>" +
+        "<b>" + esc(un.name) + '</b><div class="hp"><i style="width:100%"></i></div>' +
+        '<small class="tn">' + fmt(un.troopMax) + "</small></div>";
+    }).join("");
+    var colB = S.B.map(function (un, i) {
+      return '<div class="sg-sgcard b" data-side="B" data-ix="' + i + '"><span class="av">' + siegeAvOf(un.gid) + "</span>" +
+        "<b>" + esc(un.name) + '</b><div class="hp"><i style="width:100%"></i></div>' +
+        '<small class="tn">' + fmt(un.troopMax) + "</small></div>";
+    }).join("");
+    return '<style>' +
+      '.sg-modal.sg-sgm{width:min(97vw,1180px)!important;max-width:1180px;background:#080b10;padding:0;border:1px solid rgba(201,164,92,.3);overflow:hidden}' +
+      '.sg-modal.sg-sgm .sg-x{color:#e8c988;z-index:9}' +
+      '.sg-sgwrap{position:relative;display:flex;flex-direction:column;height:min(88vh,700px);background-image:linear-gradient(180deg,rgba(12,16,24,.55),rgba(8,10,14,.86)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center}' +
+      '.sg-sgwrap::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,transparent 34%,rgba(0,0,0,.62) 100%)}' +
+      '.sg-sgtop{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(201,164,92,.18);background:linear-gradient(180deg,rgba(0,0,0,.62),transparent)}' +
+      '.sg-sgside{flex:1;min-width:0}' +
+      '.sg-sgside b{display:block;font-size:11px;letter-spacing:.1em;color:#c8bfa8;margin-bottom:3px}' +
+      '.sg-sgside.a{text-align:left}.sg-sgside.b{text-align:right}' +
+      '.sg-sgbar{height:7px;border-radius:99px;background:#1d222c;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.8)}' +
+      '.sg-sgbar i{display:block;height:100%;width:100%;transition:width .22s ease}' +
+      '.sg-sgside.a .sg-sgbar i{background:linear-gradient(90deg,#4f9ad0,#8fd4f0)}' +
+      '.sg-sgside.b .sg-sgbar i{background:linear-gradient(90deg,#e0854a,#c0453a);float:right}' +
+      '.sg-sgside small{display:block;font-size:10px;color:#9aa3b2;margin-top:2px}' +
+      '.sg-sgrnd{flex:0 0 auto;text-align:center;padding:4px 14px;border:1px solid rgba(201,164,92,.45);border-radius:99px;background:rgba(0,0,0,.5);font-size:12px;color:#e8c988;letter-spacing:.1em;white-space:nowrap}' +
+      '.sg-sgstage{position:relative;z-index:2;flex:1;display:grid;grid-template-columns:1fr 92px 1fr;gap:6px;padding:12px 14px;align-items:start;overflow:hidden}' +
+      '.sg-sgcol{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:7px;align-content:start;max-height:100%;overflow:hidden}' +
+      '.sg-sgcard{position:relative;border:1px solid rgba(255,255,255,.13);border-radius:9px;background:rgba(8,11,16,.78);padding:4px;text-align:center;transition:transform .12s,border-color .18s,opacity .3s}' +
+      '.sg-sgcard .av{display:block;width:100%;height:44px;border-radius:6px;overflow:hidden;background:#141a22}' +
+      '.sg-sgcard .av img{width:100%;height:100%;object-fit:cover;object-position:center 16%}' +
+      '.sg-sgcard b{display:block;font-size:10.5px;color:#e8dfc8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.sg-sgcard .hp{height:5px;border-radius:99px;background:#20262f;overflow:hidden;margin:2px 0 1px}' +
+      '.sg-sgcard .hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#59b98a,#8fd694);transition:width .22s}' +
+      '.sg-sgcard.b .hp i{background:linear-gradient(90deg,#e0854a,#ffc08a)}' +
+      '.sg-sgcard small.tn{font-size:9px;color:#9aa3b2}' +
+      '.sg-sgcard.a{border-color:rgba(79,154,208,.5)}.sg-sgcard.b{border-color:rgba(224,133,74,.5)}' +
+      '.sg-sgcard.hit{animation:sgHit .22s ease}' +
+      '.sg-sgcard.atk{animation:sgAtk .2s ease}' +
+      '.sg-sgcard.dead{opacity:.4;filter:grayscale(1)}' +
+      '.sg-sgcard .ko{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#e0554a;text-shadow:0 2px 8px #000;font-weight:700}' +
+      '@keyframes sgHit{0%{transform:translateX(0)}30%{transform:translateX(-5px) scale(.97)}60%{transform:translateX(4px)}100%{transform:translateX(0)}}' +
+      '@keyframes sgAtk{0%{transform:translateY(0)}40%{transform:translateY(-5px) scale(1.04)}100%{transform:translateY(0)}}' +
+      '.sg-sgfloat{position:absolute;left:50%;top:16%;transform:translateX(-50%);font-size:15px;font-weight:700;color:#ffd06a;text-shadow:0 2px 6px #000;animation:sgFloat .9s ease-out forwards;pointer-events:none;z-index:5}' +
+      '.sg-sgfloat.cri{color:#ff7a5a;font-size:19px}.sg-sgfloat.sk{color:#8fd4f0;font-size:17px}' +
+      '@keyframes sgFloat{0%{opacity:0;transform:translate(-50%,6px) scale(.7)}20%{opacity:1;transform:translate(-50%,-2px) scale(1.15)}100%{opacity:0;transform:translate(-50%,-30px) scale(1)}}' +
+      '.sg-sgwall{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative}' +
+      '.sg-sgwall .ic{font-size:42px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.9))}' +
+      '.sg-sgwall small{font-size:9px;letter-spacing:.24em;color:#c9a45c;writing-mode:vertical-rl;text-orientation:upright;opacity:.8}' +
+      '.sg-sgwall.break .ic{animation:sgBreak .7s ease forwards}' +
+      '@keyframes sgBreak{0%{transform:scale(1)}40%{transform:scale(1.18) rotate(-4deg);filter:brightness(2.2)}100%{transform:scale(1) rotate(2deg);opacity:.55}}' +
+      '.sg-sgfoot{position:relative;z-index:2;padding:8px 16px 11px;border-top:1px solid rgba(201,164,92,.18);background:linear-gradient(0deg,rgba(0,0,0,.7),transparent);display:flex;align-items:flex-end;gap:12px}' +
+      '.sg-sglog{flex:1;min-width:0;max-height:72px;overflow:hidden;display:flex;flex-direction:column-reverse;gap:2px}' +
+      '.sg-sglog .ln{font-size:11px;color:#b8c0cc;line-height:1.5;animation:sgLn .25s ease}' +
+      '.sg-sglog .ln b{color:#ffb84a}' +
+      '@keyframes sgLn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}' +
+      '@media(max-width:760px){.sg-sgstage{grid-template-columns:1fr 44px 1fr;padding:8px}.sg-sgcard .av{height:36px}.sg-sgcol{grid-template-columns:repeat(auto-fill,minmax(60px,1fr))}}' +
+      "</style>" +
+      '<div class="sg-sgwrap">' +
+      '<div class="sg-sgtop">' +
+      '<div class="sg-sgside a"><b>⚔ ' + gt("warOurArmyT") + '</b><div class="sg-sgbar"><i id="sgBarA"></i></div><small id="sgTxtA"></small></div>' +
+      '<div class="sg-sgrnd" id="sgRound">' + gt("warRoundT", { n: 1 }) + "</div>" +
+      '<div class="sg-sgside b"><b>' + esc(S.lord) + " " + gt("warDefArmyT") + '</b><div class="sg-sgbar"><i id="sgBarB"></i></div><small id="sgTxtB"></small></div>' +
+      "</div>" +
+      '<div class="sg-sgstage">' +
+      '<div class="sg-sgcol" id="sgColA">' + colA + "</div>" +
+      '<div class="sg-sgwall" id="sgWall"><span class="ic">🏯</span><small>' + esc(S.cn) + "</small></div>" +
+      '<div class="sg-sgcol" id="sgColB">' + colB + "</div>" +
+      "</div>" +
+      '<div class="sg-sgfoot"><div class="sg-sglog" id="sgLog"></div>' +
+      '<button class="sgbtn sm ghost" data-bat="siege-skip">' + gt("warSkipT") + "</button></div>" +
+      "</div>";
+  }
+  function siegeBars() {
+    var S = SGS; if (!S) return;
+    ["A", "B"].forEach(function (sd) {
+      var arr = S.res.units[sd] || [], tot = 0, max = 0;
+      arr.forEach(function (un) { tot += Math.max(0, un.troop || 0); max += un.troopMax || 0; });
+      var bar = document.getElementById("sgBar" + sd), txt = document.getElementById("sgTxt" + sd);
+      if (bar) bar.style.width = (max ? Math.max(0, tot / max * 100) : 0) + "%";
+      if (txt) txt.textContent = troopTxt(tot) + " / " + troopTxt(max);
+    });
+  }
+  function siegeCardSync(side, ix) {
+    var S = SGS; if (!S) return;
+    var un = (S.res.units[side] || [])[ix]; if (!un) return;
+    var el = document.querySelector('.sg-sgcard[data-side="' + side + '"][data-ix="' + ix + '"]');
+    if (!el) return;
+    var hp = el.querySelector(".hp i");
+    if (hp) hp.style.width = Math.max(0, Math.min(100, un.troopMax ? (un.troop || 0) / un.troopMax * 100 : 0)) + "%";
+    var tn = el.querySelector(".tn");
+    if (tn) tn.textContent = fmt(Math.max(0, Math.round(un.troop || 0)));
+    if (un.alive === false) el.classList.add("dead");
+  }
+  function siegeTick() {
+    var S = SGS; if (!S || S.fin) return;
+    if (!S.logs) S.logs = (S.res.log || []).filter(function (l) { return !l.story; });
+    if (S.i >= S.logs.length) return siegeSettle();
+    var l = S.logs[S.i++];
+    var tSide = l.s === "A" ? "B" : "A";
+    var rnd = document.getElementById("sgRound");
+    if (rnd && l.r) rnd.textContent = gt("warRoundT", { n: l.r });
+    var actor = document.querySelector('.sg-sgcard[data-side="' + l.s + '"][data-ix="' + (l.si || 0) + '"]');
+    if (actor) {
+      actor.classList.add("atk");
+      setTimeout(function () { actor.classList.remove("atk"); }, 200);
+    }
+    var tgt = document.querySelector('.sg-sgcard[data-side="' + tSide + '"][data-ix="' + (l.ti || 0) + '"]');
+    if (tgt && (l.d > 0 || l.ex > 0)) {
+      tgt.classList.add("hit");
+      setTimeout(function () { tgt.classList.remove("hit"); }, 230);
+      var fl = document.createElement("div");
+      fl.className = "sg-sgfloat" + (l.cri ? " cri" : "") + (l.sk ? " sk" : "");
+      fl.textContent = "-" + fmt((l.d || 0) + (l.ex || 0));
+      tgt.appendChild(fl);
+      setTimeout(function () { if (fl.parentNode) fl.parentNode.removeChild(fl); }, 900);
+    }
+    if (tgt && l.dead) {
+      tgt.classList.add("dead");
+      if (!tgt.querySelector(".ko")) tgt.insertAdjacentHTML("beforeend", '<span class="ko">溃</span>');
+    }
+    var lg = document.getElementById("sgLog");
+    if (lg) {
+      var txt = l.sd || ((l.s === "A" ? "我军 " : "守军 ") + (l.n || "") + " → " + (l.t || "") + " <b>-" + fmt(l.d || 0) + "</b>");
+      if (l.edge) txt += ' <span style="color:#8fd694">克制</span>';
+      if (l.weak) txt += ' <span style="color:#e79a9a">被克</span>';
+      var d = document.createElement("div");
+      d.className = "ln"; d.innerHTML = txt;
+      lg.insertBefore(d, lg.firstChild);
+      while (lg.children.length > 4) lg.removeChild(lg.lastChild);
+    }
+    siegeBars();
+    if (l.ti != null) siegeCardSync(tSide, l.ti);
+    if (l.si != null) siegeCardSync(l.s, l.si);
+    if (S.res.eR <= 0 && tSide === "B") {
+      var wall = document.getElementById("sgWall");
+      if (wall) wall.classList.add("break");
+    }
+    setTimeout(siegeTick, l.sk ? 300 : (l.cri ? 230 : 165));
+  }
+  function siegeSkip() {
+    var S = SGS; if (!S || S.fin) return;
+    S.i = (S.logs || []).length;
+    ["A", "B"].forEach(function (sd) { (S.res.units[sd] || []).forEach(function (un, i) { siegeCardSync(sd, i); }); });
+    siegeBars();
+    var rnd = document.getElementById("sgRound");
+    if (rnd) rnd.textContent = gt("warRoundT", { n: S.res.rounds || 1 });
+    var wall = document.getElementById("sgWall");
+    if (wall && S.res.eR <= 0) wall.classList.add("break");
+    siegeSettle();
+  }
+  function siegeStage() {
+    if (!SGS) return;
+    modal(siegeStageHTML(), "wide sg-sgm");
+    siegeBars();
+    var lg = document.getElementById("sgLog");
+    if (lg) lg.innerHTML = '<div class="ln" style="color:#8b93a3">' + gt("warStageT", { n: SGS.cn }) + "</div>";
+    setTimeout(siegeTick, 420);
+  }
+  /* ---------- 攻城结算 ---------- */
+  function siegeSettle() {
+    var S = SGS; if (!S || S.fin) return;
+    S.fin = true;
+    var u = me(); if (!u) return;
+    ensureCity(u);
+    var ec = S.ec, res = S.res;
+    var win = (res.eR <= 0) && (res.pR > 0);
+    var loss = 0, tot = 0;
+    S.A.forEach(function (un) {
+      var left = Math.max(0, un.troop || 0);
+      tot += un.troopMax || 0;
+      loss += Math.max(0, (un.troopMax || 0) - left);
+      var cd = (u.cards || []).filter(function (x) { return x.id === un.cid; })[0];
+      if (cd) {
+        cd.sold = Math.round(left);
+        try {
+          if (cd.arm) { armProf(cd, cd.arm); cd.prof[cd.arm] = Math.min(999, cd.prof[cd.arm] + armProfGain(res)); }
+        } catch (e) {}
+      }
+    });
+    S.loss = loss; S.tot = tot;
+    var c = ensureCity(u);
+    if (!win) {
+      ec.troops = Math.max(0, Math.round(res.eR || 0));
+      ec.wounded = (ec.wounded || 0) + Math.round(loss * 0.4);
+      ec.morale = Math.min(100, (ec.morale || 60) + 4);
+      ec.prof = Math.min(99, (ec.prof || 50) + 1);
+      var wnd = Math.round(loss * 0.45);
+      if (wnd > 0) c.wounded.push({ rec: gMonth(u) + 2, n: wnd });
+      warNews(u, "攻「" + S.cn + "」未克 · 折兵 " + fmt(loss), "bad");
+      save();
+      modal(siegeDefeatHTML(), "wide sg-vwm");
+      return;
+    }
+    var foeTot = S.B.reduce(function (s, b) { return s + (b.troopMax || 0); }, 0);
+    var lostFoe = Math.max(0, foeTot - Math.max(0, res.eR));
+    var cap = ec.cap || 5000;
+    S.vic = {
+      kill: lostFoe,
+      capt: Math.max(0, Math.round((ec.wounded || 0) + lostFoe * 0.18)),
+      loot: {
+        coin: Math.round(cap * 0.22), rice: Math.round(cap * 0.35), wood: Math.round(cap * 0.12),
+        copper: Math.round(cap * 0.08), iron: Math.round(cap * 0.08)
+      }
+    };
+    S.step = 1;
+    save();
+    siegeVictory();
+  }
+  /* ---------- 胜利画面（四步：破城 → 降卒 → 归降 → 结果） ---------- */
+  function siegeVicCSS() {
+    return '<style>' +
+      '.sg-modal.sg-vwm{width:min(94vw,760px)!important;max-width:760px;padding:0;background:#07090d;border:1px solid rgba(201,164,92,.4);overflow:hidden}' +
+      '.sg-modal.sg-vwm .sg-x{color:#e8c988;z-index:12}' +
+      '.sg-vw{position:relative;min-height:min(84vh,620px);display:flex;align-items:center;justify-content:center;padding:26px 24px;overflow:hidden;' +
+      'background-image:radial-gradient(ellipse at 50% 40%,rgba(201,164,92,.18),transparent 62%),linear-gradient(180deg,rgba(6,8,12,.86),rgba(6,8,12,.96)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center}' +
+      '.sg-vw.blood{background-image:radial-gradient(ellipse at 50% 40%,rgba(180,50,40,.24),transparent 62%),linear-gradient(180deg,rgba(10,4,4,.9),rgba(6,3,3,.97)),url(' + SG_IMG_BATTLEFIELD + ');background-size:cover;background-position:center}' +
+      '.sg-vw.in{flex-direction:column;gap:2px}' +
+      '.sg-vw-rays{position:absolute;left:50%;top:38%;width:170%;aspect-ratio:1;transform:translate(-50%,-50%);' +
+      'background:conic-gradient(from 0deg,rgba(232,201,136,.16) 0deg,transparent 12deg,rgba(232,201,136,.1) 24deg,transparent 38deg,rgba(232,201,136,.14) 52deg,transparent 66deg,rgba(232,201,136,.08) 80deg,transparent 96deg,rgba(232,201,136,.13) 112deg,transparent 128deg,rgba(232,201,136,.09) 146deg,transparent 164deg,rgba(232,201,136,.15) 182deg,transparent 200deg,rgba(232,201,136,.1) 218deg,transparent 236deg,rgba(232,201,136,.13) 254deg,transparent 272deg,rgba(232,201,136,.08) 292deg,transparent 310deg,rgba(232,201,136,.12) 328deg,transparent 350deg);' +
+      'animation:sgRays 26s linear infinite;pointer-events:none;opacity:.55;mask-image:radial-gradient(circle at center,#000 12%,transparent 62%);-webkit-mask-image:radial-gradient(circle at center,#000 12%,transparent 62%)}' +
+      '@keyframes sgRays{to{transform:translate(-50%,-50%) rotate(360deg)}}' +
+      '.sg-vw-in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;max-width:560px}' +
+      '.sg-vw-icon{font-size:46px;filter:drop-shadow(0 0 22px rgba(232,201,136,.7));animation:sgIcon 2.4s ease-in-out infinite}' +
+      '@keyframes sgIcon{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.09);opacity:1}}' +
+      '.sg-vw-title{margin-top:6px;font-size:clamp(30px,6vw,46px);font-weight:900;letter-spacing:.24em;text-indent:.24em;' +
+      'background:linear-gradient(180deg,#fff6d8,#e8c988 42%,#b98d3e 78%,#7a5a22);-webkit-background-clip:text;background-clip:text;color:transparent;' +
+      'filter:drop-shadow(0 3px 0 rgba(90,60,20,.55)) drop-shadow(0 8px 26px rgba(232,201,136,.42));animation:sgTitle .9s cubic-bezier(.2,1.5,.4,1) both}' +
+      '@keyframes sgTitle{0%{transform:scale(1.7);opacity:0;letter-spacing:.6em}60%{opacity:1}100%{transform:scale(1);opacity:1;letter-spacing:.24em}}' +
+      '.sg-vw-city{margin-top:2px;font-size:clamp(34px,8vw,58px);font-weight:900;letter-spacing:.1em;color:#f6e9c9;text-shadow:0 0 30px rgba(232,201,136,.55),0 4px 12px #000;animation:sgFade .8s .25s both}' +
+      '.sg-vw-foe{margin-top:2px;font-size:12.5px;letter-spacing:.16em;color:#c8bfa8;animation:sgFade .8s .4s both}' +
+      '.sg-vw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%;margin-top:18px;animation:sgFade .8s .5s both}' +
+      '.sg-vw-grid>div{border:1px solid rgba(201,164,92,.3);border-radius:10px;background:rgba(0,0,0,.44);padding:9px 6px}' +
+      '.sg-vw-grid small{display:block;font-size:10px;color:#9aa3b2;letter-spacing:.1em}' +
+      '.sg-vw-grid b{display:block;font-size:17px;color:#e8c988;margin-top:2px;font-variant-numeric:tabular-nums}' +
+      '.sg-vw-loot{margin-top:11px;font-size:11.5px;color:#b8c0cc;animation:sgFade .8s .6s both}' +
+      '.sg-vw-opts{display:flex;flex-direction:column;gap:10px;width:100%;max-width:440px;margin-top:20px;animation:sgFade .7s .3s both}' +
+      '.sg-opt{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:12px 15px;border:1px solid rgba(201,164,92,.4);border-radius:12px;' +
+      'background:linear-gradient(100deg,rgba(0,0,0,.62),rgba(0,0,0,.34));color:#e8dfc8;cursor:pointer;font-family:inherit;transition:transform .14s,border-color .18s,background .18s}' +
+      '.sg-opt:hover{transform:translateY(-2px);border-color:#e8c988;background:linear-gradient(100deg,rgba(201,164,92,.2),rgba(0,0,0,.4))}' +
+      '.sg-opt .oi{font-size:22px;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.8))}' +
+      '.sg-opt b{display:block;font-size:14.5px;letter-spacing:.08em}' +
+      '.sg-opt small{display:block;font-size:10.5px;color:#a9b2c0;margin-top:2px;line-height:1.5}' +
+      '.sg-opt.ok{border-color:rgba(143,214,148,.5)}.sg-opt.ok:hover{border-color:#8fd694;background:linear-gradient(100deg,rgba(60,140,90,.24),rgba(0,0,0,.4))}' +
+      '.sg-opt.no{border-color:rgba(224,85,74,.5)}.sg-opt.no:hover{border-color:#e0554a;background:linear-gradient(100deg,rgba(150,40,32,.3),rgba(0,0,0,.4))}' +
+      '.sg-opt.no b{color:#ffb3b3}' +
+      '.sg-vw-big{font-size:clamp(38px,8vw,56px);font-weight:900;color:#e8c988;letter-spacing:.05em;text-shadow:0 0 26px rgba(232,201,136,.5);animation:sgFade .7s .1s both}' +
+      '.sg-vw-kicker{margin-top:6px;font-size:11px;letter-spacing:.34em;color:#9aa3b2;animation:sgFade .7s .2s both}' +
+      '.sg-vw-name{font-size:clamp(28px,6vw,40px);font-weight:900;letter-spacing:.16em;color:#f6e9c9;margin-top:2px;text-shadow:0 3px 14px #000;animation:sgFade .7s .3s both}' +
+      '.sg-vw-quote{margin-top:12px;font-size:13px;line-height:1.9;color:#cfc6ae;max-width:420px;padding:10px 14px;border-left:2px solid rgba(201,164,92,.55);background:rgba(0,0,0,.34);text-align:left;animation:sgFade .7s .4s both}' +
+      '.sg-vw-ask{margin-top:16px;font-size:13.5px;letter-spacing:.12em;color:#e8c988;animation:sgFade .7s .5s both}' +
+      '.sg-vw-av{width:118px;height:118px;border-radius:50%;overflow:hidden;border:2px solid rgba(201,164,92,.6);box-shadow:0 0 34px rgba(232,201,136,.35),inset 0 0 20px rgba(0,0,0,.8);margin-bottom:6px;animation:sgAv .8s cubic-bezier(.2,1.4,.4,1) both}' +
+      '.sg-vw-av img{width:100%;height:100%;object-fit:cover;object-position:center 14%;filter:saturate(.85) contrast(1.05)}' +
+      '@keyframes sgAv{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}' +
+      '@keyframes sgFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
+      '.sg-vw-res{margin-top:16px;width:100%;max-width:440px;border:1px solid rgba(201,164,92,.34);border-radius:12px;background:rgba(0,0,0,.46);padding:12px 14px;text-align:left;animation:sgFade .7s .3s both}' +
+      '.sg-vw-res .rl{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#c8d0dc;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.08)}' +
+      '.sg-vw-res .rl:last-child{border:0}.sg-vw-res .rl b{color:#e8c988}' +
+      '.sg-vw-t3{font-size:clamp(26px,5.4vw,38px);font-weight:900;letter-spacing:.18em;color:#f6e9c9;text-shadow:0 0 26px rgba(232,201,136,.45),0 4px 12px #000;animation:sgFade .8s .15s both}' +
+      '.sg-vw.blood .sg-vw-t3{color:#ffb3b3;text-shadow:0 0 26px rgba(224,60,48,.6),0 4px 12px #000}' +
+      '@media(max-width:520px){.sg-vw-grid{grid-template-columns:1fr}.sg-vw{min-height:auto;padding:20px 14px}}' +
+      "</style>";
+  }
+  function siegeVictory() {
+    if (!SGS) return;
+    modal(siegeVicCSS() + siegeVictoryBody(), "wide sg-vwm");
+  }
+  function siegeVictoryBody() {
+    var S = SGS; if (!S) return "";
+    var step = S.step || 1;
+    if (step === 1) {
+      var v = S.vic || { kill: 0, capt: 0, loot: {} };
+      var lt = v.loot || {};
+      return '<div class="sg-vw"><div class="sg-vw-rays"></div><div class="sg-vw-in">' +
+        '<div class="sg-vw-icon">⚔</div>' +
+        '<div class="sg-vw-title">' + gt("warVicT") + "</div>" +
+        '<div class="sg-vw-city">' + esc(S.cn) + "</div>" +
+        '<div class="sg-vw-foe">' + esc(S.lord) + " · " + esc((S.wl && S.wl.title) || "") + "</div>" +
+        '<div class="sg-vw-grid">' +
+        "<div><small>" + gt("warKillT") + "</small><b>" + fmt(v.kill) + "</b></div>" +
+        "<div><small>" + gt("warLossT") + "</small><b>" + fmt(S.loss || 0) + "</b></div>" +
+        "<div><small>" + gt("warCaptT") + "</small><b>" + fmt(v.capt) + "</b></div>" +
+        "</div>" +
+        '<div class="sg-vw-loot">' + gt("warLootT") + "　🪙 " + fmt(lt.coin || 0) + "　🌾 " + fmt(lt.rice || 0) + "　🪵 " + fmt(lt.wood || 0) + "　🔩 " + fmt(lt.iron || 0) + "　⛏ " + fmt(lt.copper || 0) + "</div>" +
+        '<div class="sg-vw-opts"><button class="sg-opt" data-bat="wv-step" data-n="2"><span class="oi">🏳</span><span><b>' + gt("warNextT") + "</b><small>" + gt("warNextHintT") + "</small></span></button></div>" +
+        "</div></div>";
+    }
+    if (step === 2) {
+      var cap = (S.vic && S.vic.capt) || 0;
+      return '<div class="sg-vw in"><div class="sg-vw-in">' +
+        '<div class="sg-vw-kicker">' + gt("warCaptKickT") + "</div>" +
+        '<div class="sg-vw-big">⚕ ' + fmt(cap) + "</div>" +
+        '<div class="sg-vw-foe">' + esc(S.cn) + " · " + esc(S.lord) + gt("warCaptOwnT") + "</div>" +
+        '<div class="sg-vw-opts">' +
+        '<button class="sg-opt ok" data-bat="wv-wounded" data-k="rel"><span class="oi">🌾</span><span><b>' + gt("warRelT") + "</b><small>" + gt("warRelHintT", { n: fmt(cap), p: fmt(cap * 3) }) + "</small></span></button>" +
+        '<button class="sg-opt" data-bat="wv-wounded" data-k="enl"><span class="oi">⚔</span><span><b>' + gt("warEnlT") + "</b><small>" + gt("warEnlHintT", { n: fmt(cap) }) + "</small></span></button>" +
+        "</div></div></div>";
+    }
+    if (step === 3) {
+      var g = (GENS() || []).filter(function (x) { return x.name === S.lord; })[0];
+      var av = g ? siegeAvOf(g.id) : "";
+      return '<div class="sg-vw"><div class="sg-vw-in">' +
+        (av ? '<div class="sg-vw-av">' + av + "</div>" : '<div class="sg-vw-icon">🏳</div>') +
+        '<div class="sg-vw-kicker">' + gt("warPrisonerT") + "</div>" +
+        '<div class="sg-vw-name">' + esc(S.lord) + "</div>" +
+        '<div class="sg-vw-quote">' + gt("warQuoteT", { n: esc(S.lord) }) + "</div>" +
+        '<div class="sg-vw-ask">' + gt("warAskT") + "</div>" +
+        '<div class="sg-vw-opts">' +
+        '<button class="sg-opt ok" data-bat="wv-surrender" data-k="yes"><span class="oi">🏛</span><span><b>' + gt("warYesT") + "</b><small>" + gt("warYesHintT", { c: esc(S.cn) }) + "</small></span></button>" +
+        '<button class="sg-opt no" data-bat="wv-surrender" data-k="no"><span class="oi">⚔</span><span><b>' + gt("warNoT") + "</b><small>" + gt("warNoHintT", { n: esc(S.lord) }) + "</small></span></button>" +
+        "</div></div></div>";
+    }
+    /* step 4：结果 */
+    if (S.exec) {
+      return '<div class="sg-vw blood"><div class="sg-vw-in">' +
+        '<div class="sg-vw-icon">⚔</div>' +
+        '<div class="sg-vw-t3">' + gt("warExecT") + "</div>" +
+        '<div class="sg-vw-name" style="animation-delay:.3s">' + esc(S.lord) + "</div>" +
+        '<div class="sg-vw-quote" style="border-color:#e0554a">' + gt("warExecQuoteT", { n: esc(S.lord), c: esc(S.cn) }) + "</div>" +
+        '<div class="sg-vw-res"><div class="rl"><span>' + gt("warExecEffT") + "</span><b>" + gt("warExecEff2T") + "</b></div>" +
+        '<div class="rl"><span>' + gt("warCityOwnT") + "</span><b>" + esc(S.cn) + "</b></div></div>" +
+        '<div class="sg-vw-opts"><button class="sg-opt" data-bat="wv-close"><span class="oi">🗺</span><span><b>' + gt("warBackT") + "</b><small>" + gt("warBackHintT") + "</small></span></button></div>" +
+        "</div></div>";
+    }
+    var h = S.houseInfo || {};
+    var _u = me();
+    var need = _u ? houseMonthlyCost(_u) : { n: 0, coin: 0, rice: 0 };
+    return '<div class="sg-vw"><div class="sg-vw-rays"></div><div class="sg-vw-in">' +
+      '<div class="sg-vw-icon">🏛</div>' +
+      '<div class="sg-vw-t3">' + gt("warHouseT") + "</div>" +
+      '<div class="sg-vw-name" style="animation-delay:.3s">' + esc(S.lord) + gt("warHouseSfxT") + "</div>" +
+      '<div class="sg-vw-foe">' + esc(S.cn) + " · " + gt("warHouseCityT") + "</div>" +
+      '<div class="sg-vw-res">' +
+      '<div class="rl"><span>' + gt("warSalT") + "</span><b>🪙 " + fmt(HOUSE_SAL.coin) + "　🌾 " + fmt(HOUSE_SAL.rice) + "</b></div>" +
+      '<div class="rl"><span>' + gt("warSalFromT") + "</span><b>" + gt("warSalFrom2T") + "</b></div>" +
+      '<div class="rl"><span>' + gt("warHouseCntT") + "</span><b>" + need.n + gt("warHouseUnitT") + "　" + gt("warSalSumT", { c: fmt(need.coin), r: fmt(need.rice) }) + "</b></div>" +
+      "</div>" +
+      '<div class="sg-vw-loot">' + gt("warHouseTipT") + "</div>" +
+      '<div class="sg-vw-opts"><button class="sg-opt" data-bat="wv-close"><span class="oi">🗺</span><span><b>' + gt("warBackT") + "</b><small>" + gt("warBackHintT") + "</small></span></button></div>" +
+      "</div></div>";
+  }
+  function siegeDefeatHTML() {
+    var S = SGS; if (!S) return "";
+    var ec = S.ec || {};
+    return siegeVicCSS() +
+      '<div class="sg-vw"><div class="sg-vw-in">' +
+      '<div class="sg-vw-icon" style="filter:drop-shadow(0 0 18px rgba(224,85,74,.6))">🛡</div>' +
+      '<div class="sg-vw-t3" style="color:#cdd5e0">' + gt("warFailT") + "</div>" +
+      '<div class="sg-vw-city" style="color:#9aa3b2">' + esc(S.cn) + "</div>" +
+      '<div class="sg-vw-grid">' +
+      "<div><small>" + gt("warLossT") + "</small><b>" + fmt(S.loss || 0) + "</b></div>" +
+      "<div><small>" + gt("warFoeLeftT") + "</small><b>" + fmt(ec.troops || 0) + "</b></div>" +
+      "<div><small>" + gt("warRoundT", { n: S.res.rounds || 1 }) + "</small><b>" + gt("warRetreatT") + "</b></div>" +
+      "</div>" +
+      '<div class="sg-vw-loot">' + gt("warFailHintT") + "</div>" +
+      '<div class="sg-vw-opts"><button class="sg-opt" data-bat="wv-close"><span class="oi">🗺</span><span><b>' + gt("warBackT") + "</b><small>" + gt("warBackHintT") + "</small></span></button></div>" +
+      "</div></div>";
+  }
+  /* ---------- 胜利流程推进 ---------- */
+  function wvStep(n) {
+    if (!SGS) return;
+    SGS.step = n || 2;
+    siegeVictory();
+  }
+  function wvWounded(k) {
+    var S = SGS, u = me(); if (!S || !u) return;
+    var nc = siegeCapture(u, S, k);
+    S.captured = true;
+    S.step = 3;
+    save();
+    siegeVictory();
+  }
+  function wvSurrender(k) {
+    var S = SGS, u = me(); if (!S || !u) return;
+    if (k === "yes") {
+      S.houseInfo = houseSurrender(u, S);
+      S.exec = false;
+    } else {
+      houseExecute(u, S);
+      S.exec = true;
+    }
+    S.step = 4;
+    save();
+    try { if (SGCloud && SGCloud.pushNow) SGCloud.pushNow(); } catch (e) {}
+    siegeVictory();
+  }
+  function siegeCapture(u, S, woundedMode) {
+    ensureCity(u);
+    var ec = S.ec, cn = S.cn;
+    if ((u.bat.owned || []).indexOf(cn) < 0) u.bat.owned.push(cn);
+    var nc = newCityObj(cn);
+    nc.name = cn;
+    nc.lv = Math.max(1, Math.round((ec.lv || 5) * 0.8));
+    var lt = (S.vic && S.vic.loot) || {};
+    nc.res = {
+      rice: Math.round(lt.rice || 0), wood: Math.round(lt.wood || 0), copper: Math.round(lt.copper || 0),
+      iron: Math.round(lt.iron || 0), coin: Math.round(lt.coin || 0)
+    };
+    nc.pool = 0;
+    nc.morale = 58;
+    nc.mood = 60;
+    u.bat.cities[cn] = nc;
+    var w = warState(u);
+    delete w.cities[cn];
+    var cap = (S.vic && S.vic.capt) || 0;
+    if (woundedMode === "enl") {
+      nc.pool = cap;
+      S.enlisted = cap;
+      warNews(u, "「" + cn + "」既下 · 俘获伤兵 " + fmt(cap) + " 编入我军", "ok");
+    } else {
+      nc.popAdd = (nc.popAdd || 0) + cap * 3;
+      S.released = cap;
+      try { addPoints(u, Math.round(cap / 10), gt("warRelReasonT", { n: cn })); } catch (e) {}
+      warNews(u, "「" + cn + "」既下 · 俘获伤兵 " + fmt(cap) + " 放归田野", "ok");
+    }
+    return nc;
+  }
+  /* ---------- 归降府邸 ---------- */
+  function houseSurrender(u, S) {
+    var w = warState(u);
+    var g = (GENS() || []).filter(function (x) { return x.name === S.lord; })[0];
+    var h = {
+      lord: S.lord, city: S.cn, gid: g ? g.id : "", since: gMonth(u),
+      paid: 0, loyal: 78, arrears: 0,
+      title: (S.wl && S.wl.title) || "", color: (S.wl && S.wl.color) || "#c9a45c"
+    };
+    w.houses.push(h);
+    var nc = (u.bat.cur === S.cn) ? u.bat.city : u.bat.cities[S.cn];
+    if (nc) nc.house = S.lord;
+    warNews(u, "「" + S.cn + "」归降 · " + S.lord + " 府邸立于城中，岁给俸禄", "ok");
+    return h;
+  }
+  function houseExecute(u, S) {
+    var w = warState(u);
+    w.executed.push({ lord: S.lord, city: S.cn, gm: gMonth(u) });
+    Object.keys(w.cities).forEach(function (cn) {
+      var c = w.cities[cn];
+      if (c.lord === S.lord) { c.morale = Math.max(20, (c.morale || 60) - 18); c.troops = Math.round((c.troops || 0) * 0.9); }
+    });
+    var nc = (u.bat.cur === S.cn) ? u.bat.city : u.bat.cities[S.cn];
+    if (nc) nc.house = "";
+    warNews(u, "满门抄斩 · " + S.lord + " 一族尽诛于" + S.cn, "bad");
+  }
+  /* ---------- 大殿 · 降将府邸页签 ---------- */
+  function housesTabHTML(u) {
+    ensureCity(u);
+    var w = warState(u), hs = w.houses || [];
+    var cost = houseMonthlyCost(u), c = ensureCity(u), r = c.res || u.res;
+    var lp = w.lastPay;
+    var head = '<div class="sg-note" style="margin:2px 0 10px;line-height:1.95">🏛 ' + gt("warHouseTabHintT") + "</div>" +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-bottom:10px">' +
+      '<div class="sg-palrow" style="margin:0;padding:8px 10px"><small style="color:var(--ink-3);font-size:9.5px">' + gt("warHouseCntT") + '</small><div><b style="color:#e8c988;font-size:16px">' + cost.n + "</b> " + gt("warHouseUnitT") + "</div></div>" +
+      '<div class="sg-palrow" style="margin:0;padding:8px 10px"><small style="color:var(--ink-3);font-size:9.5px">' + gt("warSalSumT", { c: "", r: "" }) + '（月）</small><div><b style="color:#e8c988;font-size:13px">🪙 ' + fmt(cost.coin) + "　🌾 " + fmt(cost.rice) + "</b></div></div>" +
+      '<div class="sg-palrow" style="margin:0;padding:8px 10px"><small style="color:var(--ink-3);font-size:9.5px">' + gt("warStockT") + '</small><div><b style="font-size:12px">🪙 ' + fmt(r.coin || 0) + "　🌾 " + fmt(r.rice || 0) + "</b></div></div>" +
+      (lp ? '<div class="sg-palrow" style="margin:0;padding:8px 10px"><small style="color:var(--ink-3);font-size:9.5px">' + gt("warLastPayT") + '</small><div><b style="font-size:12px;color:' + (lp.short ? "#e79a9a" : "#8fd694") + '">' + gt("warSalSumT", { c: fmt(lp.coin), r: fmt(lp.rice) }) + (lp.short ? " · " + gt("warArrearT", { n: fmt(lp.short) }) : "") + "</b></div></div>" : "") +
+      "</div>";
+    if (!hs.length) {
+      return head + '<div class="sg-palrow" style="text-align:center;padding:22px 12px;opacity:.85">' +
+        '<div style="font-size:26px;margin-bottom:6px">🏛</div>' +
+        '<div style="font-size:12.5px;color:#c8bfa8">' + gt("warNoHouseT") + "</div>" +
+        '<div class="sg-note" style="margin-top:6px">' + gt("warNoHouseHintT") + "</div></div>";
+    }
+    return head + hs.map(function (h) {
+      var g = h.gid ? gById(h.gid) : null;
+      var av = g ? siegeAvOf(g.id) : "";
+      var city = h.city;
+      var own = (u.bat.owned || []).indexOf(city) >= 0;
+      var loyal = h.loyal == null ? 78 : h.loyal;
+      var lc = loyal >= 75 ? "#8fd694" : loyal >= 50 ? "#e8c988" : "#e79a9a";
+      return '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.3);border-radius:11px;padding:10px 12px;margin-bottom:8px;background:linear-gradient(100deg,rgba(201,164,92,.07),rgba(0,0,0,.42))">' +
+        '<div style="display:flex;gap:10px;align-items:center">' +
+        '<span style="width:44px;height:44px;border-radius:9px;overflow:hidden;flex:none;border:1px solid rgba(201,164,92,.45);background:#141a22">' + av + "</span>" +
+        '<span style="flex:1;min-width:0">' +
+        '<b style="color:#e8c988;font-size:14px">' + esc(h.lord) + "</b>" +
+        '<small style="color:var(--ink-3);margin-left:6px">' + esc(h.title || "") + "</small>" +
+        '<small style="display:block;color:#a9b2c0;font-size:10.5px;margin-top:2px">' + gt("warHouseAtT", { n: esc(city) }) +
+        (own ? ' <span style="color:#8fd694">● ' + gt("warHeldTagT") + "</span>" : ' <span style="color:#e79a9a">○ ' + gt("warLostTagT") + "</span>") + "</small>" +
+        "</span>" +
+        '<span style="text-align:right;font-size:10.5px;color:#a9b2c0">' + gt("warPaidT", { n: h.paid || 0 }) + "<br>" +
+        '<b style="color:' + lc + '">' + gt("warLoyalT") + " " + loyal + "</b></span>" +
+        "</div>" +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:7px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.09);font-size:11px;color:#c8d0dc">' +
+        "<span>🪙 " + fmt(HOUSE_SAL.coin) + " / " + gt("warMonthT") + "</span>" +
+        "<span>🌾 " + fmt(HOUSE_SAL.rice) + " / " + gt("warMonthT") + "</span>" +
+        '<span style="color:var(--ink-3)">' + gt("warSinceT", { n: gameDate(h.since || 0).y + "." + gameDate(h.since || 0).mo }) + "</span>" +
+        (h.arrears ? '<span style="color:#e79a9a">' + gt("warArrearT", { n: fmt(h.arrears) }) + "</span>" : "") +
+        "</div></div>";
+    }).join("") +
+      (w.executed && w.executed.length ? '<div class="sg-panel-hd" style="margin-top:12px"><h3><i>·</i>' + gt("warExecListT") + "</h3></div>" +
+        w.executed.slice(-6).reverse().map(function (e) {
+          return '<div class="sg-palrow" style="border-color:rgba(224,85,74,.3);background:rgba(120,30,24,.12);padding:7px 11px;margin-bottom:5px;font-size:11.5px">⚔ <b style="color:#ffb3b3">' + esc(e.lord) + "</b> <small style='color:var(--ink-3)'>" + gt("warExecRowT", { n: esc(e.city) }) + "</small></div>";
+        }).join("") : "") +
+      '<div class="sg-note" style="opacity:.72;margin-top:8px;line-height:1.8"><small>' + gt("warHouseRuleT") + "</small></div>";
+  }
+
   function cityListHTML(u) {
+    return warCityListHTML(u);
+  }
+  function cityListHTMLLegacy(u) {
     ensureCity(u);
     var owned = u.bat.owned || [];
     return CITY_SLOTS.map(function (cn) {
@@ -14766,7 +15818,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       raidBar + mapTog + mapBlock +
       teamPanelHTML(u) +
       defLogHTML(u);   /* V61：按需求移除「胡商来市 · 丝路胡商」板块 */
-    return '<div style="display:grid;grid-template-columns:1fr 216px;gap:16px;align-items:start" class="bat-grid"><div>' + main +
+    return '<div style="display:grid;grid-template-columns:1fr 252px;gap:16px;align-items:start" class="bat-grid"><div>' + main +
       "</div><div><div class=\"sg-panel-hd\" style=\"margin-bottom:8px\"><h3><i>·</i>🗺 " + T("myCities") + "</h3></div>" + cityRows +
       '<div class="sg-note" style="margin-top:8px;font-size:10.5px;line-height:1.5">🔓 ' + T("unlockAsk", { n: T("unlockCity") }).replace(/<[^>]+>/g, "") + "</div>" +
       '<style>.sg-cityrow{width:100%;display:flex;align-items:center;gap:7px;text-align:left;padding:8px 9px;border:1px solid var(--line-2,#3a3f4a);border-radius:9px;background:transparent;color:var(--ink-2,#c8d0dc);font-size:12px;margin-bottom:6px;cursor:pointer}' +
@@ -16533,6 +17585,16 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     switch (act) {
       /* ---------- V23 内政 ---------- */
       case "pal-tab": BATUI.palTab = t.getAttribute("data-k") || "off"; palaceOpen(); return;
+      /* ---------- V79 天下城池 · 攻城略地 ---------- */
+      case "siege-open": siegeOpen(t.getAttribute("data-n")); return;
+      case "siege-go": siegeGo(t.getAttribute("data-n")); return;
+      case "siege-skip": siegeSkip(); return;
+      case "wv-step": wvStep(parseInt(t.getAttribute("data-n"), 10) || 2); return;
+      case "wv-wounded": wvWounded(t.getAttribute("data-k")); return;
+      case "wv-surrender": wvSurrender(t.getAttribute("data-k")); return;
+      case "wv-close": SGS = null; closeModal(); BATUI.tab = "home"; refreshBattle(); return;
+      case "war-filter": BATUI.warFilter = t.getAttribute("data-k") || "all"; refreshBattle(); return;
+      case "war-houses": BATUI.palTab = "houses"; palaceOpen(); return;
       /* V65：编队页切换阵形（同队共享，影响攻防速与相克） */
       case "team-form": {
         var tiF = +t.getAttribute("data-t"), kF = t.getAttribute("data-k");
