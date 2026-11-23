@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T06:46:33.198Z"
+  "updated": "2026-11-23T06:47:33.605Z"
  },
  "econ": {
   "coin": 0.012,
@@ -34,7 +34,7 @@
   },
   {
    "k": "mode",
-   "p": 1
+   "p": 0
   }
  ],
  "military": {
