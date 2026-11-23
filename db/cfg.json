@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T05:05:39.318Z"
+  "updated": "2026-11-23T06:45:28.767Z"
  },
  "econ": {
   "coin": 0.012,
@@ -87,9 +87,6 @@
   "uhTitles": "伍长,什长,队率,屯长,军候,军司马,校尉,将军"
  },
  "popmodel": {
-  "chaos": 0.3,
-  "disFarm": 25,
-  "disGrowthOff": 1,
   "disKinds": {
    "drought": 30,
    "flood": 25,
@@ -97,32 +94,35 @@
    "plague": 15,
    "war": 10
   },
-  "disLoss": 6,
-  "disRate": 12,
-  "growYear": 10,
   "policy": {
    "farm": {
+    "rice": 1.2,
     "coin": 0.9,
-    "exp": 1,
     "pop": 1.25,
     "rec": 1,
-    "rice": 1.2
+    "exp": 1
    },
    "trade": {
+    "rice": 0.9,
     "coin": 1.2,
-    "exp": 1,
     "pop": 0.95,
     "rec": 0.95,
-    "rice": 0.9
+    "exp": 1
    },
    "war": {
+    "rice": 1,
     "coin": 1,
-    "exp": 1.1,
     "pop": 0.8,
     "rec": 0.85,
-    "rice": 1
+    "exp": 1.1
    }
-  }
+  },
+  "growYear": 10,
+  "chaos": 0.3,
+  "disRate": 12,
+  "disLoss": 6,
+  "disFarm": 50,
+  "disGrowthOff": 1
  },
  "shop": [
   {
