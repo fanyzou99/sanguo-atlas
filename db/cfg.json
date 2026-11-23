@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T00:07:02.183Z"
+  "updated": "2026-11-23T01:18:27.541Z"
  },
  "econ": {
   "coin": 0.012,
@@ -261,7 +261,7 @@
   ]
  },
  "popcap": {
-  "洛阳": 1000000,
+  "洛阳": 1500000,
   "长安": 720000,
   "许昌": 770000,
   "邺": 865000,
