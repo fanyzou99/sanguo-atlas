@@ -1570,6 +1570,23 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ["uhMinB", "万人级·最小管控单位（人）", 1, 10000, "万人级作战最小管控单位 = 队（默认 50 人）；不足一个管控单位的杀伤不记战损"]
   ];
   var milRows = null;
+  /* ---------- V70：军事模型功能分区（可折叠） ----------
+     后续扩展：在 MIL_COLS 加参数行后，把 key 挂进对应组的 keys 即可归区；
+     忘记归区的参数会自动落到末尾「其他参数」组，不会丢失。 */
+  var MIL_GROUPS = [
+    { icon: "🏹", title: "募兵限制（全站生效）", desc: "人口比例 · 单城上限 · 盗贼封顶", open: true,
+      keys: ["popPct", "cityCap", "mobCap"] },
+    { icon: "🌾", title: "军资消耗与屯田", desc: "募兵粮/钱/铜/铁 · 士兵务农产粮", open: true,
+      keys: ["recRice", "recCoin", "recCopper", "recIron", "farmRice"] },
+    { icon: "🎖", title: "点将台与带兵能力", desc: "部队数/带兵上限 · 编队武将数 · 等级兑现率", open: true,
+      keys: ["armyCap", "armyMax", "armySlot", "lvBase"] },
+    { icon: "🎯", title: "特种兵 · 训练体系（V68）", desc: "训练消耗 · 批量人数 · 转化比 · 训练月数 · 营编制", open: false,
+      keys: ["eliteCost", "e68BatchStd", "e68RatioStd", "e68MStd", "e68BatchMid", "e68RatioMid", "e68MMid", "e68BatchTop", "e68RatioTop", "e68MTop", "e68Cap"] },
+    { icon: "⚔", title: "特种兵 · 战斗规则（V68）", desc: "战力倍率 · 折损比 · 智力免疫 · 士气换损 · 统领门槛 · 伤兵", open: false,
+      keys: ["e68PowStd", "e68PowMid", "e68PowTop", "e68LossDenom", "e68IntImmune", "e68ExchHi", "e68ExchLo", "e68LeadSt", "e68LeadWu", "e68WoundPct"] },
+    { icon: "🛡", title: "汉制编制层级（V69）", desc: "伍/什/队/屯/曲/部/营/军 · 最小管控单位分档 · 军官职名", open: false,
+      keys: ["uhWu", "uhShi", "uhDui", "uhTun", "uhQu", "uhBu", "uhYing", "uhJun", "uhScaleBig", "uhScaleMid", "uhMinS", "uhMinM", "uhMinB"], titles: true }
+  ];
   var MIL_TITLES_DEF = "伍长,什长,队率,屯长,军候,军司马,校尉,将军";
   var milTitles = MIL_TITLES_DEF;
   function milDef() { return JSON.parse(JSON.stringify(MIL_DEF_A)); }
@@ -1591,17 +1608,30 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   }
   function milPaint() {
     if (!milRows) milRows = milDef();
-    $("#milTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' +
-      MIL_COLS.map(function (col) {
-        var k = col[0];
+    /* V70：未归组的参数自动落入「其他参数」组，保证扩展时不丢配置 */
+    var covered = {};
+    MIL_GROUPS.forEach(function (g) { g.keys.forEach(function (k) { covered[k] = 1; }); });
+    var rest = MIL_COLS.filter(function (c) { return !covered[c[0]]; }).map(function (c) { return c[0]; });
+    var groups = MIL_GROUPS.concat(rest.length ? [{ icon: "📦", title: "其他参数（未分组）", desc: "新加入 MIL_COLS 但尚未归区的参数", open: false, keys: rest }] : []);
+    function grpHTML(gr) {
+      var rows = gr.keys.map(function (k) {
+        var col = MIL_COLS.filter(function (x) { return x[0] === k; })[0];
+        if (!col) return "";
         return '<tr><td><b>' + esc(col[1]) + '</b><div class="muted" style="font-size:11px">' + k + "</div></td>" +
           '<td><input class="btn mil-in" data-k="' + k + '" type="number" step="' + (k === "farmRice" ? "0.005" : "1") + '" min="' + col[2] + '" max="' + col[3] + '" value="' + milRows[k] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
           "<td class=\"muted\" style=\"font-size:12px\">" + esc(col[4]) + "</td></tr>";
-      }).join("") + "</tbody></table>" +
-      /* V69：军官职名（文本，逗号分隔，对应 伍/什/队/屯/曲/部/营/军） */
-      '<div style="margin-top:8px;border:1px solid rgba(201,164,92,.3);border-radius:8px;padding:9px 11px">' +
-      '<b>军官职名（按层级顺序，逗号分隔）</b><div class="muted" style="font-size:11px;margin:2px 0 6px">uhTitles · 依次对应 伍 → 什 → 队 → 屯 → 曲 → 部 → 营/军 → 大军</div>' +
-      '<input id="milTitlesIn" type="text" value="' + esc(milTitles) + '" style="width:100%;max-width:640px;padding:6px 8px"></div>';
+      }).join("");
+      var titlesHtml = gr.titles ? '<div style="margin:8px 0 4px;border:1px solid rgba(201,164,92,.3);border-radius:8px;padding:9px 11px">' +
+        '<b>军官职名（按层级顺序，逗号分隔）</b><div class="muted" style="font-size:11px;margin:2px 0 6px">uhTitles · 依次对应 伍 → 什 → 队 → 屯 → 曲 → 部 → 营/军 → 大军</div>' +
+        '<input id="milTitlesIn" type="text" value="' + esc(milTitles) + '" style="width:100%;max-width:640px;padding:6px 8px"></div>' : "";
+      return '<details class="mil-grp"' + (gr.open ? " open" : "") + ' style="border:1px solid rgba(201,164,92,.25);border-radius:10px;margin-bottom:9px;background:rgba(0,0,0,.16)">' +
+        '<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:9px 12px;flex-wrap:wrap;user-select:none">' +
+        '<span style="font-size:15px">' + gr.icon + "</span><b style=\"color:#e8c988\">" + esc(gr.title) + "</b>" +
+        '<span class="muted" style="font-size:12px">' + esc(gr.desc) + "</span>" +
+        '<span style="flex:1"></span><span class="muted" style="font-size:11px;border:1px solid rgba(201,164,92,.35);border-radius:99px;padding:1px 9px">' + gr.keys.length + " 项 ▾</span></summary>" +
+        '<div style="padding:0 12px 11px"><table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' + rows + "</tbody></table>" + titlesHtml + "</div></details>";
+    }
+    $("#milTable").innerHTML = groups.map(grpHTML).join("");
     $$("#milTable .mil-in").forEach(function (inp) {
       inp.addEventListener("input", function () {
         var k = this.getAttribute("data-k"), col = MIL_COLS.filter(function (x) { return x[0] === k; })[0];
