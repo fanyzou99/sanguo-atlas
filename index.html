@@ -11001,6 +11001,37 @@ var BOTS = [
       try { u.bat.capInit = initCardCaps(u); } catch (e83) {}
       u.bat.capVer = 83;
     }
+    /* V85：兵随编队走（一次性迁移）——非编队武将的常规兵退回所在城预备役；
+       编队内未显式记兵（sold==null）的武将按爵位上限显式化，显示强度不变 */
+    if (u.bat.soldMig !== 85) {
+      try {
+        var _own85 = (u.bat.owned || []).slice();
+        if (u.bat.cur && _own85.indexOf(u.bat.cur) < 0) _own85.push(u.bat.cur);
+        if (!_own85.length) _own85.push("__cur__");
+        _own85.forEach(function (nm) {
+          var oc = (nm === "__cur__") ? u.bat.city : (u.bat.cur === nm ? u.bat.city : u.bat.cities[nm]);
+          if (!oc) return;
+          var inF = {};
+          (oc.armies || []).forEach(function (a) { (a.mem || []).forEach(function (id) { inF[id] = 1; }); });
+          (oc.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) inF[t.slots[p.k]] = 1; }); });
+          (oc.roster || []).forEach(function (id) {
+            var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0];
+            if (!cd) return;
+            var g85 = gById(cd.gid); if (!g85) return;
+            var cap85 = troopCapEff(cd, g85, oc);
+            if (inF[id]) {
+              if (cd.sold == null) cd.sold = cap85;
+              else if (cd.sold > cap85) cd.sold = cap85;
+              return;
+            }
+            var back = cd.sold == null ? cap85 : Math.min(cd.sold, cap85);
+            if (back > 0) oc.pool = Math.max(0, (oc.pool || 0)) + back;
+            cd.sold = 0;
+          });
+        });
+      } catch (e85m) {}
+      u.bat.soldMig = 85;
+    }
     return u.bat;
   }
   function addShards(u, gid, n) { ensureBat(u); u.shards[gid] = (u.shards[gid] || 0) + n; }
@@ -12668,7 +12699,7 @@ var BOTS = [
         phT: "点将台", phSubT: "部队编成", phCntT: "部队 {a}/{b}",
         phAutoT: "一键编成", phNewT: "组建部队", phEmptyT: "点将台尚无部队：点「组建部队」手动编成，或「一键编成」按带兵能力自动分配驻城武将。",
         phAddT: "编入", phFillT: "集结补兵", phClearT: "解编", phNameT: "部队改名", phNameOkT: "已改名",
-        phRuleT: "每支部队最多 {s} 名武将、总带兵上限 {n}；同一武将不可同时进入点将台与武将编队。",
+        phRuleT: "每支部队最多 {s} 名武将、总带兵上限 {n}；撤下编队即退兵回预备役，入编时自动领兵；同一武将不可同时进入点将台与武将编队。", phBackT: "退回预备役 {n}", phGotT: "领兵 {n}",
         phPickHintT: "仅列出未编入其它部队 / 武将编队的驻城武将；本部队上限 {n}。",
         phNoneT: "没有可编入的驻城武将（先去「驻城」派驻，或从武将编队中撤下）",
         phAddOkT: "已编入 {n}", phSlotFullT: "单支部队最多 {n} 名武将", phCapFullT: "本部队已达 {n} 带兵上限，无法再编入",
@@ -12691,7 +12722,7 @@ var BOTS = [
         phT: "Command Platform", phSubT: "Unit formation", phCntT: "Units {a}/{b}",
         phAutoT: "Auto-form", phNewT: "New unit", phEmptyT: "No units yet. Tap “New unit” to form one, or “Auto-form” to assign garrisoned generals by troop ability.",
         phAddT: "Assign", phFillT: "Muster", phClearT: "Disband", phNameT: "Rename unit", phNameOkT: "Renamed",
-        phRuleT: "Up to {s} generals per unit and {n} troops in total; a general cannot be in both a unit and a battle formation.",
+        phRuleT: "Up to {s} generals per unit and {n} troops in total; troops return to the reserve when a general leaves a unit and are drawn from the reserve when joining; a general cannot be in both a unit and a battle formation.", phBackT: "returned {n} to reserve", phGotT: "assigned {n}",
         phPickHintT: "Only garrisoned generals not assigned elsewhere are listed. Unit ceiling {n}.",
         phNoneT: "No garrisoned general available (station some first, or free them from battle formations)",
         phAddOkT: "Assigned {n}", phSlotFullT: "A unit holds at most {n} generals", phCapFullT: "This unit already reaches its {n} troop ceiling",
@@ -12714,7 +12745,7 @@ var BOTS = [
         phT: "点将台", phSubT: "部隊編成", phCntT: "部隊 {a}/{b}",
         phAutoT: "一括編成", phNewT: "部隊を編成", phEmptyT: "部隊がありません。「部隊を編成」で手動編成、または「一括編成」で帯兵能力順に自動配分します。",
         phAddT: "編入", phFillT: "集結補兵", phClearT: "解散", phNameT: "部隊名変更", phNameOkT: "変更しました",
-        phRuleT: "1 部隊あたり最大 {s} 名、総帯兵上限 {n}。同じ武将を点将台と武将編成の両方には置けません。",
+        phRuleT: "1 部隊あたり最大 {s} 名、総帯兵上限 {n}。編隊から外すと兵は予備役へ戻り、編隊に入ると予備役から支給されます。同じ武将を点将台と武将編成の両方には置けません。", phBackT: "予備役へ {n} 復帰", phGotT: "兵 {n} 支給",
         phPickHintT: "他の部隊・武将編成に未編入の駐城武将のみ表示。上限 {n}。",
         phNoneT: "編入できる駐城武将がいません（先に駐城させるか、武将編成から外してください）",
         phAddOkT: "{n} を編入", phSlotFullT: "1 部隊は最大 {n} 名まで", phCapFullT: "この部隊は帯兵上限 {n} に達しています",
@@ -13465,15 +13496,22 @@ var BOTS = [
     if (!u.bat) return;
     /* V70：撤出驻城时把所有城的引用一起清掉——旧档里同一张卡可能出现在多座城，
        只清当前城会留下「幽灵驻军」，既占名额又让编队指向不存在的卡 */
+    /* V85：撤出驻城时，其常规兵退回其所在编队的城预备役 */
+    var cd85 = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    var back85 = (cd85 && cd85.sold != null && cd85.sold > 0) ? cd85.sold : 0;
     var names = (u.bat.owned || []).slice();
     if (u.bat.cur && names.indexOf(u.bat.cur) < 0) names.push(u.bat.cur);
     names.forEach(function (nm) {
       var oc = (u.bat.cur === nm) ? u.bat.city : u.bat.cities[nm];
       if (!oc) return;
+      var wasF = false;
+      (oc.armies || []).forEach(function (a) { if ((a.mem || []).indexOf(cid) >= 0) wasF = true; a.mem = (a.mem || []).filter(function (x) { return x !== cid; }); });
+      (oc.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) { wasF = true; t.slots[p.k] = null; } }); });
+      if (wasF && back85 > 0) { oc.pool = Math.max(0, (oc.pool || 0)) + back85; back85 = 0; }
       oc.roster = (oc.roster || []).filter(function (x) { return x !== cid; });
-      (oc.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) t.slots[p.k] = null; }); });
-      (oc.armies || []).forEach(function (a) { a.mem = (a.mem || []).filter(function (x) { return x !== cid; }); });
     });
+    if (back85 > 0) { var cF85 = ensureCity(u); cF85.pool = Math.max(0, (cF85.pool || 0)) + back85; }
+    if (cd85) cd85.sold = 0;
     var c = ensureCity(u);   /* 不在此清 u.bat.off：官职是全卡池任命，与驻城无关 */
     c.roster = (c.roster || []).filter(function (x) { return x !== cid; });
   }
@@ -13501,8 +13539,20 @@ var BOTS = [
     var used = false;
     (c.teams || []).forEach(function (tt, ti) { TEAM_POS.forEach(function (p) { if (tt.slots[p.k] === cid && !(ti === teamIdx && p.k === pos)) used = true; }); });
     if (used) return { ok: false, err: "used" };
+    /* V85：目标槽位原有武将被顶替时，其常规兵退回预备役 */
+    var old85 = t.slots[pos];
+    if (old85 && old85 !== cid) cardBackPool(u, c, old85);
     TEAM_POS.forEach(function (p) { if (p.k !== pos && t.slots[p.k] === cid) t.slots[p.k] = null; });
     t.slots[pos] = cid;
+    /* V85：入编即领兵——从本城预备役补足至爵位上限 */
+    var g85 = gById(card.gid);
+    if (g85) {
+      var cap85 = troopCapEff(card, g85, c);
+      var cur85 = card.sold == null ? 0 : Math.min(card.sold, cap85);
+      card.sold = cur85;
+      var take85 = Math.min(Math.max(0, cap85 - cur85), Math.max(0, c.pool || 0));
+      if (take85 > 0) { c.pool -= take85; card.sold = cur85 + take85; }
+    }
     return { ok: true };
   }
   function teamSize(u, ti) {
@@ -16433,13 +16483,44 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       made++;
     }
     c.armiesAt = 83;
+    /* V85：初建部队成员从本城预备役划拨兵员 */
+    (c.armies || []).forEach(function (a, ai) { (a.mem || []).forEach(function (id) { try { armyAllocSold(u, ai, id); } catch (e85) {} }); });
     return made;
   }
+  /* V85：兵随编队走——解散重编前，原成员的常规兵全额退回本城预备役 */
   function armyAutoAll(u) {
     var c = ensureCity(u);
+    (c.armies || []).forEach(function (a) {
+      (a.mem || []).forEach(function (id) {
+        var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0];
+        if (cd && cd.sold != null && cd.sold > 0) c.pool = Math.max(0, (c.pool || 0)) + cd.sold;
+        if (cd) cd.sold = 0;
+      });
+    });
     c.armies = [];
     c.armiesAt = 83;
     return armyInitCity(u, c);
+  }
+  /* V85：把武将卡上的常规兵全额退回指定城预备役（编队撤下用），返回退兵数 */
+  function cardBackPool(u, c, cid) {
+    var cd = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    if (!cd) return 0;
+    var back = (cd.sold != null && cd.sold > 0) ? cd.sold : 0;
+    if (back > 0 && c) c.pool = Math.max(0, (c.pool || 0)) + back;
+    cd.sold = 0;
+    return back;
+  }
+  /* V85：编入部队时自动从本城预备役划拨兵员至爵位上限（返回实际划拨数） */
+  function armyAllocSold(u, ai, cid) {
+    var c = ensureCity(u), a = (c.armies || [])[ai]; if (!a || (a.mem || []).indexOf(cid) < 0) return 0;
+    var card = (u.cards || []).filter(function (x) { return x.id === cid; })[0]; if (!card) return 0;
+    var g = gById(card.gid); if (!g) return 0;
+    var cap = troopCapEff(card, g, c);
+    var cur = card.sold == null ? 0 : Math.min(card.sold, cap);
+    card.sold = cur;   /* 显式化：不再走「null=满编」的旧语义 */
+    var take = Math.min(Math.max(0, cap - cur), Math.max(0, c.pool || 0));
+    if (take > 0) { c.pool -= take; card.sold = cur + take; }
+    return take;
   }
   function armyAdd(u, ai, cid) {
     var c = ensureCity(u), a = (c.armies || [])[ai];
@@ -16454,7 +16535,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var st = armyStat(u, ai);
     if (st.cap >= armyCapMax()) return { ok: false, err: "cap" };
     a.mem.push(cid);
-    return { ok: true, cap: troopCapEff(card, gById(card.gid), c) };
+    /* V85：入编即领兵——从本城预备役划拨至爵位上限 */
+    var got85 = armyAllocSold(u, ai, cid);
+    var cap85 = troopCapEff(card, gById(card.gid), c);
+    return { ok: true, cap: cap85, got: got85 };
   }
   /* 集结补兵：只用本城预备役，按成员顺序补到各自上限或部队 10 万上限 */
   function armyFill(u, ai) {
@@ -19016,14 +19100,16 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
             : rAG.err === "used" ? gt("phUsedT") : gt("phNoneT");
           return toast(mA, "err", 4200);
         }
-        save(); toast(gt("phAddOkT", { n: 1 }), "ok");
+        save(); toast(gt("phAddOkT", { n: 1 }) + (rAG.got > 0 ? "（" + gt("phGotT", { n: troopTxt(rAG.got) }) + "）" : ""), "ok");
         refreshBattle(); armyPickOpen(aiAG); return;
       }
       case "army-del": {
         var aiAD = +t.getAttribute("data-t"), cAD = ensureCity(u), aAD = (cAD.armies || [])[aiAD];
         if (!aAD) return;
+        /* V85：撤下即归仓——武将常规兵全额退回本城预备役 */
+        var back85 = cardBackPool(u, cAD, t.getAttribute("data-id"));
         aAD.mem = (aAD.mem || []).filter(function (x) { return x !== t.getAttribute("data-id"); });
-        save(); refreshBattle(); toast(gt("phDelOkT"), "ok"); return;
+        save(); refreshBattle(); toast(gt("phDelOkT") + (back85 > 0 ? "（" + gt("phBackT", { n: troopTxt(back85) }) + "）" : ""), "ok"); return;
       }
       case "army-clear": {
         var aiAC = +t.getAttribute("data-t"), aAC = (ensureCity(u).armies || [])[aiAC];
@@ -19035,8 +19121,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         return;
       }
       case "army-clear-go": {
-        var aiCG = +t.getAttribute("data-t"), aCG = (ensureCity(u).armies || [])[aiCG];
-        if (aCG) aCG.mem = [];
+        var aiCG = +t.getAttribute("data-t"), cCG = ensureCity(u), aCG = (cCG.armies || [])[aiCG];
+        /* V85：清空前全体成员常规兵退回本城预备役 */
+        if (aCG) { (aCG.mem || []).forEach(function (id85) { cardBackPool(u, cCG, id85); }); aCG.mem = []; }
         save(); closeModal(); refreshBattle(); toast(gt("phClearOkT"), "ok"); return;
       }
       case "army-fill": {
@@ -19126,9 +19213,13 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         BATUI.squad = idsA.slice(0, 5); BATUI.pk = null; closeModal(); toast(T("pkOk"), "ok"); refreshBattle(); return;
       }
       case "slot-clear": {
-        ensureCity(u);
-        var stt = (u.bat.city.teams || [])[+t.getAttribute("data-t")];
-        if (stt) stt.slots[t.getAttribute("data-p")] = null;
+        var cSC = ensureCity(u);
+        var stt = (cSC.teams || [])[+t.getAttribute("data-t")];
+        if (stt) {
+          /* V85：撤下即归仓——武将常规兵退回本城预备役 */
+          cardBackPool(u, cSC, stt.slots[t.getAttribute("data-p")]);
+          stt.slots[t.getAttribute("data-p")] = null;
+        }
         save(); closeModal(); refreshBattle(); return;
       }
       case "roster": pkOpen("roster"); return;
