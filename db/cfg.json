@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T01:18:27.541Z"
+  "updated": "2026-11-23T01:41:35.668Z"
  },
  "econ": {
   "coin": 0.012,
@@ -38,19 +38,19 @@
   }
  ],
  "military": {
-  "armyCap": 100000,
-  "armyMax": 5,
-  "armySlot": 5,
-  "cityCap": 1000000,
-  "eliteCost": 10,
-  "farmRice": 0.02,
-  "lvBase": 30,
-  "mobCap": 50000,
   "popPct": 10,
+  "cityCap": 1000000,
+  "mobCap": 50000,
+  "farmRice": 0.02,
+  "recRice": 0.5,
   "recCoin": 2,
   "recCopper": 0.003,
   "recIron": 0.004,
-  "recRice": 0.5
+  "eliteCost": 10,
+  "armyCap": 100000,
+  "armyMax": 5,
+  "armySlot": 5,
+  "lvBase": 30
  },
  "popmodel": {
   "chaos": 0.3,
