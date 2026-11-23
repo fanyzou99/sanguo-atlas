@@ -11234,6 +11234,7 @@ var BOTS = [
       skAct: "{n} unleashes 【{s}】 — the ranks are thrown into chaos!", spWuhuL: "Five Tiger Generals", spWuhuS: "Tiger Might", spWuziL: "Five Elite Generals", spWuziS: "Breakthrough Vanguard", spMouL: "Chief Strategists", spMouS: "Grand Strategy", spAct: "{n} triggers 【{s}】 — bonus damage {d}!", spSyn: "Skill synergy: damage \u00d71.3", spDesc: "Special skill: {p}% chance per strike for bonus damage; regular skill damage \u00d71.3 when both proc together",
       skCri: "{n} strikes a mortal opening — a devastating blow!",
       remT: "left {n}", storyT: "— Round {n} —",
+      uhInfoT: "Formation: our min command unit {a} men / enemy {b} men (army-level=dui 50, corps-level=shi 10, below=wu 5)",
       mapT: "City Map", popT: "Population", houseT: "Households", palaceT: "Palace", wallT: "City Wall",
       governT: "Hall Governance", governHint: "Appointments, policy and tax are all handled in the Palace",
       eliteTabT: "Elite Corps", eliteSoldT: "Soldiers in city", inRosterT: "{n} in units", moraleT: "Morale",
@@ -11330,6 +11331,7 @@ var BOTS = [
       skAct: "{n} 挺枪跃马，发动【{s}】，千军辟易！", spWuhuL: "五虎上将", spWuhuS: "五虎之威", spWuziL: "五子良将", spWuziS: "五子破阵", spMouL: "王佐谋主", spMouS: "运筹帷幄", spAct: "{n} 发动【{s}】，额外造成 {d} 伤害！", spSyn: "与常规技能共鸣，伤害 ×1.3", spDesc: "特殊技能：每次攻击 {p}% 概率触发额外伤害；与常规技能同回触发时，常规技能伤害 ×1.3",
       skCri: "{n} 招觑得真切，一击致命，威力倍增！",
       remT: "余 {n}", storyT: "— 第 {n} 回合 —",
+      uhInfoT: "编制层级：我军最小管控单位 {a} 人 · 敌军 {b} 人（万人级=队50 · 千人级=什10 · 千人以下=伍5）",
       mapT: "城池图", popT: "人口", houseT: "户数", palaceT: "大殿", wallT: "城墙",
       governT: "大殿理政", governHint: "政治任命、政策调整与收税均在点开大殿后办理",
       eliteTabT: "特种兵", eliteSoldT: "城内士兵", inRosterT: "在编 {n} 名", moraleT: "士气",
@@ -11732,10 +11734,10 @@ var BOTS = [
   }
   /* V68 战中伤害结算：普通兵按士气换损（高士气 3换1 / 中 2换1 / 低 1换1），
      特种兵按 lossDenom（默认 1000:1）折损；智力型武将的纯武力攻击近乎免疫（技能/陷阱正常） */
-  function el68ApplyHit(tgt, dmg, skillLike, isIntAtk) {
+  function el68ApplyHit(tgt, dmg, skillLike, isIntAtk, mu) {
     var exch = 1;
     if (tgt.morale != null) { if (tgt.morale >= E68.exchHi) exch = 3; else if (tgt.morale >= E68.exchLo) exch = 2; }
-    var eff = Math.max(1, Math.round(dmg / exch));
+    var eff = uhQuant(Math.max(1, Math.round(dmg / exch)), mu || 1);
     tgt.troop -= eff;
     if (tgt.elite && tgt.elite.n > 0) {
       var rate = tgt.elite.lossD || E68.lossDenom;
@@ -11745,6 +11747,28 @@ var BOTS = [
     }
     return eff;
   }
+  /* ========== V69：汉制编制层级（两军对战最小管控单元） ==========
+     伍5→什长统2伍 / 队50→队率 / 屯100→屯长 / 曲500→军候 / 部1000→军司马 /
+     营5000→校尉·中郎将 / 军10000+→将军。
+     最小管控单位随战役规模缩放：万人级→队(50)，千人级→什(10)，千人以下→伍(5)；
+     战损一律按整编管控单位结算（不足一个管控单位的杀伤不记战损）。
+     所有层级人数、分档阈值与军官职名均可在运营管控台「军事模型」页签配置。 */
+  var UH_DEF = { wu: 5, shi: 10, dui: 50, tun: 100, qu: 500, bu: 1000, ying: 5000, jun: 10000,
+    scaleMid: 1000, scaleBig: 10000, minS: 5, minM: 10, minB: 50,
+    titles: "伍长,什长,队率,屯长,军候,军司马,校尉,将军" };
+  var UH = JSON.parse(JSON.stringify(UH_DEF));
+  function uhTiers() {
+    var tt = String(UH.titles || "").split(","), g = function (i, d) { return (tt[i] && tt[i].trim()) || d; };
+    return [{ n: UH.wu, t: g(0, "伍长") }, { n: UH.shi, t: g(1, "什长") }, { n: UH.dui, t: g(2, "队率") }, { n: UH.tun, t: g(3, "屯长") },
+      { n: UH.qu, t: g(4, "军候") }, { n: UH.bu, t: g(5, "军司马") }, { n: UH.ying, t: g(6, "校尉") }, { n: UH.jun, t: g(7, "将军") }];
+  }
+  function uhMinUnit(total) {
+    if (total >= UH.scaleBig) return Math.max(1, Math.round(UH.minB));
+    if (total >= UH.scaleMid) return Math.max(1, Math.round(UH.minM));
+    return Math.max(1, Math.round(UH.minS));
+  }
+  function uhTitleOf(n) { var r = "士卒"; uhTiers().forEach(function (x) { if (n >= x.n) r = x.t; }); return r; }
+  function uhQuant(x, m) { return Math.max(0, Math.round(x / m) * m); }
   /* 战后：幸存特种兵归城，损耗独立入账；损失按伤兵率单独记为特种兵伤兵（月度归队） */
   function eliteReturnAfterBattle(u, res) {
     if (!res || !res.units || !res.units.A) return null;
@@ -12416,7 +12440,10 @@ var BOTS = [
      armyCap 单支部队带兵上限（默认 10 万）/ armyMax 部队数 / armySlot 单部队武将数 /
      lvBase  Lv.1 时「带兵能力」兑现颜色天赋的百分比（升到 Lv.70 兑现 100%） */
   var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30,
-    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60 };
+    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60,
+    uhWu: 5, uhShi: 10, uhDui: 50, uhTun: 100, uhQu: 500, uhBu: 1000, uhYing: 5000, uhJun: 10000,
+    uhScaleMid: 1000, uhScaleBig: 10000, uhMinS: 5, uhMinM: 10, uhMinB: 50,
+    uhTitles: "伍长,什长,队率,屯长,军候,军司马,校尉,将军" };
   function milNum(v, d, lo, hi) { var x = Number(v); if (v == null || v === "" || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function milNorm(o) {
     o = o || {}; var d = MIL_DEF;
@@ -12454,7 +12481,22 @@ var BOTS = [
       e68LeadSt: Math.round(milNum(o.e68LeadSt, d.e68LeadSt, 0, 200)),
       e68LeadWu: Math.round(milNum(o.e68LeadWu, d.e68LeadWu, 0, 200)),
       e68Cap: Math.round(milNum(o.e68Cap, d.e68Cap, 100, 1000000)),
-      e68WoundPct: Math.round(milNum(o.e68WoundPct, d.e68WoundPct, 0, 100))
+      e68WoundPct: Math.round(milNum(o.e68WoundPct, d.e68WoundPct, 0, 100)),
+      /* V69：汉制编制层级参数（层级人数 / 规模分档 / 最小管控单位 / 军官职名） */
+      uhWu: Math.round(milNum(o.uhWu, d.uhWu, 1, 1000)),
+      uhShi: Math.round(milNum(o.uhShi, d.uhShi, 1, 1000)),
+      uhDui: Math.round(milNum(o.uhDui, d.uhDui, 1, 10000)),
+      uhTun: Math.round(milNum(o.uhTun, d.uhTun, 1, 10000)),
+      uhQu: Math.round(milNum(o.uhQu, d.uhQu, 1, 100000)),
+      uhBu: Math.round(milNum(o.uhBu, d.uhBu, 1, 100000)),
+      uhYing: Math.round(milNum(o.uhYing, d.uhYing, 1, 1000000)),
+      uhJun: Math.round(milNum(o.uhJun, d.uhJun, 1, 10000000)),
+      uhScaleMid: Math.round(milNum(o.uhScaleMid, d.uhScaleMid, 1, 100000000)),
+      uhScaleBig: Math.round(milNum(o.uhScaleBig, d.uhScaleBig, 1, 100000000)),
+      uhMinS: Math.round(milNum(o.uhMinS, d.uhMinS, 1, 1000)),
+      uhMinM: Math.round(milNum(o.uhMinM, d.uhMinM, 1, 1000)),
+      uhMinB: Math.round(milNum(o.uhMinB, d.uhMinB, 1, 10000)),
+      uhTitles: (typeof o.uhTitles === "string" && o.uhTitles.trim()) ? o.uhTitles.slice(0, 120) : d.uhTitles
     };
   }
   var MIL = milNorm(null);
@@ -12471,6 +12513,12 @@ var BOTS = [
     E68.mStd = MIL.e68MStd; E68.mMid = MIL.e68MMid; E68.mTop = MIL.e68MTop;
     E68.lossDenom = MIL.e68LossDenom; E68.intImmune = MIL.e68IntImmune;
     E68.exchHi = MIL.e68ExchHi; E68.exchLo = MIL.e68ExchLo; E68.woundPct = MIL.e68WoundPct;
+    /* V69：汉制编制层级并入 military key，管控台保存即生效 */
+    UH.wu = MIL.uhWu; UH.shi = MIL.uhShi; UH.dui = MIL.uhDui; UH.tun = MIL.uhTun;
+    UH.qu = MIL.uhQu; UH.bu = MIL.uhBu; UH.ying = MIL.uhYing; UH.jun = MIL.uhJun;
+    UH.scaleMid = MIL.uhScaleMid; UH.scaleBig = MIL.uhScaleBig;
+    UH.minS = MIL.uhMinS; UH.minM = MIL.uhMinM; UH.minB = MIL.uhMinB;
+    UH.titles = MIL.uhTitles;
     return true;
   }
   function milGet() { return MIL; }
@@ -13286,8 +13334,12 @@ var BOTS = [
     var log = [], round = 0;
     /* V32：中军被击溃即全军败退 */
     var centerIx = (opt && opt.centerIx != null) ? opt.centerIx : -1, centerDown = false;
-    A.forEach(function (u, i) { u.ix = i; });
-    B.forEach(function (u, i) { u.ix = i; });
+    /* V69：编制层级——按双方投入兵力规模确定最小管控单位，并按带兵量授军官职名 */
+    var totA69 = A.reduce(function (s, x) { return s + (x.troopMax || 0); }, 0);
+    var totB69 = B.reduce(function (s, x) { return s + (x.troopMax || 0); }, 0);
+    var muA69 = uhMinUnit(totA69), muB69 = uhMinUnit(totB69);
+    A.forEach(function (u, i) { u.ix = i; u._mu = muA69; u.uh = uhTitleOf(u.troopMax); });
+    B.forEach(function (u, i) { u.ix = i; u._mu = muB69; u.uh = uhTitleOf(u.troopMax); });
     while (round < 30) {
       round++;
       /* V65：每回合开始全体回气（士气向基准缓慢回升） */
@@ -13306,8 +13358,8 @@ var BOTS = [
           /* V36：技能伤害按相关属性加成（武力系→武力 / 谋略系→智力）并随技能等级提升；发动消耗少量自身兵力 */
           var relStat = u.sp === "mou" ? (u["in"] || 0) : (u.wu || 0);
           mult *= 1 + relStat / 100 * 0.25 + 0.04 * (u.skn || 0);
-          skCost = Math.max(10, Math.round(u.troopMax * 0.02));
-          u.troop = Math.max(1, u.troop - skCost);   /* V68：技能自耗只扣普通兵，特种兵单独计数不随比例折损 */
+          skCost = Math.max(u._mu || 1, uhQuant(Math.max(10, Math.round(u.troopMax * 0.02)), u._mu || 1));
+          u.troop = Math.max(1, u.troop - skCost);   /* V68：技能自耗只扣普通兵，特种兵单独计数不随比例折损；V69：按管控单位整编 */
         }
         var spHit = !!u.sp && Math.random() * 100 < (u.spT || 0); /* V29 特殊技能独立判定 */
         if (spHit && skillHit) mult *= 1.3; /* 与常规技能同回触发 → 常规技能伤害加成 */
@@ -13321,8 +13373,11 @@ var BOTS = [
         var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 * ((u.elite.pow || 100) / 100) * (u.elite.mul || 1) : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi / (1 + tgt.def * 0.018)));
         /* V68：士气换损 + 特种兵 1000:1 折损 + 智力型纯武力近乎免疫（技能/陷阱正常） */
         var isIntAtk68 = ((u["in"] || 0) > (u.wu || 0));
-        if (tgt.elite) el68ApplyHit(tgt, dmg, skillHit, isIntAtk68); else tgt.troop -= dmg;
-        var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: dmg, sk: tag, si: u.ix, ti: tgt.ix, rem: Math.max(0, tgt.troop) };
+        /* V69：战损按受方最小管控单位整编（不足一伍/一什/一队的杀伤不产生编制战损） */
+        var csn69 = tgt.elite ? el68ApplyHit(tgt, dmg, skillHit, isIntAtk68, tgt._mu || 1) : uhQuant(dmg, tgt._mu || 1);
+        if (!tgt.elite) tgt.troop -= csn69;
+        var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: csn69, sk: tag, si: u.ix, ti: tgt.ix, rem: Math.max(0, tgt.troop),
+          rk: u.uh, rkt: tgt.uh, mu: tgt._mu || 1 };   /* V69：军官职名 + 管控单位 */
         /* V65：受创掉士气；克制提示 */
         if (tgt.morale != null) {
           var mLoss = Math.max(1, Math.round(dmg / Math.max(1, tgt.troopMax) * 60));
@@ -13337,9 +13392,10 @@ var BOTS = [
         if (spHit) {
           var spgX = SP_GROUPS.filter(function (x) { return x.k === u.sp; })[0];
           var ex = Math.max(10, Math.round(dmg * (spgX ? spgX.ex : 0.5)));
-          /* V68：特殊技能（火计/陷阱等谋略系）对特种兵正常生效 */
-          if (tgt.elite) el68ApplyHit(tgt, ex, true, false); else tgt.troop -= ex;
-          line.rem = Math.max(0, tgt.troop); line.ex = ex; line.spk = spSkillName(u.sp);
+          /* V68：特殊技能（火计/陷阱等谋略系）对特种兵正常生效；V69：战损按管控单位整编 */
+          var exC69 = tgt.elite ? el68ApplyHit(tgt, ex, true, false, tgt._mu || 1) : uhQuant(ex, tgt._mu || 1);
+          if (!tgt.elite) tgt.troop -= exC69;
+          line.rem = Math.max(0, tgt.troop); line.ex = exC69; line.spk = spSkillName(u.sp);
           line.sd = (line.sd ? line.sd + " " : "") + gt("spAct", { n: u.name, s: line.spk, d: fmt(ex) }) + (skillHit ? " " + gt("spSyn") : "");
         }
         if (tgt.troop <= 0) {
@@ -13366,6 +13422,7 @@ var BOTS = [
     var win = centerDown ? false : (eR <= 0 ? true : (pR <= 0 ? false : (pR / pM >= eR / eM)));
     var stars = !win ? 0 : (pR / pM >= 0.6 ? 3 : pR / pM >= 0.3 ? 2 : 1);
     return { win: win, stars: stars, log: log, rounds: round, pR: pR, pM: pM, eR: eR, eM: eM, units: { A: A, B: B }, centerDown: centerDown,
+      uh: { A: muA69, B: muB69, tA: totA69, tB: totB69 },
       forms: { A: (A[0] && A[0].form) || "", B: (B[0] && B[0].form) || "" } };
   }
   /* ---------- 经验 / 掉落 / 结算 ---------- */
@@ -16418,12 +16475,14 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var g = gById(un.gid);
       return '<span class="lg-rail-u" title="' + esc(un.name) + " · " + un.spd + '" style="border-color:' + (un.side === "A" ? "#5fbf8a" : "#e07f7f") + '">' + legionAv(g) + "</span>";
     }).join("") + "</div>";
-    var logHTML = res ? res.log.map(function (l) {
+    /* V69：战报头显示双方最小管控单位，姓名旁缀统帅官职（伍长…将军） */
+    var uhHead69 = (res && res.uh) ? '<div class="sg-logline sg-story">⚔ ' + esc(gt("uhInfoT", { a: fmt(res.uh.A), b: fmt(res.uh.B) })) + "</div>" : "";
+    var logHTML = res ? uhHead69 + res.log.map(function (l) {
       if (l.story) return '<div class="sg-logline sg-story" data-r="' + l.r + '">' + esc(l.txt) + "</div>";
       return '<div class="sg-logline" data-r="' + l.r + '"><span class="r">' + l.r + "</span>" +
-        '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + "</span>" +
+        '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + (l.rk ? '<small style="color:var(--ink-3)"> ·' + esc(l.rk) + "</small>" : "") + "</span>" +
         (l.sd ? '<div class="sg-note" style="margin:2px 0 2px 34px;color:#e8c988;font-style:italic">' + esc(l.sd) + "</div>" : "") +
-        "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + "</b>" +
+        "<span>" + T("vs") + " " + esc(l.t) + (l.rkt ? '<small style="color:var(--ink-3)"> ·' + esc(l.rkt) + "</small>" : "") + "</span><b>-" + fmt(l.d) + "</b>" +
         (l.ex ? '<b style="color:#ffd76a">⚡-' + fmt(l.ex) + "</b>" : "") +
         (l.lc ? '<b style="color:#c77fd0">▼' + fmt(l.lc) + "</b>" : "") +
         '<small style="color:var(--ink-3)">(' + troopTxt(l.rem) + ")</small>" +
@@ -17900,12 +17959,14 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     head = head.replace("__V53HEAD__",
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">' + headBtns +
       '<button class="sgbtn sm ghost" data-bat="back">' + T("backBattle") + "</button></div></div></div>");
-    var logHTML = res ? res.log.map(function (l) {
+    /* V69：战报头显示双方最小管控单位，姓名旁缀统帅官职（伍长…将军） */
+    var uhHead69 = (res && res.uh) ? '<div class="sg-logline sg-story">⚔ ' + esc(gt("uhInfoT", { a: fmt(res.uh.A), b: fmt(res.uh.B) })) + "</div>" : "";
+    var logHTML = res ? uhHead69 + res.log.map(function (l) {
       if (l.story) return '<div class="sg-logline sg-story" data-r="' + l.r + '">' + esc(l.txt) + "</div>";
       return '<div class="sg-logline" data-r="' + l.r + '"><span class="r">' + l.r + "</span>" +
-        '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + "</span>" +
+        '<span class="who" style="color:' + (l.s === "A" ? "#7fd08a" : "#e07f7f") + '">' + esc(l.n) + (l.rk ? '<small style="color:var(--ink-3)"> ·' + esc(l.rk) + "</small>" : "") + "</span>" +
         (l.sd ? '<div class="sg-note" style="margin:2px 0 2px 34px;color:#e8c988;font-style:italic">' + esc(l.sd) + "</div>" : "") +
-        "<span>" + T("vs") + " " + esc(l.t) + "</span><b>-" + fmt(l.d) + "</b>" +
+        "<span>" + T("vs") + " " + esc(l.t) + (l.rkt ? '<small style="color:var(--ink-3)"> ·' + esc(l.rkt) + "</small>" : "") + "</span><b>-" + fmt(l.d) + "</b>" +
         (l.ex ? '<b style="color:#ffd76a">⚡-' + fmt(l.ex) + "</b>" : "") +
         (l.lc ? '<b style="color:#c77fd0" title="' + esc(gt("skCostT", { n: fmt(l.lc) })) + '">▼' + fmt(l.lc) + "</b>" : "") +
         '<small style="color:var(--ink-3)">（' + gt("remT", { n: troopTxt(l.rem) }) + "）</small>" +

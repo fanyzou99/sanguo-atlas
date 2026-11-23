@@ -1516,7 +1516,9 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 
   /* ---------- V80 军事模型（募兵限制）：参数 CRUD，云端 key = military ---------- */
   var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30,
-    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60 };
+    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60,
+    uhWu: 5, uhShi: 10, uhDui: 50, uhTun: 100, uhQu: 500, uhBu: 1000, uhYing: 5000, uhJun: 10000,
+    uhScaleMid: 1000, uhScaleBig: 10000, uhMinS: 5, uhMinM: 10, uhMinB: 50 };
   var MIL_COLS = [
     ["popPct", "募兵比例（人口%，士兵计入人口）", 1, 100, "募兵限额 = 城市人口 × 该百分比；人口总数涵盖士兵数，募兵不增加人口"],
     ["cityCap", "单城总募兵上限（人）", 1000, 100000000, "该城所有兵力（预备役 + 编队武将带兵 + 特种兵）合计不得超过此值"],
@@ -1551,9 +1553,25 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ["e68LeadSt", "营统领·统率门槛", 0, 200, "统领特种兵营所需的统率下限（默认 80）"],
     ["e68LeadWu", "营统领·武力门槛", 0, 200, "统领特种兵营所需的武力下限（默认 80）"],
     ["e68Cap", "每营特种兵上限（人）", 100, 1000000, "每座城市每档特种兵营的编制上限（默认 10000）"],
-    ["e68WoundPct", "特种兵伤兵转化率（%）", 0, 100, "战后特种兵战损转化为特种兵伤兵的比例（默认 60%），伤兵单独记录、月度归队"]
+    ["e68WoundPct", "特种兵伤兵转化率（%）", 0, 100, "战后特种兵战损转化为特种兵伤兵的比例（默认 60%），伤兵单独记录、月度归队"],
+    /* ---------- V69 汉制编制层级（两军对战最小管控单元） ---------- */
+    ["uhWu", "伍·编制人数", 1, 1000, "最基层作战单位，伍长统辖（默认 5 人）"],
+    ["uhShi", "什·编制人数", 1, 1000, "两伍为一什，什长统辖（默认 10 人）"],
+    ["uhDui", "队·编制人数", 1, 10000, "队率（队正）统辖（默认 50 人）"],
+    ["uhTun", "屯·编制人数", 1, 10000, "两队为一屯，屯长（百人将）统辖（默认 100 人）"],
+    ["uhQu", "曲·编制人数", 1, 100000, "汉制一曲两屯至五屯，军候统辖（默认 500 人，可配 200–500）"],
+    ["uhBu", "部·编制人数", 1, 100000, "满编约千人，军司马统辖；独立编制称别部司马（默认 1000 人）"],
+    ["uhYing", "营/军·编制人数", 1, 1000000, "校尉 / 中郎将统辖，如武卫校尉、虎贲中郎将（默认 5000 人）"],
+    ["uhJun", "大军·编制人数", 1, 10000000, "万人以上，将军（偏将军、杂号将军、四征四镇）统辖，独立作战指挥权（默认 10000 人）"],
+    ["uhScaleBig", "万人级战役门槛（人）", 1, 100000000, "单方投入兵力 ≥ 此值视为万人级作战，最小管控单位 = 队（默认 10000 人）"],
+    ["uhScaleMid", "千人级战役门槛（人）", 1, 100000000, "兵力 ≥ 此值且低于万人级为千人级作战，最小管控单位 = 什（默认 1000 人）"],
+    ["uhMinS", "千人以下·最小管控单位（人）", 1, 1000, "千人以下作战最小管控单位 = 伍（默认 5 人），战损按整编单位结算"],
+    ["uhMinM", "千人级·最小管控单位（人）", 1, 1000, "千人级作战最小管控单位 = 什（默认 10 人）"],
+    ["uhMinB", "万人级·最小管控单位（人）", 1, 10000, "万人级作战最小管控单位 = 队（默认 50 人）；不足一个管控单位的杀伤不记战损"]
   ];
   var milRows = null;
+  var MIL_TITLES_DEF = "伍长,什长,队率,屯长,军候,军司马,校尉,将军";
+  var milTitles = MIL_TITLES_DEF;
   function milDef() { return JSON.parse(JSON.stringify(MIL_DEF_A)); }
   function milNumA(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function milLoad() {
@@ -1564,8 +1582,9 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
         milRows = milDef();
         if (o && typeof o === "object") MIL_COLS.forEach(function (col) { if (o[col[0]] != null) milRows[col[0]] = Number(o[col[0]]); });
+        if (o && typeof o === "object" && typeof o.uhTitles === "string" && o.uhTitles.trim()) milTitles = o.uhTitles;
         if (r.updated_at) $("#milUpdated").textContent = "云端更新于 " + dt(r.updated_at);
-      } else milRows = milDef();
+      } else { milRows = milDef(); milTitles = MIL_TITLES_DEF; }
       milPaint();
       try { popcapLoad(); } catch (e) {}
     });
@@ -1578,7 +1597,11 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         return '<tr><td><b>' + esc(col[1]) + '</b><div class="muted" style="font-size:11px">' + k + "</div></td>" +
           '<td><input class="btn mil-in" data-k="' + k + '" type="number" step="' + (k === "farmRice" ? "0.005" : "1") + '" min="' + col[2] + '" max="' + col[3] + '" value="' + milRows[k] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
           "<td class=\"muted\" style=\"font-size:12px\">" + esc(col[4]) + "</td></tr>";
-      }).join("") + "</tbody></table>";
+      }).join("") + "</tbody></table>" +
+      /* V69：军官职名（文本，逗号分隔，对应 伍/什/队/屯/曲/部/营/军） */
+      '<div style="margin-top:8px;border:1px solid rgba(201,164,92,.3);border-radius:8px;padding:9px 11px">' +
+      '<b>军官职名（按层级顺序，逗号分隔）</b><div class="muted" style="font-size:11px;margin:2px 0 6px">uhTitles · 依次对应 伍 → 什 → 队 → 屯 → 曲 → 部 → 营/军 → 大军</div>' +
+      '<input id="milTitlesIn" type="text" value="' + esc(milTitles) + '" style="width:100%;max-width:640px;padding:6px 8px"></div>';
     $$("#milTable .mil-in").forEach(function (inp) {
       inp.addEventListener("input", function () {
         var k = this.getAttribute("data-k"), col = MIL_COLS.filter(function (x) { return x[0] === k; })[0];
@@ -1586,6 +1609,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         milPreview();
       });
     });
+    var ti = $("#milTitlesIn");
+    if (ti) ti.addEventListener("input", function () { milTitles = this.value; });
     milPreview();
   }
   function milPreview() {
@@ -1599,7 +1624,9 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     }).join("");
     $("#milPreview").innerHTML = '<table style="width:100%"><thead><tr><th>城市规模</th><th>募兵限额（人）</th><th>募满消耗 粮 / 钱</th><th>满兵月加产粮</th></tr></thead><tbody>' + rows + "</tbody></table>" +
       '<div class="muted" style="font-size:12px;margin-top:6px">盗贼兵力上限 <b>' + f(milRows.mobCap || 0) + "</b> · 特种兵训练消耗 <b>" + f(milRows.eliteCost || 0) + "</b> 预备役/名。</div>" +
-      '<div class="muted" style="font-size:12px;margin-top:4px">V68 特种兵三档：标准批 <b>' + f(milRows.e68BatchStd || 0) + "</b> 人（1:" + (milRows.e68RatioStd || 0) + " · ×" + (milRows.e68PowStd || 0) + " · " + (milRows.e68MStd || 0) + " 月）· 精锐批 <b>" + f(milRows.e68BatchMid || 0) + "</b> 人（1:" + (milRows.e68RatioMid || 0) + " · ×" + (milRows.e68PowMid || 0) + " · " + (milRows.e68MMid || 0) + " 月）· 顶级批 <b>" + f(milRows.e68BatchTop || 0) + "</b> 人（1:" + (milRows.e68RatioTop || 0) + " · ×" + (milRows.e68PowTop || 0) + " · " + (milRows.e68MTop || 0) + " 月）· 折损 <b>" + f(milRows.e68LossDenom || 0) + ":1</b> · 智力免疫 <b>" + (milRows.e68IntImmune || 0) + "%</b>。</div>";
+      '<div class="muted" style="font-size:12px;margin-top:4px">V68 特种兵三档：标准批 <b>' + f(milRows.e68BatchStd || 0) + "</b> 人（1:" + (milRows.e68RatioStd || 0) + " · ×" + (milRows.e68PowStd || 0) + " · " + (milRows.e68MStd || 0) + " 月）· 精锐批 <b>" + f(milRows.e68BatchMid || 0) + "</b> 人（1:" + (milRows.e68RatioMid || 0) + " · ×" + (milRows.e68PowMid || 0) + " · " + (milRows.e68MMid || 0) + " 月）· 顶级批 <b>" + f(milRows.e68BatchTop || 0) + "</b> 人（1:" + (milRows.e68RatioTop || 0) + " · ×" + (milRows.e68PowTop || 0) + " · " + (milRows.e68MTop || 0) + " 月）· 折损 <b>" + f(milRows.e68LossDenom || 0) + ":1</b> · 智力免疫 <b>" + (milRows.e68IntImmune || 0) + "%</b>。</div>" +
+      '<div class="muted" style="font-size:12px;margin-top:4px">V69 编制层级：伍 <b>' + f(milRows.uhWu || 0) + "</b>（伍长）→ 什 <b>" + f(milRows.uhShi || 0) + "</b>（什长）→ 队 <b>" + f(milRows.uhDui || 0) + "</b>（队率）→ 屯 <b>" + f(milRows.uhTun || 0) + "</b>（屯长）→ 曲 <b>" + f(milRows.uhQu || 0) + "</b>（军候）→ 部 <b>" + f(milRows.uhBu || 0) + "</b>（军司马）→ 营/军 <b>" + f(milRows.uhYing || 0) + "</b>（校尉/中郎将）→ 大军 <b>" + f(milRows.uhJun || 0) + "+</b>（将军）。" +
+      "最小管控单位：≥<b>" + f(milRows.uhScaleBig || 0) + "</b> 人 → <b>队(" + f(milRows.uhMinB || 0) + ")</b> · ≥<b>" + f(milRows.uhScaleMid || 0) + "</b> 人 → <b>什(" + f(milRows.uhMinM || 0) + ")</b> · 千人以下 → <b>伍(" + f(milRows.uhMinS || 0) + ")</b>。</div>";;
   }
   $("#milReload").addEventListener("click", milLoad);
   $("#milReset").addEventListener("click", function () {
@@ -1609,6 +1636,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     if (!milRows) return;
     var out = {};
     MIL_COLS.forEach(function (col) { out[col[0]] = milNumA(milRows[col[0]], MIL_DEF_A[col[0]], col[2], col[3]); });
+    out.uhTitles = String(milTitles || "").trim() || MIL_TITLES_DEF;
     var btn = $("#milSave");
     btn.disabled = true;
     call("sg_cfg_set", { p_token: token(), p_key: "military", p_data: out }).then(function (r) {
