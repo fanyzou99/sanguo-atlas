@@ -12720,11 +12720,14 @@ var BOTS = [
   function cardLv(c) { return c.lv || 1; }
   /* V49：带兵上限（卡牌本身，不含兵营加成）——统一封装，便于升级前后对比 */
   function cardTroopCap(c) { return troopOfCard(c, gById(c.gid)); }
-  /* V58：有效带兵上限 = 基础上限 × 兵营加成——与 unitOf 显示口径一致，补兵/进度条统一用 */
+  /* V58：有效带兵上限 = 基础上限 × 兵营加成——V71 统一口径：
+     未显式传城时解析该武将「驻城」的兵营（cardCityOf），不再回退当前城——
+     武将详情页 / 编队进度条 / 自动补兵 与 点将台部队划拨（显式传驻城）口径完全一致 */
   function troopCapEff(c, g, cityObj) {
     var cap = troopOfCard(c, g);
     try {
-      var cu = me(), ct = cityObj || (cu && cu.bat && cu.bat.city);
+      var cu = me();
+      var ct = cityObj || (c && cardCityOf(cu, c.id)) || (cu && cu.bat && cu.bat.city);
       if (ct && ct.bld) cap = Math.round(cap * (1 + 0.02 * (ct.bld.camp || 0)));
     } catch (e) {}
     return cap;
@@ -13304,9 +13307,9 @@ var BOTS = [
     def = Math.round(def * (1 + eqsk.def / 100) * cDef * fD);
     var atk0 = Math.round(atk / mf);            /* 不含士气系数：simulate 按实时士气结算 */
     var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd + (form ? form.spd : 0);
-    /* V83：己方（玩家卡）走「颜色×等级 vs 爵位」新口径；敌方保持旧口径 */
-    var cap = side === "A" ? troopOfCard(c, g) : troopOfCardLegacy(c);
-    if (side === "A") { try { var cu = me(); if (cu && cu.bat && cu.bat.city && cu.bat.city.bld) cap = Math.round(cap * (1 + 0.02 * (cu.bat.city.bld.camp || 0))); } catch (e) {} }
+    /* V83：己方（玩家卡）走「颜色×等级 vs 爵位」新口径；敌方保持旧口径。
+       V71：上限统一走 troopCapEff（按武将驻城兵营加成）——与点将台划拨/详情页显示完全一致 */
+    var cap = side === "A" ? troopCapEff(c, g) : troopOfCardLegacy(c);
     /* V67：兵力口径落地——旧档 sold 为空（旧逻辑=永久满员）时，按当前有效上限写实一次，
        之后升级/升爵/升兵营抬高的上限不再自动变成兵力，进度条如实显示招募缺口 */
     if (c.sold == null && side === "A") c.sold = cap;
