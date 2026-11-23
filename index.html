@@ -6272,17 +6272,20 @@ function renderPassPage(name){
     const s = state.citySort;
     if(s==="name") arr.sort((a,b)=>a.n.localeCompare(b.n,"zh"));
     else if(s==="rk") arr.sort((a,b)=>a.rk-b.rk);
+    else if(s==="popcap") arr.sort((a,b)=>popCapStatic(b.n)-popCapStatic(a.n) || b.pow-a.pow || b.pop-a.pop);
     else arr.sort((a,b)=>b[s]-a[s] || b.pow-a.pow || b.pop-a.pop);
     return arr;
   }
   function cityRowHTML(c){
     const cls = state.citySel===c.n ? ' class="sel"' : '';
+    const capW = Math.round(popCapStatic(c.n)/1000)/10;   /* 人口上限（万，1 位小数） */
     return '<tr'+cls+' data-city="'+c.n+'">'+
       '<td class="num">'+c.rk+'</td>'+
       '<td class="l"><span class="cn">'+c.n+'</span> <span class="pill'+(c.lv==="都城"?" cap":"")+'">'+c.lv+'</span></td>'+
       '<td class="l">'+c.py+'</td>'+
       '<td class="l"><span class="pill" style="border-color:'+fc(c.f)+';color:'+fc(c.f)+'">'+fn(c.f)+'</span></td>'+
       '<td class="num">'+c.pop+'</td>'+
+      '<td class="num" style="color:#6b9fe8">'+capW+'</td>'+
       '<td class="num">'+c.mil.toFixed(1)+'</td>'+
       '<td class="num">'+c.army.toFixed(1)+'</td>'+
       '<td class="num">'+c.gdp.toFixed(1)+'</td>'+
@@ -6312,6 +6315,7 @@ function renderPassPage(name){
         '<div>'+
           '<div class="kvline">'+
             cell("人口", c.pop+' 万')+
+            cell("人口上限", (Math.round(popCapStatic(c.n)/1000)/10)+' 万', 1)+
             cell("兵役人口（15%）", c.mil.toFixed(1)+' 万')+
             cell("可动员兵额（32%）", c.army.toFixed(1)+' 万')+
             cell("经济GDP", c.gdp.toFixed(1)+' 亿钱')+
@@ -6361,8 +6365,8 @@ function renderPassPage(name){
     ).join("");
     const list = cityFiltered();
     const sel = state.citySel ? CITY_DATA.find(c=>c.n===state.citySel) : null;
-    const SORTS = [["pow","按综合实力"],["pop","按人口"],["mil","按兵役人口"],["gdp","按经济GDP"],["com","按商业"],["agr","按农业"],["dfn","按城防"],["sec","按治安"],["str","按战略地位"],["name","按城池名"],["rk","按排名"]];
-    const ths = [["rk","排名"],["name","城池"],["","州域"],["","归属"],["pop","人口(万)"],["mil","兵役人口(万)"],["army","常备兵额(万)"],["gdp","经济GDP(亿钱)"],["com","商业"],["agr","农业"],["dfn","城防"],["sec","治安"],["str","战略"],["pow","综合实力"]];
+    const SORTS = [["pow","按综合实力"],["pop","按人口"],["popcap","按人口上限"],["mil","按兵役人口"],["gdp","按经济GDP"],["com","按商业"],["agr","按农业"],["dfn","按城防"],["sec","按治安"],["str","按战略地位"],["name","按城池名"],["rk","按排名"]];
+    const ths = [["rk","排名"],["name","城池"],["","州域"],["","归属"],["pop","人口(万)"],["popcap","人口上限(万)"],["mil","兵役人口(万)"],["army","常备兵额(万)"],["gdp","经济GDP(亿钱)"],["com","商业"],["agr","农业"],["dfn","城防"],["sec","治安"],["str","战略"],["pow","综合实力"]];
 
     app.innerHTML = `
       <div class="section-head">
@@ -6373,6 +6377,7 @@ function renderPassPage(name){
         <div class="maphint" style="color:var(--ink-2)">
           <b style="color:var(--gold-2)">口径说明</b>　·<b>人口</b>：汉末该城所在郡国的估算户口（万），己含战乱损耗。　·<b>兵役人口</b> ＝ 人口 × 15%（汉末兵民比，战时更高）；<b>可动员兵额</b> ＝ 兵役人口 × 32%。　·<b>经济GDP</b>（亿钱，估算） ＝ 人口 × 经济指数 ÷ 100 × 2.4；<b>经济指数</b> ＝ 商业 × 50% ＋ 农业 × 30% ＋ 战略 × 20%。<br>
           ·<b>商业 / 农业 / 城防 / 治安 / 战略</b>：0–100，参照《三国志9》城市内政值的相对关系。　·<b>综合实力</b> ＝ （人口 ÷ 全图最高人口 × 100）× 40% ＋ 商业 × 20% ＋ 农业 × 15% ＋ 城防 × 15% ＋ 战略 × 10%（满分 100，数值相同者并列）。<br>
+          ·<b>人口上限</b>：采用《三国志IX》190 年城市人口数据（洛阳 36 万为全图最高，末位为安定 4.9 万），游戏中逐城受限，可由运营管控台「人口上限」逐城调整；人口达到上限后不再增长。<br>
           <span style="color:#8f8878">「归属」为 220 年三国鼎立时的实际领有者，与地图州域晕染（汉末割据初期）略有出入；以上均为史地估算与游戏参数折算，非精确统计。</span>
         </div>
       </div>
@@ -12306,7 +12311,8 @@ var BOTS = [
     return arr;
   }
   /* ================= V81：城市人口上限（后台「人口上限」页签，云端 key = popcap） =================
-     洛阳上限最高（默认 100 万）；其余按城市资源推导：都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3（以基础人口为基数），
+     V87：默认上限采用《三国志IX》190 年城市人口数据（洛阳 36 万最高，见 POP_CAP_9 表）；
+     未收录的边塞小城按等级系数推导：都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3（以基础人口为基数），
      且一律不高于洛阳上限。云端 popcap 表按城名覆盖（后台可逐城改）。人口超过上限时按上限计（不再增长）。 */
   /* ================= V82：人口增长 · 天灾 · 国策三维模型 =================
      口径（云端 key = popmodel，后台「人口·政策」页签可调）：
@@ -12439,23 +12445,46 @@ var BOTS = [
   }
   function applyPopModelCfgPull(o) { return applyPopModelCfg(o); }
   var POPCAP = null;
+  /* V87：城市人口上限默认表 —— 采用《三国志IX》190 年城市人口数据（sangokushi9.shiyo.info/toshi.html），
+     逐城可改（运营管控台「人口上限」云端 key = popcap 覆盖本表），洛阳 36 万为全图最高。
+     未收录的塞城/边城（临淄、合肥、广陵、番禺、上庸、敦煌、平城、朔方、柳城、伊吾）沿用等级系数推导。 */
+  var POP_CAP_9 = {
+    "洛阳": 360000,
+    "许昌": 330000, "邺": 308000, "成都": 276000, "长安": 248000,
+    "江陵": 242000, "襄阳": 234000, "汝南": 225000, "南皮": 219000,
+    "濮阳": 283000, "下邳": 281000, "陈留": 255000, "汉中": 236000,
+    "北海": 200000, "宛": 205000, "平原": 150000, "蓟": 132000,
+    "会稽": 113000, "寿春": 109000, "长沙": 105000, "庐江": 100000, "交趾": 100000,
+    "吴": 97000, "建业": 95000, "梓潼": 94000,
+    "晋阳": 83000, "武威": 83000, "永安": 71000,
+    "建宁": 77000, "襄平": 65000, "云南": 65000, "江夏": 66000,
+    "柴桑": 62000, "武陵": 62000,
+    "新野": 59000, "上党": 57000, "天水": 57000,
+    "零陵": 53000, "桂阳": 52000, "安定": 49000
+  };
   function popCapLuoYang() {
-    var v = POPCAP && POPCAP["洛阳"] ? Math.round(POPCAP["洛阳"]) : 1000000;
-    return Math.max(100000, v);
+    var v = (POPCAP && POPCAP["洛阳"]) || POP_CAP_9["洛阳"] || 360000;
+    return Math.max(100000, Math.round(v));
   }
   function popCapDefaultOf(name, popWan, lvName) {
     var hi = popCapLuoYang();
     if (name === "洛阳") return hi;
+    if (POP_CAP_9[name] > 0) return POP_CAP_9[name];   /* V87：三国志IX 190 年数据优先 */
     var f = lvName === "都城" ? 2.4 : lvName === "州治" ? 2.0 : lvName === "郡城" ? 1.6 : 1.3;
     var cap = Math.round((+popWan || 20) * 10000 * f / 5000) * 5000;
     return Math.max(20000, Math.min(hi, cap));
   }
+  /* 静态取某城上限（不依赖玩家存档）——云端 popcap 覆盖 > 三国志IX 默认表 > 等级系数推导 */
+  function popCapStatic(cityName) {
+    if (POPCAP && POPCAP[cityName] > 0) return Math.round(POPCAP[cityName]);
+    if (POP_CAP_9[cityName] > 0) return POP_CAP_9[cityName];
+    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
+    return popCapDefaultOf(cityName, cd ? cd.pop : 20, cd ? cd.lv : "郡城");
+  }
   function cityPopCap(u, cObj) {
     var c = cObj || ensureCity(u);
     var cityName = (c && c.name) || (u && (u.bat.cur || u.bat.spawn)) || "洛阳";
-    if (POPCAP && POPCAP[cityName] > 0) return Math.round(POPCAP[cityName]);
-    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
-    return popCapDefaultOf(cityName, cd ? cd.pop : 20, cd ? cd.lv : "郡城");
+    return popCapStatic(cityName);
   }
   function applyPopCapCfg(o) {
     if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { return false; } }
