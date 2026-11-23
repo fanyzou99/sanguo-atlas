@@ -11502,7 +11502,7 @@ var BOTS = [
   ];
   function bldName(b) { var l = lang(); return l === "zh" ? b.n : l === "ja" ? b.nen : b.en; }
   function bldDesc(b) { return (lang() === "en") ? b.den : b.dzh; }
-  /* ================= V67 特种兵（七军）/ 训练场 / 城内驻军粮耗减半 ================= */
+  /* ================= V67 特种兵（七军）/ 训练场 / 城内驻军粮耗减半（V84：极强营·主教练·混编·训练场改版） ================= */
   var ELITE_CAP = 10000, ELITE_TRAIN_COST = 10, ELITE_LEAD_ST = 80, ELITE_LEAD_WU = 80;
   /* 史料命名的各国特种兵：魏 七军/虎贲军/虎豹骑（于禁督七军、虎贲宿卫、曹纯虎豹骑）；
      蜀 白毦兵/无当飞军（陈到领白毦、王平领无当飞军）；吴 解烦军/敢死士/丹阳兵（孙权解烦督）；
@@ -11514,16 +11514,40 @@ var BOTS = [
     "群": ["飞熊军", "白马义从", "西凉铁骑"],
     "汉": ["羽林军", "虎贲军"]
   };
+  /* ================= V84：极强特种兵（史实名营）· 主教练 · 常规/特种混编 =================
+     极强营：由史实统领亲自督练时，营名与攻击倍率按史实特授（叠在普通特种兵 100 倍之上）；
+     主教练：统+武 越高，每名特种兵消耗普通兵越少（10 → 最低 6）；
+     混编：点将台部队中，统领特种兵营的武将编入后，其营内特种兵计入部队兵力与 10 万上限。 */
+  var ELITE_LEGEND = {
+    "高顺": { n: "陷阵营", mul: 2.0, tip: "陷阵之志，有死无生——营内特种兵攻击再 ×2" },
+    "麴义": { n: "先登死士", mul: 1.6, tip: "界桥先登，八百甲士破白马——攻击再 ×1.6" },
+    "兀突骨": { n: "藤甲兵", mul: 1.5, tip: "刀箭不入，浮水不沉——攻击再 ×1.5" },
+    "曹纯": { n: "虎豹骑", mul: 1.5, tip: "天下骁锐，虎豹为骑——攻击再 ×1.5" },
+    "陈到": { n: "白毦兵", mul: 1.5, tip: "西方上兵，名震白毦——攻击再 ×1.5" }
+  };
+  function eliteLegendOf(cd) { if (!cd) return null; var g = gById(cd.gid); return (g && ELITE_LEGEND[g.name]) || null; }
+  function eliteCoachOf(u, c) { var cc = c || ensureCity(u); return cc.spCoach ? (u.cards || []).filter(function (x) { return x.id === cc.spCoach; })[0] : null; }
+  function eliteCostEff(c, uForTest) {
+    var u = uForTest || me(); if (!u || !c) return ELITE_TRAIN_COST;
+    var cd = eliteCoachOf(u, c); if (!cd) return ELITE_TRAIN_COST;
+    var g = gById(cd.gid); if (!g) return ELITE_TRAIN_COST;
+    var st = (g.st || 0) + (g.wu || 0);
+    if (st <= 150) return ELITE_TRAIN_COST;
+    return Math.max(6, ELITE_TRAIN_COST - Math.floor((st - 150) / 10));
+  }
+  /* 该武将名下（任其为统领的营）的特种兵数——混编入部队时计入部队兵力 */
+  function cardEliteN(u, cid, cObj) { var c = cObj || ensureCity(u), n = 0; eliteSlots(c).forEach(function (s) { if (s.lid === cid) n += s.n || 0; }); return n; }
   function eliteSlots(c) { if (!c.elites) c.elites = [{ n: 0, q: 0, lid: null }, { n: 0, q: 0, lid: null }]; return c.elites; }
   function eliteLeaderOf(u, s) { return s.lid ? (u.cards || []).filter(function (x) { return x.id === s.lid; })[0] : null; }
   function eliteLeadOK(cd) { if (!cd) return false; var g = gById(cd.gid); if (!g) return false; return (g.st || 0) > ELITE_LEAD_ST && (g.wu || 0) > ELITE_LEAD_WU; }
-  function eliteName(u, si, cu) { var c = cu || ensureCity(u), s = eliteSlots(c)[si] || {}, cd = eliteLeaderOf(u, s); if (!cd) return gt("eliteTabT"); var g = gById(cd.gid) || {}; var arr = ELITE_NAMES[g.faction] || ELITE_NAMES["群"]; return arr[si % arr.length]; }
+  function eliteName(u, si, cu) { var c = cu || ensureCity(u), s = eliteSlots(c)[si] || {}, cd = eliteLeaderOf(u, s); var lg = eliteLegendOf(cd); if (lg) return lg.n; if (!cd) return gt("eliteTabT"); var g = gById(cd.gid) || {}; var arr = ELITE_NAMES[g.faction] || ELITE_NAMES["群"]; return arr[si % arr.length]; }
   /* 训练：10 名普通士兵 → 训练进度 +10，月度结算转正为 1 名特种兵 */
   function eliteTrainOne(u, si) {
     var c = ensureCity(u), s = eliteSlots(c)[si]; if (!s) return { err: gt("eliteTabT") + "?" };
-    if ((c.pool || 0) < ELITE_TRAIN_COST) return { err: gt("elitePoolNoT") };
-    if (s.n + Math.floor(s.q / ELITE_TRAIN_COST) >= ELITE_CAP) return { err: gt("eliteCapHitT", { m: fmt(ELITE_CAP) }) };
-    c.pool -= ELITE_TRAIN_COST; s.q += ELITE_TRAIN_COST; return { ok: 1 };
+    var cost = eliteCostEff(c, u);
+    if ((c.pool || 0) < cost) return { err: gt("elitePoolNoT") };
+    if (s.n + Math.floor(s.q / 10) >= ELITE_CAP) return { err: gt("eliteCapHitT", { m: fmt(ELITE_CAP) }) };
+    c.pool -= cost; s.q += 10; return { ok: 1, cost: cost };
   }
   /* 月度结算：训练进度转正 + 训练场士气维护 */
   function eliteMonthlyCity(c) {
@@ -11545,7 +11569,7 @@ var BOTS = [
       if (!s.lid || s.n <= 0) return;
       var cd = eliteLeaderOf(u, s); if (!cd || !eliteLeadOK(cd)) return;
       var un = A.filter(function (x) { return x.cid === cd.id; })[0]; if (!un) return;
-      un.elite = { name: eliteName(u, si, c), n: s.n, n0: s.n, ci: si };
+      un.elite = { name: eliteName(u, si, c), n: s.n, n0: s.n, ci: si, mul: (eliteLegendOf(cd) || {}).mul || 1 };
       un.troop += s.n; un.troopMax += s.n;
       s.n = 0; s._out = (s._out || 0) + un.elite.n0;
     });
@@ -11566,41 +11590,78 @@ var BOTS = [
     });
     return (tot.loss || tot.surv) ? tot : null;
   }
-  /* 大殿 · 特种兵页签 */
+  /* 大殿 · 特种兵页签（V84 训练场改版：训练场背景 · 主教练 · 转化进度条） */
   function eliteTabHTML(u) {
     var c = ensureCity(u), slots = eliteSlots(c), cards = u.cards || [];
     var sold = c.pool || 0;
     (c.roster || []).forEach(function (id) { var cc = cards.filter(function (x) { return x.id === id; })[0]; if (cc && cc.sold) sold += cc.sold; });
     var lv = (c.bld && c.bld.train) || 0, mo = c.morale == null ? 60 : c.morale;
-    var h = '<div class="sg-note" style="margin:4px 0 10px;line-height:1.9">⚔ ' + gt("eliteSoldT") + '：<b style="color:#e8c988">' + fmt(sold) + "</b>" +
+    var cost = eliteCostEff(c, u);
+    var coach = eliteCoachOf(u, c), coachG = coach ? gById(coach.gid) : null;
+    var coachElig = cards.slice().sort(function (a, b) {
+      var ga = gById(a.gid) || {}, gb = gById(b.gid) || {};
+      return ((gb.st || 0) + (gb.wu || 0)) - ((ga.st || 0) + (ga.wu || 0));
+    }).slice(0, 8);
+    var coachBtns = coachElig.map(function (ec) {
+      var eg = gById(ec.gid) || {};
+      return '<button class="sgchip' + (c.spCoach === ec.id ? " on" : "") + '" data-bat="elite-coach" data-c="' + esc(ec.id) +
+        '" title="' + esc((eg.faction || "") + " 统" + (eg.st || 0) + " 武" + (eg.wu || 0)) + '">' +
+        esc((eg.name || "?") + " · 统武" + ((eg.st || 0) + (eg.wu || 0))) + "</button>";
+    }).join("");
+    var h = '<div class="sg-trainbg">' +
+      '<div class="sg-note" style="line-height:1.9;background:rgba(0,0,0,.4);border-radius:9px;padding:7px 10px">⚔ ' + gt("eliteSoldT") + '：<b style="color:#e8c988">' + fmt(sold) + "</b>" +
       '（' + gt("poolT") + " " + fmt(c.pool || 0) + " · " + gt("inRosterT", { n: (c.roster || []).length }) + "）　·　⚕ " + gt("woundT") + " " + fmt(cityWoundN(c)) +
       '　·　🔥 ' + gt("moraleT") + ' <b style="color:' + (mo >= 80 ? "#8fd694" : "#e8c988") + '">' + fmt(mo) + "</b>" +
-      (lv > 0 ? '<br><small>' + gt("moraleHint", { n: lv }) + "</small>" : '<br><small>' + gt("moraleNoT") + "</small>") + "</div>";
+      (lv > 0 ? '<br><small>' + gt("moraleHint", { n: lv }) + "</small>" : '<br><small>' + gt("moraleNoT") + "</small>") + "</div>" +
+      /* V84：主教练 */
+      '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.35);border-radius:10px;padding:9px 11px;margin:8px 0;background:rgba(0,0,0,.42)">' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">🎖 ' + gt("eliteCoachT") + "：" +
+      (coachG ? esc(coachG.name) + '<small style="color:var(--ink-3)">（' + (coachG.faction || "") + " 统" + (coachG.st || 0) + " + 武" + (coachG.wu || 0) + "）</small>" : '<span style="color:var(--ink-3)">' + gt("eliteNoLead") + "</span>") + "</b>" +
+      '<small style="color:var(--ink-3)">' + gt("eliteCoachHintT") + " · " + gt("eliteCostCurT", { n: cost }) + "</small></div>" +
+      (coachElig.length ? '<div class="sgchips" style="margin-top:7px">' + coachBtns + "</div>" : "") +
+      "</div>";
     slots.forEach(function (s, si) {
-      var cd = eliteLeaderOf(u, s), nm = eliteName(u, si, c), ok = cd && eliteLeadOK(cd);
+      var cd = eliteLeaderOf(u, s), lg = eliteLegendOf(cd), nm = eliteName(u, si, c), ok = cd && eliteLeadOK(cd);
       var g = cd ? gById(cd.gid) : null;
       var pct = Math.min(100, Math.round(s.n / ELITE_CAP * 1000) / 10);
+      var convPct = Math.min(100, Math.round((s.q || 0) / 10 * 100));
       var leadTxt = cd ? (g ? g.name : "?") + (ok ? " ✓" : " ✗") : gt("eliteNoLead");
-      var elig = cards.filter(eliteLeadOK);
-      var leadBtns = elig.slice(0, 8).map(function (ec) {
-        var eg = gById(ec.gid) || {};
-        return '<button class="sgchip' + (s.lid === ec.id ? " on" : "") + '" data-bat="elite-lid" data-n="' + si + '" data-c="' + esc(ec.id) + '" title="' + esc(eg.faction || "") + " 统" + (eg.st || 0) + " 武" + (eg.wu || 0) + '">' + esc((eg.name || "?") + "·" + (eg.faction || "")) + "</button>";
+      var lelig = cards.filter(eliteLeadOK);
+      var leadBtns = lelig.slice(0, 8).map(function (ec) {
+        var eg = gById(ec.gid) || {}, lgE = eliteLegendOf(ec);
+        return '<button class="sgchip' + (s.lid === ec.id ? " on" : "") + '" data-bat="elite-lid" data-n="' + si + '" data-c="' + esc(ec.id) +
+          '" title="' + esc(eg.faction || "") + " 统" + (eg.st || 0) + " 武" + (eg.wu || 0) + (lgE ? " ★" + esc(lgE.n) : "") + '">' +
+          esc((eg.name || "?") + "·" + (eg.faction || "")) + (lgE ? " ★" : "") + "</button>";
       }).join("");
       h += '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.3);border-radius:10px;padding:9px 11px;margin-bottom:7px;background:rgba(0,0,0,.42)">' +
-        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">🎯 ' + esc(nm) + "</b>" +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">🎯 ' + esc(nm) +
+        (lg ? ' <span style="color:#ff9d6b" title="' + esc(lg.tip) + '">★ ' + gt("eliteLegendT") + " · 攻击 ×" + Math.round(100 * lg.mul) + "</span>" : "") + "</b>" +
         '<small style="color:var(--ink-3)">' + gt("eliteLeadT") + "：" + esc(leadTxt) + (cd ? "（" + (g ? g.faction : "?") + " 统" + (g ? g.st : "?") + " 武" + (g ? g.wu : "?") + "）" : "") + "</small>" +
         '<span style="flex:1"></span><small style="color:var(--ink-3)">' + gt("eliteCapT", { n: fmt(s.n), m: fmt(ELITE_CAP) }) + "</small></div>" +
-        '<div style="height:9px;border-radius:99px;background:#232733;margin:7px 0 3px;overflow:hidden"><div style="height:100%;width:' + pct + "%;background:#c9a45c\"></div></div>" +
-        (s.q > 0 ? '<div style="height:6px;border-radius:99px;background:#232733;margin:0 0 3px;overflow:hidden"><div style="height:100%;width:' + Math.min(100, s.q / ELITE_TRAIN_COST * 100) + '%;background:#5dcaa5"></div></div>' +
-          '<small style="color:#5dcaa5">' + gt("eliteProgT", { n: Math.min(ELITE_TRAIN_COST, s.q) }) + "</small>" : "") +
+        /* 编制进度条 */
+        '<div style="height:11px;border-radius:99px;background:#232733;margin:7px 0 3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#a8842f,#e8c988)"></div></div>' +
+        /* V84：转化进度条（训练点 → 特种兵，月度结算转正） */
+        '<div style="height:14px;border-radius:99px;background:rgba(0,0,0,.5);margin:0 0 3px;overflow:hidden;position:relative"><div style="height:100%;width:' + convPct + '%;background:linear-gradient(90deg,#3f9d7c,#5dcaa5);transition:width .3s"></div>' +
+        '<em style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:9px;color:#f2f6fa;text-shadow:0 1px 2px rgba(0,0,0,.95)">' +
+        (s.q > 0 ? esc(gt("eliteProgT", { n: Math.min(10, s.q) })) : gt("eliteConvIdleT")) + "</em></div>" +
         '<div style="display:flex;gap:8px;align-items:center;margin-top:7px;flex-wrap:wrap">' +
-        '<button class="sgbtn sm primary" data-bat="elite-train" data-n="' + si + '"' + ((c.pool || 0) >= ELITE_TRAIN_COST ? "" : " disabled") + ">" + gt("eliteTrainT") + "</button>" +
-        '<small style="color:var(--ink-3)">' + gt("eliteTrainHint") + "</small></div>" +
-        (elig.length ? '<div class="sgchips" style="margin-top:7px">' + gt("elitePickT") + "：" + leadBtns + (elig.length > 8 ? '<small style="color:var(--ink-3)"> +' + (elig.length - 8) + "</small>" : "") + "</div>"
+        '<button class="sgbtn sm primary" data-bat="elite-train" data-n="' + si + '"' + ((c.pool || 0) >= cost ? "" : " disabled") + ">" + gt("eliteTrainT") + "</button>" +
+        '<button class="sgbtn sm" data-bat="elite-train5" data-n="' + si + '"' + ((c.pool || 0) >= cost ? "" : " disabled") + ">🔥 " + gt("eliteTrain5T") + "</button>" +
+        '<small style="color:var(--ink-3)">' + gt("eliteCostCurT", { n: cost }) + "</small></div>" +
+        (lelig.length ? '<div class="sgchips" style="margin-top:7px">' + gt("elitePickT") + "：" + leadBtns + (lelig.length > 8 ? '<small style="color:var(--ink-3)"> +' + (lelig.length - 8) + "</small>" : "") + "</div>"
           : '<div class="sg-note" style="margin-top:7px;opacity:.75"><small>' + gt("elitePickNone") + "</small></div>") +
         "</div>";
     });
-    h += '<div class="sg-note" style="opacity:.75;line-height:1.9"><small>' + gt("eliteRuleT") + "</small></div>";
+    h += '<div class="sg-note" style="opacity:.85;line-height:1.9;margin-top:8px"><small>🔗 ' + gt("eliteMixT") + "</small></div>" +
+      '<div class="sg-note" style="opacity:.7;line-height:1.9"><small>' + gt("eliteRuleT") + "</small></div></div>" +
+      "<style>" +
+      /* V84：训练场背景（夯土 + 校场纹理 + 旗帜徽记） */
+      ".sg-trainbg{position:relative;border-radius:12px;padding:12px 12px 10px;margin-top:4px;border:1px solid rgba(201,164,92,.35);" +
+      "background:radial-gradient(ellipse 60% 30% at 50% 0%,rgba(232,201,136,.10),rgba(0,0,0,0) 70%)," +
+      "linear-gradient(180deg,rgba(63,47,26,.5),rgba(16,20,16,.62))," +
+      "repeating-linear-gradient(135deg,rgba(201,164,92,.05) 0 16px,rgba(0,0,0,0) 16px 32px)}" +
+      ".sg-trainbg:before{content:'🚩 　⛺ 　🎯';position:absolute;right:14px;top:9px;font-size:13px;opacity:.55;letter-spacing:2px;pointer-events:none}" +
+      "</style>";
     return h;
   }
 
@@ -12615,6 +12676,11 @@ var BOTS = [
         phFillOkT: "集结 {n} 名预备役", phFillNoneT: "预备役不足，或全员已满编",
         phAutoOkT: "已编成 {n} 支部队", phDelOkT: "已移出部队", phClearOkT: "部队已解编",
         phAbilityT: "带兵能力", phRankCapT: "爵位上限", phArmyCapT: "部队上限",
+        phLvCapT: "等级带兵", phRegT: "实际编兵", phEliteT: "实际特种兵",
+        eliteCoachT: "主教练", eliteCoachHintT: "主教练 统+武 越高，每名特种兵消耗普通兵越少（统武和 150 起每 10 点 −1，最低 6）", eliteCostCurT: "当前消耗 {n} 普通兵/名",
+        eliteTrain5T: "训练 +5", eliteLegendT: "极强", eliteConvIdleT: "暂无训练进度",
+        eliteMixT: "混编规则：点将台部队可常规兵与特种兵混装——统领特种兵营的武将编入部队后，其营内特种兵计入部队兵力与 10 万上限。",
+        eliteResT: "{n} · 特种兵",
         phCapLineT: "带兵 {c} = min（能力 {a} · 爵位 {b}）",
         phCapShortT: "带兵 {a} · 能力 {b}",
         phOverT: "已达 10 万上限", phMemT: "武将 {a}/{b}", phPowerT: "战力 {n}",
@@ -12633,6 +12699,11 @@ var BOTS = [
         phFillOkT: "Mustered {n} reserves", phFillNoneT: "Not enough reserves, or everyone is full",
         phAutoOkT: "Formed {n} unit(s)", phDelOkT: "Removed from unit", phClearOkT: "Unit disbanded",
         phAbilityT: "Ability", phRankCapT: "Rank cap", phArmyCapT: "Unit cap",
+        phLvCapT: "Level cap", phRegT: "Regulars", phEliteT: "Elites",
+        eliteCoachT: "Head Coach", eliteCoachHintT: "The higher the coach's Command+Might, the fewer regulars each elite costs (-1 per 10 pts above 150, min 6)", eliteCostCurT: "Cost {n} regulars per elite",
+        eliteTrain5T: "Train +5", eliteLegendT: "Legendary", eliteConvIdleT: "No training in progress",
+        eliteMixT: "Mixed units: Command Platform units can mix regulars and elites — elites of corps led by assigned generals count into the unit's troops and its 100k cap.",
+        eliteResT: "{n} · elites",
         phCapLineT: "Troops {c} = min(ability {a}, rank {b})",
         phCapShortT: "Troops {a} · ability {b}",
         phOverT: "100k ceiling reached", phMemT: "Generals {a}/{b}", phPowerT: "Power {n}",
@@ -12651,6 +12722,11 @@ var BOTS = [
         phFillOkT: "予備兵 {n} を集結", phFillNoneT: "予備兵不足、または全員満編",
         phAutoOkT: "{n} 部隊を編成しました", phDelOkT: "部隊から外しました", phClearOkT: "部隊を解散しました",
         phAbilityT: "帯兵能力", phRankCapT: "爵位上限", phArmyCapT: "部隊上限",
+        phLvCapT: "等級帯兵", phRegT: "実通常兵", phEliteT: "実特殊兵",
+        eliteCoachT: "主教練", eliteCoachHintT: "主教練の統+武が高いほど、特殊兵1名の消費通常兵が減る（統武和150超で10点ごとに−1、最低6）", eliteCostCurT: "現在の消費 {n} 通常兵/名",
+        eliteTrain5T: "訓練 +5", eliteLegendT: "極強", eliteConvIdleT: "訓練なし",
+        eliteMixT: "混成規則：点将台の部隊は通常兵と特殊兵を混編できます。特殊兵営の督将を部隊に編入すると、その特殊兵は部隊兵力と10万上限に算入されます。",
+        eliteResT: "{n} · 特殊兵",
         phCapLineT: "帯兵 {c} = min（能力 {a}・爵位 {b}）",
         phCapShortT: "帯兵 {a}・能力 {b}",
         phOverT: "10 万上限に到達", phMemT: "武将 {a}/{b}", phPowerT: "戦力 {n}",
@@ -13020,7 +13096,7 @@ var BOTS = [
         var mSt = (u.morale != null && u.morale < (u.moraleMax || 100) * 0.3) ? 0.92 : 1;
         var mHi = (u.morale != null && u.morale >= (u.moraleMax || 100) * 0.9) ? 1.04 : 1;
         var edge = formEdge(u.form, tgt.form);
-        var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi / (1 + tgt.def * 0.018)));
+        var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 * (u.elite.mul || 1) : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi / (1 + tgt.def * 0.018)));
         tgt.troop -= dmg; if (tgt.elite) tgt.elite.n = Math.max(0, Math.round(tgt.elite.n0 * Math.max(0, tgt.troop) / tgt.troopMax));
         var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: dmg, sk: tag, si: u.ix, ti: tgt.ix, rem: Math.max(0, tgt.troop) };
         /* V65：受创掉士气；克制提示 */
@@ -13298,6 +13374,18 @@ var BOTS = [
       resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + fmt(cityPopCap(u)) + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("upNoteT")) + '">⚔ ' + gt("poolT") + " " + fmt(c.pool || 0) + "</span>" +
+      /* V84：特种兵独立资源位（hover 显示各营兵种与数量） */
+      (function () { var eT = 0, eQ = 0; eliteSlots(c).forEach(function (s) { eT += s.n || 0; eQ += s.q || 0; });
+        var eRows = eliteSlots(c).map(function (s, si) {
+          var cdL = eliteLeaderOf(u, s), lgE = eliteLegendOf(cdL);
+          return '<div class="reshov-row">🎯 ' + esc(eliteName(u, si, c)) + (lgE ? " ★" : "") + '：<b>' + fmt(s.n || 0) + "</b> / " + fmt(ELITE_CAP) +
+            (s.q > 0 ? " · " + esc(gt("eliteProgT", { n: Math.min(10, s.q) })) : "") +
+            (lgE ? '<br><small style="opacity:.65">★ ' + esc(lgE.n) + " · " + esc(lgE.tip) + "</small>" : "") + "</div>";
+        }).join("");
+        return '<span class="respill" tabindex="0" style="border:1px solid #5dcaa566;border-radius:999px;padding:4px 11px;color:#5dcaa5">🎯 ' + gt("eliteTabT") + " " + fmt(eT) +
+          '<div class="reshov">' + '<div class="reshov-lab">🏙 ' + esc(gt("eliteResT", { n: c.name || "" })) + "</div>" + eRows +
+          (eQ > 0 ? '<div class="reshov-row" style="opacity:.6"><small>' + esc(gt("eliteProgT", { n: Math.min(10, eQ) })) + "</small></div>" : "") +
+          '<div class="reshov-sep"></div><div class="reshov-row" style="opacity:.6"><small>' + esc(gt("eliteRuleT")) + "</small></div></div></span>"; })() +
       '<span style="border:1px solid ' + (wN ? "#e07f7f88" : "var(--line-2)") + ';border-radius:999px;padding:4px 11px;color:' + (wN ? "#ffb3b3" : "var(--ink-2)") + '" title="' + esc(gt("infT") + " · " + gt("upNoteT")) + '">⚕ ' + gt("woundT") + " " + fmt(wN) + "</span>" +
       '<style>' +
       ".respill{position:relative;display:inline-block;border:1px solid var(--line-2,#3a3f4a);border-radius:999px;padding:4px 11px;cursor:help;outline:none}" +
@@ -16190,7 +16278,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var rb = recBarOf(un), capP = rb.cap, curP = rb.cur;
         if (card && rb.cap && !rb.full) shortN++;
         var armTxt = card ? (card.arm ? armName(card.arm) + " " + armProf(card, card.arm) : (armProfTop(card, 1)[0] || {}).k ? "适" + armName(armProfTop(card, 1)[0].k) + " " + armProfTop(card, 1)[0].v : "") : "";
-        return '<button class="sg-slot' + (card ? " on" : "") + (card && rb.full ? " sg-full" : "") + '" data-bat="slot" data-t="' + ti + '" data-p="' + p.k + '" title="' + esc(posDesc(p) + (card ? " · " + gt("recProgT") + " " + rb.pct + "%" + (rb.full ? "" : "（" + gt("missT", { n: troopTxt(rb.miss) }) + "）") : "")) + '">' +
+        return '<button class="sg-slot' + (card ? " on" : "") + (card && rb.full ? " sg-full" : "") + '" data-bat="slot" data-t="' + ti + '" data-p="' + p.k + '" title="' + esc(posDesc(p) + (card ? " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(card)) + " · " + gt("phRankCapT") + " " + fmt(rankTroop(card)) + " · " + gt("recProgT") + " " + rb.pct + "%" + (rb.full ? "" : "（" + gt("missT", { n: troopTxt(rb.miss) }) + "）") : "")) + '">' +
           (card ? '<span class="sg-slot-av">' + styledArtSVG(g, null, true) + "</span>" : '<span class="sg-slot-av sg-slot-av-e">＋</span>') +
           "<b>" + posName(p) + "</b>" + (card ? "<span>" + esc(g ? g.name : "?") + " <i>Lv." + cardLv(card) + "</i></span>" : '<span style="opacity:.45">' + T("slotEmpty") + "</span>") +
           (card ? '<span class="sg-slot-arm">' + esc(armTxt) + "</span>" : "") +
@@ -16293,22 +16381,32 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     });
     return hit;
   }
-  /* 部队口径：cap = min(10万, Σ成员上限)；troop 按成员顺序吃满 10 万为止 */
+  /* 部队口径（V84 混编）：常规兵 ≤ Σ成员爵位上限；统领特种兵营的成员把营内特种兵带入部队，
+     特种兵计入部队容量（与出战 troopMax += 特种兵 同口径），全员合计 ≤ 10 万；
+     power 中特种兵按 30 倍权重计（其攻击为普通兵 100 倍）。 */
   function armyStat(u, ai) {
     var c = ensureCity(u), list = armyCards(u, ai), max = armyCapMax();
-    var capSum = 0, troop = 0, power = 0, left = max, fullN = 0;
+    var capSum = 0, eAvail = 0;
     list.forEach(function (cd) {
       var g = gById(cd.gid) || {};
-      var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
-      capSum += cap;
-      var take = Math.min(cur, Math.max(0, left));
-      left -= take; troop += take;
-      if (cur >= cap) fullN++;
+      capSum += troopCapEff(cd, g, c);
+      eAvail += cardEliteN(u, cd.id, c);
+    });
+    var cap = Math.min(max, capSum + eAvail);
+    var troop = 0, elite = 0, power = 0, fullN = 0, leftReg = Math.min(max, capSum), left = max;
+    list.forEach(function (cd) {
+      var g = gById(cd.gid) || {};
+      var capM = troopCapEff(cd, g, c), cur = (cd.sold == null ? capM : Math.min(cd.sold, capM));
+      var take = Math.min(cur, Math.max(0, leftReg));
+      leftReg -= take; troop += take; left -= take;
+      if (cur >= capM) fullN++;
       var kp = (TIERS[cardTier(cd)] || {}).kp || 1;
       power += Math.round(take * (1 + (g.st || 0) / 100) * kp);
+      var eN = Math.min(cardEliteN(u, cd.id, c), Math.max(0, left));
+      left -= eN; elite += eN; troop += eN;
+      power += Math.round(eN * 30 * (1 + (g.st || 0) / 100));
     });
-    var cap = Math.min(max, capSum);
-    return { n: list.length, cap: cap, capSum: capSum, troop: troop, power: power,
+    return { n: list.length, cap: cap, capSum: capSum, troop: troop, reg: troop - elite, elite: elite, power: power,
       pct: cap ? Math.min(100, Math.round(troop / cap * 100)) : 0,
       over: capSum >= max, full: fullN, max: max, slot: armySlotMax() };
   }
@@ -16388,10 +16486,13 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     }).sort(function (x, y) { return troopCapEff(y, gById(y.gid), c) - troopCapEff(x, gById(x.gid), c); });
     var rows = cand.map(function (cd) {
       var g = gById(cd.gid) || {}, ti = cardTier(cd), cap = troopCapEff(cd, g, c);
+      var cur = (cd.sold == null ? cap : Math.min(cd.sold, cap)), eN = cardEliteN(u, cd.id, c);
       return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
-        "<span><b>" + esc(g.name || "?") + "</b> <small>Lv." + cardLv(cd) + " · " + gt("phAbilityT") + " " + fmt(troopAbilityOf(cd)) +
-        " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) + "</small></span><span class=\"sp\"></span>" +
-        '<small style="color:#e8c988">' + gt("lbTroop") + " " + fmt(cap) + "</small>" +
+        "<span><b>" + esc(g.name || "?") + "</b> <small>Lv." + cardLv(cd) +
+        " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(cd)) +
+        " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
+        " · " + gt("phRegT") + " " + fmt(cur) + "/" + fmt(cap) +
+        " · " + gt("phEliteT") + " " + fmt(eN) + "</small></span><span class=\"sp\"></span>" +
         '<button class="sgbtn sm primary" data-bat="army-add-go" data-t="' + ai + '" data-id="' + cd.id + '">' + gt("phAddT") + "</button></div>";
     }).join("");
     var st = armyStat(u, ai);
@@ -16416,12 +16517,18 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var memHTML = members.map(function (cd) {
         var g = gById(cd.gid) || {}, ti = cardTier(cd);
         var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
-        var tip = (g.name || "?") + " Lv." + cardLv(cd) + " · " + gt("phAbilityT") + " " + fmt(troopAbilityOf(cd)) + " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd));
+        var eN = cardEliteN(u, cd.id, c);
+        var tip = (g.name || "?") + " Lv." + cardLv(cd) +
+          " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(cd)) +
+          " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
+          " · " + gt("phRegT") + " " + fmt(cur) + "/" + fmt(cap) +
+          " · " + gt("phEliteT") + " " + fmt(eN);
         return '<div class="sg-armymem" title="' + esc(tip) + '">' +
           '<button class="sg-armymem-av" data-sgact="grow-open" data-id="' + cd.id + '" style="border-color:' + TIERS[ti].c + '">' + styledArtSVG(g, null, true) + "</button>" +
           "<b>" + esc(g.name || "?") + "</b>" +
           '<span style="color:' + TIERS[ti].c + '">' + esc(TIERS[ti].grade) + " · Lv." + cardLv(cd) + "</span>" +
-          "<i>" + troopTxt(cur) + " / " + troopTxt(cap) + "</i>" +
+          "<i>" + gt("phRegT") + " " + troopTxt(cur) + " / " + troopTxt(cap) + "</i>" +
+          (eN > 0 ? '<i style="color:#5dcaa5">🎯 ' + gt("phEliteT") + " " + troopTxt(eN) + "</i>" : "") +
           '<button class="sg-armymem-x" data-bat="army-del" data-t="' + ai + '" data-id="' + cd.id + '" title="' + esc(gt("phDelOkT")) + '">×</button></div>';
       }).join("");
       var empt = "";
@@ -16435,6 +16542,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         '<button class="sgbtn sm ghost" data-bat="army-clear" data-t="' + ai + '" title="' + esc(gt("phClearT")) + '">✕</button></div>' +
         '<div class="sg-army-bar' + (fullBar ? " full" : "") + '"><i style="width:' + st.pct + '%"></i><em>' +
         troopTxt(st.troop) + " / " + troopTxt(st.cap) + (st.over ? " · " + gt("phOverT") : "") + "</em></div>" +
+        (st.elite > 0 ? '<small style="display:block;text-align:center;color:#5dcaa5;font-size:9px;margin:-2px 0 3px">' + gt("phRegT") + " " + troopTxt(st.reg) + " · " + gt("phEliteT") + " " + troopTxt(st.elite) + "</small>" : "") +
         '<div class="sg-army-mem">' + memHTML + empt + "</div>" +
         '<div class="sg-army-ft"><span>' + gt("phArmyCapT") + ' <b style="color:#e8c988">' + troopTxt(maxC) + "</b></span><span class=\"sp\"></span>" +
         '<button class="sgbtn sm' + (fullBar ? " ghost" : "") + '" data-bat="army-fill" data-t="' + ai + '"' + (fullBar ? " disabled" : "") + ">🩹 " + gt("phFillT") + "</button></div></div>";
@@ -19059,6 +19167,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       }
       case "elite-train": { var r67 = eliteTrainOne(u, n); if (r67 && r67.err) toast(r67.err, "err"); else if (r67 && r67.ok) { toast(gt("eliteTrainT") + " ✓", "ok"); save(); } recruitOpen(); return; }
       case "elite-lid": { var c67 = ensureCity(u), s67 = eliteSlots(c67)[n]; if (s67) { var lid67 = t.getAttribute("data-c") || null; s67.lid = (s67.lid === lid67) ? null : lid67; save(); } recruitOpen(); return; }
+      case "elite-coach": { var cEC = ensureCity(u); var idEC = t.getAttribute("data-c") || null; cEC.spCoach = (cEC.spCoach === idEC) ? null : idEC; save(); recruitOpen(); return; }
+      case "elite-train5": { var done5 = 0, err5 = null; for (var i5 = 0; i5 < 5; i5++) { var r5 = eliteTrainOne(u, n); if (r5 && r5.err) { err5 = r5.err; break; } done5++; } if (done5) { save(); toast(gt("eliteTrain5T") + " ✓ ×" + done5 + (err5 ? " · " + err5 : ""), "ok", 5200); } else if (err5) toast(err5, "err"); recruitOpen(); return; }
       case "lg-go": BATUI.res = null; location.hash = "#/battle/f/l" + n; return;
       case "fight": location.hash = "#/battle/f/s" + n; return;
       case "sweep": location.hash = "#/battle/f/w" + n; return;
