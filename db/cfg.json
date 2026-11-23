@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T01:41:35.668Z"
+  "updated": "2026-11-23T01:50:16.680Z"
  },
  "econ": {
   "coin": 0.012,
@@ -18,15 +18,15 @@
  "gacha": [
   {
    "k": "s",
-   "p": 1
-  },
-  {
-   "k": "a",
    "p": 2
   },
   {
-   "k": "b",
+   "k": "a",
    "p": 3
+  },
+  {
+   "k": "b",
+   "p": 4
   },
   {
    "k": "c",
