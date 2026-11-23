@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T01:50:16.680Z"
+  "updated": "2026-11-23T05:04:55.896Z"
  },
  "econ": {
   "coin": 0.012,
@@ -40,7 +40,7 @@
  "military": {
   "popPct": 10,
   "cityCap": 1000000,
-  "mobCap": 50000,
+  "mobCap": 30000,
   "farmRice": 0.02,
   "recRice": 0.5,
   "recCoin": 2,
@@ -50,7 +50,41 @@
   "armyCap": 100000,
   "armyMax": 5,
   "armySlot": 5,
-  "lvBase": 30
+  "lvBase": 30,
+  "e68BatchStd": 1000,
+  "e68BatchMid": 1000,
+  "e68BatchTop": 100,
+  "e68RatioStd": 15,
+  "e68RatioMid": 40,
+  "e68RatioTop": 100,
+  "e68PowStd": 100,
+  "e68PowMid": 300,
+  "e68PowTop": 1000,
+  "e68MStd": 1,
+  "e68MMid": 2,
+  "e68MTop": 3,
+  "e68LossDenom": 1000,
+  "e68IntImmune": 90,
+  "e68ExchHi": 80,
+  "e68ExchLo": 60,
+  "e68LeadSt": 80,
+  "e68LeadWu": 80,
+  "e68Cap": 10000,
+  "e68WoundPct": 60,
+  "uhWu": 5,
+  "uhShi": 10,
+  "uhDui": 50,
+  "uhTun": 100,
+  "uhQu": 500,
+  "uhBu": 1000,
+  "uhYing": 5000,
+  "uhJun": 10000,
+  "uhScaleBig": 10000,
+  "uhScaleMid": 1000,
+  "uhMinS": 5,
+  "uhMinM": 10,
+  "uhMinB": 50,
+  "uhTitles": "伍长,什长,队率,屯长,军候,军司马,校尉,将军"
  },
  "popmodel": {
   "chaos": 0.3,
