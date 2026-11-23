@@ -297,13 +297,14 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div style="margin:16px 0 6px;font-weight:600">试算（默认参数）</div>
       <div id="milPreview"></div>
 
-      <div style="margin:22px 0 6px;font-weight:600">城市人口上限（逐城可改，洛阳最高）</div>
+      <div style="margin:22px 0 6px;font-weight:600">城市人口上限（逐城可改，洛阳最高 · 双击行修改）</div>
       <div class="muted" style="font-size:12px;margin-bottom:6px">
-        格式：每行「城名=上限」。V87 起默认值采用<b>《三国志IX》190 年城市人口</b>（洛阳 36 万 / 许昌 33 万 / 邺 30.8 万 / 濮阳 28.3 万 … 安定 4.9 万，洛阳为全图最高）；
+        列表默认显示 52 城的当前上限（未修改过的城显示默认值）；<b>双击任意一行</b>弹出修改窗口，改完点「保存人口上限」全站生效。
+        默认值采用<b>《三国志IX》190 年城市人口</b>（洛阳 36 万全图最高 / 许昌 33 万 / 邺 30.8 万 / 濮阳 28.3 万 … 安定 4.9 万）；
         未收录三国志IX 表的边塞小城（临淄、合肥、广陵、番禺、上庸、敦煌、平城、朔方、柳城、伊吾）沿用等级系数推导（都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3，不高于洛阳）。
-        人口达到上限后不再增长（募兵限额 = 人口 × 募兵比例，同步受限）。改完后点「保存人口上限」全站生效；如云端已有旧值，请先「重新生成默认值」再保存以覆盖。
+        人口达到上限后不再增长（募兵限额 = 人口 × 募兵比例，同步受限）；「当前上限」列金色标注 = 已偏离默认值。点击表头「默认上限 / 当前上限」可排序。
       </div>
-      <textarea id="popcapText" spellcheck="false" style="width:100%;height:320px;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.7;padding:8px;border-radius:8px;border:1px solid var(--line-2,#3a4150);background:rgba(255,255,255,.04);color:inherit"></textarea>
+      <div id="popcapTable" style="max-height:430px;overflow:auto;border:1px solid var(--line-2,#3a4150);border-radius:8px"></div>
       <div class="toolbar" style="margin-top:8px">
         <button class="btn" id="popcapDefault">重新生成默认值</button>
         <button class="btn gold" id="popcapSave">保存人口上限</button>
@@ -1683,60 +1684,61 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 
   /* ---------- V81 城市人口上限（云端 key = popcap）+ 全站重置加点（云端 key = spreset） ----------
      V87：第 4 列为《三国志IX》190 年城市人口（sangokushi9.shiyo.info/toshi.html），即默认人口上限；
-     0 表示该城未收录于三国志IX 表（沿用等级系数推导）。洛阳 36 万为全图最高。 */
+     0 表示该城未收录于三国志IX 表（沿用等级系数推导）。洛阳 36 万为全图最高。
+     V89：第 5 列为州域（《三国志IX》州归属）；UI 改为列表 + 双击行弹窗修改。 */
   var POP_CITIES = [
-    ["洛阳", 42, "都城", 360000],
-    ["长安", 30, "都城", 248000],
-    ["许昌", 32, "都城", 330000],
-    ["邺", 36, "都城", 308000],
-    ["成都", 34, "都城", 276000],
-    ["建业", 26, "都城", 95000],
-    ["襄阳", 24, "州治", 234000],
-    ["江陵", 22, "州治", 242000],
-    ["宛", 20, "郡城", 205000],
-    ["寿春", 20, "州治", 109000],
-    ["汝南", 19, "郡城", 225000],
-    ["下邳", 18, "州治", 281000],
-    ["吴", 18, "郡城", 97000],
-    ["濮阳", 17, "州治", 283000],
-    ["陈留", 16, "郡城", 255000],
-    ["临淄", 16, "州治", 0],
-    ["晋阳", 16, "州治", 83000],
-    ["会稽", 16, "郡城", 113000],
-    ["长沙", 15, "郡城", 105000],
-    ["蓟", 14, "州治", 132000],
-    ["汉中", 14, "州治", 236000],
-    ["北海", 14, "郡城", 200000],
-    ["江夏", 14, "郡城", 66000],
-    ["南皮", 13, "郡城", 219000],
-    ["庐江", 13, "郡城", 100000],
-    ["江州", 13, "郡城", 199000],
-    ["平原", 12, "郡城", 150000],
-    ["合肥", 12, "郡城", 0],
-    ["柴桑", 12, "郡城", 62000],
-    ["上党", 11, "郡城", 57000],
-    ["广陵", 11, "郡城", 0],
-    ["天水", 10, "郡城", 57000],
-    ["武威", 9, "州治", 83000],
-    ["武陵", 9, "郡城", 62000],
-    ["梓潼", 9, "郡城", 94000],
-    ["交趾", 9, "郡城", 100000],
-    ["新野", 8, "郡城", 59000],
-    ["桂阳", 8, "郡城", 52000],
-    ["零陵", 8, "郡城", 53000],
-    ["永安", 8, "关城", 71000],
-    ["番禺", 8, "州治", 0],
-    ["襄平", 7, "郡城", 65000],
-    ["北平", 7, "郡城", 118000],
-    ["安定", 7, "郡城", 49000],
-    ["建宁", 6, "郡城", 77000],
-    ["云南", 6, "郡城", 65000],
-    ["上庸", 6, "郡城", 0],
-    ["敦煌", 5, "郡城", 0],
-    ["平城", 5, "塞", 0],
-    ["朔方", 4, "塞", 0],
-    ["柳城", 4, "塞", 0],
-    ["伊吾", 3, "塞", 0]
+    ["洛阳", 42, "都城", 360000, "司隶"],
+    ["长安", 30, "都城", 248000, "雍州"],
+    ["许昌", 32, "都城", 330000, "豫州"],
+    ["邺", 36, "都城", 308000, "冀州"],
+    ["成都", 34, "都城", 276000, "益州"],
+    ["建业", 26, "都城", 95000, "扬州"],
+    ["襄阳", 24, "州治", 234000, "荆州"],
+    ["江陵", 22, "州治", 242000, "荆州"],
+    ["宛", 20, "郡城", 205000, "荆州"],
+    ["寿春", 20, "州治", 109000, "扬州"],
+    ["汝南", 19, "郡城", 225000, "豫州"],
+    ["下邳", 18, "州治", 281000, "徐州"],
+    ["吴", 18, "郡城", 97000, "扬州"],
+    ["濮阳", 17, "州治", 283000, "兖州"],
+    ["陈留", 16, "郡城", 255000, "兖州"],
+    ["临淄", 16, "州治", 0, "青州"],
+    ["晋阳", 16, "州治", 83000, "并州"],
+    ["会稽", 16, "郡城", 113000, "扬州"],
+    ["长沙", 15, "郡城", 105000, "荆州"],
+    ["蓟", 14, "州治", 132000, "幽州"],
+    ["汉中", 14, "州治", 236000, "益州"],
+    ["北海", 14, "郡城", 200000, "青州"],
+    ["江夏", 14, "郡城", 66000, "荆州"],
+    ["南皮", 13, "郡城", 219000, "冀州"],
+    ["庐江", 13, "郡城", 100000, "扬州"],
+    ["江州", 13, "郡城", 199000, "益州"],
+    ["平原", 12, "郡城", 150000, "冀州"],
+    ["合肥", 12, "郡城", 0, "扬州"],
+    ["柴桑", 12, "郡城", 62000, "扬州"],
+    ["上党", 11, "郡城", 57000, "并州"],
+    ["广陵", 11, "郡城", 0, "徐州"],
+    ["天水", 10, "郡城", 57000, "雍州"],
+    ["武威", 9, "州治", 83000, "凉州"],
+    ["武陵", 9, "郡城", 62000, "荆州"],
+    ["梓潼", 9, "郡城", 94000, "益州"],
+    ["交趾", 9, "郡城", 100000, "交州"],
+    ["新野", 8, "郡城", 59000, "荆州"],
+    ["桂阳", 8, "郡城", 52000, "荆州"],
+    ["零陵", 8, "郡城", 53000, "荆州"],
+    ["永安", 8, "关城", 71000, "益州"],
+    ["番禺", 8, "州治", 0, "交州"],
+    ["襄平", 7, "郡城", 65000, "幽州"],
+    ["北平", 7, "郡城", 118000, "幽州"],
+    ["安定", 7, "郡城", 49000, "雍州"],
+    ["建宁", 6, "郡城", 77000, "益州"],
+    ["云南", 6, "郡城", 65000, "益州"],
+    ["上庸", 6, "郡城", 0, "荆州"],
+    ["敦煌", 5, "郡城", 0, "凉州"],
+    ["平城", 5, "塞", 0, "并州"],
+    ["朔方", 4, "塞", 0, "并州"],
+    ["柳城", 4, "塞", 0, "幽州"],
+    ["伊吾", 3, "塞", 0, "凉州"]
   ];
   function popDefCap(name, pop, lv, cap9) {
     if (cap9 > 0) return cap9;   /* V87：三国志IX 190 年人口直接作为默认上限 */
@@ -1745,30 +1747,94 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     var cap = Math.round((+pop || 20) * 10000 * f / 5000) * 5000;
     return Math.max(20000, Math.min(360000, cap));
   }
-  var popcapCfg = null;
+  var popcapCfg = null;     /* 云端已有配置（key=popcap） */
+  var popcapEdits = {};     /* 本次会话修改：城名 -> 数值（尚未保存） */
+  var popcapSort = "";      /* ""=默认顺序 | "cur"=当前上限降序 | "def"=默认上限降序 */
+  function popDefVal(c) { return popDefCap(c[0], c[1], c[2], c[3]); }
+  function popEffVal(c) {
+    var n = c[0];
+    if (popcapEdits[n] != null && isFinite(+popcapEdits[n])) return Math.round(+popcapEdits[n]);
+    if (popcapCfg && popcapCfg[n] != null && +popcapCfg[n] > 0) return Math.round(+popcapCfg[n]);
+    return popDefVal(c);
+  }
+  function popIsMod(c) {
+    var n = c[0];
+    if (popcapEdits[n] != null) return true;
+    return !!(popcapCfg && popcapCfg[n] != null && +popcapCfg[n] > 0 && Math.round(+popcapCfg[n]) !== popDefVal(c));
+  }
   function popcapPaint() {
-    var o = popcapCfg || {};
-    $("#popcapText").value = POP_CITIES.map(function (c) {
-      var v = (o[c[0]] != null && +o[c[0]] > 0) ? Math.round(+o[c[0]]) : popDefCap(c[0], c[1], c[2], c[3]);
-      return c[0] + "=" + v;
-    }).join("\n");
-    var tot = 0, mx = 0;
-    POP_CITIES.forEach(function (c) { var v = (o[c[0]] != null && +o[c[0]] > 0) ? Math.round(+o[c[0]]) : popDefCap(c[0], c[1], c[2], c[3]); tot += v; mx = Math.max(mx, v); });
-    $("#popcapMsg").textContent = "共 " + POP_CITIES.length + " 城 · 上限合计 " + tot.toLocaleString("en-US") + " · 最高 " + mx.toLocaleString("en-US") + "（默认表：三国志IX 190 年人口，洛阳最高）";
-  }
-  function popcapParse() {
-    var out = {}, bad = [];
-    String($("#popcapText").value || "").split(/\r?\n/).forEach(function (ln) {
-      ln = ln.trim();
-      if (!ln || ln.charAt(0) === "#") return;
-      var i = ln.indexOf("=");
-      if (i < 0) { bad.push(ln); return; }
-      var k = ln.slice(0, i).trim(), v = Math.round(+ln.slice(i + 1).replace(/[^0-9]/g, ""));
-      if (!k || !isFinite(v) || v <= 0) { bad.push(ln); return; }
-      out[k] = v;
+    var rows = POP_CITIES.slice();
+    if (popcapSort === "cur") rows.sort(function (a, b) { return popEffVal(b) - popEffVal(a) || a[0].localeCompare(b[0], "zh"); });
+    else if (popcapSort === "def") rows.sort(function (a, b) { return popDefVal(b) - popDefVal(a) || a[0].localeCompare(b[0], "zh"); });
+    function th(label, key) {
+      var arrow = popcapSort === key ? " ▾" : "";
+      return '<th data-pcsort="' + key + '" style="text-align:left;padding:7px 10px;position:sticky;top:0;background:#10151f;border-bottom:1px solid #2a3547;font-weight:600;white-space:nowrap;' +
+        (key ? "cursor:pointer;user-select:none" : "") + '">' + label + arrow + "</th>";
+    }
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>' +
+      th("州") + th("城市") + th("等级") + th("人口（IX·190年）") + th("默认上限", "def") + th("当前上限", "cur") +
+      "</tr></thead><tbody>";
+    rows.forEach(function (c, i) {
+      var def = popDefVal(c), cur = popEffVal(c), mod = popIsMod(c);
+      html += '<tr data-pcr="' + POP_CITIES.indexOf(c) + '" title="双击修改「' + c[0] + '」的人口上限" style="cursor:pointer;' +
+        (i % 2 ? "background:rgba(255,255,255,.03);" : "") + '">' +
+        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap">' + c[4] + "</td>" +
+        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)"><b>' + c[0] + "</b>" + (c[0] === "洛阳" ? ' <span style="font-size:11px;color:#ffd479">全图最高</span>' : "") + "</td>" +
+        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)">' + c[2] + "</td>" +
+        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-family:ui-monospace,Consolas,monospace">' + (c[3] > 0 ? c[3].toLocaleString("en-US") : '<span style="opacity:.45">—（系数推导）</span>') + "</td>" +
+        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-family:ui-monospace,Consolas,monospace">' + def.toLocaleString("en-US") + "</td>" +
+        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-family:ui-monospace,Consolas,monospace;color:' + (mod ? "#ffd479" : "inherit") + '">' +
+        cur.toLocaleString("en-US") + (mod ? ' <span style="font-size:11px">改</span>' : "") + "</td></tr>";
     });
-    return { data: out, bad: bad };
+    html += "</tbody></table>";
+    $("#popcapTable").innerHTML = html;
+    var tot = 0, mx = 0, nmod = 0;
+    POP_CITIES.forEach(function (c) { var v = popEffVal(c); tot += v; mx = Math.max(mx, v); if (popIsMod(c)) nmod++; });
+    $("#popcapMsg").textContent = "共 " + POP_CITIES.length + " 城 · 上限合计 " + tot.toLocaleString("en-US") + " · 最高 " + mx.toLocaleString("en-US") +
+      " · 已改 " + nmod + " 城" + (popcapEdits && Object.keys(popcapEdits).length ? "（未保存）" : "");
   }
+  /* 双击行 → 弹窗修改 */
+  function popcapEditModal(c) {
+    var def = popDefVal(c), cur = popEffVal(c);
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:98;display:flex;align-items:center;justify-content:center";
+    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:380px;color:#e8ecf3;font-family:inherit">' +
+      '<div style="font-weight:600;font-size:15px;margin-bottom:12px">修改人口上限 — ' + esc(c[0]) + "（" + c[4] + " · " + c[2] + "）</div>" +
+      '<div style="font-size:13px;margin-bottom:6px">默认上限（三国志IX 190 年）：' + def.toLocaleString("en-US") + (c[3] > 0 ? "" : "（该城未收录三国志IX 表，按等级系数推导）") + "</div>" +
+      '<div style="font-size:13px;margin-bottom:10px">当前上限：' + cur.toLocaleString("en-US") + (popIsMod(c) ? "（已改）" : "（默认）") + "</div>" +
+      '<div style="font-size:13px;margin-bottom:12px">新上限：<input id="pcN" type="number" min="1000" max="9999999" step="1000" value="' + cur + '" style="width:120px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"> <span class="muted" style="font-size:12px">（1000 ~ 9,999,999）</span></div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button id="pcReset" class="btn" style="padding:6px 14px;margin-right:auto">恢复默认值</button>' +
+      '<button id="pcCancel" class="btn" style="padding:6px 14px">取消</button>' +
+      '<button id="pcOk" class="btn gold" style="padding:6px 14px">确定</button></div></div>';
+    document.body.appendChild(ov);
+    var inp = ov.querySelector("#pcN");
+    inp.focus(); inp.select();
+    ov.querySelector("#pcCancel").onclick = function () { document.body.removeChild(ov); };
+    ov.querySelector("#pcReset").onclick = function () { inp.value = def; };
+    function ok() {
+      var v = Math.round(+String(inp.value).replace(/[^0-9]/g, "") || 0);
+      if (v < 1000 || v > 9999999) { admTip("上限需在 1000 ~ 9,999,999 之间", true); return; }
+      popcapEdits[c[0]] = v;
+      document.body.removeChild(ov);
+      popcapPaint();
+    }
+    ov.querySelector("#pcOk").onclick = ok;
+    inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") ok(); if (ev.key === "Escape") document.body.removeChild(ov); });
+  }
+  $("#popcapTable").addEventListener("dblclick", function (ev) {
+    var tr = ev.target.closest ? ev.target.closest("tr[data-pcr]") : null;
+    if (!tr) return;
+    var c = POP_CITIES[parseInt(tr.getAttribute("data-pcr"), 10)];
+    if (c) popcapEditModal(c);
+  });
+  $("#popcapTable").addEventListener("click", function (ev) {
+    var th = ev.target.closest ? ev.target.closest("th[data-pcsort]") : null;
+    if (!th) return;
+    var k = th.getAttribute("data-pcsort");
+    popcapSort = (popcapSort === k) ? "" : k;
+    popcapPaint();
+  });
   function popcapLoad() {
     call("sg_cfg_get", { p_key: "popcap" }).then(function (r) {
       var o = null;
@@ -1777,29 +1843,25 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
       }
       popcapCfg = (o && typeof o === "object") ? o : null;
+      popcapEdits = {};
       popcapPaint();
-    })["catch"](function () { popcapCfg = null; popcapPaint(); });
+    })["catch"](function () { popcapCfg = null; popcapEdits = {}; popcapPaint(); });
   }
   $("#popcapDefault").addEventListener("click", function () {
-    popcapCfg = null; popcapPaint(); $("#popcapMsg").textContent += "　（已生成默认值，尚未保存）";
+    popcapEdits = {}; popcapPaint();
+    $("#popcapMsg").textContent += "　（已恢复显示默认值：未改动的城回到默认；如需覆盖云端旧值请再点「保存人口上限」）";
   });
   $("#popcapSave").addEventListener("click", function () {
-    var p = popcapParse();
-    if (p.bad.length) return admTip("有 " + p.bad.length + " 行格式不对：" + p.bad.slice(0, 3).join(" / "), true);
-    var keys = Object.keys(p.data);
-    if (!keys.length) return admTip("没有可保存的内容（每行格式：城名=上限）", true);
-    var lv = 0, over = [];
-    keys.forEach(function (k) {
-      POP_CITIES.forEach(function (c) { if (c[0] === k) lv = Math.max(lv, p.data[k]); });
-    });
-    var luo = p.data["洛阳"] || 360000;
-    keys.forEach(function (k) { if (p.data[k] > luo) over.push(k); });
+    var data = {}, over = [];
+    POP_CITIES.forEach(function (c) { data[c[0]] = popEffVal(c); });
+    var luo = data["洛阳"] || popDefCap("洛阳", 42, "都城", 360000);
+    POP_CITIES.forEach(function (c) { if (data[c[0]] > luo) over.push(c[0]); });
     if (over.length && !confirm("这些城的上限高于洛阳（" + over.slice(0, 5).join("、") + "），仍要保存？")) return;
     var btn = $("#popcapSave");
     btn.disabled = true;
-    call("sg_cfg_set", { p_token: token(), p_key: "popcap", p_data: p.data }).then(function (r) {
+    call("sg_cfg_set", { p_token: token(), p_key: "popcap", p_data: data }).then(function (r) {
       btn.disabled = false;
-      if (r && r.ok) { popcapCfg = p.data; popcapPaint(); admTip("人口上限已保存，全站生效（玩家端刷新或下次打开拉取）"); }
+      if (r && r.ok) { popcapCfg = data; popcapEdits = {}; popcapPaint(); admTip("人口上限已保存，全站生效（玩家端刷新或下次打开拉取）"); }
       else if (r && r.err === "unauthorized") logout();
       else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
     });
