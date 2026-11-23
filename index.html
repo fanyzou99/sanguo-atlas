@@ -11427,6 +11427,72 @@ var BOTS = [
     if (v) s = s.replace(/\{(\w+)\}/g, function (m, p) { return v[p] != null ? v[p] : m; });
     return s;
   }
+  /* ================= V86：V68 特种兵三档体系词条（注入 GT） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        e68NeedCoachT: "请先任命主训练官（教官）——教官训练期间不得编队/出战",
+        e68TrainBusyT: "该营正在训练中（倒计时进行）",
+        e68CoachBusyT: "教官已编入部队/出战中，请先将其移出编队再开训",
+        e68PoolNoT: "预备役不足：本批次需 {n} 名普通兵",
+        e68StartT: "开训：消耗 {n} 预备役 · {m} 个月后成军",
+        e68BatchT: "批量开训",
+        e68CntT: "训练倒计时 {n}/{m} 月",
+        e68TierRatioT: "转化 1:{n}",
+        e68TierPowT: "战力 ×{n}",
+        e68TierBatchT: "每批 {n} 人",
+        e68WoundT: "特种兵伤兵",
+        e68AttT: "随队特种兵",
+        e68AttNoneT: "不带",
+        e68AttHintT: "编队时明确是否携带特种兵：只能携带本阵营（营统领阵营）的预备役特种兵，单独计数，伤兵单独记录，战后归城",
+        e68FactionNoT: "阵营不符：只能携带本阵营（营统领阵营）的特种兵",
+        e68IntImmT: "智力型武将的纯武力攻击对特种兵近乎免疫（90% 减免）；技能、陷阱等谋略伤害正常生效",
+        e68CoachLockT: "教官训练中（不得编队/出战）",
+        eliteRuleT: "规则（V68）：按兵种批量训练（标准/精锐 1000 人、顶级 100 人一批）· 转化比与战力分三档（100/300/1000 倍）· 训练 1–3 个月倒计时 · 教官训练期间不得编队/出战 · 特种兵折损 1000:1，普通兵按士气 1:1～3:1 · 伤兵单独记录，月度归队 · 管控台 military 页签可配全部参数"
+      },
+      en: {
+        e68NeedCoachT: "Appoint a head coach first — the coach cannot join squads while training",
+        e68TrainBusyT: "This corps is already in training (countdown running)",
+        e68CoachBusyT: "The coach is currently in a squad — remove them from the squad before starting training",
+        e68PoolNoT: "Not enough reserves: this batch needs {n} regulars",
+        e68StartT: "Training started: {n} reserves consumed · ready in {m} months",
+        e68BatchT: "Batch Train",
+        e68CntT: "Training countdown {n}/{m} months",
+        e68TierRatioT: "Convert 1:{n}",
+        e68TierPowT: "Power ×{n}",
+        e68TierBatchT: "Batch of {n}",
+        e68WoundT: "Elite wounded",
+        e68AttT: "Attach Elite Corps",
+        e68AttNoneT: "None",
+        e68AttHintT: "Declare per general whether they bring elites when forming a squad: only own-faction reserve elites, counted separately with separate wounded tracking",
+        e68FactionNoT: "Faction mismatch: can only attach own-faction elites (by corps leader's faction)",
+        e68IntImmT: "Pure force attacks from intellect-type generals are nearly immune (90% reduced) against elites; skills and traps still work normally",
+        e68CoachLockT: "Coach on duty (cannot join squads / fight)",
+        eliteRuleT: "Rules (V68): batch training per corps (std/vet 1000, top 100 per batch) · 3 tiers with ratio & power (100/300/1000x) · 1–3 month countdown · coach cannot fight while training · elite losses 1000:1, regulars 1:1–3:1 by morale · separate wounded tracking · all tunable in admin military tab"
+      },
+      ja: {
+        e68NeedCoachT: "先に主練習官（教官）を任命してください——訓練中は編隊/出陣できません",
+        e68TrainBusyT: "この営は訓練中です（カウントダウン進行中）",
+        e68CoachBusyT: "教官が編隊に出陣中です。訓練開始前に編隊から外してください",
+        e68PoolNoT: "予備役が不足：この批次には {n} 人の通常兵が必要",
+        e68StartT: "訓練開始：{n} 予備役を消費 · {m} ヶ月後に成軍",
+        e68BatchT: "一括訓練",
+        e68CntT: "訓練カウントダウン {n}/{m} ヶ月",
+        e68TierRatioT: "転化 1:{n}",
+        e68TierPowT: "戦力 ×{n}",
+        e68TierBatchT: "1回 {n} 人",
+        e68WoundT: "特殊兵傷兵",
+        e68AttT: "随伴特殊兵",
+        e68AttNoneT: "帯同しない",
+        e68AttHintT: "編隊時に各武将が特殊兵を帯同するか明示：自陣営（督将の陣営）の予備役特殊兵のみ、個別計数・傷兵も個別記録",
+        e68FactionNoT: "陣営不一致：自陣営（督将の陣営）の特殊兵のみ帯同可能",
+        e68IntImmT: "知力型武将の純武力攻撃は特殊兵にほぼ無効（90% 軽減）；技能・罠などは通常どおり有効",
+        e68CoachLockT: "教官訓練中（編隊/出陣不可）",
+        eliteRuleT: "規則（V68）：兵種ごとに一括訓練（標準/精鋭 1000 人、最精鋭 100 人）· 転化比と戦力は三段階（100/300/1000 倍）· 訓練 1～3 ヶ月のカウントダウン · 教官は訓練中出陣不可 · 特殊兵の損耗 1000:1、通常兵は士気により 1:1～3:1 · 傷兵は個別記録で月次復帰 · 全パラメータは管理画面 military で設定可"
+      }
+    };
+    ["zh", "ja", "en"].forEach(function (lg) { if (GT[lg] && ADD[lg]) Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; }); });
+  })();
   /* ================= V66：三语词条（注入 GT，随语言切换） ================= */
   (function () {
     var ADD = {
@@ -11535,6 +11601,25 @@ var BOTS = [
   function bldDesc(b) { return (lang() === "en") ? b.den : b.dzh; }
   /* ================= V67 特种兵（七军）/ 训练场 / 城内驻军粮耗减半（V84：极强营·主教练·混编·训练场改版） ================= */
   var ELITE_CAP = 10000, ELITE_TRAIN_COST = 10, ELITE_LEAD_ST = 80, ELITE_LEAD_WU = 80;
+  /* ================= V68：三档特种兵运行参数（由 applyMilCfg 用云端 military.e68* 覆盖） =================
+     batch 每批训练人数（预备役投入 = batch × ratio）；ratio 转化比（1 特种兵消耗 ratio 名预备役）；
+     pow 战力倍率（普通士兵=1）；months 训练月数（倒计时）；lossDenom 特种兵折损（每受 {n} 点伤害折损 1 名）；
+     intImmune 智力型武将纯武力攻击对特种兵的免疫%（技能/陷阱不受免疫）；
+     exchHi/exchLo 普通兵士气换损档位：士气≥exchHi 3换1、≥exchLo 2换1、否则 1换1。 */
+  var E68 = { batchStd: 1000, batchMid: 1000, batchTop: 100, ratioStd: 15, ratioMid: 40, ratioTop: 100,
+    powStd: 100, powMid: 300, powTop: 1000, mStd: 1, mMid: 2, mTop: 3,
+    lossDenom: 1000, intImmune: 90, exchHi: 80, exchLo: 60, woundPct: 60 };
+  function e68Tier(tk) {
+    if (tk === "mid") return { k: "mid", batch: E68.batchMid, ratio: E68.ratioMid, pow: E68.powMid, months: E68.mMid };
+    if (tk === "top") return { k: "top", batch: E68.batchTop, ratio: E68.ratioTop, pow: E68.powTop, months: E68.mTop };
+    return { k: "std", batch: E68.batchStd, ratio: E68.ratioStd, pow: E68.powStd, months: E68.mStd };
+  }
+  function e68TierName(tk) {
+    var l = lang();
+    if (tk === "top") return l === "en" ? "Top Elite Corps" : l === "ja" ? "最精鋭特殊兵" : "顶级特种兵";
+    if (tk === "mid") return l === "en" ? "Veteran Elite Corps" : l === "ja" ? "精鋭特殊兵" : "精锐特种兵";
+    return l === "en" ? "Standard Elite Corps" : l === "ja" ? "標準特殊兵" : "标准特种兵";
+  }
   /* 史料命名的各国特种兵：魏 七军/虎贲军/虎豹骑（于禁督七军、虎贲宿卫、曹纯虎豹骑）；
      蜀 白毦兵/无当飞军（陈到领白毦、王平领无当飞军）；吴 解烦军/敢死士/丹阳兵（孙权解烦督）；
      群 飞熊军/白马义从/西凉铁骑；汉 羽林军/虎贲军。按统领武将阵营自动转化名称。 */
@@ -11558,6 +11643,13 @@ var BOTS = [
   };
   function eliteLegendOf(cd) { if (!cd) return null; var g = gById(cd.gid); return (g && ELITE_LEGEND[g.name]) || null; }
   function eliteCoachOf(u, c) { var cc = c || ensureCity(u); return cc.spCoach ? (u.cards || []).filter(function (x) { return x.id === cc.spCoach; })[0] : null; }
+  /* V68：主训练官（教官）在特种兵训练倒计时期间不得编队/出战，仅任点将台主训练官 */
+  function e68CoachOnDuty(u, cObj, cid) {
+    var c = cObj || ensureCity(u);
+    var coach = eliteCoachOf(u, c);
+    if (!coach || coach.id !== cid) return false;
+    return eliteSlots(c).some(function (s) { return s.tr; });
+  }
   function eliteCostEff(c, uForTest) {
     var u = uForTest || me(); if (!u || !c) return ELITE_TRAIN_COST;
     var cd = eliteCoachOf(u, c); if (!cd) return ELITE_TRAIN_COST;
@@ -11568,56 +11660,107 @@ var BOTS = [
   }
   /* 该武将名下（任其为统领的营）的特种兵数——混编入部队时计入部队兵力 */
   function cardEliteN(u, cid, cObj) { var c = cObj || ensureCity(u), n = 0; eliteSlots(c).forEach(function (s) { if (s.lid === cid) n += s.n || 0; }); return n; }
-  function eliteSlots(c) { if (!c.elites) c.elites = [{ n: 0, q: 0, lid: null }, { n: 0, q: 0, lid: null }]; return c.elites; }
+  function eliteSlots(c) {
+    if (!c.elites || !c.elites.length) c.elites = [{ n: 0, q: 0, lid: null, tk: "std", tr: null, w: 0 }, { n: 0, q: 0, lid: null, tk: "mid", tr: null, w: 0 }, { n: 0, q: 0, lid: null, tk: "top", tr: null, w: 0 }];
+    /* V68 迁移：V85 双营 → 三档（0=标准 1=精锐 2=顶级）；旧训练点 q 按 10:1 一次性转正 */
+    if (c.elites.length === 2) c.elites.push({ n: 0, q: 0, lid: null, tk: "top", tr: null, w: 0 });
+    c.elites.forEach(function (s, i) {
+      if (!s.tk) { s.tk = ["std", "mid", "top"][i] || "std"; if ((s.q || 0) > 0) { s.n = Math.min(ELITE_CAP, (s.n || 0) + Math.floor(s.q / 10)); s.q = 0; } }
+      if (s.w == null) s.w = 0;
+      if (!s.tr) s.tr = null;
+    });
+    return c.elites;
+  }
   function eliteLeaderOf(u, s) { return s.lid ? (u.cards || []).filter(function (x) { return x.id === s.lid; })[0] : null; }
   function eliteLeadOK(cd) { if (!cd) return false; var g = gById(cd.gid); if (!g) return false; return (g.st || 0) > ELITE_LEAD_ST && (g.wu || 0) > ELITE_LEAD_WU; }
   function eliteName(u, si, cu) { var c = cu || ensureCity(u), s = eliteSlots(c)[si] || {}, cd = eliteLeaderOf(u, s); var lg = eliteLegendOf(cd); if (lg) return lg.n; if (!cd) return gt("eliteTabT"); var g = gById(cd.gid) || {}; var arr = ELITE_NAMES[g.faction] || ELITE_NAMES["群"]; return arr[si % arr.length]; }
-  /* 训练：10 名普通士兵 → 训练进度 +10，月度结算转正为 1 名特种兵 */
-  function eliteTrainOne(u, si) {
+  /* V68 批量训练：一次投入一个批次预备役（标准/精锐 1000 人、顶级 100 人，可在管控台配置），
+     按 1:{ratio} 转化，训练需 1–3 个月倒计时（月度结算推进）；
+     教官（主训练官）训练期间不得编队/出战，仅任点将台主训练官 */
+  function eliteBatchTrain(u, si) {
     var c = ensureCity(u), s = eliteSlots(c)[si]; if (!s) return { err: gt("eliteTabT") + "?" };
-    var cost = eliteCostEff(c, u);
-    if ((c.pool || 0) < cost) return { err: gt("elitePoolNoT") };
-    if (s.n + Math.floor(s.q / 10) >= ELITE_CAP) return { err: gt("eliteCapHitT", { m: fmt(ELITE_CAP) }) };
-    c.pool -= cost; s.q += 10; return { ok: 1, cost: cost };
+    var t68 = e68Tier(s.tk);
+    var coach = eliteCoachOf(u, c);
+    if (!coach) return { err: gt("e68NeedCoachT") };
+    if (s.tr) return { err: gt("e68TrainBusyT") };
+    if (cardInTeam(u, coach.id) || cardInArmy(u, coach.id)) return { err: gt("e68CoachBusyT") };
+    var need = t68.batch * t68.ratio;
+    if ((c.pool || 0) < need) return { err: gt("e68PoolNoT", { n: fmt(need) }) };
+    if (s.n + t68.batch > ELITE_CAP) return { err: gt("eliteCapHitT", { m: fmt(ELITE_CAP) }) };
+    c.pool -= need;
+    s.tr = { left: t68.months, tot: t68.months, out: t68.batch };
+    return { ok: 1, need: need, months: t68.months, batch: t68.batch };
   }
-  /* 月度结算：训练进度转正 + 训练场士气维护 */
+  /* 月度结算：训练倒计时推进 + 特种兵伤兵归队 + 训练场士气维护 */
   function eliteMonthlyCity(c) {
     if (!c) return;
     eliteSlots(c).forEach(function (s) {
-      var gain = Math.floor(s.q / ELITE_TRAIN_COST);
-      if (gain > 0) { s.n = Math.min(ELITE_CAP, s.n + gain); s.q -= gain * ELITE_TRAIN_COST; if (s.n >= ELITE_CAP) s.q = 0; }
+      if (s.tr && s.tr.left != null) {
+        s.tr.left--;
+        if (s.tr.left <= 0) { s.n = Math.min(ELITE_CAP, (s.n || 0) + (s.tr.out || 0)); s.tr = null; }
+      }
+      if ((s.w || 0) > 0) { s.n = Math.min(ELITE_CAP, (s.n || 0) + s.w); s.w = 0; }  /* V68：特种兵伤兵月度归队 */
     });
     var tr = (c.bld && c.bld.train) || 0;
     c.morale = c.morale == null ? 60 : c.morale;
     if (tr > 0) c.morale = Math.min(100, c.morale + tr * 2);
     else c.morale = Math.max(60, c.morale - 2);
   }
-  /* 开战：统领（统>80 且 武>80）自动率本营特种兵出战；全军攻击随士气提升 */
+  /* V68 开战：每名武将按编队时的「随队特种兵」开关（card.el68）携带本阵营预备役特种兵出战；
+     单独计数（un.elite），营统领须 统/武 达标，且武将阵营 = 营统领阵营 */
   function eliteAttachSquad(A, uForTest) {
     var u = uForTest || me(); if (!u || !A || !A.length) return;
-    var c = ensureCity(u);
-    eliteSlots(c).forEach(function (s, si) {
+    var c = ensureCity(u), slots = eliteSlots(c);
+    A.forEach(function (un) {
+      var cd = (u.cards || []).filter(function (x) { return x.id === un.cid; })[0];
+      if (!cd) return;
+      var si = (cd.el68 == null || cd.el68 < 0) ? -1 : cd.el68;
+      if (si < 0 || !slots[si]) return;
+      var s = slots[si];
       if (!s.lid || s.n <= 0) return;
-      var cd = eliteLeaderOf(u, s); if (!cd || !eliteLeadOK(cd)) return;
-      var un = A.filter(function (x) { return x.cid === cd.id; })[0]; if (!un) return;
-      un.elite = { name: eliteName(u, si, c), n: s.n, n0: s.n, ci: si, mul: (eliteLegendOf(cd) || {}).mul || 1 };
+      var lead = eliteLeaderOf(u, s); if (!lead || !eliteLeadOK(lead)) return;
+      var gl = gById(lead.gid), gc = gById(cd.gid);
+      if (!gl || !gc || gl.faction !== gc.faction) return;  /* 只能携带本阵营特种兵 */
+      if (un.elite) return;   /* 一将只带一营 */
+      var t68 = e68Tier(s.tk);
+      un.elite = { name: eliteName(u, si, c), n: s.n, n0: s.n, ci: si, mul: (eliteLegendOf(lead) || {}).mul || 1, pow: t68.pow, lossD: E68.lossDenom };
       un.troop += s.n; un.troopMax += s.n;
-      s.n = 0; s._out = (s._out || 0) + un.elite.n0;
+      s.n = 0;
     });
     var mo = c.morale == null ? 60 : c.morale;
     if (mo !== 60) { var f = 1 + (mo - 60) * 0.002; A.forEach(function (un) { un.atk = Math.round(un.atk * f); }); }
   }
-  /* 战后：幸存特种兵归城，损耗独立入账（out.eliteInfo） */
+  /* V68 战中伤害结算：普通兵按士气换损（高士气 3换1 / 中 2换1 / 低 1换1），
+     特种兵按 lossDenom（默认 1000:1）折损；智力型武将的纯武力攻击近乎免疫（技能/陷阱正常） */
+  function el68ApplyHit(tgt, dmg, skillLike, isIntAtk) {
+    var exch = 1;
+    if (tgt.morale != null) { if (tgt.morale >= E68.exchHi) exch = 3; else if (tgt.morale >= E68.exchLo) exch = 2; }
+    var eff = Math.max(1, Math.round(dmg / exch));
+    tgt.troop -= eff;
+    if (tgt.elite && tgt.elite.n > 0) {
+      var rate = tgt.elite.lossD || E68.lossDenom;
+      if (!skillLike && isIntAtk) rate = Math.round(rate / Math.max(0.05, 1 - E68.intImmune / 100));  /* 智力型纯武力 → 近乎免疫 */
+      var el = Math.min(tgt.elite.n, Math.floor(dmg / rate));
+      tgt.elite.n = Math.max(0, tgt.elite.n - el);
+    }
+    return eff;
+  }
+  /* 战后：幸存特种兵归城，损耗独立入账；损失按伤兵率单独记为特种兵伤兵（月度归队） */
   function eliteReturnAfterBattle(u, res) {
     if (!res || !res.units || !res.units.A) return null;
     var c = ensureCity(u), slots = eliteSlots(c), tot = { loss: 0, surv: 0, names: [] };
     res.units.A.forEach(function (un) {
       if (!un || !un.elite) return;
       var surv = Math.max(0, Math.round(un.elite.n));
+      var loss = Math.max(0, (un.elite.n0 || 0) - surv);
       var s = slots[un.elite.ci];
-      if (s) s.n = Math.min(ELITE_CAP, (s.n || 0) + surv);
-      tot.surv += surv; tot.loss += Math.max(0, un.elite.n0 - surv);
-      if (un.elite.n0 > 0 && tot.names.indexOf(un.elite.name) < 0) tot.names.push(un.elite.name);
+      if (s) {
+        s.n = Math.min(ELITE_CAP, (s.n || 0) + surv);
+        var wn = Math.round(loss * (E68.woundPct / 100));
+        if (wn > 0) s.w = (s.w || 0) + wn;
+      }
+      tot.surv += surv; tot.loss += loss;
+      if ((un.elite.n0 || 0) > 0 && tot.names.indexOf(un.elite.name) < 0) tot.names.push(un.elite.name);
     });
     return (tot.loss || tot.surv) ? tot : null;
   }
@@ -11627,8 +11770,9 @@ var BOTS = [
     var sold = c.pool || 0;
     (c.roster || []).forEach(function (id) { var cc = cards.filter(function (x) { return x.id === id; })[0]; if (cc && cc.sold) sold += cc.sold; });
     var lv = (c.bld && c.bld.train) || 0, mo = c.morale == null ? 60 : c.morale;
-    var cost = eliteCostEff(c, u);
     var coach = eliteCoachOf(u, c), coachG = coach ? gById(coach.gid) : null;
+    var elWoundAll = slots.reduce(function (s2, x2) { return s2 + (x2.w || 0); }, 0);
+    var coachLocked = coach && slots.some(function (s2) { return s2.tr; });
     var coachElig = cards.slice().sort(function (a, b) {
       var ga = gById(a.gid) || {}, gb = gById(b.gid) || {};
       return ((gb.st || 0) + (gb.wu || 0)) - ((ga.st || 0) + (ga.wu || 0));
@@ -11642,20 +11786,24 @@ var BOTS = [
     var h = '<div class="sg-trainbg">' +
       '<div class="sg-note" style="line-height:1.9;background:rgba(0,0,0,.4);border-radius:9px;padding:7px 10px">⚔ ' + gt("eliteSoldT") + '：<b style="color:#e8c988">' + fmt(sold) + "</b>" +
       '（' + gt("poolT") + " " + fmt(c.pool || 0) + " · " + gt("inRosterT", { n: (c.roster || []).length }) + "）　·　⚕ " + gt("woundT") + " " + fmt(cityWoundN(c)) +
+      '　·　🎯 ' + gt("e68WoundT") + " " + fmt(elWoundAll) +
       '　·　🔥 ' + gt("moraleT") + ' <b style="color:' + (mo >= 80 ? "#8fd694" : "#e8c988") + '">' + fmt(mo) + "</b>" +
       (lv > 0 ? '<br><small>' + gt("moraleHint", { n: lv }) + "</small>" : '<br><small>' + gt("moraleNoT") + "</small>") + "</div>" +
-      /* V84：主教练 */
+      /* V84：主教练（V68：训练期间为点将台主训练官，不得编队/出战） */
       '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.35);border-radius:10px;padding:9px 11px;margin:8px 0;background:rgba(0,0,0,.42)">' +
       '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">🎖 ' + gt("eliteCoachT") + "：" +
       (coachG ? esc(coachG.name) + '<small style="color:var(--ink-3)">（' + (coachG.faction || "") + " 统" + (coachG.st || 0) + " + 武" + (coachG.wu || 0) + "）</small>" : '<span style="color:var(--ink-3)">' + gt("eliteNoLead") + "</span>") + "</b>" +
-      '<small style="color:var(--ink-3)">' + gt("eliteCoachHintT") + " · " + gt("eliteCostCurT", { n: cost }) + "</small></div>" +
+      (coachLocked ? ' <span style="color:#ffb26b; font-size:11px">🛡 ' + esc(gt("e68CoachLockT")) + "</span>" : "") +
+      '<small style="color:var(--ink-3)">' + gt("e68NeedCoachT") + "</small></div>" +
       (coachElig.length ? '<div class="sgchips" style="margin-top:7px">' + coachBtns + "</div>" : "") +
       "</div>";
     slots.forEach(function (s, si) {
       var cd = eliteLeaderOf(u, s), lg = eliteLegendOf(cd), nm = eliteName(u, si, c), ok = cd && eliteLeadOK(cd);
       var g = cd ? gById(cd.gid) : null;
+      var t68 = e68Tier(s.tk);
       var pct = Math.min(100, Math.round(s.n / ELITE_CAP * 1000) / 10);
-      var convPct = Math.min(100, Math.round((s.q || 0) / 10 * 100));
+      var trProg = s.tr ? Math.min(100, Math.round((s.tr.tot - s.tr.left) / Math.max(1, s.tr.tot) * 100)) : 0;
+      var need = t68.batch * t68.ratio;
       var leadTxt = cd ? (g ? g.name : "?") + (ok ? " ✓" : " ✗") : gt("eliteNoLead");
       var lelig = cards.filter(eliteLeadOK);
       var leadBtns = lelig.slice(0, 8).map(function (ec) {
@@ -11664,27 +11812,39 @@ var BOTS = [
           '" title="' + esc(eg.faction || "") + " 统" + (eg.st || 0) + " 武" + (eg.wu || 0) + (lgE ? " ★" + esc(lgE.n) : "") + '">' +
           esc((eg.name || "?") + "·" + (eg.faction || "")) + (lgE ? " ★" : "") + "</button>";
       }).join("");
+      var trainable = (c.pool || 0) >= need && coach && !s.tr;
       h += '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.3);border-radius:10px;padding:9px 11px;margin-bottom:7px;background:rgba(0,0,0,.42)">' +
         '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">🎯 ' + esc(nm) +
+        '<span style="color:#9ec9ff;font-size:11px">（' + esc(e68TierName(s.tk)) + "）</span>" +
         (lg ? ' <span style="color:#ff9d6b" title="' + esc(lg.tip) + '">★ ' + gt("eliteLegendT") + " · 攻击 ×" + Math.round(100 * lg.mul) + "</span>" : "") + "</b>" +
         '<small style="color:var(--ink-3)">' + gt("eliteLeadT") + "：" + esc(leadTxt) + (cd ? "（" + (g ? g.faction : "?") + " 统" + (g ? g.st : "?") + " 武" + (g ? g.wu : "?") + "）" : "") + "</small>" +
-        '<span style="flex:1"></span><small style="color:var(--ink-3)">' + gt("eliteCapT", { n: fmt(s.n), m: fmt(ELITE_CAP) }) + "</small></div>" +
+        '<span style="flex:1"></span><small style="color:var(--ink-3)">' + gt("eliteCapT", { n: fmt(s.n), m: fmt(ELITE_CAP) }) +
+        ((s.w || 0) > 0 ? ' · ⚕ ' + fmt(s.w) : "") + "</small></div>" +
+        /* 三档参数行 */
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;font-size:11px;color:#9ec9ff">' +
+        "<span>" + esc(gt("e68TierRatioT", { n: t68.ratio })) + "</span>" +
+        "<span>" + esc(gt("e68TierPowT", { n: fmt(t68.pow) })) + "</span>" +
+        "<span>" + esc(gt("e68TierBatchT", { n: fmt(t68.batch) })) + "</span>" +
+        "<span>⏳ " + t68.months + " 月/批</span>" +
+        "<span style='color:#8fd694'>折损 " + fmt(E68.lossDenom) + ":1</span></div>" +
         /* 编制进度条 */
         '<div style="height:11px;border-radius:99px;background:#232733;margin:7px 0 3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#a8842f,#e8c988)"></div></div>' +
-        /* V84：转化进度条（训练点 → 特种兵，月度结算转正） */
-        '<div style="height:14px;border-radius:99px;background:rgba(0,0,0,.5);margin:0 0 3px;overflow:hidden;position:relative"><div style="height:100%;width:' + convPct + '%;background:linear-gradient(90deg,#3f9d7c,#5dcaa5);transition:width .3s"></div>' +
+        /* V68：训练倒计时条（月度结算推进，满格成军） */
+        '<div style="height:14px;border-radius:99px;background:rgba(0,0,0,.5);margin:0 0 3px;overflow:hidden;position:relative"><div style="height:100%;width:' + trProg + '%;background:linear-gradient(90deg,#3f9d7c,#5dcaa5);transition:width .3s"></div>' +
         '<em style="position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:9px;color:#f2f6fa;text-shadow:0 1px 2px rgba(0,0,0,.95)">' +
-        (s.q > 0 ? esc(gt("eliteProgT", { n: Math.min(10, s.q) })) : gt("eliteConvIdleT")) + "</em></div>" +
+        (s.tr ? esc(gt("e68CntT", { n: Math.max(1, s.tr.left), m: s.tr.tot })) : gt("eliteConvIdleT")) + "</em></div>" +
         '<div style="display:flex;gap:8px;align-items:center;margin-top:7px;flex-wrap:wrap">' +
-        '<button class="sgbtn sm primary" data-bat="elite-train" data-n="' + si + '"' + ((c.pool || 0) >= cost ? "" : " disabled") + ">" + gt("eliteTrainT") + "</button>" +
-        '<button class="sgbtn sm" data-bat="elite-train5" data-n="' + si + '"' + ((c.pool || 0) >= cost ? "" : " disabled") + ">🔥 " + gt("eliteTrain5T") + "</button>" +
-        '<small style="color:var(--ink-3)">' + gt("eliteCostCurT", { n: cost }) + "</small></div>" +
+        '<button class="sgbtn sm primary" data-bat="elite-batch" data-n="' + si + '"' + (trainable ? "" : " disabled") + ">🔥 " + esc(gt("e68BatchT")) +
+        "（" + fmt(need) + " 预备役 → " + fmt(t68.batch) + " 名 · " + t68.months + " 月）</button>" +
+        (s.tr ? '<small style="color:#ffd76a">⏳ ' + esc(gt("e68CntT", { n: Math.max(1, s.tr.left), m: s.tr.tot })) + " · 成军 +" + fmt(s.tr.out) + "</small>" :
+          '<small style="color:var(--ink-3)">' + (coach ? "" : esc(gt("e68NeedCoachT"))) + "</small>") + "</div>" +
         (lelig.length ? '<div class="sgchips" style="margin-top:7px">' + gt("elitePickT") + "：" + leadBtns + (lelig.length > 8 ? '<small style="color:var(--ink-3)"> +' + (lelig.length - 8) + "</small>" : "") + "</div>"
           : '<div class="sg-note" style="margin-top:7px;opacity:.75"><small>' + gt("elitePickNone") + "</small></div>") +
         "</div>";
     });
     h += '<div class="sg-note" style="opacity:.85;line-height:1.9;margin-top:8px"><small>🔗 ' + gt("eliteMixT") + "</small></div>" +
-      '<div class="sg-note" style="opacity:.7;line-height:1.9"><small>' + gt("eliteRuleT") + "</small></div></div>" +
+      '<div class="sg-note" style="opacity:.7;line-height:1.9"><small>🧠 ' + esc(gt("e68IntImmT")) + "</small></div>" +
+      '<div class="sg-note" style="opacity:.6;line-height:1.9"><small>' + esc(gt("eliteRuleT")) + "</small></div></div>" +
       "<style>" +
       /* V84：训练场背景（夯土 + 校场纹理 + 旗帜徽记） */
       ".sg-trainbg{position:relative;border-radius:12px;padding:12px 12px 10px;margin-top:4px;border:1px solid rgba(201,164,92,.35);" +
@@ -12255,7 +12415,8 @@ var BOTS = [
   /* V83：新增点将台与带兵能力参数
      armyCap 单支部队带兵上限（默认 10 万）/ armyMax 部队数 / armySlot 单部队武将数 /
      lvBase  Lv.1 时「带兵能力」兑现颜色天赋的百分比（升到 Lv.70 兑现 100%） */
-  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30 };
+  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30,
+    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60 };
   function milNum(v, d, lo, hi) { var x = Number(v); if (v == null || v === "" || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function milNorm(o) {
     o = o || {}; var d = MIL_DEF;
@@ -12272,7 +12433,28 @@ var BOTS = [
       armyCap: Math.round(milNum(o.armyCap, d.armyCap, 10000, 1000000)),
       armyMax: Math.round(milNum(o.armyMax, d.armyMax, 1, 10)),
       armySlot: Math.round(milNum(o.armySlot, d.armySlot, 1, 10)),
-      lvBase: milNum(o.lvBase, d.lvBase, 0, 100)
+      lvBase: milNum(o.lvBase, d.lvBase, 0, 100),
+      /* V68：三档特种兵参数（与运营管控台 military 页签一一对应） */
+      e68BatchStd: Math.round(milNum(o.e68BatchStd, d.e68BatchStd, 10, 100000)),
+      e68BatchMid: Math.round(milNum(o.e68BatchMid, d.e68BatchMid, 10, 100000)),
+      e68BatchTop: Math.round(milNum(o.e68BatchTop, d.e68BatchTop, 10, 100000)),
+      e68RatioStd: Math.round(milNum(o.e68RatioStd, d.e68RatioStd, 1, 100)),
+      e68RatioMid: Math.round(milNum(o.e68RatioMid, d.e68RatioMid, 1, 100)),
+      e68RatioTop: Math.round(milNum(o.e68RatioTop, d.e68RatioTop, 1, 100)),
+      e68PowStd: Math.round(milNum(o.e68PowStd, d.e68PowStd, 1, 10000)),
+      e68PowMid: Math.round(milNum(o.e68PowMid, d.e68PowMid, 1, 10000)),
+      e68PowTop: Math.round(milNum(o.e68PowTop, d.e68PowTop, 1, 10000)),
+      e68MStd: Math.round(milNum(o.e68MStd, d.e68MStd, 1, 12)),
+      e68MMid: Math.round(milNum(o.e68MMid, d.e68MMid, 1, 12)),
+      e68MTop: Math.round(milNum(o.e68MTop, d.e68MTop, 1, 12)),
+      e68LossDenom: Math.round(milNum(o.e68LossDenom, d.e68LossDenom, 1, 1000000)),
+      e68IntImmune: Math.round(milNum(o.e68IntImmune, d.e68IntImmune, 0, 100)),
+      e68ExchHi: Math.round(milNum(o.e68ExchHi, d.e68ExchHi, 0, 100)),
+      e68ExchLo: Math.round(milNum(o.e68ExchLo, d.e68ExchLo, 0, 100)),
+      e68LeadSt: Math.round(milNum(o.e68LeadSt, d.e68LeadSt, 0, 200)),
+      e68LeadWu: Math.round(milNum(o.e68LeadWu, d.e68LeadWu, 0, 200)),
+      e68Cap: Math.round(milNum(o.e68Cap, d.e68Cap, 100, 1000000)),
+      e68WoundPct: Math.round(milNum(o.e68WoundPct, d.e68WoundPct, 0, 100))
     };
   }
   var MIL = milNorm(null);
@@ -12281,6 +12463,14 @@ var BOTS = [
     if (!o || typeof o !== "object") return false;
     MIL = milNorm(o);
     ELITE_TRAIN_COST = MIL.eliteCost;
+    /* V68：特种兵三档参数并入 military key，管控台保存即生效 */
+    ELITE_CAP = MIL.e68Cap; ELITE_LEAD_ST = MIL.e68LeadSt; ELITE_LEAD_WU = MIL.e68LeadWu;
+    E68.batchStd = MIL.e68BatchStd; E68.batchMid = MIL.e68BatchMid; E68.batchTop = MIL.e68BatchTop;
+    E68.ratioStd = MIL.e68RatioStd; E68.ratioMid = MIL.e68RatioMid; E68.ratioTop = MIL.e68RatioTop;
+    E68.powStd = MIL.e68PowStd; E68.powMid = MIL.e68PowMid; E68.powTop = MIL.e68PowTop;
+    E68.mStd = MIL.e68MStd; E68.mMid = MIL.e68MMid; E68.mTop = MIL.e68MTop;
+    E68.lossDenom = MIL.e68LossDenom; E68.intImmune = MIL.e68IntImmune;
+    E68.exchHi = MIL.e68ExchHi; E68.exchLo = MIL.e68ExchLo; E68.woundPct = MIL.e68WoundPct;
     return true;
   }
   function milGet() { return MIL; }
@@ -13117,7 +13307,7 @@ var BOTS = [
           var relStat = u.sp === "mou" ? (u["in"] || 0) : (u.wu || 0);
           mult *= 1 + relStat / 100 * 0.25 + 0.04 * (u.skn || 0);
           skCost = Math.max(10, Math.round(u.troopMax * 0.02));
-          u.troop = Math.max(1, u.troop - skCost); if (u.elite) u.elite.n = Math.max(0, Math.round(u.elite.n0 * Math.max(1, u.troop) / u.troopMax));
+          u.troop = Math.max(1, u.troop - skCost);   /* V68：技能自耗只扣普通兵，特种兵单独计数不随比例折损 */
         }
         var spHit = !!u.sp && Math.random() * 100 < (u.spT || 0); /* V29 特殊技能独立判定 */
         if (spHit && skillHit) mult *= 1.3; /* 与常规技能同回触发 → 常规技能伤害加成 */
@@ -13127,8 +13317,11 @@ var BOTS = [
         var mSt = (u.morale != null && u.morale < (u.moraleMax || 100) * 0.3) ? 0.92 : 1;
         var mHi = (u.morale != null && u.morale >= (u.moraleMax || 100) * 0.9) ? 1.04 : 1;
         var edge = formEdge(u.form, tgt.form);
-        var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 * (u.elite.mul || 1) : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi / (1 + tgt.def * 0.018)));
-        tgt.troop -= dmg; if (tgt.elite) tgt.elite.n = Math.max(0, Math.round(tgt.elite.n0 * Math.max(0, tgt.troop) / tgt.troopMax));
+        /* V68：特种兵按档位战力（pow/100）计入攻击；特种兵营提供防御（换损率另计） */
+        var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 * ((u.elite.pow || 100) / 100) * (u.elite.mul || 1) : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi / (1 + tgt.def * 0.018)));
+        /* V68：士气换损 + 特种兵 1000:1 折损 + 智力型纯武力近乎免疫（技能/陷阱正常） */
+        var isIntAtk68 = ((u["in"] || 0) > (u.wu || 0));
+        if (tgt.elite) el68ApplyHit(tgt, dmg, skillHit, isIntAtk68); else tgt.troop -= dmg;
         var line = { r: round, s: u.side, n: u.name, t: tgt.name, d: dmg, sk: tag, si: u.ix, ti: tgt.ix, rem: Math.max(0, tgt.troop) };
         /* V65：受创掉士气；克制提示 */
         if (tgt.morale != null) {
@@ -13144,7 +13337,8 @@ var BOTS = [
         if (spHit) {
           var spgX = SP_GROUPS.filter(function (x) { return x.k === u.sp; })[0];
           var ex = Math.max(10, Math.round(dmg * (spgX ? spgX.ex : 0.5)));
-          tgt.troop -= ex; if (tgt.elite) tgt.elite.n = Math.max(0, Math.round(tgt.elite.n0 * Math.max(0, tgt.troop) / tgt.troopMax));
+          /* V68：特殊技能（火计/陷阱等谋略系）对特种兵正常生效 */
+          if (tgt.elite) el68ApplyHit(tgt, ex, true, false); else tgt.troop -= ex;
           line.rem = Math.max(0, tgt.troop); line.ex = ex; line.spk = spSkillName(u.sp);
           line.sd = (line.sd ? line.sd + " " : "") + gt("spAct", { n: u.name, s: line.spk, d: fmt(ex) }) + (skillHit ? " " + gt("spSyn") : "");
         }
@@ -13534,6 +13728,7 @@ var BOTS = [
     if (!card) return { ok: false, err: "card" };
     if ((c.roster || []).indexOf(cid) < 0) return { ok: false, err: "roster" };
     if (cardInArmy(u, cid)) return { ok: false, err: "army" };   /* V83：点将台 / 武将编队互斥 */
+    if (e68CoachOnDuty(u, c, cid)) return { ok: false, err: "coach" };   /* V68：主训练官训练期间不得编队/出战 */
     if (pos === "cav" && !cardCav(card)) return { ok: false, err: "cav" };
     if (pos === "front" && !cardInf(card)) return { ok: false, err: "front" };
     var used = false;
@@ -16829,10 +17024,24 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         return '<button class="sgbtn sm ' + (on ? "primary" : "ghost") + '" data-bat="arm-set" data-k="' + a.k + '" data-t="' + ti + '" data-p="' + pos + '" title="' + esc(gt("gsArmNote")) + '">' +
           armName(a.k) + " <b style='color:" + (on ? "#10131a" : "#ffd76a") + "'>" + pf + "</b> <small style='color:" + (on ? "#10131a" : "#9ec9ff") + "'>" + apt + "</small></button>";
       }).join("") + "</div>";
+    /* V68：随队特种兵开关——编队时明确是否带特种兵，只能带本阵营（营统领阵营）预备役，单独计数 */
+    var c68 = ensureCity(u), slots68 = eliteSlots(c68);
+    var attRow = '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🎯 ' + esc(gt("e68AttT")) + "</h3></div>" +
+      '<div class="sg-note"><small>' + esc(gt("e68AttHintT")) + "</small></div>" +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:6px 0">' +
+      '<button class="sgbtn sm ' + (card.el68 == null || card.el68 < 0 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="-1" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">' + esc(gt("e68AttNoneT")) + "</button>" +
+      slots68.map(function (s68, si68) {
+        var ld68 = eliteLeaderOf(u, s68), lg68 = eliteLegendOf(ld68);
+        var gg68 = ld68 ? gById(ld68.gid) : null;
+        var same = !!(gg68 && g.faction && gg68.faction === g.faction);
+        return '<button class="sgbtn sm ' + (card.el68 === si68 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="' + si68 + '" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '"' +
+          (same ? "" : ' title="' + esc(gt("e68FactionNoT")) + '"') + ">" + esc(eliteName(u, si68, c68) + (lg68 ? " ★" : "")) +
+          " · " + (s68.n ? fmt(s68.n) : "0") + (s68.tr ? " ⏳" : "") + (same ? "" : " 🚫") + "</button>";
+      }).join("") + "</div>";
     modal("<h3>⚔ " + T("teamT") + " " + (ti + 1) + " · " + posName(p) + "</h3>" +
       '<div style="display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start" class="bigcard-grid">' +
       '<div style="width:300px;max-width:100%;margin:0 auto">' + cardHTML(card, false) + "</div>" +
-      "<div>" + stats + spRow + armRow +
+      "<div>" + stats + spRow + armRow + attRow +
       '<div class="sg-note">' + posDesc(p) + "</div>" +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' + recBtn +
       '<button class="sgbtn sm ghost" data-bat="pk-open" data-mode="slot" data-t="' + ti + '" data-p="' + pos + '">⇄ ' + T("pkSwap") + "</button>" +
@@ -19200,7 +19409,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (pkA.mode === "slot") {
           ensureCity(u);
           var szA = slotSet(u, pkA.ti, pkA.pos, idsA[0]);
-          if (!szA.ok) return toast(szA.err === "cav" ? T("cavNeed") : szA.err === "front" ? T("frontNeed") : szA.err === "used" ? T("teamUsed") : szA.err === "army" ? gt("phInArmyT") : T("noRoster"), "err");
+          if (!szA.ok) return toast(szA.err === "cav" ? T("cavNeed") : szA.err === "front" ? T("frontNeed") : szA.err === "used" ? T("teamUsed") : szA.err === "army" ? gt("phInArmyT") : szA.err === "coach" ? gt("e68CoachLockT") : T("noRoster"), "err");
           BATUI.pk = null; save(); closeModal(); toast(T("pkOk"), "ok"); refreshBattle(); return;
         }
         if (pkA.mode === "roster") {
@@ -19256,10 +19465,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         else { if (tis65.length >= 5) return toast(gt("lgCntT"), "err"); tis65.push(ti65); }
         refreshBattle(); return;
       }
-      case "elite-train": { var r67 = eliteTrainOne(u, n); if (r67 && r67.err) toast(r67.err, "err"); else if (r67 && r67.ok) { toast(gt("eliteTrainT") + " ✓", "ok"); save(); } recruitOpen(); return; }
+      case "elite-batch": { var r68 = eliteBatchTrain(u, n); if (r68 && r68.err) toast(r68.err, "err"); else if (r68 && r68.ok) { toast(gt("e68StartT", { n: fmt(r68.need), m: r68.months }) + " ✓", "ok", 5200); save(); } recruitOpen(); return; }
+      case "el68-att": { var siA68 = +t.getAttribute("data-si"); var cidA68 = t.getAttribute("data-c"); var cdA68 = (u.cards || []).filter(function (x) { return x.id === cidA68; })[0]; if (cdA68) { cdA68.el68 = (cdA68.el68 === siA68) ? -1 : siA68; save(); } if (cdA68) slotBigCard(u, cdA68, +t.getAttribute("data-t"), t.getAttribute("data-p")); return; }
       case "elite-lid": { var c67 = ensureCity(u), s67 = eliteSlots(c67)[n]; if (s67) { var lid67 = t.getAttribute("data-c") || null; s67.lid = (s67.lid === lid67) ? null : lid67; save(); } recruitOpen(); return; }
       case "elite-coach": { var cEC = ensureCity(u); var idEC = t.getAttribute("data-c") || null; cEC.spCoach = (cEC.spCoach === idEC) ? null : idEC; save(); recruitOpen(); return; }
-      case "elite-train5": { var done5 = 0, err5 = null; for (var i5 = 0; i5 < 5; i5++) { var r5 = eliteTrainOne(u, n); if (r5 && r5.err) { err5 = r5.err; break; } done5++; } if (done5) { save(); toast(gt("eliteTrain5T") + " ✓ ×" + done5 + (err5 ? " · " + err5 : ""), "ok", 5200); } else if (err5) toast(err5, "err"); recruitOpen(); return; }
       case "lg-go": BATUI.res = null; location.hash = "#/battle/f/l" + n; return;
       case "fight": location.hash = "#/battle/f/s" + n; return;
       case "sweep": location.hash = "#/battle/f/w" + n; return;

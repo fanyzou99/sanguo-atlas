@@ -1515,7 +1515,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   });
 
   /* ---------- V80 军事模型（募兵限制）：参数 CRUD，云端 key = military ---------- */
-  var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30 };
+  var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30,
+    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60 };
   var MIL_COLS = [
     ["popPct", "募兵比例（人口%，士兵计入人口）", 1, 100, "募兵限额 = 城市人口 × 该百分比；人口总数涵盖士兵数，募兵不增加人口"],
     ["cityCap", "单城总募兵上限（人）", 1000, 100000000, "该城所有兵力（预备役 + 编队武将带兵 + 特种兵）合计不得超过此值"],
@@ -1529,7 +1530,28 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ["armyCap", "点将台单部队带兵上限（人）", 10000, 1000000, "V83 点将台：每支部队的总带兵上限，默认 10 万"],
     ["armyMax", "点将台部队数上限", 1, 10, "每座城池可组建的部队数量，默认 5 支"],
     ["armySlot", "单部队武将数上限", 1, 10, "每支部队最多编入的武将数，默认 5 名"],
-    ["lvBase", "Lv.1 带兵能力兑现率（%）", 0, 100, "带兵能力 = 卡牌颜色上限 × 等级兑现率；Lv.1 兑现此百分比，Lv.70 兑现 100%，默认 30%"]
+    ["lvBase", "Lv.1 带兵能力兑现率（%）", 0, 100, "带兵能力 = 卡牌颜色上限 × 等级兑现率；Lv.1 兑现此百分比，Lv.70 兑现 100%，默认 30%"],
+    /* ---------- V68 特种兵三档体系 ---------- */
+    ["e68BatchStd", "标准营·每批人数", 10, 100000, "标准特种兵一次批量训练的人数（默认 1000 人/批），不再逐个训练"],
+    ["e68BatchMid", "精锐营·每批人数", 10, 100000, "精锐特种兵一次批量训练的人数（默认 1000 人/批）"],
+    ["e68BatchTop", "顶级营·每批人数", 10, 100000, "顶级特种兵一次批量训练的人数（默认 100 人/批）"],
+    ["e68RatioStd", "标准营·转化比（预备役:特种兵）", 1, 100, "每训练 1 名标准特种兵消耗的预备役（默认 15:1）"],
+    ["e68RatioMid", "精锐营·转化比（预备役:特种兵）", 1, 100, "每训练 1 名精锐特种兵消耗的预备役（默认 40:1）"],
+    ["e68RatioTop", "顶级营·转化比（预备役:特种兵）", 1, 100, "每训练 1 名顶级特种兵消耗的预备役（最高 100:1，默认 100）"],
+    ["e68PowStd", "标准营·战力倍率（普通士兵=1）", 1, 10000, "标准特种兵单兵战力为普通士兵的倍数（默认 100 倍）"],
+    ["e68PowMid", "精锐营·战力倍率", 1, 10000, "精锐特种兵单兵战力倍数（默认 300 倍）"],
+    ["e68PowTop", "顶级营·战力倍率", 1, 10000, "顶级特种兵单兵战力倍数（默认 1000 倍，即普通士兵的 1000 倍）"],
+    ["e68MStd", "标准营·训练月数（倒计时）", 1, 12, "标准营批量训练所需月数（默认 1 个月），月度结算推进倒计时"],
+    ["e68MMid", "精锐营·训练月数（倒计时）", 1, 12, "精锐营批量训练所需月数（默认 2 个月）"],
+    ["e68MTop", "顶级营·训练月数（倒计时）", 1, 12, "顶级营批量训练所需月数（默认 3 个月）"],
+    ["e68LossDenom", "特种兵折损比（伤害:折损1名）", 1, 1000000, "特种兵防御达到最大值：每受到该数值的伤害才折损 1 名特种兵（默认 1000:1）；技能/陷阱伤害同样按此折损"],
+    ["e68IntImmune", "智力型纯武力对特种兵免疫（%）", 0, 100, "智力型武将的纯武力攻击对特种兵的减伤率（默认 90%，近乎免疫）；技能、陷阱等谋略伤害不受免疫"],
+    ["e68ExchHi", "普通兵换损档·高士气线", 0, 100, "部队士气 ≥ 此值时普通兵 3 换 1（每 3 点伤害折损 1 名，默认 80）"],
+    ["e68ExchLo", "普通兵换损档·中士气线", 0, 100, "士气介于两线之间 2 换 1，低于此线 1 换 1（默认 60）"],
+    ["e68LeadSt", "营统领·统率门槛", 0, 200, "统领特种兵营所需的统率下限（默认 80）"],
+    ["e68LeadWu", "营统领·武力门槛", 0, 200, "统领特种兵营所需的武力下限（默认 80）"],
+    ["e68Cap", "每营特种兵上限（人）", 100, 1000000, "每座城市每档特种兵营的编制上限（默认 10000）"],
+    ["e68WoundPct", "特种兵伤兵转化率（%）", 0, 100, "战后特种兵战损转化为特种兵伤兵的比例（默认 60%），伤兵单独记录、月度归队"]
   ];
   var milRows = null;
   function milDef() { return JSON.parse(JSON.stringify(MIL_DEF_A)); }
@@ -1576,7 +1598,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       return "<tr><td>" + esc(c[0]) + "</td><td>" + f(lim) + "</td><td>" + f(lim * (milRows.recRice || 0)) + " / " + f(lim * (milRows.recCoin || 0)) + "</td><td>" + f(lim * (milRows.farmRice || 0)) + "</td></tr>";
     }).join("");
     $("#milPreview").innerHTML = '<table style="width:100%"><thead><tr><th>城市规模</th><th>募兵限额（人）</th><th>募满消耗 粮 / 钱</th><th>满兵月加产粮</th></tr></thead><tbody>' + rows + "</tbody></table>" +
-      '<div class="muted" style="font-size:12px;margin-top:6px">盗贼兵力上限 <b>' + f(milRows.mobCap || 0) + "</b> · 特种兵训练消耗 <b>" + f(milRows.eliteCost || 0) + "</b> 预备役/名。</div>";
+      '<div class="muted" style="font-size:12px;margin-top:6px">盗贼兵力上限 <b>' + f(milRows.mobCap || 0) + "</b> · 特种兵训练消耗 <b>" + f(milRows.eliteCost || 0) + "</b> 预备役/名。</div>" +
+      '<div class="muted" style="font-size:12px;margin-top:4px">V68 特种兵三档：标准批 <b>' + f(milRows.e68BatchStd || 0) + "</b> 人（1:" + (milRows.e68RatioStd || 0) + " · ×" + (milRows.e68PowStd || 0) + " · " + (milRows.e68MStd || 0) + " 月）· 精锐批 <b>" + f(milRows.e68BatchMid || 0) + "</b> 人（1:" + (milRows.e68RatioMid || 0) + " · ×" + (milRows.e68PowMid || 0) + " · " + (milRows.e68MMid || 0) + " 月）· 顶级批 <b>" + f(milRows.e68BatchTop || 0) + "</b> 人（1:" + (milRows.e68RatioTop || 0) + " · ×" + (milRows.e68PowTop || 0) + " · " + (milRows.e68MTop || 0) + " 月）· 折损 <b>" + f(milRows.e68LossDenom || 0) + ":1</b> · 智力免疫 <b>" + (milRows.e68IntImmune || 0) + "%</b>。</div>";
   }
   $("#milReload").addEventListener("click", milLoad);
   $("#milReset").addEventListener("click", function () {
