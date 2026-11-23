@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T06:45:28.767Z"
+  "updated": "2026-11-23T06:46:33.198Z"
  },
  "econ": {
   "coin": 0.012,
@@ -88,11 +88,11 @@
  },
  "popmodel": {
   "disKinds": {
-   "drought": 30,
-   "flood": 25,
+   "drought": 20,
+   "flood": 10,
    "locust": 20,
-   "plague": 15,
-   "war": 10
+   "plague": 5,
+   "war": 20
   },
   "policy": {
    "farm": {
