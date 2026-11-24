@@ -11188,6 +11188,8 @@ var BOTS = [
       try { u.bat.capInit = initCardCaps(u); } catch (e83) {}
       u.bat.capVer = 83;
     }
+    /* V94：单将带兵硬上限校正——旧档里兵营/星级/装备叠加导致单将带兵数十万的，超出部分退回所在城预备役 */
+    try { u.bat.trim94 = trimOverTroops(u); } catch (e94) {}
     /* V85：兵随编队走（一次性迁移）——非编队武将的常规兵退回所在城预备役；
        编队内未显式记兵（sold==null）的武将按爵位上限显式化，显示强度不变 */
     if (u.bat.soldMig !== 85) {
@@ -12763,7 +12765,7 @@ var BOTS = [
   /* V83：新增点将台与带兵能力参数
      armyCap 单支部队带兵上限（默认 10 万）/ armyMax 部队数 / armySlot 单部队武将数 /
      lvBase  Lv.1 时「带兵能力」兑现颜色天赋的百分比（升到 Lv.70 兑现 100%） */
-  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30,
+  var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 100000, armyMax: 5, armySlot: 5, lvBase: 30, unitCap: 100000,
     e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60,
     uhWu: 5, uhShi: 10, uhDui: 50, uhTun: 100, uhQu: 500, uhBu: 1000, uhYing: 5000, uhJun: 10000,
     uhScaleMid: 1000, uhScaleBig: 10000, uhMinS: 5, uhMinM: 10, uhMinB: 50,
@@ -12782,6 +12784,9 @@ var BOTS = [
       recIron: milNum(o.recIron, d.recIron, 0, 100),
       eliteCost: Math.round(milNum(o.eliteCost, d.eliteCost, 1, 10000)),
       armyCap: Math.round(milNum(o.armyCap, d.armyCap, 10000, 1000000)),
+      /* V94：单将带兵硬上限（后台军事模型可调）——等级带兵 / 爵位 / 星级 / 装备 / 兵营加成叠加后的天花板，
+         超出部分在启动、切换城池、月度结算时自动退回所在城预备役 */
+      unitCap: Math.round(milNum(o.unitCap, d.unitCap, 1000, 1000000)),
       armyMax: Math.round(milNum(o.armyMax, d.armyMax, 1, 10)),
       armySlot: Math.round(milNum(o.armySlot, d.armySlot, 1, 10)),
       lvBase: milNum(o.lvBase, d.lvBase, 0, 100),
@@ -12843,6 +12848,8 @@ var BOTS = [
     UH.scaleMid = MIL.uhScaleMid; UH.scaleBig = MIL.uhScaleBig;
     UH.minS = MIL.uhMinS; UH.minM = MIL.uhMinM; UH.minB = MIL.uhMinB;
     UH.titles = MIL.uhTitles;
+    /* V94：后台单将带兵上限变更后立即校正（云端配置晚于存档加载时也能收敛） */
+    try { var _u94 = me(); if (_u94 && trimOverTroops(_u94) > 0) save(); } catch (e94a) {}
     return true;
   }
   function milGet() { return MIL; }
@@ -12936,6 +12943,8 @@ var BOTS = [
       try { popYearly(u); } catch (eP82) {}
       /* V37：伤兵痊愈 + 兵耗（所有城池，每月结算一次） */
       troopMonthlyAll(u, gm);
+      /* V94：月度校正单将带兵硬上限（后台 unitCap），超编士兵退回所在城预备役 */
+      try { trimOverTroops(u); } catch (e94m) {}
       /* V79：敌城自主发展 + 归降府邸俸禄 */
       try { warMonthly(u, gm); } catch (eW79) {}
       return inc;
@@ -13072,8 +13081,15 @@ var BOTS = [
     }
     return true;
   }
-  /* V92：调试/测试句柄（只读引用，供控制台排障与自动化测试） */
-  try { window.__SGCOMBAT__ = { COMBATRULE: COMBATRULE, armEdge: armEdge, armGrpBonusOf: armGrpBonusOf, applyCombatRuleCfg: applyCombatRuleCfg, unitOf: unitOf, simulate: simulate, me: me }; } catch (e) {}
+  /* V92：调试/测试句柄（只读引用，供控制台排障与自动化测试）；V94 追加带兵上限相关 */
+  try {
+    window.__SGCOMBAT__ = {
+      COMBATRULE: COMBATRULE, armEdge: armEdge, armGrpBonusOf: armGrpBonusOf, applyCombatRuleCfg: applyCombatRuleCfg,
+      unitOf: unitOf, simulate: simulate, me: me,
+      applyMilCfg: applyMilCfg, troopCapEff: troopCapEff, troopOfCard: troopOfCard, troopAbilityOf: troopAbilityOf,
+      unitCapMax: unitCapMax, trimOverTroops: trimOverTroops,
+    };
+  } catch (e) {}
   function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
   function eqOf(c) {
     var out = { atk: 0, def: 0, hp: 0, spd: 0 }, u = me(), list = (u && u.eqs) || [];
@@ -13114,7 +13130,8 @@ var BOTS = [
       var ct = cityObj || (c && cardCityOf(cu, c.id)) || (cu && cu.bat && cu.bat.city);
       if (ct && ct.bld) cap = Math.round(cap * (1 + 0.02 * (ct.bld.camp || 0)));
     } catch (e) {}
-    return cap;
+    /* V94：兵营加成后仍不得超过后台「单将带兵上限」 */
+    return Math.min(unitCapMax(), Math.round(cap));
   }
   /* ================= V83：全将带兵数初始化 =================
      为每张卡写入 cap（实际带兵上限）/ capA（带兵能力）/ capR（爵位上限）；
@@ -13133,8 +13150,10 @@ var BOTS = [
     if (!u || !u.cards) return { n: 0, cut: 0 };
     var n = 0, cut = 0;
     u.cards.forEach(function (c) {
-      var cap = troopCapOf(c);
-      c.cap = cap; c.capA = troopAbilityOf(c); c.capR = rankTroop(c); c.capAt = 83;
+      /* V94：cap 统一走 troopCapEff（= MAX(等级带兵, 爵位)×兵营加成，且不超过后台单将上限），
+         此前写 troopCapOf（min 口径）与实际可带兵数不一致 */
+      var cap = troopCapEff(c, gById(c.gid));
+      c.cap = cap; c.capA = troopAbilityOf(c); c.capR = rankTroop(c); c.capAt = 94;
       if (c.sold == null) c.sold = cap;
       else if (c.sold > cap) {
         var over = c.sold - cap;
@@ -13149,6 +13168,28 @@ var BOTS = [
       n++;
     });
     return { n: n, cut: cut };
+  }
+  /* V94：单将带兵上限校正——超过上限的现役兵退回该将所在城预备役（不吞兵），返回退回总数。
+     启动、切换城池、月度结算、进入点将台前都会跑一次，保证旧档/异常档自动收敛。 */
+  function trimOverTroops(u) {
+    if (!u || !u.cards) return 0;
+    var back = 0;
+    u.cards.forEach(function (c) {
+      if (!c || c.sold == null) return;
+      var cap = troopCapEff(c, gById(c.gid));
+      if (c.cap !== cap) c.cap = cap;
+      if (c.sold > cap) {
+        var over = c.sold - cap;
+        c.sold = cap;
+        try {
+          var cty = cardCityOf(u, c.id);
+          if (!cty) { ensureCity(u); cty = u.bat.city; }
+          cty.pool = (cty.pool || 0) + over;
+        } catch (e) {}
+        back += over;
+      }
+    });
+    return back;
   }
   /* V41 点数台账：所有增量发放统一走 spGrant（累计获得 spG），消耗走 spU（累计分配），
      待分配点数 sp = spG - spU 派生并实时回写；两个计数器单调递增，随云端存档持久化 */
@@ -13490,6 +13531,8 @@ var BOTS = [
     return Math.max(1000, t);
   }
   function troopCapOf(c) { return c ? Math.min(troopAbilityOf(c), rankTroop(c)) : 0; }
+  /* V94：展示用的「等级带兵」——同样受后台单将上限约束，避免界面出现超过实际可带兵的数 */
+  function troopAbilityDisp(c) { return Math.min(unitCapMax(), troopAbilityOf(c)); }
   /* 关卡守军总兵力（与 stageEnemies 同口径，仅用于展示） */
   function stageGuardN(n) {
     var lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
@@ -13504,9 +13547,12 @@ var BOTS = [
   }
   function troopOfCard(c, g) {
     if (!c) return 0;
-    /* V73：实际编兵上限 = MAX(等级带兵, 爵位上限)——两口径取大者；特种兵在此之上单独增加 */
-    return Math.max(troopAbilityOf(c), rankTroop(c));
+    /* V73：实际编兵上限 = MAX(等级带兵, 爵位上限)——两口径取大者；特种兵在此之上单独增加
+       V94：再受后台「单将带兵上限」硬约束（军事模型 unitCap，默认 10 万），
+            防止兵营等级（每级 +2%，最高可到城市等级×10 级）与星级/装备叠加后无限膨胀 */
+    return Math.min(unitCapMax(), Math.max(troopAbilityOf(c), rankTroop(c)));
   }
+  function unitCapMax() { return Math.max(1000, Math.round(+MIL.unitCap || 100000)); }
   /* V83：敌方旧口径——关卡守军 / 贼寇 / 攻城守军仍用「等级累加 + 爵位封顶」，不改既有战平衡 */
   function troopOfCardLegacy(c) {
     if (!c) return 0;
@@ -14921,7 +14967,7 @@ var BOTS = [
     var why = nx >= RANKS.length ? gt("rankMaxT") : cardLv(c) < rankNeedLv(nx) ? gt("rankLvT", { n: rankNeedLv(nx) }) : (u.points || 0) < rankCost(nx) ? T("eqLack") : "";
     return '<div class="sg-rankline sg-palrow">' +
       '<span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
-      "<span><b>" + esc(g.name) + "</b> <small>Lv." + cardLv(c) + " · " + gt("phCapShortT", { a: fmt(troopOfCard(c, g)), b: fmt(troopAbilityOf(c)) }) + "</small><br>" +
+      "<span><b>" + esc(g.name) + "</b> <small>Lv." + cardLv(c) + " · " + gt("phCapShortT", { a: fmt(troopOfCard(c, g)), b: fmt(troopAbilityDisp(c)) }) + "</small><br>" +
       '<small style="color:#e8c988">🏅 ' + rankName(rk) + " · " + gt("rankCapT") + " " + fmt(RANKS[rk].troop) + "</small>" +
       (why ? ' <small style="color:var(--ink-3)">' + esc(why) + "</small>" : "") + "</span>" +
       '<span class="sp"></span>' +
@@ -15665,7 +15711,7 @@ var BOTS = [
     var sq = warSquad(u), p = 0;
     sq.forEach(function (cd) {
       var g = gById(cd.gid); if (!g) return;
-      var sold = cd.sold == null ? troopOfCard(cd, g) : cd.sold;
+      var sold = cd.sold == null ? troopOfCard(cd, g) : Math.min(cd.sold, troopCapEff(cd, g));   /* V94：不超单将上限 */
       p += sold;
     });
     return { n: sq.length, power: p };
@@ -15802,7 +15848,7 @@ var BOTS = [
       var g = gById(cd.gid) || {}; var gid = cd.gid;
       var av = "";
       try { av = window.__SGAtlas && window.__SGAtlas.avFor ? window.__SGAtlas.avFor(g) : ""; } catch (e) {}
-      var sold = cd.sold == null ? troopOfCard(cd, g) : cd.sold;
+      var sold = cd.sold == null ? troopOfCard(cd, g) : Math.min(cd.sold, troopCapEff(cd, g));   /* V94：不超单将上限 */
       return '<div class="sg-dgc my"><span class="av">' + av + "</span><span class=\"nm\"><b>" + esc(g.name || "?") + "</b><small>Lv." + cardLv(cd) + " · " + fmt(sold) + "</small></span></div>";
     }).join("");
     modal('<style>' +
@@ -17060,7 +17106,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (card && rb.cap && !rb.full) shortN++;
         /* V73：双段进度条（兵力 + 战斗值）——MAX(等级,爵位)+特种兵 口径 */
         var cb73 = card ? unitCombatOf(u, card, c) : null;
-        var tip73 = card ? posDesc(p) + " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(card)) +
+        var tip73 = card ? posDesc(p) + " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(card)) +
           " · " + gt("phRankCapT") + " " + fmt(rankTroop(card)) + " · " + gt("v73CapT", { n: fmt(troopCapEff(card, g, c)) }) +
           (cb73 && cb73.el > 0 ? " · " + gt("phEliteT") + " " + fmt(cb73.el) + "（" + esc(cb73.elName) + " ×" + fmt(cb73.elPowMul) + "）" : "") : "";
         var armTxt = card ? (card.arm ? armName(card.arm) + " " + armProf(card, card.arm) : (armProfTop(card, 1)[0] || {}).k ? "适" + armName(armProfTop(card, 1)[0].k) + " " + armProfTop(card, 1)[0].v : "") : "";
@@ -17320,7 +17366,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var cur = (cd.sold == null ? cap : Math.min(cd.sold, cap)), eN = cardEliteN(u, cd.id, c);
       return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
         "<span><b>" + esc(g.name || "?") + "</b> <small>Lv." + cardLv(cd) +
-        " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(cd)) +
+        " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(cd)) +
         " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
         " · " + gt("phRegT") + " " + fmt(cur) + "/" + fmt(cap) +
         " · " + gt("phEliteT") + " " + fmt(eN) + "</small></span><span class=\"sp\"></span>" +
@@ -17336,6 +17382,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   function pointHallHTML(u) {
     var c = ensureCity(u);
     if (!c.armies) c.armies = [];
+    /* V94：进入点将台前校正单将带兵硬上限（超编退回本城预备役） */
+    try { if (trimOverTroops(u) > 0) save(); } catch (e94p) {}
     /* 首次进入：把现有驻城（未出战）武将自动编成部队，之后以玩家编成为准 */
     if (c.armiesAt !== 83) {
       try { armyInitCity(u, c); } catch (e) {}
@@ -17350,7 +17398,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
         var eN = cardEliteN(u, cd.id, c);
         var tip = (g.name || "?") + " Lv." + cardLv(cd) +
-          " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(cd)) +
+          " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(cd)) +
           " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
           " · " + gt("phRegT") + " " + fmt(cur) + "/" + fmt(cap) +
           " · " + gt("phEliteT") + " " + fmt(eN);
@@ -17433,7 +17481,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var capT = cb.regCap + cb.el, tot = cb.reg + cb.el;
     var full = capT > 0 && tot >= capT;
     var tip = (g.name || "?") + " Lv." + cardLv(cd) + " · " + tierLabel(tr) +
-      " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(cd)) +
+      " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(cd)) +
       " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
       " · " + gt("v73CapT", { n: fmt(troopCapEff(cd, g, c)) }) +
       (cb.el ? " · " + gt("phEliteT") + " " + fmt(cb.el) + "（" + esc(cb.elName) + " ×" + fmt(cb.elPowMul) + "）" : "");
@@ -17475,6 +17523,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   function hallUnifiedHTML(u) {
     var c = ensureCity(u);
     if (rosterClean(u, c)) { try { save(); } catch (e) {} }
+    /* V94：进入点将台前校正单将带兵硬上限（超编退回本城预备役） */
+    try { if (trimOverTroops(u) > 0) save(); } catch (e94h) {}
     if (!c.armies) c.armies = [];
     if (c.armiesAt !== 83) {
       try { armyInitCity(u, c); } catch (e) {}
@@ -19219,7 +19269,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-note" style="margin:10px 0 4px">' + T("spAlloc", { n: spLeft }) +
       (c.spG ? ' <small style="color:var(--ink-3)">' + gt("spCardAuditT", { g: c.spG, u: spUsedOf(c) }) + "</small>" : "") + "</div><div style='display:flex;flex-wrap:wrap;gap:6px'>" + spHTML + "</div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("equipT") + " · " + T("eqWpn") + "：" + wtypeOf(g) + "</div>" + eqHTML +
-      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">爵</span><span><b>🏅 ' + rankName(rankOf(c)) + "</b> <small>" + gt("lbTroop") + " " + gt("phCapLineT", { c: fmt(troopOfCard(c, g)), a: fmt(troopAbilityOf(c)), b: fmt(RANKS[rankOf(c)].troop) }) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">爵</span><span><b>🏅 ' + rankName(rankOf(c)) + "</b> <small>" + gt("lbTroop") + " " + gt("phCapLineT", { c: fmt(troopOfCard(c, g)), a: fmt(troopAbilityDisp(c)), b: fmt(RANKS[rankOf(c)].troop) }) + "</small></span></div>" +
       '<div class="sg-note" style="margin:12px 0 4px">' + T("mountT") + "</div>" + mtHTML +
       '<div style="text-align:center;margin-top:14px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
   }
@@ -20067,7 +20117,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       /* ---------- V27 多城池 / 编队 / 商队 ---------- */
       case "cityswitch": {
         ensureCity(u);
-        if (switchCity(u, t.getAttribute("data-n"))) { save(); toast(t.getAttribute("data-n"), "ok"); closeModal(); refreshBattle(); }
+        if (switchCity(u, t.getAttribute("data-n"))) {
+          try { trimOverTroops(u); } catch (e94c) {}   /* V94：换城后按新城兵营上限校正 */
+          save(); toast(t.getAttribute("data-n"), "ok"); closeModal(); refreshBattle();
+        }
         return;
       }
       case "unlock": unlockOpen(t.getAttribute("data-n")); return;
