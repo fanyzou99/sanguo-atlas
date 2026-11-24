@@ -17,6 +17,9 @@ h1 i{font-style:normal;color:var(--gold)}
 .sub{color:var(--ink2);font-size:13px;margin-bottom:14px}
 .stat{display:flex;flex-wrap:wrap;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:14px}
 .stat b{color:var(--gold)}
+.badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.5px}
+.badge.gold{background:#3a2c14;color:#e8c988;border:1px solid #c9a45c66}
+.badge.blue{background:#16243a;color:#8ab6ff;border:1px solid #3f6fb366}
 .bar{height:5px;background:#242a36;border-radius:3px;overflow:hidden;margin:-6px 0 14px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,#c9a45c,#e8c988);width:0;transition:width .3s}
 .warn{display:none;background:#3a2c14;color:#f2d998;border:1px solid #c9a45c;border-radius:8px;padding:8px 14px;font-size:13px;margin-bottom:12px}
@@ -31,8 +34,11 @@ select{padding:8px 10px;border-radius:8px;border:1px solid var(--line);backgroun
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
 .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
 .card:hover{transform:translateY(-3px);border-color:#c9a45c}
-.card .ph{aspect-ratio:3/4;background:#10131a;display:flex;align-items:center;justify-content:center}
-.card img{width:100%;height:100%;object-fit:cover;display:block}
+.card .ph{aspect-ratio:3/4;background:#10131a;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.card .ph::before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(100deg,#10131a 30%,#1d2433 50%,#10131a 70%);background-size:200% 100%;animation:shimmer 1.3s infinite linear}
+.card img{width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1;opacity:0;transition:opacity .35s ease}
+.card img.ld{opacity:1}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .card .cap{padding:8px 10px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
 .card .cap i{font-style:normal;font-size:12px}
 .card .tier{position:absolute;top:8px;left:8px;font-weight:800;font-size:14px;text-shadow:0 1px 3px #000a}
@@ -69,7 +75,7 @@ select{padding:8px 10px;border-radius:8px;border:1px solid var(--line);backgroun
   <div class="chips" id="tierChips"></div>
   <div class="grid" id="grid"></div>
   <div class="more" id="more"></div>
-  <div class="foot">独立永久页面 · 数据与主站 <a href="./" style="color:#8a94a6">sanguo-atlas</a> 同源（pt/ 分片 × 8）· 本页与立绘数据今后不再改动</div>
+  <div class="foot">独立永久页面 · 数据与主站 <a href="./" style="color:#8a94a6">sanguo-atlas</a> 同源 · 立绘分片已持久化到浏览器本地（IndexedDB），首次载入后刷新秒开、0 网络请求 · 分片文件名自带内容哈希，数据更新自动换新片增量缓存 · 筛选/排序偏好同样记忆</div>
 </div>
 <div id="lb"><button class="x" id="lbx">×</button><img id="lbi" alt=""><div class="nm" id="lbn"></div><div class="sb" id="lbs"></div></div>
 <script>
@@ -95,56 +101,172 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
              st:a[7], wu:a[8], "in":a[9], po:a[10], ch:a[11], sum:a[7]+a[8]+a[9]+a[10]+a[11] };
   });
   var state = { q:"", fac:"all", tier:"all", sort:"rank", limit:96, loaded:false };
-  var okCount = {}, trying = {}, done = {}, ptReady = false;
+  /* V98：筛选/排序/每页数量偏好持久化（localStorage） */
+  try {
+    var _pref = JSON.parse(localStorage.getItem("sg_wall_pref") || "{}");
+    if (_pref.fac) state.fac = String(_pref.fac);
+    if (_pref.tier) state.tier = String(_pref.tier);
+    if (_pref.sort) state.sort = String(_pref.sort);
+    if (_pref.limit) state.limit = Math.max(96, _pref.limit|0);
+    if (_pref.q) state.q = String(_pref.q).slice(0, 60);
+  } catch(_e){}
+  function savePref(){ try { localStorage.setItem("sg_wall_pref", JSON.stringify({ q:state.q, fac:state.fac, tier:state.tier, sort:state.sort, limit:state.limit })); } catch(_e){} }
+  var okCount = {}, failSet = {}, ptReady = false, settledDone = false, netEver = false, booted = false;
 
   function tierOf(g){ for (var i=0;i<TIERS.length;i++) if (g.sum >= TIERS[i].min) return TIERS[i]; return TIERS[TIERS.length-1]; }
   function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function ptn(){ return Object.keys(window.__SG_PT__).length; }
   function ptN(){ return Object.keys(okCount).length; }
 
-  /* ---- 加固加载器：双源（本站优先 + jsDelivr CDN 回退，逐次交替）· 并发 2 · 单片最多重试 5 次（指数退避）· onload 校验立绘合并 · 全部落定后若有失败，每 20s 自动再试 ---- */
+  /* ---- V98 加固加载器 + IndexedDB 持久化缓存 ----
+     pt/ 分片文件名自带内容哈希（改数据=换文件名），缓存天然按版本失效，不会出现数据不及时；
+     首访：网络下载（双源交替 · 并发 2 · 重试 5 次指数退避）并写入本地缓存；
+     复访：直接从 IndexedDB 执行分片文本，0 网络请求秒开；缺失/损坏片自动转网络并增量补缓存 ---- */
   var SRC = ["./", "https://cdn.jsdelivr.net/gh/fanyzou99/sanguo-atlas@main/"];
-  var QUEUE = FILES.slice(), active = 0, autoTimer = null;
-  function pump(){
-    while (active < 2 && QUEUE.length) {
-      var f = QUEUE.shift();
-      if (done[f]) continue;
-      load(f, 0);
-    }
-    if (!QUEUE.length && !active && !ptReady) { /* 全部落定 */ settled(); }
+  var autoTimer = null;
+  function isDone(f){ return !!okCount[f] || !!failSet[f]; }
+  function allDone(){ for (var i=0;i<FILES.length;i++) if (!isDone(FILES[i])) return false; return true; }
+
+  /* IndexedDB：库 sg_pt_cache / 表 shards，key=分片文件名，value={t:文本,at:时间戳} */
+  var DBN="sg_pt_cache", STN="shards", _db=null, _idbOK=true;
+  function idbOpen(cb){
+    if (_db) return cb(_db);
+    if (!_idbOK || !window.indexedDB) { _idbOK=false; return cb(null); }
+    var rq;
+    try { rq = indexedDB.open(DBN, 1); } catch(e){ _idbOK=false; return cb(null); }
+    rq.onupgradeneeded = function(){ try { rq.result.createObjectStore(STN); } catch(e){} };
+    rq.onsuccess = function(){ _db = rq.result; cb(_db); };
+    rq.onerror = function(){ _idbOK=false; cb(null); };
   }
-  function load(f, attempt){
-    active++;
+  function idbGet(key, cb){
+    idbOpen(function(d){ if (!d) return cb(null);
+      try { var rq = d.transaction(STN,"readonly").objectStore(STN).get(key);
+        rq.onsuccess = function(){ cb(rq.result || null); };
+        rq.onerror = function(){ cb(null); };
+      } catch(e){ cb(null); } });
+  }
+  function idbSet(key, val){
+    idbOpen(function(d){ if (!d) return;
+      try { d.transaction(STN,"readwrite").objectStore(STN).put(val, key); } catch(e){} });
+  }
+  function idbDel(key){
+    idbOpen(function(d){ if (!d) return;
+      try { d.transaction(STN,"readwrite").objectStore(STN).delete(key); } catch(e){} });
+  }
+  function idbPrune(){
+    /* 全量落定后清理过期缓存键（不在当前文件清单内的旧版本分片） */
+    idbOpen(function(d){ if (!d) return;
+      try { var st = d.transaction(STN,"readwrite").objectStore(STN);
+        var kr = st.getAllKeys();
+        kr.onsuccess = function(){ (kr.result||[]).forEach(function(k){ if (FILES.indexOf(String(k)) < 0) st.delete(k); }); };
+      } catch(e){} });
+  }
+
+  /* 分片文本执行：合并进 window.__SG_PT__；返回是否有效（无效=缓存损坏，删除后走网络） */
+  function evalShard(text, f){
     var before = ptn();
-    var s = document.createElement("script");
-    s.src = SRC[attempt % SRC.length] + f + (attempt >= 2 ? ("?r=" + attempt + "_" + Date.now()) : "");
-    s.onload = function(){
-      /* onload 不代表内容有效（CDN 错误页解析失败不触发 onerror）——校验立绘 key 是否合并，未合并则换源重试 */
-      if (ptn() === before && attempt < 5) {
-        setTimeout(function(){ load(f, attempt + 1); }, 600);
-        return;
-      }
-      okCount[f] = 1; done[f] = 1; active--;
-      paintProgress();
-      if (!ptReady || !state.loaded) paint();   /* 新片到达即补渲染 */
-      pump();
-    };
-    s.onerror = function(){
-      if (attempt < 5) {
-        trying[f] = attempt + 1;
-        setTimeout(function(){ load(f, attempt + 1); }, 800 * Math.pow(2, attempt));
-      } else {
-        active--;
-        done[f] = 1;   /* 本轮放弃，进入周期重试 */
-        paintProgress();
-        pump();
-      }
-    };
-    document.head.appendChild(s);
+    try {
+      var s = document.createElement("script");
+      s.textContent = text;
+      document.head.appendChild(s);
+      document.head.removeChild(s);
+    } catch(e){ if (f) idbDel(f); return false; }
+    if (ptn() === before) { if (f) idbDel(f); return false; }
+    return true;
   }
+
+  /* 网络加载：双源（本站优先 + jsDelivr 回退）· 并发 2 · 单片重试 5 次 · 内容校验后写入缓存 */
+  var netQueue = [], activeNet = 0;
+  function netBackoff(attempt){ return attempt >= 2 ? 800 * Math.pow(2, Math.min(attempt - 2, 3)) : 600; }
+  function netGiveUp(f, attempt){
+    if (attempt < 5) return false;
+    failSet[f] = 1; activeNet--;
+    paintProgress(); settled(); pumpNet();
+    return true;
+  }
+  function fetchShard(f, attempt){
+    var url = SRC[attempt % SRC.length] + f + (attempt >= 2 ? ("?r=" + attempt + "_" + Date.now()) : "");
+    try {
+      var x = new XMLHttpRequest();
+      x.open("GET", url, true);
+      x.timeout = 30000;
+      x.onload = function(){
+        var t = (x.status >= 200 && x.status < 300) ? x.responseText : null;
+        if (t && evalShard(t, null)) {
+          idbSet(f, { t: t, at: Date.now() });
+          okCount[f] = 1; activeNet--;
+          paintProgress();
+          if (!ptReady || !state.loaded) paint();   /* 新片到达即补渲染 */
+          settled(); pumpNet();
+          return;
+        }
+        if (!netGiveUp(f, attempt)) setTimeout(function(){ fetchShard(f, attempt + 1); }, netBackoff(attempt));
+      };
+      x.onerror = x.ontimeout = function(){
+        if (!netGiveUp(f, attempt)) setTimeout(function(){ fetchShard(f, attempt + 1); }, netBackoff(attempt));
+      };
+      x.send();
+    } catch(e) {
+      if (!netGiveUp(f, attempt)) setTimeout(function(){ fetchShard(f, attempt + 1); }, netBackoff(attempt));
+    }
+  }
+  function pumpNet(){
+    while (activeNet < 2 && netQueue.length) {
+      var f = netQueue.shift();
+      activeNet++; netEver = true;
+      fetchShard(f, 0);
+    }
+  }
+
+  /* 缓存水合：命中分片逐帧执行（不阻塞 UI），缺失/损坏片转网络 */
+  var evalQueue = [], evalBusy = false;
+  function drainEval(){
+    if (!evalQueue.length || evalBusy) return;
+    evalBusy = true;
+    setTimeout(function(){
+      evalBusy = false;
+      var it = evalQueue.shift();
+      if (okCount[it.f]) { drainEval(); return; }   /* 网络已抢先到位 */
+      if (evalShard(it.t, it.f)) {
+        okCount[it.f] = 1;
+        paintProgress();
+        if (!ptReady || !state.loaded) paint();
+        settled();
+        drainEval();
+      } else {
+        activeNet++; netEver = true;
+        fetchShard(it.f, 0);
+        drainEval();
+      }
+    }, 16);
+  }
+  function boot(){
+    var got = 0, misses = [];
+    FILES.forEach(function(f){
+      idbGet(f, function(rec){
+        got++;
+        if (rec && rec.t && rec.t.length > 1000) evalQueue.push({ f: f, t: rec.t });
+        else misses.push(f);
+        if (got === FILES.length) {
+          booted = true;
+          paintProgress();
+          document.getElementById("q").value = state.q;
+          document.getElementById("sort").value = state.sort;
+          paint();
+          netQueue = misses;
+          pumpNet();
+          drainEval();
+          if (!evalQueue.length && !misses.length) settled();
+        }
+      });
+    });
+  }
+
   function settled(){
-    var failed = FILES.filter(function(f){ return !okCount[f]; });
+    if (settledDone || !allDone()) return;
+    var failed = FILES.filter(function(f){ return failSet[f]; });
     if (failed.length || ptn() < 716) {
+      settledDone = true;
       var warn = document.getElementById("warn");
       warn.style.display = "block";
       warn.innerHTML = "⚠ 部分立绘分片加载失败（已载 " + ptN() + "/" + FILES.length + " 片 · " + ptn() + " 张），20 秒后自动重试，也可 <a href='javascript:void(0)' id='wr' style='color:#f2d998;text-decoration:underline'>立即重试</a>";
@@ -152,26 +274,43 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
       if (autoTimer) clearTimeout(autoTimer);
       autoTimer = setTimeout(function(){ retryFailed(); }, 20000);
     } else {
+      settledDone = true; ptReady = true;
       document.getElementById("warn").style.display = "none";
-      if (!ptReady) { ptReady = true; paint(); }
-      paintProgress();
+      idbPrune();
+      paint(); paintProgress();
     }
   }
   function retryFailed(){
-    /* 立绘不足 716 张时整轮重载（已成功分片合并幂等）；足额则只补失败片 */
-    QUEUE = ptn() < 716 ? FILES.slice() : FILES.filter(function(f){ return !okCount[f]; });
-    done = {}; trying = {};
+    if (autoTimer) clearTimeout(autoTimer);
+    settledDone = false;
+    var failed = FILES.filter(function(f){ return failSet[f] || !okCount[f]; });
+    /* 立绘不足 716 张时整轮重载（已缓存片合并幂等）；足额则只补失败片并清掉坏缓存 */
+    if (ptn() < 716) failed = FILES.slice();
+    failed.forEach(function(f){ delete okCount[f]; delete failSet[f]; idbDel(f); });
     document.getElementById("warn").innerHTML = "正在重试失败分片…";
-    pump();
+    netQueue = failed.slice();
+    pumpNet();
+    paintProgress();
   }
-  function manualRetry(){ if (autoTimer) clearTimeout(autoTimer); retryFailed(); }
+  function manualRetry(){ retryFailed(); }
   function paintProgress(){
-    var loadedN = ptn();
-    document.getElementById("pbar").style.width = Math.round(loadedN / FILES.length * 100) + "%";
-    var st = document.getElementById("stat");
-    st.innerHTML = "<span>已加载立绘 <b>" + loadedN + "</b> / " + 716 + " 张</span>" +
-      "<span>分片 <b>" + ptN() + "</b> / " + FILES.length + "</span>" +
-      "<span>武将总数 <b>" + G.length + "</b></span>";
+    var loadedN = ptn(), doneN = 0;
+    FILES.forEach(function(f){ if (isDone(f)) doneN++; });
+    document.getElementById("pbar").style.width = Math.round(doneN / FILES.length * 100) + "%";
+    var badge;
+    if (booted && settledDone && ptn() >= 716 && !FILES.some(function(f){ return failSet[f]; })) {
+      badge = netEver ? '<span class="badge blue">🌐 本次从网络更新 · 已写入本地缓存，下次刷新秒开</span>'
+                      : '<span class="badge gold">⚡ 本地缓存秒开 · 本次刷新 0 网络请求</span>';
+    } else if (booted && netEver) {
+      badge = '<span class="badge blue">🌐 网络加载中…（首次访问需下载，之后刷新秒开）</span>';
+    } else if (booted) {
+      badge = '<span class="badge gold">⚡ 本地缓存加载中…</span>';
+    } else {
+      badge = '<span class="badge blue">⏳ 正在检查本地缓存…</span>';
+    }
+    document.getElementById("stat").innerHTML = "<span>已加载立绘 <b>" + loadedN + "</b> / " + 716 + " 张</span>" +
+      "<span>分片 <b>" + doneN + "</b> / " + FILES.length + "</span>" +
+      "<span>武将总数 <b>" + G.length + "</b></span>" + badge;
   }
 
   /* ---- 渲染 ---- */
@@ -212,7 +351,7 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
     document.getElementById("grid").innerHTML = shown.length ? shown.map(function(g){
       var tr = tierOf(g), f = FACTION[g.faction];
       return '<div class="card" data-n="' + esc(g.name) + '" data-id="' + esc(g.id) + '">' +
-        '<div class="ph"><img loading="lazy" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
+        '<div class="ph"><img loading="lazy" onload="this.classList.add(\'ld\')" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
         '<span class="tier" style="color:' + tr.c + '">' + tr.n + '</span>' +
         '<div class="cap"><b>' + esc(g.name) + '</b><i style="color:' + (f ? f.color : "#8a6a3a") + '">' + (f ? f.name : esc(g.faction)) + '</i></div></div>';
     }).join("") : '<div class="empty">' + (ptn() ? "没有符合条件的立绘，试试更换筛选条件" : "立绘分片加载中，请稍候…") + '</div>';
@@ -220,12 +359,12 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
     document.getElementById("more").innerHTML = left > 0 ? '<button id="moreBtn">显示更多（还有 ' + left + ' 位）</button>' : '';
     document.getElementById("cnt").textContent = "已配图 " + ptn() + " / " + G.length + " · 筛选结果 " + arr.length + " 位";
     var mb = document.getElementById("moreBtn");
-    if (mb) mb.onclick = function(){ state.limit += 120; paint(); };
+    if (mb) mb.onclick = function(){ state.limit += 120; savePref(); paint(); };
     Array.prototype.forEach.call(document.querySelectorAll("#facChips .chip"), function(el){
-      el.onclick = function(){ state.fac = el.getAttribute("data-f"); state.limit = 96; paint(); };
+      el.onclick = function(){ state.fac = el.getAttribute("data-f"); state.limit = 96; savePref(); paint(); };
     });
     Array.prototype.forEach.call(document.querySelectorAll("#tierChips .chip"), function(el){
-      el.onclick = function(){ state.tier = el.getAttribute("data-t"); state.limit = 96; paint(); };
+      el.onclick = function(){ state.tier = el.getAttribute("data-t"); state.limit = 96; savePref(); paint(); };
     });
     Array.prototype.forEach.call(document.querySelectorAll(".card"), function(el){
       el.onclick = function(){ openLb(el.getAttribute("data-n")); };
@@ -245,11 +384,10 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
   document.getElementById("lbx").onclick = function(){ lb.style.display = "none"; };
   lb.onclick = function(e){ if (e.target === lb) lb.style.display = "none"; };
   document.addEventListener("keydown", function(e){ if (e.key === "Escape") lb.style.display = "none"; });
-  document.getElementById("q").addEventListener("input", function(e){ state.q = e.target.value; state.limit = 96; paint(); });
-  document.getElementById("sort").addEventListener("change", function(e){ state.sort = e.target.value; paint(); });
+  document.getElementById("q").addEventListener("input", function(e){ state.q = e.target.value; state.limit = 96; savePref(); paint(); });
+  document.getElementById("sort").addEventListener("change", function(e){ state.sort = e.target.value; savePref(); paint(); });
   paintProgress();
-  paint();
-  pump();
+  boot();
 })();
 </script>
 </body>
