@@ -12124,20 +12124,30 @@ var BOTS = [
   /* ---------- V27 多城池 / 编队 ---------- */
   var CITY_SLOTS = ["洛阳", "长安", "襄阳", "成都", "建业"];
   var CITY_UNLOCK_PTS = 1000, CITY_UNLOCK_RES = 1000;
-  /* V99：出战编队 3 将横向一排——主将 + 副将1 + 副将2（槽位 key center/left/right 不变，旧档零迁移） */
+  /* V100：出战编队支持 3/5/7 人三种模式（默认 3 人，可切换）——主将 + 副将1~6。
+     槽位 key center/left/right 保持不变（旧档零迁移），s4~s7 为扩展槽。 */
   var TEAM_POS = [
     { k: "center", n: "主将", nen: "主将", en: "Commander", dzh: "全队核心：主将被击溃即全军败退", den: "Team core; if the commander falls, all retreat" },
     { k: "left", n: "副将1", nen: "副将1", en: "Deputy 1", dzh: "混合兵种", den: "Mixed troops" },
-    { k: "right", n: "副将2", nen: "副将2", en: "Deputy 2", dzh: "混合兵种", den: "Mixed troops" }
+    { k: "right", n: "副将2", nen: "副将2", en: "Deputy 2", dzh: "混合兵种", den: "Mixed troops" },
+    { k: "s4", n: "副将3", nen: "副将3", en: "Deputy 3", dzh: "混合兵种", den: "Mixed troops" },
+    { k: "s5", n: "副将4", nen: "副将4", en: "Deputy 4", dzh: "混合兵种", den: "Mixed troops" },
+    { k: "s6", n: "副将5", nen: "副将5", en: "Deputy 5", dzh: "混合兵种", den: "Mixed troops" },
+    { k: "s7", n: "副将6", nen: "副将6", en: "Deputy 6", dzh: "混合兵种", den: "Mixed troops" }
   ];
   function posName(p) { var l = lang(); return l === "zh" ? p.n : l === "ja" ? p.nen : p.en; }
   function posDesc(p) { return lang() === "en" ? p.den : p.dzh; }
+  /* V100：编队规模（3/5/7，默认 3），按队伍持久化 */
+  var TEAM_SIZES = [3, 5, 7];
+  function teamSizeOf(t) { var s = t && +t.size; return TEAM_SIZES.indexOf(s) >= 0 ? s : 3; }
+  function teamPosList(t) { return TEAM_POS.slice(0, teamSizeOf(t)); }
   function defaultTeams(prev) {
     var arr = [];
     for (var i = 0; i < 5; i++) {
-      /* V97：3 槽（中军/左军/右军）——旧档前锋→左军、骑军→右军，特种兵槽丢弃 */
+      /* V97：3 槽（中军/左军/右军）——旧档前锋→左军、骑军→右军，特种兵槽丢弃；
+         V100：size 编队规模（3/5/7）持久化，默认 3 */
       var p0 = prev && prev[i], ps = (p0 && p0.slots) || {};
-      var t = { n: i + 1, nm: (p0 && p0.nm) || "", slots: { center: ps.center || null, left: ps.left || ps.front || null, right: ps.right || ps.cav || null } };
+      var t = { n: i + 1, nm: (p0 && p0.nm) || "", size: teamSizeOf(p0), slots: { center: ps.center || null, left: ps.left || ps.front || null, right: ps.right || ps.cav || null, s4: ps.s4 || null, s5: ps.s5 || null, s6: ps.s6 || null, s7: ps.s7 || null } };
       arr.push(t);
     }
     return arr;
@@ -12160,7 +12170,19 @@ var BOTS = [
     u.res = c.res;
     if (!c.teams || c.teams.length !== 5) c.teams = defaultTeams(c.teams);
     if (!c.roster) c.roster = [];
-    if (!c.armies) c.armies = [];   /* V83 点将台：部队编成 */
+    /* V100：点将台功能删除——旧档 armies 成员士兵全额退回本城预备役后清空（幂等） */
+    if (c.armies && c.armies.length) {
+      var hasC100 = {};
+      (u.cards || []).forEach(function (x) { hasC100[x.id] = x; });
+      (c.armies || []).forEach(function (a100) {
+        (a100.mem || []).forEach(function (id100) {
+          var cd100 = hasC100[id100];
+          if (cd100 && cd100.sold != null && cd100.sold > 0) { c.pool = Math.max(0, (c.pool || 0)) + cd100.sold; cd100.sold = 0; }
+        });
+      });
+      c.armies = [];
+      try { delete c.armiesAt; } catch (e100a) { c.armiesAt = undefined; }
+    }
     /* V37 伤兵系统：正常兵储备池 + 伤兵疗养批次（rec = 痊愈的日历月） */
     if (c.pool == null) c.pool = 0;
     if (!c.wounded) c.wounded = [];
@@ -13381,7 +13403,7 @@ var BOTS = [
         distGoT: "确定配兵", distCancelT: "取消",
         distDoneT: "配兵完成：常规兵 {a} / {c}{x}", distBackT: "退回预备役 {n}", distLackT: "预备役不足，实补 {n}", distCarryT: "特种兵携带 {a} / {b}",
         distCarryRowT: "携带 <b>{a}</b> / 营内 {b}（留守本城 {k}）", distCarryHintT: "· 可在「⚙ 配兵」里调整常规兵与特种兵数量",
-        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 点将台部队与武将编队同为固定槽位配置：点击空位编入、点击武将卡更换；编队 3 将（主将 + 2 副将）出战，部队 5 将",
+        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 3 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", sqOpsT: "编队操作（补兵/配兵/兵种/吞噬）",
         distElSelT: "🎯 特种兵类型与携带数量",
         distFormT: "按阵型「{f}」实时核算（阵型攻 ×{a}%）",
         distTotT: "👥 总带兵 <b>{n}</b>", distPowT: "⚡ 总战斗值 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -13399,7 +13421,7 @@ var BOTS = [
         distGoT: "Apply", distCancelT: "Cancel",
         distDoneT: "Troops set: regular {a} / {c}{x}", distBackT: "returned {n} to reserve", distLackT: "reserve short, got {n}", distCarryT: "elite carried {a} / {b}",
         distCarryRowT: "Carried <b>{a}</b> / corps {b} (left in city {k})", distCarryHintT: "· adjust regular & elite numbers in \"⚙ Troops\"",
-        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall units use the same fixed-slot setup as battle teams: click an empty slot to add, click a general card to replace. Teams field 3 (commander + 2 deputies), units field 5",
+        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 3); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", sqOpsT: "Unit ops (refill / assign troops / arm / absorb)",
         distElSelT: "🎯 Elite corps type & carried number",
         distFormT: "Calculated live with formation \"{f}\" (form atk ×{a}%)",
         distTotT: "👥 Total troops <b>{n}</b>", distPowT: "⚡ Total power <b>{n}</b>", distDefT: "🛡 Defense <b>{n}</b>",
@@ -13417,7 +13439,7 @@ var BOTS = [
         distGoT: "確定", distCancelT: "キャンセル",
         distDoneT: "設定完了：通常兵 {a} / {c}{x}", distBackT: "予備へ {n} 返却", distLackT: "予備不足、実補 {n}", distCarryT: "特殊兵携行 {a} / {b}",
         distCarryRowT: "携行 <b>{a}</b> / 営内 {b}（城に残す {k}）", distCarryHintT: "·「⚙ 兵数設定」で通常兵と特殊兵の数を調整できます",
-        phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 点将台部隊は武将編隊と同じ固定スロット方式：空きスロットで編入、武将カードで交代。編隊は3将（主将＋2副将）、部隊は5将",
+        phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 編隊は固定スロット方式：空きスロットで編入、選択済み武将で交代（詳細ページへ移動しません）；規模 3/5/7 人切替可（既定 3 人）。縮小時は余分な武将が自動的に外れ、兵は予備役へ戻る", teamSizeT: "編隊規模 {n} 人", teamSizeOkT: "編隊規模を {n} 人に変更しました", sqOpsT: "編隊操作（補兵/配兵/兵種/吸収）",
         distElSelT: "🎯 特殊兵の種類と携行数",
         distFormT: "陣形「{f}」でリアルタイム計算（陣形攻 ×{a}%）",
         distTotT: "👥 総兵数 <b>{n}</b>", distPowT: "⚡ 総戦闘値 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -13438,7 +13460,7 @@ var BOTS = [
     var ADD = {
       zh: {
         phT: "点将台", phSubT: "部队编成", phCntT: "部队 {a}/{b}",
-        phAutoT: "一键编成", phNewT: "组建部队", phEmptyT: "点将台尚无部队：点「组建部队」手动编成，或「一键编成」按带兵能力自动分配驻城武将。",
+        phAutoT: "一键编成", phNewT: "组建部队", phEmptyT: "尚无出战编队：先把武将加入驻城（卡牌墙 → 驻城），再点击空槽编入。",
         phAddT: "编入", phFillT: "集结补兵", phClearT: "解编", phNameT: "部队改名", phNameOkT: "已改名",
         phRuleT: "每支部队最多 {s} 名武将、总带兵上限 {n}；撤下编队即退兵回预备役，入编时自动领兵；同一武将不可同时进入点将台与武将编队。", phBackT: "退回预备役 {n}", phGotT: "领兵 {n}",
         phPickHintT: "仅列出未编入其它部队 / 武将编队的驻城武将；本部队上限 {n}。",
@@ -13451,7 +13473,7 @@ var BOTS = [
         phLvCapT: "等级带兵", phRegT: "实际编兵", phEliteT: "实际特种兵",
         eliteCoachT: "主教练", eliteCoachHintT: "主教练 统+武 越高，每名特种兵消耗普通兵越少（统武和 150 起每 10 点 −1，最低 6）", eliteCostCurT: "当前消耗 {n} 普通兵/名",
         eliteTrain5T: "训练 +5", eliteLegendT: "极强", eliteConvIdleT: "暂无训练进度",
-        eliteMixT: "混编规则：点将台部队可常规兵与特种兵混装——统领特种兵营的武将编入部队后，其营内特种兵计入部队兵力与 10 万上限。",
+        eliteMixT: "混编规则：出战编队可常规兵与特种兵混装——统领特种兵营的武将编入编队后，其营内特种兵计入编队兵力与上限。",
         eliteResT: "{n} · 特种兵",
         phCapLineT: "带兵 {c} = min（能力 {a} · 爵位 {b}）",
         phCapShortT: "带兵 {a} · 能力 {b}",
@@ -13474,7 +13496,7 @@ var BOTS = [
         phLvCapT: "Level cap", phRegT: "Regulars", phEliteT: "Elites",
         eliteCoachT: "Head Coach", eliteCoachHintT: "The higher the coach's Command+Might, the fewer regulars each elite costs (-1 per 10 pts above 150, min 6)", eliteCostCurT: "Cost {n} regulars per elite",
         eliteTrain5T: "Train +5", eliteLegendT: "Legendary", eliteConvIdleT: "No training in progress",
-        eliteMixT: "Mixed units: Command Platform units can mix regulars and elites — elites of corps led by assigned generals count into the unit's troops and its 100k cap.",
+        eliteMixT: "Mixed units: Battle teams can mix regulars and elites — elites of corps led by assigned generals count into the team's troops and cap.",
         eliteResT: "{n} · elites",
         phCapLineT: "Troops {c} = min(ability {a}, rank {b})",
         phCapShortT: "Troops {a} · ability {b}",
@@ -13497,7 +13519,7 @@ var BOTS = [
         phLvCapT: "等級帯兵", phRegT: "実通常兵", phEliteT: "実特殊兵",
         eliteCoachT: "主教練", eliteCoachHintT: "主教練の統+武が高いほど、特殊兵1名の消費通常兵が減る（統武和150超で10点ごとに−1、最低6）", eliteCostCurT: "現在の消費 {n} 通常兵/名",
         eliteTrain5T: "訓練 +5", eliteLegendT: "極強", eliteConvIdleT: "訓練なし",
-        eliteMixT: "混成規則：点将台の部隊は通常兵と特殊兵を混編できます。特殊兵営の督将を部隊に編入すると、その特殊兵は部隊兵力と10万上限に算入されます。",
+        eliteMixT: "混成規則：出戦編隊は通常兵と特殊兵を混編できます。特殊兵営の督将を編隊に編入すると、その特殊兵は編隊兵力と上限に算入されます。",
         eliteResT: "{n} · 特殊兵",
         phCapLineT: "帯兵 {c} = min（能力 {a}・爵位 {b}）",
         phCapShortT: "帯兵 {a}・能力 {b}",
@@ -15372,7 +15394,7 @@ var BOTS = [
     var teams = ensureCity(u).teams || [];
     var teamsHTML = teams.map(function (t, ti) {
       var rr = teamReady(u, ti), on = pick === ti;
-      var mem = TEAM_POS.map(function (p) {
+      var mem = teamPosList(t).map(function (p) {
         var id = t.slots[p.k]; if (!id) return "";
         var cc = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cc) return "";
         var gg = gById(cc.gid) || {};
@@ -15382,7 +15404,7 @@ var BOTS = [
       var why = rr.ok ? "" : (rr.lack > 0 ? gt("mobLackN", { n: rr.lack }) : gt("mobLackCenter"));
       return '<button class="sg-teamrow' + (on ? " on" : "") + (rr.ok ? "" : " dis") + '" data-bat="mobteam" data-i="' + idx + '" data-t="' + ti + '"' + (rr.ok ? "" : " disabled") + ">" +
         '<span class="no">' + (ti + 1) + "</span>" +
-        '<span class="tx"><b>' + esc(t.nm || gt("mobTeamRow", { n: ti + 1 })) + " · " + rr.n + "/" + TEAM_POS.length + ' <small style="color:#ffd76a">⚡' + fmt(teamPowerOf(u, ti)) + "</small></b>" +
+        '<span class="tx"><b>' + esc(t.nm || gt("mobTeamRow", { n: ti + 1 })) + " · " + rr.n + "/" + teamSizeOf(t) + ' <small style="color:#ffd76a">⚡' + fmt(teamPowerOf(u, ti)) + "</small></b>" +
         (on ? ' <small style="color:#8ed6a5">✓ ' + gt("mobTeamOn") + "</small>" : "") +
         (why ? ' <small style="color:#e07f7f">' + why + "</small>" : "") +
         '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">' + (mem || '<span class="sg-note" style="font-size:10px;margin:0">—</span>') + "</div></span></button>";
@@ -17296,28 +17318,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-idle-av svg,.sg-idle-av img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}" +
       "@media(max-width:640px){.sg-slots{grid-template-columns:repeat(3,1fr)}}</style>";
   }
-  /* ================= V83：点将台（驻城武将编成部队，单部队 10 万上限） =================
-     数据：city.armies = [{ nm, mem:[cardId...], f }]
-     规则：① 只能编入本城驻城武将；② 单部队最多 armySlot 名（默认 5）；
-           ③ 部队带兵上限 = min(armyCap, Σ成员带兵上限)，默认 10 万；
-           ④ 同一武将不可同时在点将台与「武将编队」出战。 */
-  function armyCapMax() { return Math.max(10000, Math.round(+MIL.armyCap || 100000)); }
-  function armySlotMax() { return Math.max(1, Math.min(10, Math.round(+MIL.armySlot || 5))); }
-  function armyNumMax() { return Math.max(1, Math.min(10, Math.round(+MIL.armyMax || 5))); }
-  function armyNameOf(a, ai) {
-    if (a && a.nm) return a.nm;
-    var l = lang();
-    return l === "en" ? "Unit " + (ai + 1) : l === "ja" ? "第" + (ai + 1) + "部隊" : "第" + (ai + 1) + "部队";
-  }
-  function armyCards(u, ai) {
-    var c = ensureCity(u), a = (c.armies || [])[ai];
-    if (!a) return [];
-    var has = {};
-    (u.cards || []).forEach(function (x) { has[x.id] = x; });
-    var out = [];
-    (a.mem || []).forEach(function (id) { if (has[id]) out.push(has[id]); });
-    return out;
-  }
+  /* ================= V100：点将台（armies 部队编成）已删除 =================
+     旧档 armies 数据在 ensureCity 中溶解（士兵退回预备役）；以下仅保留
+     cardInTeam / cardInArmy（互斥校验，armies 恒为空后 cardInArmy 恒 false）与 cardBackPool。 */
   function cardInTeam(u, cid) {
     var c = ensureCity(u), hit = false;
     (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) hit = true; }); });
@@ -17331,87 +17334,6 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     });
     return hit;
   }
-  /* 部队口径（V84 混编）：常规兵 ≤ Σ成员爵位上限；统领特种兵营的成员把营内特种兵带入部队，
-     特种兵计入部队容量（与出战 troopMax += 特种兵 同口径），全员合计 ≤ 10 万；
-     power 中特种兵按 30 倍权重计（其攻击为普通兵 100 倍）。 */
-  function armyStat(u, ai) {
-    var c = ensureCity(u), list = armyCards(u, ai), max = armyCapMax();
-    var capSum = 0, eAvail = 0;
-    list.forEach(function (cd) {
-      var g = gById(cd.gid) || {};
-      capSum += troopCapEff(cd, g, c);
-      eAvail += cardEliteN(u, cd.id, c);
-    });
-    var cap = Math.min(max, capSum + eAvail);
-    var troop = 0, elite = 0, power = 0, fullN = 0, leftReg = Math.min(max, capSum), left = max;
-    /* V73：战力拆分——普通兵战力 / 特种兵战力（特种单兵按 E68 档位战力换算） */
-    var regPow = 0, elPow = 0;
-    list.forEach(function (cd) {
-      var g = gById(cd.gid) || {};
-      var capM = troopCapEff(cd, g, c), cur = (cd.sold == null ? capM : Math.min(cd.sold, capM));
-      var take = Math.min(cur, Math.max(0, leftReg));
-      leftReg -= take; troop += take; left -= take;
-      if (cur >= capM) fullN++;
-      var kp = (TIERS[cardTier(cd)] || {}).kp || 1;
-      var fM = (1 + (g.st || 0) / 100) * kp;
-      power += Math.round(take * fM);
-      regPow += Math.round(take * fM);
-      var eN = Math.min(cardEliteN(u, cd.id, c), Math.max(0, left));
-      left -= eN; elite += eN; troop += eN;
-      power += Math.round(eN * 30 * (1 + (g.st || 0) / 100));
-      elPow += Math.round(eN * elitePowOfCard(u, cd, c) * fM);
-    });
-    return { n: list.length, cap: cap, capSum: capSum, troop: troop, reg: troop - elite, elite: elite, power: power,
-      regPow: regPow, elPow: elPow,
-      pct: cap ? Math.min(100, Math.round(troop / cap * 100)) : 0,
-      over: capSum >= max, full: fullN, max: max, slot: armySlotMax() };
-  }
-  /* V73：该武将随队特种兵的单兵战力倍率（E68 档位 pow，默认 100） */
-  function elitePowOfCard(u, cd, cObj) {
-    var at = unitAttachElite(u, cd, cObj);
-    return at.pow || 100;
-  }
-  /* 一键编成：把「驻城且未出战」的武将按带兵能力从高到低填进部队 */
-  function armyInitCity(u, c) {
-    if (!c) return 0;
-    if (c.armies && c.armies.length) return 0;
-    c.armies = [];
-    var used = {};
-    (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) used[t.slots[p.k]] = 1; }); });
-    var pool = cityRoster(u).filter(function (cd) { return !used[cd.id]; })
-      .sort(function (a, b) { return troopCapEff(b, gById(b.gid), c) - troopCapEff(a, gById(a.gid), c); });
-    var max = armyCapMax(), slot = armySlotMax(), made = 0;
-    for (var ai = 0; ai < armyNumMax() && pool.length; ai++) {
-      var mem = [], capSum = 0, scan = 0, total = pool.length;
-      while (pool.length && mem.length < slot && capSum < max && scan < total) {
-        scan++;
-        var cd = pool.shift(), cp = troopCapEff(cd, gById(cd.gid), c);
-        if (capSum + cp > max) { pool.push(cd); continue; }
-        mem.push(cd.id); capSum += cp;
-      }
-      if (!mem.length) break;
-      c.armies.push({ nm: "", mem: mem, f: "yulin" });
-      made++;
-    }
-    c.armiesAt = 83;
-    /* V85：初建部队成员从本城预备役划拨兵员 */
-    (c.armies || []).forEach(function (a, ai) { (a.mem || []).forEach(function (id) { try { armyAllocSold(u, ai, id); } catch (e85) {} }); });
-    return made;
-  }
-  /* V85：兵随编队走——解散重编前，原成员的常规兵全额退回本城预备役 */
-  function armyAutoAll(u) {
-    var c = ensureCity(u);
-    (c.armies || []).forEach(function (a) {
-      (a.mem || []).forEach(function (id) {
-        var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0];
-        if (cd && cd.sold != null && cd.sold > 0) c.pool = Math.max(0, (c.pool || 0)) + cd.sold;
-        if (cd) cd.sold = 0;
-      });
-    });
-    c.armies = [];
-    c.armiesAt = 83;
-    return armyInitCity(u, c);
-  }
   /* V85：把武将卡上的常规兵全额退回指定城预备役（编队撤下用），返回退兵数 */
   function cardBackPool(u, c, cid) {
     var cd = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
@@ -17420,177 +17342,6 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     if (back > 0 && c) c.pool = Math.max(0, (c.pool || 0)) + back;
     cd.sold = 0;
     return back;
-  }
-  /* V85：编入部队时自动从本城预备役划拨兵员至爵位上限（返回实际划拨数） */
-  function armyAllocSold(u, ai, cid) {
-    var c = ensureCity(u), a = (c.armies || [])[ai]; if (!a || (a.mem || []).indexOf(cid) < 0) return 0;
-    var card = (u.cards || []).filter(function (x) { return x.id === cid; })[0]; if (!card) return 0;
-    var g = gById(card.gid); if (!g) return 0;
-    var cap = troopCapEff(card, g, c);
-    var cur = card.sold == null ? 0 : Math.min(card.sold, cap);
-    card.sold = cur;   /* 显式化：不再走「null=满编」的旧语义 */
-    var take = Math.min(Math.max(0, cap - cur), Math.max(0, c.pool || 0));
-    if (take > 0) { c.pool -= take; card.sold = cur + take; }
-    return take;
-  }
-  function armyAdd(u, ai, cid, repIdx) {
-    var c = ensureCity(u), a = (c.armies || [])[ai];
-    if (!a) return { ok: false, err: "army" };
-    var rep = (repIdx != null && repIdx >= 0 && repIdx < (a.mem || []).length) ? repIdx : -1;
-    if (rep < 0 && (a.mem || []).indexOf(cid) >= 0) return { ok: false, err: "in" };
-    if (rep < 0 && (a.mem || []).length >= armySlotMax()) return { ok: false, err: "slot" };
-    var card = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
-    if (!card) return { ok: false, err: "card" };
-    if ((c.roster || []).indexOf(cid) < 0) return { ok: false, err: "roster" };
-    if (cardInTeam(u, cid)) return { ok: false, err: "team" };
-    if (cardInArmy(u, cid, ai)) return { ok: false, err: "used" };
-    var st = armyStat(u, ai);
-    if (st.cap >= armyCapMax()) return { ok: false, err: "cap" };
-    /* V97：槽位替换——被换下武将的常规兵退回本城预备役（同武将编队换将口径） */
-    if (rep >= 0) cardBackPool(u, c, a.mem[rep]);
-    if (rep >= 0) a.mem[rep] = cid; else a.mem.push(cid);
-    /* V85：入编即领兵——从本城预备役划拨至爵位上限 */
-    var got85 = armyAllocSold(u, ai, cid);
-    var cap85 = troopCapEff(card, gById(card.gid), c);
-    return { ok: true, cap: cap85, got: got85, rep: rep >= 0 };
-  }
-  /* 集结补兵：只用本城预备役，按成员顺序补到各自上限或部队 10 万上限 */
-  function armyFill(u, ai) {
-    var c = ensureCity(u), st = armyStat(u, ai);
-    var left = Math.max(0, armyCapMax() - st.troop);
-    if (!left || !st.n) return { ok: false, err: "cap" };
-    var got = 0;
-    armyCards(u, ai).forEach(function (cd) {
-      if (left <= 0) return;
-      var g = gById(cd.gid); if (!g) return;
-      var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
-      var need = Math.min(cap - cur, left);
-      if (need <= 0) return;
-      var from = Math.min(need, c.pool || 0);
-      if (from <= 0) return;
-      c.pool -= from; cd.sold = cur + from;
-      got += from; left -= from;
-    });
-    if (!got) return { ok: false, err: "pool" };
-    return { ok: true, n: got };
-  }
-  function armyPickOpen(ai, repIdx) {
-    var u = me(); if (!u) return;
-    var c = ensureCity(u), a = (c.armies || [])[ai];
-    if (!a) return;
-    var rep = (repIdx != null && repIdx >= 0 && repIdx < (a.mem || []).length) ? repIdx : -1;
-    if (rep < 0 && (a.mem || []).length >= armySlotMax()) return toast(gt("phSlotFullT", { n: armySlotMax() }), "err");
-    var cand = cityRoster(u).filter(function (cd) {
-      return (a.mem || []).indexOf(cd.id) < 0 && !cardInArmy(u, cd.id, ai) && !cardInTeam(u, cd.id);
-    }).sort(function (x, y) { return troopCapEff(y, gById(y.gid), c) - troopCapEff(x, gById(x.gid), c); });
-    var rows = cand.map(function (cd) {
-      var g = gById(cd.gid) || {}, ti = cardTier(cd), cap = troopCapEff(cd, g, c);
-      var cur = (cd.sold == null ? cap : Math.min(cd.sold, cap)), eN = cardEliteN(u, cd.id, c);
-      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[ti].c + ';color:#10131a">' + esc(TIERS[ti].grade) + "</span>" +
-        "<span><b>" + esc(g.name || "?") + "</b> <small>Lv." + cardLv(cd) +
-        " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(cd)) +
-        " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
-        " · " + gt("phRegT") + " " + fmt(cur) + "/" + fmt(cap) +
-        " · " + gt("phEliteT") + " " + fmt(eN) + "</small></span><span class=\"sp\"></span>" +
-        '<button class="sgbtn sm primary" data-bat="army-add-go" data-t="' + ai + '" data-ix="' + rep + '" data-id="' + cd.id + '">' + (rep >= 0 ? gt("phRepT") : gt("phAddT")) + "</button></div>";
-    }).join("");
-    var st = armyStat(u, ai);
-    var headTxt = rep >= 0 ? (rep === 0 ? "主将" : "副将·" + mi2roleTxt(rep)) : gt("phAddT");
-    modal("<h3>🏯 " + headTxt + " · " + esc(armyNameOf(a, ai)) + "</h3>" +
-      '<div class="sg-note">' + (rep >= 0 ? gt("phRepHintT") + "　·　" : "") + gt("phPickHintT", { n: troopTxt(armyCapMax()) }) + "　·　" +
-      gt("phArmyCapT") + " " + troopTxt(st.cap) + " / " + troopTxt(armyCapMax()) + "</div>" +
-      (rows || '<div class="sg-note">' + gt("phNoneT") + "</div>") +
-      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>", "wide");
-  }
-  function mi2roleTxt(k) { return ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][k - 1] || (k + 1); }
-  function armySlotRole(k) { return k === 0 ? "主将" : "副将·" + mi2roleTxt(k); }
-  function pointHallHTML(u) {
-    var c = ensureCity(u);
-    if (!c.armies) c.armies = [];
-    /* V94：进入点将台前校正单将带兵硬上限（超编退回本城预备役） */
-    try { if (trimOverTroops(u) > 0) save(); } catch (e94p) {}
-    /* 首次进入：把现有驻城（未出战）武将自动编成部队，之后以玩家编成为准 */
-    if (c.armiesAt !== 83) {
-      try { armyInitCity(u, c); } catch (e) {}
-      c.armiesAt = 83;
-      try { save(); } catch (e) {}
-    }
-    var list = c.armies || [], maxC = armyCapMax(), slotN = armySlotMax();
-    var units = list.map(function (a, ai) {
-      var st = armyStat(u, ai), members = armyCards(u, ai);
-      var memHTML = members.map(function (cd) {
-        var g = gById(cd.gid) || {}, ti = cardTier(cd);
-        var cap = troopCapEff(cd, g, c), cur = (cd.sold == null ? cap : Math.min(cd.sold, cap));
-        var eN = cardEliteN(u, cd.id, c);
-        var tip = (g.name || "?") + " Lv." + cardLv(cd) +
-          " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(cd)) +
-          " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
-          " · " + gt("phRegT") + " " + fmt(cur) + "/" + fmt(cap) +
-          " · " + gt("phEliteT") + " " + fmt(eN);
-      /* V73：成员双段小条（兵力/战斗值） */
-      var cbM = unitCombatOf(u, cd, c);
-      return '<div class="sg-armymem" title="' + esc(tip + " · " + gt("v73TroopT", { t: troopTxt(cbM.reg + cbM.el), e: troopTxt(cbM.el), r: troopTxt(cbM.reg), c: troopTxt(cbM.regCap + cbM.el) })) + '">' +
-          '<button class="sg-armymem-av" data-sgact="grow-open" data-id="' + cd.id + '" style="border-color:' + TIERS[ti].c + '">' + styledArtSVG(g, null, true) + "</button>" +
-          "<b>" + esc(g.name || "?") + "</b>" +
-          '<span style="color:' + TIERS[ti].c + '">' + esc(TIERS[ti].grade) + " · Lv." + cardLv(cd) + "</span>" +
-          '<span style="display:block;width:100%">' + v73BarsHTML(cbM, { h: 7, hp: 6, emSz: 7.5 }).both + "</span>" +
-          '<button class="sg-armymem-x" data-bat="army-del" data-t="' + ai + '" data-id="' + cd.id + '" title="' + esc(gt("phDelOkT")) + '">×</button></div>';
-      }).join("");
-      var empt = "";
-      for (var k = members.length; k < slotN; k++) empt += '<button class="sg-armymem add" data-bat="army-add" data-t="' + ai + '"><span style="font-size:17px;line-height:1">＋</span><b>' + gt("phAddT") + "</b></button>";
-      /* V73：部队级双段条——兵力（橙=特种/绿=普通）+ 战斗值（hover 显示数值） */
-      var fullBar = st.cap > 0 && st.troop >= st.cap;   /* V88 修复：原误声明在成员 map 回调内，外层引用导致 ReferenceError（点将台渲染中断） */
-      var ePct = st.cap ? Math.max(0, Math.min(100, st.elite / st.cap * 100)) : 0;
-      var rPct = Math.max(0, 100 - ePct);
-      var tipA73 = gt("v73TroopT", { t: troopTxt(st.troop), e: troopTxt(st.elite), r: troopTxt(st.reg), c: troopTxt(st.cap) }) +
-        (st.over ? " · " + gt("phOverT") : "");
-      var pPct = (st.regPow + st.elPow) ? Math.max(0, Math.min(100, st.elPow / (st.regPow + st.elPow) * 100)) : 0;
-      var pPct2 = Math.max(0, 100 - pPct);
-      var tipP73 = gt("v73PowT", { p: fmt(st.regPow + st.elPow), a: fmt(st.regPow), b: fmt(st.elPow), m: "100~" + fmt(E68.powTop || 1000) });
-      return '<div class="sg-army">' +
-        '<div class="sg-army-hd"><b>⚔ ' + esc(armyNameOf(a, ai)) + "</b>" +
-        "<small>" + gt("phMemT", { a: members.length, b: slotN }) + "</small>" +
-        '<small class="pw" title="' + esc(gt("phPowerT", { n: fmt(st.power) })) + '">⚡' + fmt(st.power) + "</small>" +
-        '<button class="sgbtn sm ghost" data-bat="army-name" data-t="' + ai + '" title="' + esc(gt("phNameT")) + '">✏</button>' +
-        '<button class="sgbtn sm ghost" data-bat="army-clear" data-t="' + ai + '" title="' + esc(gt("phClearT")) + '">✕</button></div>' +
-        v73SegBar(ePct, rPct, troopTxt(st.troop) + (fullBar ? " ✅" : "") + " / " + troopTxt(st.cap), tipA73, 9) +
-        v73SegBar(pPct, pPct2, "⚡" + fmt(st.regPow + st.elPow), tipP73, 8) +
-        '<small style="display:block;text-align:center;font-size:9px;margin:-2px 0 3px;color:var(--ink-3)">' +
-        '<span style="color:#f0a44a">🟠 ' + gt("phEliteT") + " " + troopTxt(st.elite) + "</span> · " +
-        '<span style="color:#7fd08a">🟢 ' + gt("phRegT") + " " + troopTxt(st.reg) + "</span></small>" +
-        '<div class="sg-army-mem">' + memHTML + empt + "</div>" +
-        '<div class="sg-army-ft"><span>' + gt("phArmyCapT") + ' <b style="color:#e8c988">' + troopTxt(maxC) + "</b></span><span class=\"sp\"></span>" +
-        '<button class="sgbtn sm' + (fullBar ? " ghost" : "") + '" data-bat="army-fill" data-t="' + ai + '"' + (fullBar ? " disabled" : "") + ">🩹 " + gt("phFillT") + "</button></div></div>";
-    }).join("");
-    return '<div class="sg-panel" style="margin-top:12px"><div class="sg-panel-hd"><h3><i>·</i>🏯 ' + gt("phT") +
-      ' <small style="font-weight:400;color:var(--ink-3)">' + gt("phSubT") + "</small></h3><span class=\"sp\"></span>" +
-      '<small style="color:var(--ink-3)">' + gt("phCntT", { a: list.length, b: armyNumMax() }) + "</small>" +
-      '<button class="sgbtn sm ghost" data-bat="army-auto" style="margin-left:8px">⚡ ' + gt("phAutoT") + "</button>" +
-      '<button class="sgbtn sm" data-bat="army-new" style="margin-left:6px">＋ ' + gt("phNewT") + "</button></div>" +
-      (list.length ? '<div class="sg-phgrid">' + units + "</div>" : '<div class="sg-note" style="padding:10px 0">' + gt("phEmptyT") + "</div>") +
-      '<div class="sg-note" style="margin-top:7px;font-size:11px;line-height:1.7">' + gt("phRuleT", { n: troopTxt(maxC), s: slotN }) + "</div>" +
-      "<style>" +
-      ".sg-phgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}" +
-      "@media(max-width:900px){.sg-phgrid{grid-template-columns:1fr}}" +
-      ".sg-army{border:1px solid rgba(201,164,92,.35);border-radius:11px;background:linear-gradient(180deg,rgba(201,164,92,.07),rgba(0,0,0,.18));padding:8px 10px;min-width:0}" +
-      ".sg-army-hd{display:flex;align-items:center;gap:6px;font-size:12px;color:#e8c988}" +
-      ".sg-army-hd small{color:var(--ink-3);font-size:10px}" +
-      ".sg-army-hd .pw{margin-left:auto;color:#ffd76a;font-weight:700}" +
-      ".sg-army-bar{position:relative;height:9px;border-radius:5px;background:rgba(0,0,0,.45);margin:6px 0;overflow:hidden}" +
-      ".sg-army-bar i{display:block;height:100%;background:linear-gradient(90deg,#a8842f,#e8c988);transition:width .3s}" +
-      ".sg-army-bar.full i{background:linear-gradient(90deg,#4fae7c,#8fd6a2)}" +
-      ".sg-army-bar em{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:8.5px;color:#f2f6fa;text-shadow:0 1px 2px rgba(0,0,0,.95)}" +
-      ".sg-army-mem{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}" +
-      ".sg-armymem{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);padding:4px 2px 5px;font-size:9px;color:var(--ink-3);min-width:0}" +
-      ".sg-armymem.add{border-style:dashed;cursor:pointer;justify-content:center;min-height:76px;color:#8b93a3}" +
-      ".sg-armymem-av{width:36px;height:36px;border-radius:7px;overflow:hidden;border:1.5px solid #c9a45c;background:#0d1117;padding:0;cursor:pointer;display:block}" +
-      ".sg-armymem-av img,.sg-armymem-av svg,.sg-armymem-av .sg-artwrap{width:100%;height:100%;object-fit:cover;object-position:top;display:block}" +
-      ".sg-armymem b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:10px}" +
-      ".sg-armymem i{font-style:normal;font-size:8.5px;color:#e8c988}" +
-      ".sg-armymem-x{position:absolute;top:1px;right:2px;border:0;background:rgba(0,0,0,.55);color:#e07f7f;border-radius:50%;width:14px;height:14px;line-height:1;font-size:10px;cursor:pointer;padding:0}" +
-      ".sg-army-ft{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10.5px;color:var(--ink-3)}" +
-      ".sg-army-ft .sp{flex:1}" +
-      "</style></div>";
   }
 
   /* ================= V91：点将台 · 武将编队 一体化（参考样例卡式布局） =================
@@ -17627,7 +17378,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-gframe">' +
         '<span class="sg-glv">' + cardLv(cd) + "</span>" +
         (skN > 0 ? '<span class="sg-gawake">觉醒</span>' : "") +
-        '<button class="sg-gav" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name || "?") + ' 详情">' + styledArtSVG(g, null, true) + "</button>" +
+        /* V100：头像不再跳转武将详情——点击落在卡片上走「更换选将」，保留在编队页 */
+        '<span class="sg-gav" title="' + esc(g.name || "?") + '">' + styledArtSVG(g, null, true) + "</span>" +
+        '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
         '<div class="sg-gnm"><i class="sg-gfac" style="background:' + facColor(fac) + '">' + esc(String(fac).slice(0, 1)) + "</i>" +
         "<b>" + esc(g.name || "?") + "</b><i>Lv." + cardLv(cd) + "</i></div>" +
       "</div>" +
@@ -17635,6 +17388,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-gbar">' + v73SegBar(capT ? Math.max(0, Math.min(100, cb.el / capT * 100)) : 0, capT ? Math.max(0, 100 - cb.el / capT * 100) : 0,
         troopTxt(tot) + " / " + troopTxt(capT), tip, 8) + "</div>" +
       '<div class="sg-gskills">' + skRows + "</div>" +
+      /* V100：编队操作入口（补兵/配兵/兵种/吞噬）——点击卡片本体只更换选将，不再打开详情 */
+      (ctx.ti != null && ctx.clickPos != null ? '<button class="sg-gops" data-bat="slot-ops" data-t="' + ctx.ti + '" data-p="' + ctx.clickPos + '" title="' + esc(gt("sqOpsT")) + '">⚙</button>' : "") +
       (ctx.delBat ? '<button class="sg-gx" data-bat="' + ctx.delBat + '" data-t="' + ctx.ti + '" data-id="' + cd.id + '" title="' + esc(gt("phDelOkT")) + '">×</button>' : "") +
       "</div>";
   }
@@ -17648,24 +17403,18 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   function hallUnifiedHTML(u) {
     var c = ensureCity(u);
     if (rosterClean(u, c)) { try { save(); } catch (e) {} }
-    /* V94：进入点将台前校正单将带兵硬上限（超编退回本城预备役） */
+    /* V94：进入编队前校正单将带兵硬上限（超编退回本城预备役） */
     try { if (trimOverTroops(u) > 0) save(); } catch (e94h) {}
-    if (!c.armies) c.armies = [];
-    if (c.armiesAt !== 83) {
-      try { armyInitCity(u, c); } catch (e) {}
-      c.armiesAt = 83;
-      try { save(); } catch (e) {}
-    }
     var roster = cityRoster(u);
-    var slotN = armySlotMax(), maxC = armyCapMax();
     /* ---------- ① 出战编队（teams） ---------- */
     var trows = (c.teams || []).map(function (t, ti) {
       /* V96：整队核算（阵型相关）——进度条 + 总人数/总战斗值/防御 */
       var ts96 = teamCombatStat(u, ti), pw = ts96 ? ts96.powSum : teamPowerOf(u, ti);
       var tn = t.nm ? esc(t.nm) : (T("teamT") + " " + (ti + 1));
-      /* V97：出战编队 3 将（主将·中军 + 副将·左军/右军），卡片列与 V96 整队核算不变 */
+      /* V100：编队规模 3/5/7（默认 3）——槽位列与网格列数随规模变化 */
       var shortN = 0;
-      var cols = TEAM_POS.map(function (p) {
+      var posL = teamPosList(t), sz = posL.length;
+      var cols = posL.map(function (p) {
         var cid = t.slots[p.k], card = cid ? (u.cards || []).filter(function (x) { return x.id === cid; })[0] : null;
         if (!card) {
           return genSlotAddHTML({ bat: "slot", ti: ti, pos: p.k, role: posName(p), label: T("slotEmpty"),
@@ -17687,55 +17436,24 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
           gt("teamStatT", { t: troopTxt(ts96.troop), p: fmt(ts96.powSum), d: fmt(ts96.def) }) + "</small>";
       })();
       return '<div class="sg-team2"><div class="sg-team-hd"><b class="sg-team-nm" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚔ ' + tn + "</b>" +
-        '<small class="sg-team-pw" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚡' + fmt(pw) + "</small><small>" + teamSize(u, ti) + "/" + TEAM_POS.length + "</small>" +
+        '<small class="sg-team-pw" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚡' + fmt(pw) + "</small><small>" + teamSize(u, ti) + "/" + sz + "</small>" +
         '<button class="sgbtn sm ghost" data-bat="team-name" data-t="' + ti + '" title="' + esc(gt("teamNmT")) + '">✏</button>' +
         '<button class="sgbtn sm ghost" data-bat="rec-all" data-t="' + ti + '" title="' + esc(gt("recAllT")) + '"' + (shortN ? "" : " disabled") + ">🩹 " + gt("recAllT") + "</button></div>" +
         '<div class="sg-formrow">' + FORMS.map(function (f) {
           var on = (t.f || "yulin") === f.k;
           return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="team-form" data-t="' + ti + '" data-k="' + f.k + '" title="' + esc(formDesc(f) + " · " + formTag(f)) + '">' + formName(f) + "</button>";
-        }).join("") + "</div>" +
+        }).join("") +
+        /* V100：编队规模切换（3/5/7 人，默认 3）——缩小规模时多余武将自动退编（兵回预备役） */
+        '<span class="sg-sizerow">' + TEAM_SIZES.map(function (sn) {
+          return '<button class="sgchip' + (sz === sn ? " on" : "") + '" data-bat="team-size" data-t="' + ti + '" data-k="' + sn + '" title="' + esc(gt("teamSizeT", { n: sn })) + '">' + sn + "人</button>";
+        }).join("") + "</span></div>" +
         tsBar96 +
-        /* V99：3 将横向一排（主将/副将1/副将2 等宽三列）；sg-slots 无全局 grid 样式，改用 sg-gwrap 并内联三列 */
-        '<div class="sg-gwrap" style="grid-template-columns:repeat(3,1fr)">' + cols + "</div></div>";
+        /* V100：横向一排（主将/副将1~N 等宽，列数随规模 3/5/7） */
+        '<div class="sg-gwrap" style="grid-template-columns:repeat(' + sz + ',1fr)">' + cols + "</div></div>";
     }).join("");
-    /* ---------- ② 点将台部队（armies） ---------- */
-    var arows = (c.armies || []).map(function (a, ai) {
-      var st = armyStat(u, ai), members = armyCards(u, ai);
-      /* V97：槽位角色——主将 + 副将·一~四（同武将编队的固定槽位配置方式）；点击武将卡可更换 */
-      var cols = members.map(function (cd, mi) {
-        var g = gById(cd.gid) || {};
-        return genCardColHTML(u, cd, g, armySlotRole(mi), mi === 0, { c: c, ti: ai, delBat: "army-del", clickBat: "army-rep", clickPos: mi });
-      }).join("");
-      var empt = "";
-      for (var k = members.length; k < slotN; k++) {
-        empt += genSlotAddHTML({ bat: "army-add", ti: ai, role: armySlotRole(k), label: T("slotEmpty"), sub: gt("phAddT"), tip: gt("phPickHintT", { n: troopTxt(maxC) }) });
-      }
-      var fullBar = st.cap > 0 && st.troop >= st.cap;
-      var ePct = st.cap ? Math.max(0, Math.min(100, st.elite / st.cap * 100)) : 0;
-      var rPct = Math.max(0, 100 - ePct);
-      var tipA73 = gt("v73TroopT", { t: troopTxt(st.troop), e: troopTxt(st.elite), r: troopTxt(st.reg), c: troopTxt(st.cap) }) +
-        (st.over ? " · " + gt("phOverT") : "");
-      var pPct = (st.regPow + st.elPow) ? Math.max(0, Math.min(100, st.elPow / (st.regPow + st.elPow) * 100)) : 0;
-      var pPct2 = Math.max(0, 100 - pPct);
-      var tipP73 = gt("v73PowT", { p: fmt(st.regPow + st.elPow), a: fmt(st.regPow), b: fmt(st.elPow), m: "100~" + fmt(E68.powTop || 1000) });
-      return '<div class="sg-team2"><div class="sg-team-hd"><b>🏯 ' + esc(armyNameOf(a, ai)) + "</b>" +
-        "<small>" + gt("phMemT", { a: members.length, b: slotN }) + "</small>" +
-        '<small class="pw" title="' + esc(gt("phPowerT", { n: fmt(st.power) })) + '">⚡' + fmt(st.power) + "</small>" +
-        '<button class="sgbtn sm ghost" data-bat="army-name" data-t="' + ai + '" title="' + esc(gt("phNameT")) + '">✏</button>' +
-        '<button class="sgbtn sm ghost" data-bat="army-clear" data-t="' + ai + '" title="' + esc(gt("phClearT")) + '">✕</button></div>' +
-        v73SegBar(ePct, rPct, troopTxt(st.troop) + (fullBar ? " ✅" : "") + " / " + troopTxt(st.cap), tipA73, 9) +
-        v73SegBar(pPct, pPct2, "⚡" + fmt(st.regPow + st.elPow), tipP73, 8) +
-        '<small style="display:block;text-align:center;font-size:9px;margin:-2px 0 3px;color:var(--ink-3)">' +
-        '<span style="color:#f0a44a">🟠 ' + gt("phEliteT") + " " + troopTxt(st.elite) + "</span> · " +
-        '<span style="color:#7fd08a">🟢 ' + gt("phRegT") + " " + troopTxt(st.reg) + "</span></small>" +
-        '<div class="sg-gwrap">' + cols + empt + "</div>" +
-        '<div class="sg-army-ft"><span>' + gt("phArmyCapT") + ' <b style="color:#e8c988">' + troopTxt(maxC) + "</b></span><span class=\"sp\"></span>" +
-        '<button class="sgbtn sm' + (fullBar ? " ghost" : "") + '" data-bat="army-fill" data-t="' + ai + '"' + (fullBar ? " disabled" : "") + ">🩹 " + gt("phFillT") + "</button></div></div>";
-    }).join("");
-    /* ---------- ③ 驻城武将头像墙 ---------- */
+    /* ---------- ② 驻城武将头像墙（V100：点将台已删除，仅出战编队占用） ---------- */
     var usedIds = {};
     (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) usedIds[t.slots[p.k]] = 1; }); });
-    (c.armies || []).forEach(function (a) { (a.mem || []).forEach(function (id) { usedIds[id] = 1; }); });
     var idle = roster.filter(function (card) { return !usedIds[card.id]; });
     var idleWall = idle.length
       ? '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🏰 ' + T("rosterT") + ' <small style="color:var(--ink-3);font-weight:400">' + gt("rosterIdle", { n: idle.length }) + "</small></h3></div>" +
@@ -17747,17 +17465,11 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         }).join("") + "</div>"
       : "";
     return '<div class="sg-panel" style="margin-top:12px">' +
-      '<div class="sg-panel-hd"><h3><i>·</i>🏯 ' + gt("phT") + " · " + T("teamT") +
+      '<div class="sg-panel-hd"><h3><i>·</i>⚔ ' + T("teamT") +
       ' <small style="font-weight:400;color:var(--ink-3)">' + gt("phSubT") + "</small></h3><span class=\"sp\"></span>" +
-      '<small style="color:var(--ink-3)">' + T("rosterT") + " " + roster.length + "/" + rosterCap() + " · " + gt("phCntT", { a: (c.armies || []).length, b: armyNumMax() }) + "</small>" +
-      '<button class="sgbtn sm ghost" data-bat="roster" style="margin-left:8px">' + T("addRoster") + "</button>" +
-      '<button class="sgbtn sm ghost" data-bat="army-auto" style="margin-left:6px">⚡ ' + gt("phAutoT") + "</button>" +
-      '<button class="sgbtn sm" data-bat="army-new" style="margin-left:6px">＋ ' + gt("phNewT") + "</button></div>" +
-      (trows ? '<div class="sg-panel-hd" style="margin-top:4px"><h3><i>·</i>⚔ ' + T("teamT") + "（出战编队）</h3><span class=\"sp\"></span>" +
-        '<small style="color:var(--ink-3)">' + (c.teams || []).length + " 队 · " + gt("phRuleT", { n: troopTxt(maxC), s: slotN }) + "</small></div>" + trows : "") +
-      (arows ? '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🏯 ' + gt("phT") + "（" + gt("phSubT") + "）</h3><span class=\"sp\"></span>" +
-        '<small style="color:var(--ink-3)">' + gt("phCntT", { a: (c.armies || []).length, b: armyNumMax() }) + "</small></div>" + arows : "") +
-      ((!(c.teams || []).length && !(c.armies || []).length) ? '<div class="sg-note" style="padding:10px 0">' + gt("phEmptyT") + "</div>" : "") +
+      '<small style="color:var(--ink-3)">' + T("rosterT") + " " + roster.length + "/" + rosterCap() + "</small>" +
+      '<button class="sgbtn sm ghost" data-bat="roster" style="margin-left:8px">' + T("addRoster") + "</button></div>" +
+      (trows ? trows : '<div class="sg-note" style="padding:10px 0">' + gt("phEmptyT") + "</div>") +
       idleWall +
       '<div class="sg-note" style="margin-top:7px;font-size:11px;line-height:1.7">' + gt("phSlotWayT") + "　·　" + gt("armProfT") + "：胜 +50 / 险胜 +20 / 负 +5（上限 999）　·　" + gt("eliteMixT") + "</div>" +
       "<style>" +
@@ -17779,6 +17491,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-gnm b{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:11px}" +
       ".sg-gnm i{font-style:normal;font-size:9px;color:#e8c988;margin-left:auto}" +
       ".sg-gfac{font-style:normal;min-width:14px;height:14px;border-radius:3px;color:#10131a;font-size:9px;font-weight:700;line-height:14px;flex:none;text-align:center;padding:0 1px}" +
+      ".sg-gdraft{position:absolute;left:0;right:0;top:36%;z-index:2;background:rgba(8,10,14,.74);color:#e8c988;font-size:9.5px;font-weight:700;text-align:center;padding:1px 0;letter-spacing:.03em;text-shadow:0 1px 2px rgba(0,0,0,.9)}" +
+      ".sg-sizerow{display:flex;gap:4px;margin-left:auto}.sg-sizerow .sgchip{font-size:10px;padding:2px 8px}" +
       ".sg-garm{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-1)}" +
       ".sg-garm b{color:#9ec9ff;font-weight:600;letter-spacing:.02em}" +
       ".sg-gskills{text-align:left;font-size:10px;border-top:1px dashed rgba(201,164,92,.25);padding-top:4px}" +
@@ -17788,6 +17502,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-gskd{font-size:9px;color:var(--ink-3);line-height:1.4;margin:0 0 3px;padding-left:15px}" +
       ".sg-gskd.sp{color:var(--ink-2)}" +
       ".sg-gx{position:absolute;top:3px;right:3px;z-index:5;border:0;background:rgba(0,0,0,.6);color:#e07f7f;border-radius:50%;width:16px;height:16px;line-height:1;font-size:11px;cursor:pointer;padding:0}" +
+      ".sg-gops{position:absolute;top:3px;right:3px;z-index:5;border:1px solid rgba(201,164,92,.5);background:rgba(8,10,14,.8);color:#e8c988;border-radius:50%;width:18px;height:18px;line-height:1;font-size:10px;cursor:pointer;padding:0}.sg-gops:hover{background:#c9a45c;color:#10131a}" +
       ".sg-army-ft{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10.5px;color:var(--ink-3)}.sg-army-ft .sp{flex:1}" +
       ".sg-idlewall{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin:6px 0 4px}" +
       ".sg-idlecell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.22);cursor:pointer;font-size:10px;transition:.15s;min-width:0}" +
@@ -17869,7 +17584,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var used = {}, inIds = {}, otherIds = {};
     (c.teams || []).forEach(function (tt) { TEAM_POS.forEach(function (pp) { if (tt.slots[pp.k]) used[tt.slots[pp.k]] = 1; }); });
     var cur = ((c.teams || [])[ti] || { slots: {} }).slots[pos];
-    var cards, bad = null, armyRep = -1;
+    var cards, bad = null;
     if (mode === "slot") {
       cards = cityRoster(u);
       if (!cards.length) return toast(T("noRoster"), "err");
@@ -17894,28 +17609,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       cards = (u.cards || []).filter(function (x) { return !inIds[x.id] && !otherIds[x.id]; });
       var rostG = {}; cityRoster(u).forEach(function (x) { rostG[x.gid] = 1; });
       bad = function (cd) { return rostG[cd.gid] ? T("dupName") : null; };
-    } else if (mode === "army") {
-      /* V99：点将台部队编成改走通用选将控件（与出战编队同款 pkOpen/pkRender/pickTable 表格选择）。
-         ti=部队下标；pos=被更换槽位下标（空串/undefined=新增）。候选口径与原 armyPickOpen 一致：
-         本城驻城 roster 内、未编入本部队、未编入其他部队、未在出战编队。 */
-      var aPk = (c.armies || [])[ti];
-      if (!aPk) return;
-      var repPk = (pos !== "" && pos != null && isFinite(+pos)) ? +pos : -1;
-      if (!(repPk >= 0 && repPk < (aPk.mem || []).length)) repPk = -1;
-      if (repPk < 0 && (aPk.mem || []).length >= armySlotMax()) return toast(gt("phSlotFullT", { n: armySlotMax() }), "err");
-      cards = cityRoster(u).filter(function (cd) {
-        return (aPk.mem || []).indexOf(cd.id) < 0 && !cardInArmy(u, cd.id, ti) && !cardInTeam(u, cd.id);
-      });
-      if (!cards.length) return toast(gt("phNoneT"), "err");
-      cur = repPk >= 0 ? aPk.mem[repPk] : null;
-      armyRep = repPk;
     } else cards = (u.cards || []).slice();
     if (!cards.length) return toast(T("pkEmpty"), "err");
     var sel = {};
     if (mode === "squad") (BATUI.squad || []).forEach(function (id2) { sel[id2] = 1; });
-    else if ((mode === "slot" || mode === "army") && cur) sel[cur] = 1;
+    else if (mode === "slot" && cur) sel[cur] = 1;
     BATUI.pk = { mode: mode, ti: ti || 0, pos: pos || "", sel: sel, cards: cards, bad: bad };
-    if (mode === "army") BATUI.pk.rep = armyRep;
     pkRender();
   }
   function pkRender() {
@@ -17926,13 +17625,6 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var p = TEAM_POS.filter(function (x) { return x.k === pk.pos; })[0] || TEAM_POS[0];
       head = "<h3>⚔ " + T("teamT") + " " + (pk.ti + 1) + " · " + posName(p) + "</h3>";
       note = '<div class="sg-note" style="margin:6px 0">' + posDesc(p) + "　·　" + (pk.pos === "cav" ? T("cavNeed") : pk.pos === "front" ? T("frontNeed") : T("pickHint")) + "</div>";
-    } else if (pk.mode === "army") {
-      /* V99：点将台选将复用通用控件——标题与说明对齐原 armyPickOpen 语义 */
-      var aPkR = (ensureCity(u).armies || [])[pk.ti];
-      head = "<h3>🏯 " + (pk.rep >= 0 ? armySlotRole(pk.rep) : gt("phAddT")) + " · " + (aPkR ? esc(armyNameOf(aPkR, pk.ti)) : "") + "</h3>";
-      note = '<div class="sg-note" style="margin:6px 0">' + (pk.rep >= 0 ? gt("phRepHintT") + "　·　" : "") +
-        gt("phPickHintT", { n: troopTxt(armyCapMax()) }) + "　·　" +
-        gt("phArmyCapT") + " " + troopTxt(armyStat(u, pk.ti).cap) + " / " + troopTxt(armyCapMax()) + "</div>";
     } else if (pk.mode === "roster") {
       head = "<h3>👥 " + T("addRoster") + " · " + esc(u.bat.cur) + "（" + cityRoster(u).length + "/" + rosterCap() + "）</h3>";
       note = '<div class="sg-note" style="margin:6px 0">' + T("dupName") + "　·　" + T("rosterFull", { n: rosterCap() }) + "</div>";
@@ -20422,89 +20114,44 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (!trz.ok) return toast(trz.err === "same" ? T("transSame") : T("transEmpty"), "err");
         save(); closeModal(); toast(T("transOk", { n: tfrom, m: tto }), "ok"); refreshBattle(); return;
       }
-      /* ---------- V83 点将台：部队编成 ---------- */
-      case "army-new": {
-        var cAN = ensureCity(u);
-        if (!cAN.armies) cAN.armies = [];
-        if (cAN.armies.length >= armyNumMax()) return toast(gt("phNoRoomT", { n: armyNumMax() }), "err");
-        cAN.armies.push({ nm: "", mem: [], f: "yulin" });
-        cAN.armiesAt = 83;
-        save(); refreshBattle(); toast("🏯 " + gt("phNewT"), "ok"); return;
-      }
-      case "army-auto": {
-        var nAA = armyAutoAll(u);
-        save(); refreshBattle();
-        toast("⚡ " + gt("phAutoOkT", { n: nAA }), nAA ? "ok" : "err"); return;
-      }
-      /* V99：点将台选将改用与出战编队相同的通用选将控件（pkOpen mode=army） */
-      case "army-add": pkOpen("army", +t.getAttribute("data-t"), ""); return;
-      /* V97：点击已配武将卡 → 更换该槽位（同武将编队换将方式） */
-      case "army-rep": pkOpen("army", +t.getAttribute("data-t"), t.getAttribute("data-p") || ""); return;
-      case "army-add-go": {
-        var aiAG = +t.getAttribute("data-t"), rAG = armyAdd(u, aiAG, t.getAttribute("data-id"),
-          t.getAttribute("data-ix") === "" || t.getAttribute("data-ix") == null ? undefined : +t.getAttribute("data-ix"));
-        if (!rAG.ok) {
-          var mA = rAG.err === "cap" ? gt("phCapFullT", { n: troopTxt(armyCapMax()) })
-            : rAG.err === "slot" ? gt("phSlotFullT", { n: armySlotMax() })
-            : rAG.err === "team" ? gt("phInTeamT")
-            : rAG.err === "used" ? gt("phUsedT") : gt("phNoneT");
-          return toast(mA, "err", 4200);
+      /* V100：点将台（armies 部队编成）已删除——army-* 处理器全部移除 */
+      /* V100：编队规模切换（3/5/7 人）——缩小规模时多余槽位武将自动退编（兵回预备役） */
+      case "team-size": {
+        var cTS = ensureCity(u), tTS = (cTS.teams || [])[+t.getAttribute("data-t")];
+        if (!tTS) return;
+        var szTS = +t.getAttribute("data-k");
+        if (TEAM_SIZES.indexOf(szTS) < 0) return;
+        var oldSz = teamSizeOf(tTS);
+        if (szTS < oldSz) {
+          var backN = 0;
+          TEAM_POS.slice(szTS).forEach(function (p) {
+            var cidTS = tTS.slots[p.k];
+            if (cidTS) { backN += cardBackPool(u, cTS, cidTS); tTS.slots[p.k] = null; }
+          });
+          tTS.size = szTS;
+          save(); refreshBattle();
+          toast(gt("teamSizeOkT", { n: szTS }) + (backN > 0 ? "（" + gt("phBackT", { n: troopTxt(backN) }) + "）" : ""), "ok");
+        } else {
+          tTS.size = szTS;
+          save(); refreshBattle();
+          toast(gt("teamSizeOkT", { n: szTS }), "ok");
         }
-        save(); toast(gt("phAddOkT", { n: 1 }) + (rAG.got > 0 ? "（" + gt("phGotT", { n: troopTxt(rAG.got) }) + "）" : ""), "ok");
-        refreshBattle(); armyPickOpen(aiAG, rAG.rep ? +t.getAttribute("data-ix") : undefined); return;
-      }
-      case "army-del": {
-        var aiAD = +t.getAttribute("data-t"), cAD = ensureCity(u), aAD = (cAD.armies || [])[aiAD];
-        if (!aAD) return;
-        /* V85：撤下即归仓——武将常规兵全额退回本城预备役 */
-        var back85 = cardBackPool(u, cAD, t.getAttribute("data-id"));
-        aAD.mem = (aAD.mem || []).filter(function (x) { return x !== t.getAttribute("data-id"); });
-        save(); refreshBattle(); toast(gt("phDelOkT") + (back85 > 0 ? "（" + gt("phBackT", { n: troopTxt(back85) }) + "）" : ""), "ok"); return;
-      }
-      case "army-clear": {
-        var aiAC = +t.getAttribute("data-t"), aAC = (ensureCity(u).armies || [])[aiAC];
-        if (!aAC) return;
-        modal("<h3>🏯 " + gt("phClearT") + " · " + esc(armyNameOf(aAC, aiAC)) + "</h3>" +
-          '<div class="sg-note">' + esc(gt("phClearAskT", { n: armyNameOf(aAC, aiAC) })) + "</div>" +
-          '<div style="text-align:center;margin-top:12px"><button class="sgbtn primary" data-bat="army-clear-go" data-t="' + aiAC + '">' + gt("phClearT") + "</button> " +
-          '<button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
         return;
-      }
-      case "army-clear-go": {
-        var aiCG = +t.getAttribute("data-t"), cCG = ensureCity(u), aCG = (cCG.armies || [])[aiCG];
-        /* V85：清空前全体成员常规兵退回本城预备役 */
-        if (aCG) { (aCG.mem || []).forEach(function (id85) { cardBackPool(u, cCG, id85); }); aCG.mem = []; }
-        save(); closeModal(); refreshBattle(); toast(gt("phClearOkT"), "ok"); return;
-      }
-      case "army-fill": {
-        var rAF = armyFill(u, +t.getAttribute("data-t"));
-        if (!rAF.ok) return toast(gt("phFillNoneT"), "err", 4200);
-        save(); refreshBattle(); toast("🩹 " + gt("phFillOkT", { n: fmt(rAF.n) }), "ok"); return;
-      }
-      case "army-name": {
-        var aiAN = +t.getAttribute("data-t"), aAN = (ensureCity(u).armies || [])[aiAN];
-        if (!aAN) return;
-        modal("<h3>✏ " + gt("phNameT") + "</h3>" +
-          '<div style="display:flex;gap:8px;align-items:center">' +
-          '<input id="sgArmyNm" maxlength="12" value="' + esc(aAN.nm || "") + '" style="flex:1;padding:7px 10px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit">' +
-          '<button class="sgbtn primary" data-bat="army-name-go" data-t="' + aiAN + '">' + T("bulkOk") + "</button></div>");
-        return;
-      }
-      case "army-name-go": {
-        var aiNG = +t.getAttribute("data-t"), aNG = (ensureCity(u).armies || [])[aiNG];
-        if (!aNG) return;
-        var aInp = document.getElementById("sgArmyNm");
-        aNG.nm = (aInp ? aInp.value : "").trim().slice(0, 12);
-        save(); closeModal(); refreshBattle(); toast(gt("phNameOkT"), "ok"); return;
       }
       case "slot": {
         ensureCity(u);
         var tiS = +t.getAttribute("data-t"), posS = t.getAttribute("data-p");
-        var ttS = (u.bat.city.teams || [])[tiS];
-        var cidS = ttS ? ttS.slots[posS] : null;
-        var cardS = cidS ? (u.cards || []).filter(function (x) { return x.id === cidS; })[0] : null;
-        if (cardS) slotBigCard(u, cardS, tiS, posS);
-        else pkOpen("slot", tiS, posS);
+        /* V100：点击已选武将不再打开详情（slotBigCard）——保留在编队页，直接进入更换选将 */
+        pkOpen("slot", tiS, posS);
+        return;
+      }
+      /* V100：卡片 ⚙ 按钮 → 编队操作面板（补兵/配兵/兵种/吞噬） */
+      case "slot-ops": {
+        ensureCity(u);
+        var tiO = +t.getAttribute("data-t"), posO = t.getAttribute("data-p");
+        var cidO = ((u.bat.city.teams || [])[tiO] || { slots: {} }).slots[posO];
+        var cdO = cidO ? (u.cards || []).filter(function (x) { return x.id === cidO; })[0] : null;
+        if (cdO) slotBigCard(u, cdO, tiO, posO);
         return;
       }
       case "pk-open": pkOpen(t.getAttribute("data-mode"), +t.getAttribute("data-t") || 0, t.getAttribute("data-p") || ""); return;
@@ -20529,7 +20176,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         }
         else if (pkT.sel[cidT]) delete pkT.sel[cidT];
         else if (Object.keys(pkT.sel).length >= (pkT.mode === "squad" ? 5 : 1)) {
-          if (pkT.mode === "slot" || pkT.mode === "army") { pkT.sel = {}; pkT.sel[cidT] = 1; }
+          if (pkT.mode === "slot") { pkT.sel = {}; pkT.sel[cidT] = 1; }
           else return toast(T("squadDesc"), "err");
         } else pkT.sel[cidT] = 1;
         /* V37 防闪动：局部更新勾选行与计数，不整表重渲染 */
@@ -20547,21 +20194,6 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var pkA = BATUI.pk; if (!pkA) return;
         var idsA = Object.keys(pkA.sel);
         if (!idsA.length) return toast(T("pkNone"), "err");
-        if (pkA.mode === "army") {
-          /* V99：点将台选将走通用控件——确认后复用 armyAdd（含槽位替换/预备役划拨），选将窗保持打开便于连编 */
-          var rAA = armyAdd(u, pkA.ti, idsA[0], pkA.rep >= 0 ? pkA.rep : undefined);
-          if (!rAA.ok) {
-            var mAA = rAA.err === "cap" ? gt("phCapFullT", { n: troopTxt(armyCapMax()) })
-              : rAA.err === "slot" ? gt("phSlotFullT", { n: armySlotMax() })
-              : rAA.err === "team" ? gt("phInTeamT")
-              : rAA.err === "used" ? gt("phUsedT") : gt("phNoneT");
-            return toast(mAA, "err", 4200);
-          }
-          save(); toast(gt("phAddOkT", { n: 1 }) + (rAA.got > 0 ? "（" + gt("phGotT", { n: troopTxt(rAA.got) }) + "）" : ""), "ok");
-          refreshBattle();
-          pkOpen("army", pkA.ti, rAA.rep ? String(pkA.rep) : "");
-          return;
-        }
         if (pkA.mode === "slot") {
           ensureCity(u);
           var szA = slotSet(u, pkA.ti, pkA.pos, idsA[0]);
@@ -20979,7 +20611,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       recycleLvOk: recycleLvOk, recycleLvMax: function () { return RECYCLE_LV_MAX; }, selCalc: selCalc,
       bldYield: bldYieldAt, officeBonusPct: officeBonusPct, cityPreview: cityPreview, palaceOpen: palaceOpen,
       /* V65 作战模型导出 */
-      forms: function () { return FORMS.map(function (f) { return { k: f.k, n: f.n, atk: f.atk, def: f.def, spd: f.spd }; }); }, teamStatF: teamCombatStat, distPreviewF: distPreview, armyAddF: armyAdd,
+      forms: function () { return FORMS.map(function (f) { return { k: f.k, n: f.n, atk: f.atk, def: f.def, spd: f.spd }; }); }, teamStatF: teamCombatStat, distPreviewF: distPreview,
       formEdgeF: formEdge, unitOfCtx: function (cid, form, mateIds) {
         var u = me(); var c = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
         var mates = (mateIds || []).map(function (id) { return (u.cards || []).filter(function (x) { return x.id === id; })[0]; }).filter(Boolean);
@@ -20997,11 +20629,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       /* V66 探针导出：爵位 / 带兵上限 / 放归 / 人口产出 */
       rankOf: rankOf, ranks: function () { return RANKS.map(function (r) { return { n: r.n, troop: r.troop }; }); },
       rankTroop: rankTroop, rankName: rankName, rankCost: rankCost, rankNeedLv: rankNeedLv, troopCapOf: troopCapOf,
-      /* V83 探针：带兵能力 / 初始化 / 点将台 */
+      /* V83 探针：带兵能力 / 初始化（V100：点将台导出已随功能删除） */
       troopAbilityOf: troopAbilityOf, lvTroopFactor: lvTroopFactor, tierTroopOf: tierTroopOf, initCardCaps: initCardCaps,
-      pointHallHTML: pointHallHTML, armyStat: armyStat, armyAdd: armyAdd, armyFill: armyFill, armyAutoAll: armyAutoAll,
-      armyPickOpen: armyPickOpen, armyCapMax: armyCapMax, armySlotMax: armySlotMax, armyNumMax: armyNumMax,
-      armyCards: armyCards, cardInArmy: cardInArmy, cardInTeam: cardInTeam,
+      cardInTeam: cardInTeam, teamSizeOf: teamSizeOf, teamPosList: teamPosList,
       stageGuardN: stageGuardN, mobTroopOf: mobTroopOf, popMulOf: popMulOf, popBonusPct: popBonusPct,
       /* V67 探针导出：招募进度条口径 + 兵力口径迁移 */
       recBarOf: recBarOf, slotRecHTML: slotRecHTML,
