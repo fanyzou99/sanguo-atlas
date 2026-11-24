@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-23T09:24:40.431Z"
+  "updated": "2026-11-24T03:58:58.509Z"
  },
  "econ": {
   "coin": 0.012,
@@ -347,5 +347,40 @@
   "朔方": 50000,
   "柳城": 50000,
   "伊吾": 40000
+ },
+ "combatrule": {
+  "ctrDmg": 25,
+  "beats": {
+   "dao": "gong",
+   "gong": "qiang",
+   "qiang": "qi",
+   "qi": "dao"
+  },
+  "grp": {
+   "dao": {
+    "a2": 0,
+    "d2": 3.5,
+    "a3": 0,
+    "d3": 5
+   },
+   "gong": {
+    "a2": 3.5,
+    "d2": 0,
+    "a3": 5,
+    "d3": 0
+   },
+   "qiang": {
+    "a2": 2.1,
+    "d2": 1.4,
+    "a3": 3,
+    "d3": 2
+   },
+   "qi": {
+    "a2": 1.4,
+    "d2": 2.1,
+    "a3": 2,
+    "d3": 3
+   }
+  }
  }
 }
