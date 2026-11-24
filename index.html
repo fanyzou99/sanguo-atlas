@@ -1461,10 +1461,12 @@ footer.foot{
 </div>
 
 <script>
-/* V93 立绘自愈加载器：pt 分片动态加载 · 并发 2 防带宽竞争 · 单片重试 5 次（指数退避）· 落定后失败片每 20s 自动再试 ·
-   立绘墙打开时新片到达即补渲染 · 素材数据与加载名单永久固定（与独立版 wall.html 同源），未来不再改动 */
+/* V93c 立绘自愈加载器：pt 数据固化 16 分片（pt00~pt15，共 716 张，永不再改动）· 双源加载
+   （jsDelivr CDN 优先 + GitHub Pages 回退，逐次交替重试 5 次·指数退避）· 并发 2 防带宽竞争 ·
+   落定后失败片每 20s 自动再试 · 立绘墙打开时新片到达即补渲染 */
 (function(){
-  var FILES=["pt/pt0_31e504d1.js","pt/pt1_e7db7e9d.js","pt/pt2_a60d4adf.js","pt/pt3_a6525b73.js","pt/pt4_ca44ffd5.js","pt/pt5_661a339e.js","pt/pt6_edcc319f.js","pt/pt7_a88a1a5c.js"];
+  var FILES=["pt/pt00_59a27172.js","pt/pt01_abfc3202.js","pt/pt02_7932e290.js","pt/pt03_7420d140.js","pt/pt04_19e2df4d.js","pt/pt05_0ea99286.js","pt/pt06_1b06dcf5.js","pt/pt07_9e2f5362.js","pt/pt08_887ed192.js","pt/pt09_bf3316d7.js","pt/pt10_c9711bf4.js","pt/pt11_b5d82c3f.js","pt/pt12_4d44f244.js","pt/pt13_500b411a.js","pt/pt14_5437d5fb.js","pt/pt15_6b3f9294.js"];
+  var SRC=["./","https://cdn.jsdelivr.net/gh/fanyzou99/sanguo-atlas@main/"];
   window.__SG_PT__=window.__SG_PT__||{};
   var QUEUE=FILES.slice(), active=0, done={}, okSet={}, autoTimer=null, everFail={}, permFail=[];
   function ptn(){ return Object.keys(window.__SG_PT__).length; }
@@ -1478,9 +1480,15 @@ footer.foot{
   }
   function load(f, attempt){
     active++;
+    var before=ptn();
     var s=document.createElement("script");
-    s.src=f+(attempt?("?r="+attempt+"_"+Date.now()):"");
+    s.src=SRC[attempt%SRC.length]+f+((attempt>=2)?("?r="+attempt+"_"+Date.now()):"");
     s.onload=function(){
+      /* V93c：onload 不代表内容有效（CDN 错误页解析失败不触发 onerror）——校验立绘 key 是否合并，未合并则换源重试 */
+      if(Object.keys(window.__SG_PT__).length===before && attempt<5){
+        setTimeout(function(){ load(f,attempt+1); }, 600);
+        return;
+      }
       okSet[f]=1; done[f]=1; active--;
       var wallOpen=!!document.getElementById("wallBox");
       if(wallOpen){ try{ window.dispatchEvent(new HashChangeEvent("hashchange")); }catch(e){} }
@@ -1495,13 +1503,14 @@ footer.foot{
   }
   function settled(){
     var failed=FILES.filter(function(f){ return !okSet[f]; });
-    if(failed.length){ sgBanner(); autoRetry(); }
+    if(failed.length || ptn()<716){ sgBanner(); autoRetry(); }
     else { if(autoTimer){ clearTimeout(autoTimer); autoTimer=null; } removeBanner(); }
   }
   function autoRetry(){
     if(autoTimer) clearTimeout(autoTimer);
     autoTimer=setTimeout(function(){
-      QUEUE=FILES.filter(function(f){ return !okSet[f]; });
+      /* 立绘不足 716 张时整轮重载（已成功分片合并幂等）；足额则只补失败片 */
+      QUEUE = ptn()<716 ? FILES.slice() : FILES.filter(function(f){ return !okSet[f]; });
       done={}; permFail=[]; pump();
     }, 20000);
   }
