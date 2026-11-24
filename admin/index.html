@@ -296,8 +296,6 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         <button class="btn gold" id="milSave">保存并全站生效</button>
       </div>
       <div id="milTable"></div>
-      <div style="margin:16px 0 6px;font-weight:600">试算（默认参数）</div>
-      <div id="milPreview"></div>
 
       <div style="margin:22px 0 6px;font-weight:600">加点分配（每张卡独立点数）</div>
       <div class="muted" style="font-size:12px;margin-bottom:6px">
@@ -1670,27 +1668,10 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       inp.addEventListener("input", function () {
         var k = this.getAttribute("data-k"), col = MIL_COLS.filter(function (x) { return x[0] === k; })[0];
         milRows[k] = milNumA(this.value, MIL_DEF_A[k], col[2], col[3]);
-        milPreview();
       });
     });
     var ti = $("#milTitlesIn");
     if (ti) ti.addEventListener("input", function () { milTitles = this.value; });
-    milPreview();
-  }
-  function milPreview() {
-    if (!milRows) return;
-    function f(n) { return (+n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }); }
-    var cities = [["洛阳（约 59 万人口·建筑加成后）", 590000], ["州治（约 28 万人口）", 280000], ["小城（约 11 万人口）", 110000]];
-    var pct = milNumA(milRows.popPct, 10, 1, 100), cap = milNumA(milRows.cityCap, 1000000, 1000, 100000000);
-    var rows = cities.map(function (c) {
-      var lim = Math.min(Math.floor(c[1] * pct / 100), cap);
-      return "<tr><td>" + esc(c[0]) + "</td><td>" + f(lim) + "</td><td>" + f(lim * (milRows.recRice || 0)) + " / " + f(lim * (milRows.recCoin || 0)) + "</td><td>" + f(lim * (milRows.farmRice || 0)) + "</td></tr>";
-    }).join("");
-    $("#milPreview").innerHTML = '<table style="width:100%"><thead><tr><th>城市规模</th><th>募兵限额（人）</th><th>募满消耗 粮 / 钱</th><th>满兵月加产粮</th></tr></thead><tbody>' + rows + "</tbody></table>" +
-      '<div class="muted" style="font-size:12px;margin-top:6px">盗贼兵力上限 <b>' + f(milRows.mobCap || 0) + "</b> · 特种兵训练消耗 <b>" + f(milRows.eliteCost || 0) + "</b> 预备役/名。</div>" +
-      '<div class="muted" style="font-size:12px;margin-top:4px">V68 特种兵三档：标准批 <b>' + f(milRows.e68BatchStd || 0) + "</b> 人（1:" + (milRows.e68RatioStd || 0) + " · ×" + (milRows.e68PowStd || 0) + " · " + (milRows.e68MStd || 0) + " 月）· 精锐批 <b>" + f(milRows.e68BatchMid || 0) + "</b> 人（1:" + (milRows.e68RatioMid || 0) + " · ×" + (milRows.e68PowMid || 0) + " · " + (milRows.e68MMid || 0) + " 月）· 顶级批 <b>" + f(milRows.e68BatchTop || 0) + "</b> 人（1:" + (milRows.e68RatioTop || 0) + " · ×" + (milRows.e68PowTop || 0) + " · " + (milRows.e68MTop || 0) + " 月）· 折损 <b>" + f(milRows.e68LossDenom || 0) + ":1</b> · 智力免疫 <b>" + (milRows.e68IntImmune || 0) + "%</b>。</div>" +
-      '<div class="muted" style="font-size:12px;margin-top:4px">V69 编制层级：伍 <b>' + f(milRows.uhWu || 0) + "</b>（伍长）→ 什 <b>" + f(milRows.uhShi || 0) + "</b>（什长）→ 队 <b>" + f(milRows.uhDui || 0) + "</b>（队率）→ 屯 <b>" + f(milRows.uhTun || 0) + "</b>（屯长）→ 曲 <b>" + f(milRows.uhQu || 0) + "</b>（军候）→ 部 <b>" + f(milRows.uhBu || 0) + "</b>（军司马）→ 营/军 <b>" + f(milRows.uhYing || 0) + "</b>（校尉/中郎将）→ 大军 <b>" + f(milRows.uhJun || 0) + "+</b>（将军）。" +
-      "最小管控单位：≥<b>" + f(milRows.uhScaleBig || 0) + "</b> 人 → <b>队(" + f(milRows.uhMinB || 0) + ")</b> · ≥<b>" + f(milRows.uhScaleMid || 0) + "</b> 人 → <b>什(" + f(milRows.uhMinM || 0) + ")</b> · 千人以下 → <b>伍(" + f(milRows.uhMinS || 0) + ")</b>。</div>";;
   }
   $("#milReload").addEventListener("click", milLoad);
   $("#milReset").addEventListener("click", function () {

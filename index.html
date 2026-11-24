@@ -11933,10 +11933,13 @@ var BOTS = [
       var gl = gById(lead.gid), gc = gById(cd.gid);
       if (!gl || !gc || gl.faction !== gc.faction) return;  /* 只能携带本阵营特种兵 */
       if (un.elite) return;   /* 一将只带一营 */
+      /* V95：按配兵数量携带（默认全营），携行部分从营中扣除，余部留守本城预备役 */
+      var take68 = eliteCarryN(cd, s);
+      if (take68 <= 0) return;
       var t68 = e68Tier(s.tk);
-      un.elite = { name: eliteName(u, si, c), n: s.n, n0: s.n, ci: si, mul: (eliteLegendOf(lead) || {}).mul || 1, pow: t68.pow, lossD: E68.lossDenom };
-      un.troop += s.n; un.troopMax += s.n;
-      s.n = 0;
+      un.elite = { name: eliteName(u, si, c), n: take68, n0: take68, ci: si, mul: (eliteLegendOf(lead) || {}).mul || 1, pow: t68.pow, lossD: E68.lossDenom };
+      un.troop += take68; un.troopMax += take68;
+      s.n = Math.max(0, (s.n || 0) - take68);
     });
     var mo = c.morale == null ? 60 : c.morale;
     if (mo !== 60) { var f = 1 + (mo - 60) * 0.002; A.forEach(function (un) { un.atk = Math.round(un.atk * f); }); }
@@ -12559,8 +12562,11 @@ var BOTS = [
     /* V91：增长% 优先取城市模型逐城配置 */
     var rate = Math.round(cityGrowPctOf(u, c) * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0)) * 10) / 10;
     var cur = cityPop(u, c), cap = cityPopCap(u, c);
+    /* V95：next 只推演自然人口的增长（上限约束自然增长），归田/天灾差额另计 */
+    var nat = Math.min(cityPopNatural(u, c), cap);
+    var adjust = (c.popAdd || 0) - (c.popLoss || 0);
     return { rate: rate, stable: st.stable, why: st.why, cur: cur, cap: cap,
-      next: Math.min(cap, Math.round(cur * (1 + rate / 100))), mul: c.popMul || 1,
+      next: Math.max(0, Math.min(cap, Math.round(nat * (1 + rate / 100))) + adjust), mul: c.popMul || 1,
       loss: c.popLoss || 0, disYear: c.disYear, disKind: c.disKind, disLoss: c.disLoss || 0, pol: pf };
   }
   function applyPopModelCfgPull(o) { return applyPopModelCfg(o); }
@@ -12696,19 +12702,28 @@ var BOTS = [
     if (opts.extra) L.push(opts.extra);
     return L.join("\n");
   }
+  /* V95：自然人口（基础人口 × 建筑加成 × 年增长复利）——基础人口优先取「城市模型」190 年人口，
+     未收录城回落到城市图鉴（万 → 人）。自然人口受「城市模型」人口上限约束。 */
+  function cityPopNatural(u, cObj) {
+    var c = cObj || ensureCity(u);
+    var cm = cityModelOf(cityNameOf(u, c));
+    var cd = cityDataOf(u, c);
+    var base = (cm && cm.pop9 > 0) ? cm.pop9 : ((cd ? cd.pop : 20) * 10000);
+    var mul = 1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0);
+    return Math.max(0, Math.round(base * mul * (c.popMul || 1)));
+  }
+  /* 未封顶的户籍总人口（自然人口 + 归田迁入 − 天灾减员） */
   function cityPopRaw(u, cObj) {
     var c = cObj || ensureCity(u);
-    var cd = cityDataOf(u, c);
-    var base = (cd ? cd.pop : 20) * 10000;
-    var mul = 1 + 0.06 * (c.bld.farm || 0) + 0.05 * (c.bld.market || 0) + 0.03 * (c.bld.wall || 0) + 0.02 * (c.bld.camp || 0);
-    /* V82：base×建筑×增长系数（复利）+ 卸甲归田/放归人口 − 天灾损失 */
-    return Math.max(0, Math.round(base * mul * (c.popMul || 1)) + (c.popAdd || 0) - (c.popLoss || 0));
+    return Math.max(0, cityPopNatural(u, c) + (c.popAdd || 0) - (c.popLoss || 0));
   }
   function cityPop(u, cObj) {
     var c = cObj || ensureCity(u);
-    var raw = cityPopRaw(u, c);
     var cap = cityPopCap(u, c);
-    return Math.max(0, Math.min(raw, cap));
+    /* V95：上限只约束「自然增长」；卸甲归田/放归田野属迁入人口，另计在外——
+       否则城已满（如洛阳）时归田零收益，玩家看到人口永远卡在上限。 */
+    var nat = Math.min(cityPopNatural(u, c), cap);
+    return Math.max(0, nat + (c.popAdd || 0) - (c.popLoss || 0));
   }
   /* V66：人口对资源产出的高额加成（10 万人口 +60%，上限 +160%） */
   function popMulOf(u) { return Math.min(2.6, 1 + 0.6 * Math.pow(Math.max(0, cityPop(u)) / 100000, 0.65)); }
@@ -12867,9 +12882,8 @@ var BOTS = [
   /* 募兵限额：人口 × popPct%，再受单城总募兵上限约束；返回 { pop, lim, tot } */
   function cityRecLimitInfo(u, cObj) {
     var c = cObj || ensureCity(u);
-    var cityName = (c && c.name) || u.bat.cur || u.bat.spawn || "洛阳";
-    var cityName = (c && c.name) || u.bat.cur || u.bat.spawn || "洛阳";
-    var pop = Math.max(0, Math.min(cityPopRaw(u, c), cityPopCap(u, c)));
+    /* V95：募兵基数用「实际人口」（自然 + 卸甲归田），与主页人口显示同源 */
+    var pop = Math.max(0, cityPop(u, c));
     var lim = Math.min(Math.floor(pop * (MIL.popPct || 10) / 100), MIL.cityCap || 1000000);
     return { pop: pop, lim: lim, tot: cityTroopTotal(u, c) };
   }
@@ -13350,6 +13364,52 @@ var BOTS = [
         discT: "兵を帰農", discGoT: "帰農", discDockT: "帰農 · 兵から民へ", discHintT: "予備兵 {n} を人口に転換できます（1:1）",
         milCost4T: "糧 {r} · 銭 {c} · 銅 {p} · 鉄 {i} /兵",
         dis_drought: "旱魃", dis_flood: "水害", dis_locust: "蝗害", dis_plague: "疫病", dis_war: "兵災"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
+
+  /* ================= V95 三语词条（编队二级配兵 / 城市模型人口口径） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        distT: "配兵", distTitleT: "{n} · 配兵", distRegT: "🪖 常规兵",
+        distRegHintT: "带兵上限 <b>{c}</b> · 现有 <b>{n}</b> · 本城预备役 <b>{p}</b><br>增加从预备役划拨；减少则退回预备役。",
+        distFullT: "满编 {c}", distPoolT: "尽用预备役 {p}", distZeroT: "清空",
+        distElT: "🎯 随队特种兵 · {s}", distElHintT: "营内可战 <b>{n}</b> 人。只有「携带」的人随本将出战，其余留守本城（不损耗）。",
+        distAllT: "全带 {n}", distNoneT: "不带", distNoElT: "未选择随队特种兵营——先在上方「🎯 随队特种兵」里选一个营，再回来配兵。",
+        distGoT: "确定配兵", distCancelT: "取消",
+        distDoneT: "配兵完成：常规兵 {a} / {c}{x}", distBackT: "退回预备役 {n}", distLackT: "预备役不足，实补 {n}", distCarryT: "特种兵携带 {a} / {b}",
+        distCarryRowT: "携带 <b>{a}</b> / 营内 {b}（留守本城 {k}）", distCarryHintT: "· 可在「⚙ 配兵」里调整常规兵与特种兵数量",
+        homeCapT: "上限 {c}", homeRelT: "含卸甲归田 {n}", chipRelT: "归田 +{n}",
+        popNatureT: "自然 {a} / 上限 {b}", popRelT: "卸甲归田 {n}", popRelNoteT: "（归田人口不受上限约束）"
+      },
+      en: {
+        distT: "Troops", distTitleT: "{n} · Troop detail", distRegT: "🪖 Regular troops",
+        distRegHintT: "Troop cap <b>{c}</b> · current <b>{n}</b> · city reserve <b>{p}</b><br>Reinforce draws from the reserve; reduction returns troops to it.",
+        distFullT: "Full {c}", distPoolT: "Use reserve {p}", distZeroT: "Empty",
+        distElT: "🎯 Attached elite corps · {s}", distElHintT: "<b>{n}</b> elites ready in the corps. Only the carried number marches with this general; the rest stay in the city (no losses).",
+        distAllT: "All {n}", distNoneT: "None", distNoElT: "No elite corps selected — pick one under \"🎯 Attached elite corps\" above, then come back here.",
+        distGoT: "Apply", distCancelT: "Cancel",
+        distDoneT: "Troops set: regular {a} / {c}{x}", distBackT: "returned {n} to reserve", distLackT: "reserve short, got {n}", distCarryT: "elite carried {a} / {b}",
+        distCarryRowT: "Carried <b>{a}</b> / corps {b} (left in city {k})", distCarryHintT: "· adjust regular & elite numbers in \"⚙ Troops\"",
+        homeCapT: "cap {c}", homeRelT: "incl. settlers {n}", chipRelT: "settlers +{n}",
+        popNatureT: "natural {a} / cap {b}", popRelT: "disbanded-to-fields {n}", popRelNoteT: "(settlers are exempt from the cap)"
+      },
+      ja: {
+        distT: "兵数設定", distTitleT: "{n} · 兵数設定", distRegT: "🪖 通常兵",
+        distRegHintT: "帯兵上限 <b>{c}</b> · 現在 <b>{n}</b> · 縦城予備 <b>{p}</b><br>増員は予備から引き、減員は予備へ戻します。",
+        distFullT: "満編 {c}", distPoolT: "予備を全使用 {p}", distZeroT: "ゼロ",
+        distElT: "🎯 随伴特殊兵 · {s}", distElHintT: "営内 <b>{n}</b> 人。「携行」した人数だけ出戦し、残りは城に留まります（損耗なし）。",
+        distAllT: "全携行 {n}", distNoneT: "携行なし", distNoElT: "随伴特殊兵営が未選択——上の「🎯 随伴特殊兵」で営を選んでから設定してください。",
+        distGoT: "確定", distCancelT: "キャンセル",
+        distDoneT: "設定完了：通常兵 {a} / {c}{x}", distBackT: "予備へ {n} 返却", distLackT: "予備不足、実補 {n}", distCarryT: "特殊兵携行 {a} / {b}",
+        distCarryRowT: "携行 <b>{a}</b> / 営内 {b}（城に残す {k}）", distCarryHintT: "·「⚙ 兵数設定」で通常兵と特殊兵の数を調整できます",
+        homeCapT: "上限 {c}", homeRelT: "帰農 {n} 含む", chipRelT: "帰農 +{n}",
+        popNatureT: "自然 {a} / 上限 {b}", popRelT: "帰農人口 {n}", popRelNoteT: "（帰農人口は上限の対象外）"
       }
     };
     Object.keys(ADD).forEach(function (lg) {
@@ -14097,7 +14157,8 @@ var BOTS = [
     return '<div class="sg-resrow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
       resPill(u, "rice") + resPill(u, "wood") + resPill(u, "copper") + resPill(u, "iron") +
       resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") +
-      '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + fmt(cityPopCap(u)) + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
+      '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + fmt(cityPopCap(u)) +
+      (cityPop(u) > cityPopCap(u) ? "（" + gt("chipRelT", { n: fmt(cityPop(u) - cityPopCap(u)) }) + "）" : "") + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("upNoteT")) + '">⚔ ' + gt("poolT") + " " + fmt(c.pool || 0) + "</span>" +
       /* V84：特种兵独立资源位（hover 显示各营兵种与数量） */
       (function () { var eT = 0, eQ = 0; eliteSlots(c).forEach(function (s) { eT += s.n || 0; eQ += s.q || 0; });
@@ -14941,7 +15002,10 @@ var BOTS = [
     };
     return '<div class="sg-panel-hd" style="margin:12px 0 4px"><h3><i>·</i>👥 ' + gt("popT") + "</h3></div>" +
       '<div class="sg-note" style="margin:0 0 8px">' + gt("relHintT") + "</div>" +
-      '<div class="sg-rankline"><span class="i" style="background:#3a6b5b;color:#dff5ea">人</span><span><b>' + gt("popT") + " " + fmt(pop) + "</b>　<small style='color:#8fd694'>" + gt("popBonusT", { n: pct }) + "</small></span></div>" +
+      '<div class="sg-rankline"><span class="i" style="background:#3a6b5b;color:#dff5ea">人</span><span><b>' + gt("popT") + " " + fmt(pop) + "</b>　<small style='color:#8fd694'>" + gt("popBonusT", { n: pct }) + "</small><br>" +
+      "<small style='color:var(--ink-3)'>" + gt("popNatureT", { a: fmt(Math.min(cityPopNatural(u, c), cityPopCap(u, c))), b: fmt(cityPopCap(u, c)) }) +
+      "　·　" + gt("popRelT", { n: fmt(Math.max(0, c.popAdd || 0)) }) + ((c.popLoss || 0) > 0 ? "　·　" + gt("popLossT", { n: fmt(c.popLoss || 0) }) : "") +
+      "　" + gt("popRelNoteT") + "</small></span></div>" +
       '<div class="sg-rankline"><span class="i" style="background:#5b4a2f;color:#f5e6c4">备</span><span><b>' + gt("poolT") + " " + fmt(pool) + "</b></span><span class=\"sp\"></span>" + inp("pool", pool) +
       '<button class="sgbtn sm' + (pool > 0 ? " primary" : "") + '" data-bat="rel" data-k="pool"' + (pool > 0 ? "" : " disabled") + ">" + gt("relT") + "</button>" +
       (pool > 0 ? '<button class="sgbtn sm ghost" data-bat="rel" data-k="pool" data-all="1">' + gt("relAllT") + "</button>" : "") + "</div>" +
@@ -17032,6 +17096,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
      实际编兵 = MAX(等级带兵, 爵位上限) + 特种兵（特种兵单独增加）。
      兵力条：单条两段——前段特种兵（橙）、后段普通预备役（绿）；
      战斗值条：普通兵战力与特种兵战力（特种单兵 ×E68 档位战力）换算结果同色列示，hover 显示数值。 */
+  /* V95：随队特种兵按「配兵数量」携带——card.el68n 为编队时指定携带人数（缺省=全营） */
+  function eliteCarryN(card, s) {
+    var have = (s && s.n) ? s.n : 0;
+    if (card.el68n == null || card.el68n === "") return have;
+    return Math.max(0, Math.min(have, Math.round(+card.el68n || 0)));
+  }
   function unitAttachElite(u, card, cObj) {
     var c = cObj || ensureCity(u);
     if (!card || card.el68 == null || card.el68 < 0) return { n: 0, pow: 0, tk: "", name: "" };
@@ -17039,7 +17109,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var lead = eliteLeaderOf(u, s); if (!lead || !eliteLeadOK(lead)) return { n: 0, pow: 0, tk: "", name: "" };
     var gl = gById(lead.gid), gc = gById(card.gid);
     if (!gl || !gc || gl.faction !== gc.faction) return { n: 0, pow: 0, tk: "", name: "" };
-    return { n: s.n || 0, w: s.w || 0, pow: (e68Tier(s.tk) || {}).pow || 100, tk: s.tk || "std", name: eliteName(u, card.el68, c) };
+    return { n: eliteCarryN(card, s), have: s.n || 0, w: s.w || 0, pow: (e68Tier(s.tk) || {}).pow || 100, tk: s.tk || "std", name: eliteName(u, card.el68, c) };
   }
   function unitCombatOf(u, card, cObj) {
     var c = cObj || ensureCity(u), g = gById(card.gid) || {};
@@ -17845,7 +17915,15 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         return '<button class="sgbtn sm ' + (card.el68 === si68 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="' + si68 + '" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '"' +
           (same ? "" : ' title="' + esc(gt("e68FactionNoT")) + '"') + ">" + esc(eliteName(u, si68, c68) + (lg68 ? " ★" : "")) +
           " · " + (s68.n ? fmt(s68.n) : "0") + (s68.tr ? " ⏳" : "") + (same ? "" : " 🚫") + "</button>";
-      }).join("") + "</div>";
+      }).join("") + "</div>" +
+      /* V95：随队特种兵配兵数量（默认全营，可只带一部分） */
+      (function () {
+        var sSel = (card.el68 != null && card.el68 >= 0) ? slots68[card.el68] : null;
+        if (!sSel) return "";
+        var have = sSel.n || 0, carry = eliteCarryN(card, sSel);
+        return '<div class="sg-note" style="margin:0 0 4px">' + gt("distCarryRowT", { a: fmt(carry), b: fmt(have), k: fmt(Math.max(0, have - carry)) }) +
+          '<small style="color:var(--ink-3)">' + gt("distCarryHintT") + "</small></div>";
+      })();
     modal("<h3>⚔ " + T("teamT") + " " + (ti + 1) + " · " + posName(p) + "</h3>" +
       '<div style="display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start" class="bigcard-grid">' +
       '<div style="width:300px;max-width:100%;margin:0 auto">' + cardHTML(card, false) + "</div>" +
@@ -17853,11 +17931,44 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<small style="color:var(--ink-3);font-size:9.5px;display:block;text-align:center">🟠 ' + esc(gt("barEliteT")) + "　🟢 " + esc(gt("barRegT")) + "</small></div>" +
       spRow + armRow + attRow +
       '<div class="sg-note">' + posDesc(p) + "</div>" +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' + recBtn +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' +
+      '<button class="sgbtn sm primary" data-bat="dist-open" data-id="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">⚙ ' + gt("distT") + "</button>" + recBtn +
       '<button class="sgbtn sm ghost" data-bat="pk-open" data-mode="slot" data-t="' + ti + '" data-p="' + pos + '">⇄ ' + T("pkSwap") + "</button>" +
       '<button class="sgbtn sm ghost" data-bat="slot-clear" data-t="' + ti + '" data-p="' + pos + '">✕ ' + T("slotRemove") + "</button>" +
       "</div>" + dupHTML + "</div></div>" +
       '<style>@media(max-width:760px){.bigcard-grid{grid-template-columns:1fr!important}}</style>', "wide");
+  }
+  /* ================= V95：编队二级配兵 =================
+     一键补兵是「补满」，本弹窗负责「带多少」：常规兵 0~带兵上限（增兵从本城预备役划拨、减兵退回预备役）；
+     随队特种兵 0~营内可战人数（未携带的部分留守本城，不参战也不损耗）。 */
+  function distQuick(k, num, txt) {
+    return '<button class="sgbtn sm ghost" data-bat="dist-set" data-k="' + k + '" data-n="' + num + '">' + txt + "</button>";
+  }
+  function distOpen(u, card, ti, pos) {
+    var g = gById(card.gid) || {};
+    var c = ensureCity(u);
+    var cap = troopCapEff(card, g), cur = (card.sold == null ? cap : Math.min(card.sold, cap));
+    var pool = Math.max(0, c.pool || 0);
+    var slots = eliteSlots(c);
+    var s = (card.el68 != null && card.el68 >= 0) ? slots[card.el68] : null;
+    var have = s ? (s.n || 0) : 0, carry = s ? eliteCarryN(card, s) : 0;
+    var elBlock = s
+      ? '<div class="sg-panel-hd" style="margin:14px 0 4px"><h3><i>·</i>' + gt("distElT", { s: eliteName(u, card.el68, c) }) + "</h3></div>" +
+        '<div class="sg-note" style="margin:0 0 6px">' + gt("distElHintT", { n: fmt(have) }) + "</div>" +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<input id="sgDistEl" type="number" min="0" max="' + have + '" step="1" value="' + carry + '" style="width:130px;padding:6px 9px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit;text-align:right">' +
+        distQuick("el", have, gt("distAllT", { n: fmt(have) })) + distQuick("el", 0, gt("distNoneT")) + "</div>"
+      : '<div class="sg-note" style="margin-top:12px">' + gt("distNoElT") + "</div>";
+    modal("<h3>⚙ " + esc(gt("distTitleT", { n: g.name || "" })) + "</h3>" +
+      '<div class="sg-panel-hd" style="margin:4px 0 4px"><h3><i>·</i>' + gt("distRegT") + "</h3></div>" +
+      '<div class="sg-note" style="margin:0 0 6px">' + gt("distRegHintT", { c: fmt(cap), n: fmt(cur), p: fmt(pool) }) + "</div>" +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+      '<input id="sgDistReg" type="number" min="0" max="' + cap + '" step="1" value="' + cur + '" style="width:140px;padding:6px 9px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit;text-align:right">' +
+      distQuick("reg", cap, gt("distFullT", { c: fmt(cap) })) + distQuick("reg", Math.min(cap, cur + pool), gt("distPoolT", { p: fmt(Math.min(cap, cur + pool)) })) + distQuick("reg", 0, gt("distZeroT")) + "</div>" +
+      elBlock +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">' +
+      '<button class="sgbtn primary" data-bat="dist-go" data-id="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">' + gt("distGoT") + "</button>" +
+      '<button class="sgbtn" data-sgact="close">' + gt("distCancelT") + "</button></div>", "wide");
   }
   function unlockOpen(name) {
     var u = me(); if (!u) return;
@@ -17897,7 +18008,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   function batHomeTab(u) {
     ensureCity(u); ensureMobs(u);
     var c = u.bat.city, cityName = u.bat.spawn || "洛阳";
-    var pop = cityPop(u), houses = Math.round(pop / 5);
+    var pop = cityPop(u), capNow = cityPopCap(u, c);
+    /* V95：户数统一走户籍经济模型（人口 ÷ 户均人口，默认 20 人/户），与招募处人口页/月收入同源 */
+    var houses = households(u);
+    var popAddN = Math.max(0, c.popAdd || 0), popTip = [];
+    if (popAddN > 0) popTip.push(gt("homeRelT", { n: fmt(popAddN) }));
+    if (pop >= capNow && popAddN <= 0) popTip.push("已达上限 " + fmt(capNow));
     var cards = u.cards || [];
     var cityRows = cityListHTML(u);
     /* 城内劫掠警告 */
@@ -17916,7 +18032,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-panel-hd"><h3><i>·</i>' + (BATUI.homeMap === "world" ? "🗺 " + gt("wmWorldT") + " · " + esc(cityName) : "🏙 " + gt("mapT") + " · " + esc(cityName)) + "</h3><span class=\"sp\"></span>" +
       '<small style="color:var(--ink-3)">' + gt("underling", { n: cards.length }) + "</small></div>" +
       '<div style="margin:8px 0 4px">' + homeResBar(u) + "</div>" +
-      '<div class="sg-note" style="margin:6px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b></div>" +
+      '<div class="sg-note" style="margin:6px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b>" +
+      '　<small style="color:var(--ink-3)">' + gt("homeCapT", { c: fmt(capNow) }) + (popTip.length ? " · " + popTip.join(" · ") : "") + "</small></div>" +
       raidBar + mapTog + mapBlock +
       hallUnifiedHTML(u) +
       defLogHTML(u);   /* V61：按需求移除「胡商来市 · 丝路胡商」板块 */
@@ -20322,6 +20439,52 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         refreshBattle(); return;
       }
       case "elite-batch": { var r68 = eliteBatchTrain(u, n); if (r68 && r68.err) toast(r68.err, "err"); else if (r68 && r68.ok) { toast(gt("e68StartT", { n: fmt(r68.need), m: r68.months }) + " ✓", "ok", 5200); save(); } recruitOpen(); return; }
+      /* V95：编队二级配兵（常规兵数量 + 特种兵携行数） */
+      case "dist-open": {
+        var dOpen = (u.cards || []).filter(function (x) { return x.id === (t.getAttribute("data-id") || ""); })[0];
+        if (!dOpen) return;
+        distOpen(u, dOpen, +t.getAttribute("data-t"), t.getAttribute("data-p"));
+        return;
+      }
+      case "dist-set": {
+        var dK = t.getAttribute("data-k"), dV = Math.max(0, Math.round(+t.getAttribute("data-n") || 0));
+        var dInp = document.getElementById(dK === "el" ? "sgDistEl" : "sgDistReg");
+        if (!dInp) return;
+        var dMax = Math.max(0, Math.round(+dInp.getAttribute("max") || 0));
+        dInp.value = Math.min(dMax, dV);
+        return;
+      }
+      case "dist-go": {
+        var dCid = t.getAttribute("data-id"), dTi = +t.getAttribute("data-t"), dPos = t.getAttribute("data-p");
+        var dCard = (u.cards || []).filter(function (x) { return x.id === dCid; })[0]; if (!dCard) return;
+        var dG = gById(dCard.gid) || {};
+        var dCap = troopCapEff(dCard, dG), dCur = (dCard.sold == null ? dCap : Math.min(dCard.sold, dCap));
+        var dCty = ensureCity(u), dPool = Math.max(0, dCty.pool || 0);
+        var dRegInp = document.getElementById("sgDistReg");
+        var dWant = Math.max(0, Math.min(dCap, Math.round(+(dRegInp ? dRegInp.value : dCur) || 0)));
+        var dDelta = dWant - dCur, dNote = [];
+        if (dDelta > 0) {
+          var dTake = Math.min(dDelta, dPool);
+          dCty.pool = dPool - dTake;
+          dWant = dCur + dTake;
+          if (dTake < dDelta) dNote.push(gt("distLackT", { n: fmt(dTake) }));
+        } else if (dDelta < 0) {
+          dCty.pool = dPool + (-dDelta);
+          dNote.push(gt("distBackT", { n: fmt(-dDelta) }));
+        }
+        dCard.sold = dWant;
+        var dSlots = eliteSlots(dCty);
+        if (dCard.el68 != null && dCard.el68 >= 0 && dSlots[dCard.el68]) {
+          var dS = dSlots[dCard.el68], dElInp = document.getElementById("sgDistEl");
+          var dEl = Math.max(0, Math.min(dS.n || 0, Math.round(+(dElInp ? dElInp.value : 0) || 0)));
+          dCard.el68n = dEl;
+          dNote.push(gt("distCarryT", { a: fmt(dEl), b: fmt(dS.n || 0) }));
+        }
+        save(); closeModal(); refreshBattle();
+        slotBigCard(u, dCard, dTi, dPos);
+        toast(gt("distDoneT", { a: fmt(dCard.sold), c: fmt(dCap), x: dNote.length ? "（" + dNote.join(" · ") + "）" : "" }), "ok", 5200);
+        return;
+      }
       case "el68-att": { var siA68 = +t.getAttribute("data-si"); var cidA68 = t.getAttribute("data-c"); var cdA68 = (u.cards || []).filter(function (x) { return x.id === cidA68; })[0]; if (cdA68) { cdA68.el68 = (cdA68.el68 === siA68) ? -1 : siA68; save(); } if (cdA68) slotBigCard(u, cdA68, +t.getAttribute("data-t"), t.getAttribute("data-p")); return; }
       case "elite-lid": { var c67 = ensureCity(u), s67 = eliteSlots(c67)[n]; if (s67) { var lid67 = t.getAttribute("data-c") || null; s67.lid = (s67.lid === lid67) ? null : lid67; save(); } recruitOpen(); return; }
       case "elite-coach": { var cEC = ensureCity(u); var idEC = t.getAttribute("data-c") || null; cEC.spCoach = (cEC.spCoach === idEC) ? null : idEC; save(); recruitOpen(); return; }
@@ -20617,7 +20780,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     _sg: function () { return SGCloud; },
     _bots: BOTS,
     _tiers: TIERS,
-    _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes, gMonth: gMonth, ensureCity: ensureCity, ensureMobs: ensureMobs, mobEnemies: mobEnemies, cityPop: cityPop, wallCost: wallCost,
+    _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes, gMonth: gMonth, ensureCity: ensureCity, ensureMobs: ensureMobs, mobEnemies: mobEnemies, cityPop: cityPop, cityPopNat: cityPopNatural, cityPopCapF: cityPopCap, householdsF: households, releaseF: releaseToField, eliteCarryF: eliteCarryN, eliteAttachF: eliteAttachSquad, distOpenF: distOpen, homeTabF: function (uu) { return batHomeTab(uu); }, popPanelF: popPanelHTML, wallCost: wallCost,
       switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity,
       rosterCap: rosterCap, rosterRoom: rosterRoom, rosterClean: rosterClean, recycleF: doRecycle, teamPanelHTML: teamPanelHTML, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard, growOpen: growOpen, catCounts: cardTierCounts, catOpen: openCatRecycle, catRun: doCatRecycle,
       /* V49 六项需求探针导出 */
@@ -20657,6 +20820,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       recBarOf: recBarOf, slotRecHTML: slotRecHTML,
       soldFix: function (u) { var n = 0; ((u && u.cards) || []).forEach(function (c) { if (c.sold == null) { var un = unitOf(c, "A"); if (un && un.troopMax) { c.sold = un.troopMax; n++; } } }); return n; },
       releaseF: releaseToField, rankBodyHTML: rankBodyHTML, popPanelHTML: popPanelHTML, cityPopF: cityPop,
+      /* V95 探针：城市模型人口口径 + 编队二级配兵 */
+      cityPopNatF: cityPopNatural, cityPopCapF: cityPopCap, eliteCarryF: eliteCarryN, eliteAttachF: eliteAttachSquad, distOpenF: distOpen,
       /* V68 探针导出：户口经济（户数 / 一户年账 / 户口产出 / 云端参数） */
       econGet: econGet, econDef: econDef, econSet: applyEconCfg, householdsF: households,
       grainMonthF: grainPerHouseMonth, cityEcoOutF: cityEcoOut, cityPreviewF: cityPreview, cityMonthlyF: cityMonthly,
