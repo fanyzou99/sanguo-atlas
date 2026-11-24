@@ -10163,7 +10163,12 @@ var BOTS = [
           if (r && r.ok && r.data) { return applyPopModelCfg(r.data); }
           return false;
         })["catch"](function () { return false; });
-        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11]).then(function () { retry(); return okT || okG || okW; });
+        /* V92：作战规则（兵种克制 + 同兵种武将加成，后台「作战规则」保存，key = combatrule） */
+        var p12 = rpcP("sg_cfg_get", { p_key: "combatrule" }).then(function (r) {
+          if (r && r.ok && r.data) { applyCombatRuleCfg(r.data); return true; }
+          return false;
+        })["catch"](function () { return false; });
+        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12]).then(function () { retry(); return okT || okG || okW; });
       } catch (e) { return Promise.resolve(false); }
     }
 
@@ -12982,6 +12987,66 @@ var BOTS = [
     return ks.map(function (k) { return { k: k, v: armProf(c, k), apt: armApt(g, k) }; }).sort(function (x, y) { return y.v - x.v; }).slice(0, n || 2);
   }
   function armProfBonus(c, k) { return k ? ((armProf(c, k) - 100) / 899) * 0.12 : 0; }   /* V66：熟悉度最高 +12% 杀伤 */
+  /* ================= V92：作战规则（兵种克制 + 同兵种武将加成，后台「作战规则」页签，云端 key = combatrule） =================
+     克制环：刀盾兵 克 弓箭兵 → 枪兵 → 骑兵 → 刀盾兵，每次克制攻击 +15% 伤害（ctrDmg 可配）。
+     同兵种武将加成：按出战队伍内同兵种武将人数（含自身）取 2 名 / 3 名档位（≥3 取 3 名档）：
+       盾兵 dao  ：2 名 受伤 -3.5% / 3 名 受伤 -5%
+       枪兵 qiang：2 名 伤害 +2.1%、受伤 -1.4% / 3 名 伤害 +3%、受伤 -2%
+       弓兵 gong ：2 名 伤害 +3.5% / 3 名 伤害 +5%
+       骑兵 qi   ：2 名 伤害 +1.4%、受伤 -2.1% / 3 名 伤害 +2%、受伤 -3% */
+  var COMBATRULE = {
+    ctrDmg: 15,
+    beats: { dao: "gong", gong: "qiang", qiang: "qi", qi: "dao" },
+    grp: {
+      dao:  { a2: 0,   d2: 3.5, a3: 0, d3: 5 },
+      qiang:{ a2: 2.1, d2: 1.4, a3: 3, d3: 2 },
+      gong: { a2: 3.5, d2: 0,   a3: 5, d3: 0 },
+      qi:   { a2: 1.4, d2: 2.1, a3: 2, d3: 3 }
+    }
+  };
+  /* 攻方兵种对守方兵种的克制倍率（仅克制方向加成，被克不额外减伤） */
+  function armEdge(a, b) {
+    if (!a || !b) return 1;
+    var d = (COMBATRULE.ctrDmg || 0) / 100;
+    if (d > 0 && COMBATRULE.beats[a] === b) return 1 + d;
+    return 1;
+  }
+  /* 队内同兵种武将加成：返回 { atk: 伤害倍率, def: 受伤倍率 } */
+  function armGrpBonusOf(arm, mates) {
+    var out = { atk: 1, def: 1, n: 0 };
+    if (!arm) return out;
+    var n = 1;
+    (mates || []).forEach(function (m) { if (m && m.arm === arm) n++; });
+    out.n = n;
+    var g = COMBATRULE.grp[arm];
+    if (!g) return out;
+    var a = 0, d = 0;
+    if (n >= 3) { a = g.a3; d = g.d3; } else if (n >= 2) { a = g.a2; d = g.d2; }
+    if (a) out.atk = 1 + a / 100;
+    if (d) out.def = 1 - d / 100;
+    return out;
+  }
+  function applyCombatRuleCfg(o) {
+    if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { return false; } }
+    if (!o || typeof o !== "object") return false;
+    if (isFinite(+o.ctrDmg) && +o.ctrDmg >= 0 && +o.ctrDmg <= 100) COMBATRULE.ctrDmg = +o.ctrDmg;
+    if (o.beats && typeof o.beats === "object") {
+      var m = {};
+      Object.keys(o.beats).forEach(function (k) { if (typeof o.beats[k] === "string" && o.beats[k]) m[k] = o.beats[k]; });
+      if (Object.keys(m).length) COMBATRULE.beats = m;
+    }
+    if (o.grp && typeof o.grp === "object") {
+      var gp = {};
+      Object.keys(o.grp).forEach(function (k) {
+        var e = o.grp[k]; if (!e || typeof e !== "object") return;
+        gp[k] = { a2: +e.a2 || 0, d2: +e.d2 || 0, a3: +e.a3 || 0, d3: +e.d3 || 0 };
+      });
+      if (Object.keys(gp).length) COMBATRULE.grp = gp;
+    }
+    return true;
+  }
+  /* V92：调试/测试句柄（只读引用，供控制台排障与自动化测试） */
+  try { window.__SGCOMBAT__ = { COMBATRULE: COMBATRULE, armEdge: armEdge, armGrpBonusOf: armGrpBonusOf, applyCombatRuleCfg: applyCombatRuleCfg, unitOf: unitOf, simulate: simulate, me: me }; } catch (e) {}
   function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
   function eqOf(c) {
     var out = { atk: 0, def: 0, hp: 0, spd: 0 }, u = me(), list = (u && u.eqs) || [];
@@ -13583,6 +13648,8 @@ var BOTS = [
       if (isBond(g, bmg)) bondArmN++;
     }
     var cAtk = 1 + Math.min(0.18, bondArmN * 0.06) + (bondN >= 2 ? 0.05 : 0), cDef = 1;
+    /* V92：同兵种武将加成（队内含自身 2/3 名同兵种 → 伤害/受伤系数） */
+    var agb = armGrpBonusOf(c.arm, mates);
     /* V65 士气：魅力入战场（初始 60 + 魅力×0.35，上限 70 + 魅力×0.3） */
     var ch = Number(g.ch) || 0;
     var moraleMax = Math.round(70 + ch * 0.3), morale = Math.round(60 + ch * 0.35);
@@ -13596,7 +13663,7 @@ var BOTS = [
     atk = Math.round(atk * kp);
     var def = Math.round((mySt + subD + (g.ch || 0) * 0.1 + growD) * (1 + 0.08 * stars) * (1 + skb.def)) + eq.def;
     var eqsk = eqSkillsBonus(c);
-    atk = Math.round(atk * (1 + eqsk.atk / 100) * cAtk * fA);
+    atk = Math.round(atk * (1 + eqsk.atk / 100) * cAtk * agb.atk * fA);
     def = Math.round(def * (1 + eqsk.def / 100) * cDef * fD);
     var atk0 = Math.round(atk / mf);            /* 不含士气系数：simulate 按实时士气结算 */
     var spd = Math.round((40 + g["in"] * 0.5) * (1 + (mt ? mt.spd : 0))) + eq.spd + (form ? form.spd : 0);
@@ -13612,7 +13679,9 @@ var BOTS = [
       st: g.st + (spa.st || 0), wu: g.wu + (spa.wu || 0), "in": g["in"] + (spa["in"] || 0), prof: c.arm ? armProf(c, c.arm) : 0,
       troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g, ti), alive: true, skn: skb.n, kp: kp, skd: tr.skd || 0, sp: spg ? spg.k : null, spT: spT,
       /* V65 */
-      morale: morale, moraleMax: moraleMax, atk0: atk0, form: form ? form.k : "", subA: subA, subD: subD, bond: !!(bondA || bondD), cAtk: cAtk, rk: rankOf(c), rkN: rankName(rankOf(c)), bondArm: bondArmN };
+      morale: morale, moraleMax: moraleMax, atk0: atk0, form: form ? form.k : "", subA: subA, subD: subD, bond: !!(bondA || bondD), cAtk: cAtk, rk: rankOf(c), rkN: rankName(rankOf(c)), bondArm: bondArmN,
+      /* V92：兵种克制系数（armGA 出战时按 armGrpBonusOf 的 atk 已乘入 atk；armGD 受伤系数在 simulate 结算） */
+      armGA: agb.atk, armGD: agb.def, armGN: agb.n };
   }
   /* V36 队伍战力评估：总战力 = Σ(士兵数 + 士兵数 × 统率力/100) */
   function teamPowerOf(u, ti) {
@@ -13665,8 +13734,13 @@ var BOTS = [
         var mSt = (u.morale != null && u.morale < (u.moraleMax || 100) * 0.3) ? 0.92 : 1;
         var mHi = (u.morale != null && u.morale >= (u.moraleMax || 100) * 0.9) ? 1.04 : 1;
         var edge = formEdge(u.form, tgt.form);
-        /* V68：特种兵按档位战力（pow/100）计入攻击；特种兵营提供防御（换损率另计） */
-        var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 * ((u.elite.pow || 100) / 100) * (u.elite.mul || 1) : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi / (1 + tgt.def * 0.018)));
+        /* V92：兵种克制（盾克弓/弓克枪/枪克骑/骑克盾，+ctrDmg% 伤害） */
+        var aEdge = armEdge(u.arm, tgt.arm);
+        if (aEdge > 1.001) edge *= aEdge;
+        /* V68：特种兵按档位战力（pow/100）计入攻击；特种兵营提供防御（换损率另计）
+           V92：受方同兵种武将减伤（armGD，盾兵组减伤等）乘入伤害 */
+        var gd92 = (tgt.armGD != null && tgt.armGD !== 1) ? tgt.armGD : 1;
+        var dmg = Math.max(10, Math.round(((u.atk0 || u.atk) * mfNow * 6 + u.troopMax * 0.12 + (u.elite ? u.elite.n * 11.88 * ((u.elite.pow || 100) / 100) * (u.elite.mul || 1) : 0)) * (0.85 + Math.random() * 0.3) * mult * edge * mSt * mHi * gd92 / (1 + tgt.def * 0.018)));
         /* V68：士气换损 + 特种兵 1000:1 折损 + 智力型纯武力近乎免疫（技能/陷阱正常） */
         var isIntAtk68 = ((u["in"] || 0) > (u.wu || 0));
         /* V69：战损按受方最小管控单位整编（不足一伍/一什/一队的杀伤不产生编制战损） */

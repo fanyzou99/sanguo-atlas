@@ -132,6 +132,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <button class="tab" data-tab="econ">经济模型</button>
     <button class="tab" data-tab="mil">军事模型</button>
     <button class="tab" data-tab="citym">城市模型</button>
+    <button class="tab" data-tab="rule">作战规则</button>
     <button class="tab" data-tab="popm">人口·政策</button>
     <button class="tab" data-tab="mig">数据迁移</button>
   </div>
@@ -331,6 +332,26 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div id="cmTable" style="max-height:520px;overflow:auto;border:1px solid var(--line-2,#3a4150);border-radius:8px"></div>
       <div class="toolbar" style="margin-top:8px">
         <span class="muted" id="cmMsg"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-rule" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">作战规则 · 兵种克制与加成（全站生效） <span class="muted" id="ruleUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="ruleReload">刷新</button>
+        <button class="btn" id="ruleReset">恢复默认</button>
+        <button class="btn gold" id="ruleSave">保存并全站生效</button>
+      </div>
+      <div style="margin:8px 0 6px;font-weight:600">① 兵种克制关系（克制方对被克方增加伤害）</div>
+      <div class="muted" style="font-size:12px;margin-bottom:6px">克制环：刀盾兵 克 弓箭兵 → 克 枪兵 → 克 骑兵 → 克 刀盾兵。每种克制关系的攻击伤害加成统一由下方「克制伤害加成」控制（默认 15%）。其余兵种（戟兵/弩兵/象兵/弩车/投石车/兵器/水军）暂不入环，克制倍率按 1 计。</div>
+      <div id="ruleCt"></div>
+      <div style="margin:18px 0 6px;font-weight:600">② 兵种加成（按出战队伍内同兵种武将人数，含自身；≥3 名取 3 名档）</div>
+      <div id="ruleGrp"></div>
+      <div class="hint">
+        结算口径：<b>克制</b> —— 出战武将主兵种克制目标武将主兵种时，本次攻击伤害 ×（1 + 克制伤害加成%），战斗日志中显示「克制」提示；<b>同兵种加成</b> —— 队内（编队/部队）同兵种武将达 2 名或 3 名时，该兵种武将伤害按「伤害%」提升、受到的伤害按「减伤%」降低，攻击属性与受伤结算分别乘算。保存后玩家端刷新或下次打开拉取生效。
       </div>
     </div>
   </section>
@@ -2013,6 +2034,102 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
   });
 
+  /* ---------- V92 作战规则：兵种克制 + 同兵种武将加成（云端 key = combatrule） ---------- */
+  var RULE_DEF = {
+    ctrDmg: 15,
+    beats: { dao: "gong", gong: "qiang", qiang: "qi", qi: "dao" },
+    grp: {
+      dao:  { a2: 0,   d2: 3.5, a3: 0, d3: 5 },
+      qiang:{ a2: 2.1, d2: 1.4, a3: 3, d3: 2 },
+      gong: { a2: 3.5, d2: 0,   a3: 5, d3: 0 },
+      qi:   { a2: 1.4, d2: 2.1, a3: 2, d3: 3 }
+    }
+  };
+  var RULE_ARMS = [["dao", "刀盾兵（盾兵）"], ["gong", "弓箭兵（弓兵）"], ["qiang", "枪兵"], ["qi", "骑兵"]];
+  var ruleRows = null;
+  function ruleDefA() { return JSON.parse(JSON.stringify(RULE_DEF)); }
+  function ruleNum(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.round(Math.max(lo, Math.min(hi, x)) * 100) / 100; }
+  function ruleLoad() {
+    $("#ruleUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "combatrule" }).then(function (r) {
+      var o = null;
+      if (r && r.ok && r.data) {
+        o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        if (r.updated_at) $("#ruleUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      }
+      ruleRows = ruleDefA();
+      if (o && typeof o === "object") {
+        if (o.ctrDmg != null) ruleRows.ctrDmg = ruleNum(o.ctrDmg, RULE_DEF.ctrDmg, 0, 100);
+        if (o.beats && typeof o.beats === "object") Object.keys(ruleRows.beats).forEach(function (k) { if (typeof o.beats[k] === "string" && o.beats[k]) ruleRows.beats[k] = o.beats[k]; });
+        if (o.grp && typeof o.grp === "object") Object.keys(ruleRows.grp).forEach(function (k) {
+          var src = o.grp[k] || {};
+          ["a2", "d2", "a3", "d3"].forEach(function (f) { if (src[f] != null) ruleRows.grp[k][f] = ruleNum(src[f], RULE_DEF.grp[k][f], 0, 100); });
+        });
+      }
+      rulePaint();
+    })["catch"](function () { ruleRows = ruleDefA(); rulePaint(); });
+  }
+  function rulePaint() {
+    if (!ruleRows) ruleRows = ruleDefA();
+    /* ① 克制关系 */
+    var armN = {}; RULE_ARMS.forEach(function (a) { armN[a[0]] = a[1]; });
+    $("#ruleCt").innerHTML = '<table style="width:100%"><thead><tr><th style="width:180px">克制方</th><th style="width:60px"></th><th style="width:180px">被克方</th><th style="width:170px">克制伤害加成（%）</th></tr></thead><tbody>' +
+      RULE_ARMS.map(function (a) {
+        var to = ruleRows.beats[a[0]];
+        return "<tr><td><b>" + esc(a[1]) + "</b></td><td style=\"color:#8fd694;font-weight:700\">克</td>" +
+          '<td><select class="btn rl-in" data-grp="beats" data-k="' + a[0] + '" style="width:160px;padding:6px 8px;background:rgba(255,255,255,.04);color:#e8ecf3;border:1px solid #2a3547;border-radius:6px">' +
+          RULE_ARMS.map(function (b) { return '<option value="' + b[0] + '"' + (to === b[0] ? " selected" : "") + ">" + esc(b[1]) + "</option>"; }).join("") + "</select></td>" +
+          (a[0] === "dao" ? '<td rowspan="' + RULE_ARMS.length + '"><input class="btn rl-in" data-grp="ctr" type="number" step="0.5" min="0" max="100" value="' + ruleRows.ctrDmg + '" style="width:130px;text-align:right;padding:6px 8px"></td>' : "") +
+          "</tr>";
+      }).join("") + "</tbody></table>";
+    /* ② 兵种加成 */
+    $("#ruleGrp").innerHTML = '<table style="width:100%"><thead><tr><th style="width:170px">兵种</th><th>2 名 · 伤害提升（%）</th><th>2 名 · 受伤降低（%）</th><th>3 名 · 伤害提升（%）</th><th>3 名 · 受伤降低（%）</th></tr></thead><tbody>' +
+      RULE_ARMS.map(function (a) {
+        var g = ruleRows.grp[a[0]];
+        return '<tr><td><b>' + esc(a[1]) + '</b><div class="muted" style="font-size:11px">' + a[0] + "</div></td>" +
+          ["a2", "d2", "a3", "d3"].map(function (f) {
+            return '<td><input class="btn rl-in" data-grp="grp" data-k="' + a[0] + '" data-f="' + f + '" type="number" step="0.1" min="0" max="100" value="' + g[f] + '" style="width:110px;text-align:right;padding:6px 8px"></td>';
+          }).join("") + "</tr>";
+      }).join("") + "</tbody></table>" +
+      '<div class="muted" style="font-size:12px;margin-top:6px">填 0 表示该项无效果。默认：盾兵只减伤（3.5%/5%）、弓兵只增伤（3.5%/5%）、枪兵与骑兵增伤 + 减伤兼有。</div>';
+    $$("#ruleCt .rl-in, #ruleGrp .rl-in").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k"), v = Number(this.value);
+        if (!isFinite(v)) return;
+        if (grp === "ctr") ruleRows.ctrDmg = ruleNum(v, RULE_DEF.ctrDmg, 0, 100);
+        else if (grp === "grp") ruleRows.grp[k][this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.grp[k][this.getAttribute("data-f")], 0, 100);
+      });
+      inp.addEventListener("change", function () {
+        var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k");
+        if (grp === "beats" && this.value) ruleRows.beats[k] = this.value;
+      });
+    });
+  }
+  $("#ruleReload").addEventListener("click", ruleLoad);
+  $("#ruleReset").addEventListener("click", function () {
+    ruleRows = ruleDefA(); $("#ruleUpdated").textContent = "已恢复默认值（尚未保存）"; rulePaint();
+  });
+  $("#ruleSave").addEventListener("click", function () {
+    if (!ruleRows) return;
+    var out = { ctrDmg: ruleNum(ruleRows.ctrDmg, RULE_DEF.ctrDmg, 0, 100), beats: {}, grp: {} };
+    RULE_ARMS.forEach(function (a) {
+      out.beats[a[0]] = ruleRows.beats[a[0]] || RULE_DEF.beats[a[0]];
+      out.grp[a[0]] = {};
+      ["a2", "d2", "a3", "d3"].forEach(function (f) { out.grp[a[0]][f] = ruleNum(ruleRows.grp[a[0]][f], RULE_DEF.grp[a[0]][f], 0, 100); });
+    });
+    var btn = $("#ruleSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "combatrule", p_data: out }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        admTip("作战规则已保存，全站生效（玩家端刷新或下次打开拉取）");
+        if (r.updated_at) $("#ruleUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
   $("#spResetBtn").addEventListener("click", function () {
     if (!confirm("确定重置全站所有玩家的加点分配？已分配点数会退回各自卡牌，属性加点清零。")) return;
     var btn = $("#spResetBtn");
@@ -2640,6 +2757,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#tab-econ").hidden = state.tab !== "econ";
       $("#tab-mil").hidden = state.tab !== "mil";
       $("#tab-citym").hidden = state.tab !== "citym";
+      $("#tab-rule").hidden = state.tab !== "rule";
       $("#tab-popm").hidden = state.tab !== "popm";
       $("#tab-mig").hidden = state.tab !== "mig";
       if (state.tab === "acc") loadAccounts(true);
@@ -2650,6 +2768,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       if (state.tab === "econ") ecoLoad();
       if (state.tab === "mil") milLoad();
       if (state.tab === "citym") cmLoad();
+      if (state.tab === "rule") ruleLoad();
       if (state.tab === "popm") popmLoad();
     });
   });
