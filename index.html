@@ -12124,11 +12124,11 @@ var BOTS = [
   /* ---------- V27 多城池 / 编队 ---------- */
   var CITY_SLOTS = ["洛阳", "长安", "襄阳", "成都", "建业"];
   var CITY_UNLOCK_PTS = 1000, CITY_UNLOCK_RES = 1000;
-  /* V97：出战编队 3 将——主将 + 2 副将（特种兵1/2 槽位取消；旧档前锋→左军、骑军→右军） */
+  /* V99：出战编队 3 将横向一排——主将 + 副将1 + 副将2（槽位 key center/left/right 不变，旧档零迁移） */
   var TEAM_POS = [
-    { k: "center", n: "主将 · 中军", nen: "主将・中軍", en: "Commander · Center", dzh: "全队核心：中军被击溃即全军败退", den: "Team core; if the center falls, all retreat" },
-    { k: "left", n: "副将 · 左军", nen: "副将・左軍", en: "Deputy · Left Wing", dzh: "混合兵种", den: "Mixed troops" },
-    { k: "right", n: "副将 · 右军", nen: "副将・右軍", en: "Deputy · Right Wing", dzh: "混合兵种", den: "Mixed troops" }
+    { k: "center", n: "主将", nen: "主将", en: "Commander", dzh: "全队核心：主将被击溃即全军败退", den: "Team core; if the commander falls, all retreat" },
+    { k: "left", n: "副将1", nen: "副将1", en: "Deputy 1", dzh: "混合兵种", den: "Mixed troops" },
+    { k: "right", n: "副将2", nen: "副将2", en: "Deputy 2", dzh: "混合兵种", den: "Mixed troops" }
   ];
   function posName(p) { var l = lang(); return l === "zh" ? p.n : l === "ja" ? p.nen : p.en; }
   function posDesc(p) { return lang() === "en" ? p.den : p.dzh; }
@@ -17695,7 +17695,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
           return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="team-form" data-t="' + ti + '" data-k="' + f.k + '" title="' + esc(formDesc(f) + " · " + formTag(f)) + '">' + formName(f) + "</button>";
         }).join("") + "</div>" +
         tsBar96 +
-        '<div class="sg-slots" style="grid-template-columns:repeat(5,1fr)">' + cols + "</div></div>";
+        /* V99：3 将横向一排（主将/副将1/副将2 等宽三列）；sg-slots 无全局 grid 样式，改用 sg-gwrap 并内联三列 */
+        '<div class="sg-gwrap" style="grid-template-columns:repeat(3,1fr)">' + cols + "</div></div>";
     }).join("");
     /* ---------- ② 点将台部队（armies） ---------- */
     var arows = (c.armies || []).map(function (a, ai) {
@@ -17868,7 +17869,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var used = {}, inIds = {}, otherIds = {};
     (c.teams || []).forEach(function (tt) { TEAM_POS.forEach(function (pp) { if (tt.slots[pp.k]) used[tt.slots[pp.k]] = 1; }); });
     var cur = ((c.teams || [])[ti] || { slots: {} }).slots[pos];
-    var cards, bad = null;
+    var cards, bad = null, armyRep = -1;
     if (mode === "slot") {
       cards = cityRoster(u);
       if (!cards.length) return toast(T("noRoster"), "err");
@@ -17876,6 +17877,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (pos === "cav" && !cardCav(cd)) return T("cavNeed");
         if (pos === "front" && !cardInf(cd)) return T("frontNeed");
         if (used[cd.id] && cd.id !== cur) return T("teamUsed");
+        /* V99：已编入点将台部队的武将在编队选将表置灰（与 slotSet 互斥校验一致） */
+        if (cardInArmy(u, cd.id)) return gt("phInArmyT");
         return null;
       };
     } else if (mode === "roster") {
@@ -17891,12 +17894,28 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       cards = (u.cards || []).filter(function (x) { return !inIds[x.id] && !otherIds[x.id]; });
       var rostG = {}; cityRoster(u).forEach(function (x) { rostG[x.gid] = 1; });
       bad = function (cd) { return rostG[cd.gid] ? T("dupName") : null; };
+    } else if (mode === "army") {
+      /* V99：点将台部队编成改走通用选将控件（与出战编队同款 pkOpen/pkRender/pickTable 表格选择）。
+         ti=部队下标；pos=被更换槽位下标（空串/undefined=新增）。候选口径与原 armyPickOpen 一致：
+         本城驻城 roster 内、未编入本部队、未编入其他部队、未在出战编队。 */
+      var aPk = (c.armies || [])[ti];
+      if (!aPk) return;
+      var repPk = (pos !== "" && pos != null && isFinite(+pos)) ? +pos : -1;
+      if (!(repPk >= 0 && repPk < (aPk.mem || []).length)) repPk = -1;
+      if (repPk < 0 && (aPk.mem || []).length >= armySlotMax()) return toast(gt("phSlotFullT", { n: armySlotMax() }), "err");
+      cards = cityRoster(u).filter(function (cd) {
+        return (aPk.mem || []).indexOf(cd.id) < 0 && !cardInArmy(u, cd.id, ti) && !cardInTeam(u, cd.id);
+      });
+      if (!cards.length) return toast(gt("phNoneT"), "err");
+      cur = repPk >= 0 ? aPk.mem[repPk] : null;
+      armyRep = repPk;
     } else cards = (u.cards || []).slice();
     if (!cards.length) return toast(T("pkEmpty"), "err");
     var sel = {};
     if (mode === "squad") (BATUI.squad || []).forEach(function (id2) { sel[id2] = 1; });
-    else if (mode === "slot" && cur) sel[cur] = 1;
+    else if ((mode === "slot" || mode === "army") && cur) sel[cur] = 1;
     BATUI.pk = { mode: mode, ti: ti || 0, pos: pos || "", sel: sel, cards: cards, bad: bad };
+    if (mode === "army") BATUI.pk.rep = armyRep;
     pkRender();
   }
   function pkRender() {
@@ -17907,6 +17926,13 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var p = TEAM_POS.filter(function (x) { return x.k === pk.pos; })[0] || TEAM_POS[0];
       head = "<h3>⚔ " + T("teamT") + " " + (pk.ti + 1) + " · " + posName(p) + "</h3>";
       note = '<div class="sg-note" style="margin:6px 0">' + posDesc(p) + "　·　" + (pk.pos === "cav" ? T("cavNeed") : pk.pos === "front" ? T("frontNeed") : T("pickHint")) + "</div>";
+    } else if (pk.mode === "army") {
+      /* V99：点将台选将复用通用控件——标题与说明对齐原 armyPickOpen 语义 */
+      var aPkR = (ensureCity(u).armies || [])[pk.ti];
+      head = "<h3>🏯 " + (pk.rep >= 0 ? armySlotRole(pk.rep) : gt("phAddT")) + " · " + (aPkR ? esc(armyNameOf(aPkR, pk.ti)) : "") + "</h3>";
+      note = '<div class="sg-note" style="margin:6px 0">' + (pk.rep >= 0 ? gt("phRepHintT") + "　·　" : "") +
+        gt("phPickHintT", { n: troopTxt(armyCapMax()) }) + "　·　" +
+        gt("phArmyCapT") + " " + troopTxt(armyStat(u, pk.ti).cap) + " / " + troopTxt(armyCapMax()) + "</div>";
     } else if (pk.mode === "roster") {
       head = "<h3>👥 " + T("addRoster") + " · " + esc(u.bat.cur) + "（" + cityRoster(u).length + "/" + rosterCap() + "）</h3>";
       note = '<div class="sg-note" style="margin:6px 0">' + T("dupName") + "　·　" + T("rosterFull", { n: rosterCap() }) + "</div>";
@@ -19239,13 +19265,13 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     } catch (e) {}
     var pct = Math.max(0, Math.min(100, Math.round(un.troop / (un.troopMax || 1) * 100)));
     /* V28：战前侦察 hover */
-    var tip = un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + (un.pos === "center" ? " · " + posName(TEAM_POS[1]) : "") + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + "\n" +
+    var tip = un.name + " Lv." + un.lv + (un.arm ? " · " + armName(un.arm) : "") + " · " + tierLabel(tr) + (un.pos === "center" ? " · " + posName(TEAM_POS[0]) : "") + (un.sp ? " · " + spLabel(un.sp) + "【" + spSkillName(un.sp) + "】" : "") + "\n" +
       T("troopShort", { n: troopTxt(un.troop) }) + (un.troop < un.troopMax ? " / " + troopTxt(un.troopMax) : "") + "\n" +
       "攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd;
     /* V53：五军位置徽标（野怪/同盟战按编队槽位） */
     var posB = "";
     if (un.five) { var fp53 = TEAM_POS.filter(function (p) { return p.k === un.five; })[0]; if (fp53) posB = ' <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:#3d5a8a;color:#cfe2ff;font-weight:800;vertical-align:2px">' + posName(fp53) + "</span>"; }
-    if (un.pos === "center") posB += ' <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:#8a6b2a;color:#ffe9b8;font-weight:800;vertical-align:2px">★' + posName(TEAM_POS[1]) + "</span>";
+    if (un.pos === "center") posB += ' <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:#8a6b2a;color:#ffe9b8;font-weight:800;vertical-align:2px">★' + posName(TEAM_POS[0]) + "</span>";
     /* V53：详细属性（武 / 统 / 智）+ 技能行（品级技 + 特殊技） */
     var statLine = "攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + ' <small style="color:var(--ink-3)">（武' + un.wu + " 统" + un.st + " 智" + un["in"] + "）</small>";
     var skLine = un.sk ? '<div style="font-size:10.5px;margin-top:3px"><span style="color:#e8c988" title="' + esc((un.sk.d || "")) + '">【' + esc(un.sk.n || un.sk) + "】</span>" +
@@ -20410,9 +20436,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         save(); refreshBattle();
         toast("⚡ " + gt("phAutoOkT", { n: nAA }), nAA ? "ok" : "err"); return;
       }
-      case "army-add": armyPickOpen(+t.getAttribute("data-t")); return;
+      /* V99：点将台选将改用与出战编队相同的通用选将控件（pkOpen mode=army） */
+      case "army-add": pkOpen("army", +t.getAttribute("data-t"), ""); return;
       /* V97：点击已配武将卡 → 更换该槽位（同武将编队换将方式） */
-      case "army-rep": armyPickOpen(+t.getAttribute("data-t"), +t.getAttribute("data-p")); return;
+      case "army-rep": pkOpen("army", +t.getAttribute("data-t"), t.getAttribute("data-p") || ""); return;
       case "army-add-go": {
         var aiAG = +t.getAttribute("data-t"), rAG = armyAdd(u, aiAG, t.getAttribute("data-id"),
           t.getAttribute("data-ix") === "" || t.getAttribute("data-ix") == null ? undefined : +t.getAttribute("data-ix"));
@@ -20502,7 +20529,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         }
         else if (pkT.sel[cidT]) delete pkT.sel[cidT];
         else if (Object.keys(pkT.sel).length >= (pkT.mode === "squad" ? 5 : 1)) {
-          if (pkT.mode === "slot") { pkT.sel = {}; pkT.sel[cidT] = 1; }
+          if (pkT.mode === "slot" || pkT.mode === "army") { pkT.sel = {}; pkT.sel[cidT] = 1; }
           else return toast(T("squadDesc"), "err");
         } else pkT.sel[cidT] = 1;
         /* V37 防闪动：局部更新勾选行与计数，不整表重渲染 */
@@ -20520,6 +20547,21 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var pkA = BATUI.pk; if (!pkA) return;
         var idsA = Object.keys(pkA.sel);
         if (!idsA.length) return toast(T("pkNone"), "err");
+        if (pkA.mode === "army") {
+          /* V99：点将台选将走通用控件——确认后复用 armyAdd（含槽位替换/预备役划拨），选将窗保持打开便于连编 */
+          var rAA = armyAdd(u, pkA.ti, idsA[0], pkA.rep >= 0 ? pkA.rep : undefined);
+          if (!rAA.ok) {
+            var mAA = rAA.err === "cap" ? gt("phCapFullT", { n: troopTxt(armyCapMax()) })
+              : rAA.err === "slot" ? gt("phSlotFullT", { n: armySlotMax() })
+              : rAA.err === "team" ? gt("phInTeamT")
+              : rAA.err === "used" ? gt("phUsedT") : gt("phNoneT");
+            return toast(mAA, "err", 4200);
+          }
+          save(); toast(gt("phAddOkT", { n: 1 }) + (rAA.got > 0 ? "（" + gt("phGotT", { n: troopTxt(rAA.got) }) + "）" : ""), "ok");
+          refreshBattle();
+          pkOpen("army", pkA.ti, rAA.rep ? String(pkA.rep) : "");
+          return;
+        }
         if (pkA.mode === "slot") {
           ensureCity(u);
           var szA = slotSet(u, pkA.ti, pkA.pos, idsA[0]);
