@@ -131,6 +131,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <button class="tab" data-tab="shop">商店配置</button>
     <button class="tab" data-tab="econ">经济模型</button>
     <button class="tab" data-tab="mil">军事模型</button>
+    <button class="tab" data-tab="citym">城市模型</button>
     <button class="tab" data-tab="popm">人口·政策</button>
     <button class="tab" data-tab="mig">数据迁移</button>
   </div>
@@ -297,20 +298,6 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div style="margin:16px 0 6px;font-weight:600">试算（默认参数）</div>
       <div id="milPreview"></div>
 
-      <div style="margin:22px 0 6px;font-weight:600">城市人口上限（逐城可改，洛阳最高 · 双击行修改）</div>
-      <div class="muted" style="font-size:12px;margin-bottom:6px">
-        列表默认显示 52 城的当前上限（未修改过的城显示默认值）；<b>双击任意一行</b>弹出修改窗口，改完点「保存人口上限」全站生效。
-        默认值采用<b>《三国志IX》190 年城市人口</b>（洛阳 36 万全图最高 / 许昌 33 万 / 邺 30.8 万 / 濮阳 28.3 万 … 安定 4.9 万）；
-        未收录三国志IX 表的边塞小城（临淄、合肥、广陵、番禺、上庸、敦煌、平城、朔方、柳城、伊吾）沿用等级系数推导（都城 ×2.4 / 州治 ×2.0 / 郡城 ×1.6 / 关塞 ×1.3，不高于洛阳）。
-        人口达到上限后不再增长（募兵限额 = 人口 × 募兵比例，同步受限）；「当前上限」列金色标注 = 已偏离默认值。点击表头「默认上限 / 当前上限」可排序。
-      </div>
-      <div id="popcapTable" style="max-height:430px;overflow:auto;border:1px solid var(--line-2,#3a4150);border-radius:8px"></div>
-      <div class="toolbar" style="margin-top:8px">
-        <button class="btn" id="popcapDefault">重新生成默认值</button>
-        <button class="btn gold" id="popcapSave">保存人口上限</button>
-        <span class="muted" id="popcapMsg"></span>
-      </div>
-
       <div style="margin:22px 0 6px;font-weight:600">加点分配（每张卡独立点数）</div>
       <div class="muted" style="font-size:12px;margin-bottom:6px">
         V81 起武将从「升级」获得的加点只属于该卡，不再全卡共用。<b>重置全部加点</b>会清空所有玩家的属性加点，并把已分配的点数退回各自卡牌（玩家下次打开或刷新生效）。
@@ -322,6 +309,28 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div class="hint">
         计算链路：<b>募兵限额 = 城市人口 × popPct%</b>，同时受<b>单城总募兵上限 cityCap</b> 约束；人口总数涵盖士兵数（募兵即编户从军，不增加人口）。<b>farmRice</b>：在城士兵参与农业生产，每名士兵每月加产粮；<b>recRice / recCoin / recCopper / recIron</b>：招募处每募 1 兵消耗的粮/钱/铜/铁（四项同时校验，缺一不可）；<b>eliteCost</b>：每训练 1 名特种兵消耗的预备役兵员（默认 10 名普通兵 → 1 名特种兵）；<b>mobCap</b>：城外盗贼/贼寇兵力上限，无论级别多高一律封顶。<br>
         募兵只在玩家端「招募处 → 募兵」页签进行，新兵先入本城预备役；编队补兵、自动补兵、卡牌取兵全部只消耗预备役。保存后玩家端刷新或下次打开生效。
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-citym" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">城市模型（全站生效） <span class="muted" id="cmUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="cmReload">刷新</button>
+        <button class="btn" id="cmReset">恢复默认值</button>
+        <button class="btn gold" id="cmSave">保存并全站生效</button>
+      </div>
+      <div class="muted" style="font-size:12px;margin-bottom:6px">
+        基础数据取自<b>《三国志IX》190 年城池表</b>（州 / 都市 / 特技 / 人口 / 商業 / 開発 / 兵法 / 耐久 / 隣接都市数）。
+        <b>兵役人口</b> ＝ 基础人口 × 15%（汉末兵民比，与城市图鉴口径一致）；<b>经商人口</b> ＝ 基础人口 × 商業 ÷ 1000 × 20%。<br>
+        <b>人口上限</b>逐城可改，<b>默认 1,000,000</b>：基础人口按年增长%（可逐城改，默认 10%），同时接收卸甲归田（预备役 / 伤兵退回）人口，人口总数不超过上限即继续接收。
+        <b>双击任意一行</b>弹出修改窗口（上限 + 年增长），改完点「保存并全站生效」。玩家端主页右侧城市列表 hover 即显示本模型数据。
+      </div>
+      <div id="cmTable" style="max-height:520px;overflow:auto;border:1px solid var(--line-2,#3a4150);border-radius:8px"></div>
+      <div class="toolbar" style="margin-top:8px">
+        <span class="muted" id="cmMsg"></span>
       </div>
     </div>
   </section>
@@ -344,7 +353,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div style="font-weight:600;margin:16px 0 6px">④ 试算（42 万人口大城市）</div>
       <div id="popmPreview"></div>
       <div class="hint">
-        人口链路：<b>城市人口基数（洛阳 42 万 / 邺 36 万 / 成都 34 万 / 许昌 32 万 / 长安 30 万 …）× 建筑加成 × 增长系数</b>，再受「军事模型 → 城市人口上限」约束。<br>
+        人口链路：<b>城市人口基数 × 建筑加成 × 增长系数</b>，再受「城市模型」人口上限约束（默认 100 万/城，逐城可改）。<br>
         人口在<b>城池安定</b>（城内无贼寇、当年未遭灾）时按 <b>growYear%</b> 复利增长；城内有贼寇时增速 × <b>chaos</b>；遭灾当年按 <b>disGrowthOff</b> 决定是否停止增长。<br>
         天灾每年判定一次（disRate%），损失 disLoss% 人口，并让当年粮产 -disFarm%。<br>
         国策三选一（玩家端 大殿 → 政务）：<b>重农</b> 粮产↑ / 人口增速↑；<b>重商</b> 钱收↑ / 募兵略便宜；<b>强兵</b> 募兵成本↓↓ / 战斗经验↑、人口增速↓。系数直接乘在对应产出与成本上，保存后全站生效。<br>
@@ -1682,190 +1691,198 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
   });
 
-  /* ---------- V81 城市人口上限（云端 key = popcap）+ 全站重置加点（云端 key = spreset） ----------
-     V87：第 4 列为《三国志IX》190 年城市人口（sangokushi9.shiyo.info/toshi.html），即默认人口上限；
-     0 表示该城未收录于三国志IX 表（沿用等级系数推导）。洛阳 36 万为全图最高。
-     V89：第 5 列为州域（《三国志IX》州归属）；UI 改为列表 + 双击行弹窗修改。 */
-  var POP_CITIES = [
-    ["洛阳", 42, "都城", 360000, "司隶"],
-    ["长安", 30, "都城", 248000, "雍州"],
-    ["许昌", 32, "都城", 330000, "豫州"],
-    ["邺", 36, "都城", 308000, "冀州"],
-    ["成都", 34, "都城", 276000, "益州"],
-    ["建业", 26, "都城", 95000, "扬州"],
-    ["襄阳", 24, "州治", 234000, "荆州"],
-    ["江陵", 22, "州治", 242000, "荆州"],
-    ["宛", 20, "郡城", 205000, "荆州"],
-    ["寿春", 20, "州治", 109000, "扬州"],
-    ["汝南", 19, "郡城", 225000, "豫州"],
-    ["下邳", 18, "州治", 281000, "徐州"],
-    ["吴", 18, "郡城", 97000, "扬州"],
-    ["濮阳", 17, "州治", 283000, "兖州"],
-    ["陈留", 16, "郡城", 255000, "兖州"],
-    ["临淄", 16, "州治", 0, "青州"],
-    ["晋阳", 16, "州治", 83000, "并州"],
-    ["会稽", 16, "郡城", 113000, "扬州"],
-    ["长沙", 15, "郡城", 105000, "荆州"],
-    ["蓟", 14, "州治", 132000, "幽州"],
-    ["汉中", 14, "州治", 236000, "益州"],
-    ["北海", 14, "郡城", 200000, "青州"],
-    ["江夏", 14, "郡城", 66000, "荆州"],
-    ["南皮", 13, "郡城", 219000, "冀州"],
-    ["庐江", 13, "郡城", 100000, "扬州"],
-    ["江州", 13, "郡城", 199000, "益州"],
-    ["平原", 12, "郡城", 150000, "冀州"],
-    ["合肥", 12, "郡城", 0, "扬州"],
-    ["柴桑", 12, "郡城", 62000, "扬州"],
-    ["上党", 11, "郡城", 57000, "并州"],
-    ["广陵", 11, "郡城", 0, "徐州"],
-    ["天水", 10, "郡城", 57000, "雍州"],
-    ["武威", 9, "州治", 83000, "凉州"],
-    ["武陵", 9, "郡城", 62000, "荆州"],
-    ["梓潼", 9, "郡城", 94000, "益州"],
-    ["交趾", 9, "郡城", 100000, "交州"],
-    ["新野", 8, "郡城", 59000, "荆州"],
-    ["桂阳", 8, "郡城", 52000, "荆州"],
-    ["零陵", 8, "郡城", 53000, "荆州"],
-    ["永安", 8, "关城", 71000, "益州"],
-    ["番禺", 8, "州治", 0, "交州"],
-    ["襄平", 7, "郡城", 65000, "幽州"],
-    ["北平", 7, "郡城", 118000, "幽州"],
-    ["安定", 7, "郡城", 49000, "雍州"],
-    ["建宁", 6, "郡城", 77000, "益州"],
-    ["云南", 6, "郡城", 65000, "益州"],
-    ["上庸", 6, "郡城", 0, "荆州"],
-    ["敦煌", 5, "郡城", 0, "凉州"],
-    ["平城", 5, "塞", 0, "并州"],
-    ["朔方", 4, "塞", 0, "并州"],
-    ["柳城", 4, "塞", 0, "幽州"],
-    ["伊吾", 3, "塞", 0, "凉州"]
+  /* ---------- V91 城市模型（云端 key = citymodel）----------
+     基础数据取《三国志IX》190 年城池表（州/都市/特技/人口/商業/開発/兵法①②/耐久/隣接都市数）。
+     新增派生列：兵役人口 = 基础人口 × 15%；经商人口 = 基础人口 × 商業 ÷ 1000 × 20%。
+     人口上限逐城可改（默认 1,000,000），人口年增长%逐城可改（默认 10%）。
+     玩家端：主页右侧城市列表 hover 显示本模型；人口按年增长并接收卸甲归田人口，不超过上限。
+     （原「城市人口上限」popcap 页签已删除，由本模型接管；全站重置加点 spreset 逻辑另见下方。） */
+  var CM9 = [
+    /* [都市, 州, 特技, 人口(IX·190年), 商業, 開発, 兵法①, 兵法②, 耐久, 隣接都市数] */
+    ["襄平", "幽州", "弓骑", 65000, 600, 400, "齐射", "", 600, "3＋乌桓"],
+    ["北平", "幽州", "", 118000, 700, 600, "齐射", "", 800, "3＋乌桓"],
+    ["蓟", "幽州", "", 132000, 800, 600, "连射", "", 700, "3＋乌桓"],
+    ["南皮", "冀州", "步兵", 219000, 700, 600, "齐射", "", 800, "4"],
+    ["平原", "冀州", "", 150000, 500, 700, "心攻", "", 600, "4"],
+    ["邺", "冀州", "", 308000, 1000, 600, "陷阱", "", 800, "6"],
+    ["晋阳", "并州", "", 83000, 500, 600, "齐射", "落石", 700, "3"],
+    ["上党", "并州", "", 57000, 600, 500, "齐射", "落石", 700, "3"],
+    ["北海", "青州", "谋略", 200000, 700, 700, "陷阱", "", 600, "3"],
+    ["濮阳", "兖州", "", 283000, 900, 500, "齐射", "", 800, "5"],
+    ["陈留", "兖州", "", 255000, 800, 600, "齐射", "", 700, "5"],
+    ["下邳", "徐州", "", 281000, 700, 1000, "心攻", "", 800, "5"],
+    ["小沛", "徐州", "", 97000, 400, 700, "心攻", "", 600, "5"],
+    ["许昌", "豫州", "", 330000, 1000, 500, "齐射", "", 800, "4"],
+    ["汝南", "豫州", "知识", 225000, 800, 500, "混乱", "射台", 700, "6"],
+    ["洛阳", "司隶", "", 360000, 1000, 500, "陷阱", "", 800, "7"],
+    ["长安", "雍州", "", 248000, 900, 600, "连射", "", 800, "5"],
+    ["安定", "雍州", "策略", 49000, 400, 700, "齐射", "落石", 600, "5"],
+    ["天水", "雍州", "", 57000, 400, 800, "混乱", "落石", 700, "4＋羌"],
+    ["西平", "凉州", "", 63000, 500, 600, "齐射", "落石", 700, "2＋羌"],
+    ["武威", "凉州", "骑马", 83000, 700, 500, "齐射", "落石", 700, "3"],
+    ["寿春", "扬州", "", 109000, 600, 700, "连射", "", 800, "5"],
+    ["庐江", "扬州", "", 100000, 600, 600, "齐射", "射台", 700, "4"],
+    ["建业", "扬州", "", 95000, 900, 700, "齐射", "", 800, "4"],
+    ["吴", "扬州", "", 97000, 700, 800, "混乱", "", 700, "3"],
+    ["会稽", "扬州", "水军", 113000, 600, 1000, "齐射", "", 700, "3＋山越"],
+    ["柴桑", "扬州", "", 62000, 600, 600, "齐射", "射台", 800, "5＋山越"],
+    ["宛", "荆州", "", 205000, 700, 600, "陷阱", "", 800, "5"],
+    ["新野", "荆州", "", 59000, 400, 500, "陷阱", "", 600, "5"],
+    ["襄阳", "荆州", "", 234000, 900, 700, "混乱", "", 800, "4"],
+    ["江陵", "荆州", "", 242000, 800, 800, "连射", "", 800, "5"],
+    ["江夏", "荆州", "", 66000, 600, 500, "齐射", "射台", 800, "2"],
+    ["长沙", "荆州", "", 105000, 700, 500, "连射", "射台", 700, "3"],
+    ["武陵", "荆州", "", 62000, 400, 600, "齐射", "", 700, "5"],
+    ["桂阳", "荆州", "", 52000, 400, 400, "齐射", "", 600, "4＋山越"],
+    ["零陵", "荆州", "", 53000, 500, 400, "齐射", "", 600, "3"],
+    ["西城", "荆州", "攻城", 57000, 400, 500, "齐射", "", 700, "6"],
+    ["永安", "益州", "", 71000, 700, 500, "陷阱", "射台", 800, "3"],
+    ["汉中", "益州", "", 236000, 700, 1000, "心攻", "落石", 800, "5＋羌"],
+    ["梓潼", "益州", "", 94000, 400, 700, "齐射", "射台", 700, "6"],
+    ["成都", "益州", "", 276000, 800, 900, "连射", "射台", 800, "3"],
+    ["江州", "益州", "", 199000, 500, 700, "齐射", "落石", 600, "3"],
+    ["建宁", "益州", "弩兵", 77000, 400, 700, "连射", "", 600, "4＋南蛮"],
+    ["云南", "益州", "", 65000, 400, 800, "妖术", "", 700, "2＋南蛮"],
+    ["交趾", "交州", "", 100000, 500, 600, "齐射", "", 700, "4＋南蛮"]
   ];
-  function popDefCap(name, pop, lv, cap9) {
-    if (cap9 > 0) return cap9;   /* V87：三国志IX 190 年人口直接作为默认上限 */
-    if (name === "洛阳") return 360000;
-    var f = lv === "都城" ? 2.4 : lv === "州治" ? 2.0 : lv === "郡城" ? 1.6 : 1.3;
-    var cap = Math.round((+pop || 20) * 10000 * f / 5000) * 5000;
-    return Math.max(20000, Math.min(360000, cap));
+  function cmDefCap() { return 1000000; }
+  function cmDefGrow() { return 10; }
+  function cmMilPop(r) { return Math.round(r[3] * 0.15); }
+  function cmMerPop(r) { return Math.round(r[3] * (r[4] || 0) / 1000 * 0.2); }
+  var cmCfg = null;     /* 云端已有配置（key=citymodel）：{ 城名: { cap, grow } } */
+  var cmEdits = {};     /* 本次会话修改：城名 -> { cap, grow }（尚未保存） */
+  var cmSort = "";      /* ""=默认顺序 | "pop"=人口降序 | "cap"=上限降序 */
+  function cmEffVal(r) {
+    var n = r[0];
+    var e = cmEdits[n] || (cmCfg && cmCfg[n]) || {};
+    var cap = Math.round(+e.cap);
+    var grow = (+e.grow);
+    return {
+      cap: (isFinite(cap) && cap > 0) ? cap : cmDefCap(),
+      grow: (isFinite(grow) && grow >= 0) ? Math.min(100, grow) : cmDefGrow()
+    };
   }
-  var popcapCfg = null;     /* 云端已有配置（key=popcap） */
-  var popcapEdits = {};     /* 本次会话修改：城名 -> 数值（尚未保存） */
-  var popcapSort = "";      /* ""=默认顺序 | "cur"=当前上限降序 | "def"=默认上限降序 */
-  function popDefVal(c) { return popDefCap(c[0], c[1], c[2], c[3]); }
-  function popEffVal(c) {
-    var n = c[0];
-    if (popcapEdits[n] != null && isFinite(+popcapEdits[n])) return Math.round(+popcapEdits[n]);
-    if (popcapCfg && popcapCfg[n] != null && +popcapCfg[n] > 0) return Math.round(+popcapCfg[n]);
-    return popDefVal(c);
-  }
-  function popIsMod(c) {
-    var n = c[0];
-    if (popcapEdits[n] != null) return true;
-    return !!(popcapCfg && popcapCfg[n] != null && +popcapCfg[n] > 0 && Math.round(+popcapCfg[n]) !== popDefVal(c));
-  }
-  function popcapPaint() {
-    var rows = POP_CITIES.slice();
-    if (popcapSort === "cur") rows.sort(function (a, b) { return popEffVal(b) - popEffVal(a) || a[0].localeCompare(b[0], "zh"); });
-    else if (popcapSort === "def") rows.sort(function (a, b) { return popDefVal(b) - popDefVal(a) || a[0].localeCompare(b[0], "zh"); });
+  function cmIsMod(r) { return !!cmEdits[r[0]] || !!(cmCfg && cmCfg[r[0]] && (+cmCfg[r[0]].cap > 0 || (+cmCfg[r[0]].grow >= 0 && +cmCfg[r[0]].grow !== cmDefGrow()))); }
+  function cmPaint() {
+    var rows = CM9.slice();
+    if (cmSort === "pop") rows.sort(function (a, b) { return b[3] - a[3] || a[0].localeCompare(b[0], "zh"); });
+    else if (cmSort === "cap") rows.sort(function (a, b) { return cmEffVal(b).cap - cmEffVal(a).cap || a[0].localeCompare(b[0], "zh"); });
     function th(label, key) {
-      var arrow = popcapSort === key ? " ▾" : "";
-      return '<th data-pcsort="' + key + '" style="text-align:left;padding:7px 10px;position:sticky;top:0;background:#10151f;border-bottom:1px solid #2a3547;font-weight:600;white-space:nowrap;' +
+      var arrow = cmSort === key ? " ▾" : "";
+      return '<th data-cmsort="' + key + '" style="text-align:left;padding:7px 9px;position:sticky;top:0;background:#10151f;border-bottom:1px solid #2a3547;font-weight:600;white-space:nowrap;' +
         (key ? "cursor:pointer;user-select:none" : "") + '">' + label + arrow + "</th>";
     }
+    var td = 'padding:5px 9px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap;font-size:12.5px';
     var html = '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>' +
-      th("州") + th("城市") + th("等级") + th("人口（IX·190年）") + th("默认上限", "def") + th("当前上限", "cur") +
+      th("州") + th("都市") + th("特技") + th("人口（IX·190年）", "pop") + th("商業") + th("開発") + th("兵法①") + th("兵法②") + th("耐久") + th("隣接") +
+      th("兵役人口") + th("经商人口") + th("人口上限", "cap") + th("增长%/年") +
       "</tr></thead><tbody>";
-    rows.forEach(function (c, i) {
-      var def = popDefVal(c), cur = popEffVal(c), mod = popIsMod(c);
-      html += '<tr data-pcr="' + POP_CITIES.indexOf(c) + '" title="双击修改「' + c[0] + '」的人口上限" style="cursor:pointer;' +
+    rows.forEach(function (r, i) {
+      var ef = cmEffVal(r), mod = cmIsMod(r);
+      var bf2 = r[7] ? ' <span style="opacity:.7">' + r[7] + "</span>" : "";
+      html += '<tr data-cmr="' + CM9.indexOf(r) + '" title="双击修改「' + r[0] + '」的人口上限与年增长" style="cursor:pointer;' +
         (i % 2 ? "background:rgba(255,255,255,.03);" : "") + '">' +
-        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap">' + c[4] + "</td>" +
-        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)"><b>' + c[0] + "</b>" + (c[0] === "洛阳" ? ' <span style="font-size:11px;color:#ffd479">全图最高</span>' : "") + "</td>" +
-        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)">' + c[2] + "</td>" +
-        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-family:ui-monospace,Consolas,monospace">' + (c[3] > 0 ? c[3].toLocaleString("en-US") : '<span style="opacity:.45">—（系数推导）</span>') + "</td>" +
-        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-family:ui-monospace,Consolas,monospace">' + def.toLocaleString("en-US") + "</td>" +
-        '<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-family:ui-monospace,Consolas,monospace;color:' + (mod ? "#ffd479" : "inherit") + '">' +
-        cur.toLocaleString("en-US") + (mod ? ' <span style="font-size:11px">改</span>' : "") + "</td></tr>";
+        '<td style="' + td + '">' + r[1] + "</td>" +
+        '<td style="' + td + '"><b>' + r[0] + "</b>" + (r[0] === "洛阳" ? ' <span style="font-size:11px;color:#ffd479">都</span>' : "") + "</td>" +
+        '<td style="' + td + '">' + (r[2] ? '<span style="color:#9ec9ff">' + r[2] + "</span>" : '<span style="opacity:.4">—</span>') + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace">' + r[3].toLocaleString("en-US") + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace">' + r[4] + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace">' + r[5] + "</td>" +
+        '<td style="' + td + '">' + r[6] + "</td>" +
+        '<td style="' + td + '">' + bf2 + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace">' + r[8] + "</td>" +
+        '<td style="' + td + '">' + r[9] + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace;color:#8fd6a2">' + cmMilPop(r).toLocaleString("en-US") + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace;color:#9ec9ff">' + cmMerPop(r).toLocaleString("en-US") + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace;color:' + (mod ? "#ffd479" : "inherit") + '">' +
+        ef.cap.toLocaleString("en-US") + (mod ? ' <span style="font-size:11px">改</span>' : "") + "</td>" +
+        '<td style="' + td + ';font-family:ui-monospace,Consolas,monospace">' + ef.grow + "%</td></tr>";
     });
     html += "</tbody></table>";
-    $("#popcapTable").innerHTML = html;
-    var tot = 0, mx = 0, nmod = 0;
-    POP_CITIES.forEach(function (c) { var v = popEffVal(c); tot += v; mx = Math.max(mx, v); if (popIsMod(c)) nmod++; });
-    $("#popcapMsg").textContent = "共 " + POP_CITIES.length + " 城 · 上限合计 " + tot.toLocaleString("en-US") + " · 最高 " + mx.toLocaleString("en-US") +
-      " · 已改 " + nmod + " 城" + (popcapEdits && Object.keys(popcapEdits).length ? "（未保存）" : "");
+    $("#cmTable").innerHTML = html;
+    var nmod = 0, capTot = 0;
+    CM9.forEach(function (r) { if (cmIsMod(r)) nmod++; capTot += cmEffVal(r).cap; });
+    $("#cmMsg").textContent = "共 " + CM9.length + " 城 · 上限合计 " + capTot.toLocaleString("en-US") +
+      "（默认 100 万/城） · 已改 " + nmod + " 城" + (cmEdits && Object.keys(cmEdits).length ? "（未保存）" : "");
   }
-  /* 双击行 → 弹窗修改 */
-  function popcapEditModal(c) {
-    var def = popDefVal(c), cur = popEffVal(c);
+  /* 双击行 → 弹窗修改（人口上限 + 年增长%） */
+  function cmEditModal(r) {
+    var ef = cmEffVal(r), isDef = !(cmCfg && cmCfg[r[0]]);
     var ov = document.createElement("div");
     ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:98;display:flex;align-items:center;justify-content:center";
-    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:380px;color:#e8ecf3;font-family:inherit">' +
-      '<div style="font-weight:600;font-size:15px;margin-bottom:12px">修改人口上限 — ' + esc(c[0]) + "（" + c[4] + " · " + c[2] + "）</div>" +
-      '<div style="font-size:13px;margin-bottom:6px">默认上限（三国志IX 190 年）：' + def.toLocaleString("en-US") + (c[3] > 0 ? "" : "（该城未收录三国志IX 表，按等级系数推导）") + "</div>" +
-      '<div style="font-size:13px;margin-bottom:10px">当前上限：' + cur.toLocaleString("en-US") + (popIsMod(c) ? "（已改）" : "（默认）") + "</div>" +
-      '<div style="font-size:13px;margin-bottom:12px">新上限：<input id="pcN" type="number" min="1000" max="9999999" step="1000" value="' + cur + '" style="width:120px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"> <span class="muted" style="font-size:12px">（1000 ~ 9,999,999）</span></div>' +
+    ov.innerHTML = '<div style="background:#141a24;border:1px solid #2a3547;border-radius:10px;padding:20px 22px;min-width:420px;color:#e8ecf3;font-family:inherit">' +
+      '<div style="font-weight:600;font-size:15px;margin-bottom:4px">修改城市模型 — ' + esc(r[0]) + "（" + r[1] + (r[2] ? " · " + r[2] : "") + "）</div>" +
+      '<div class="muted" style="font-size:12px;margin-bottom:12px">人口（IX·190年）' + r[3].toLocaleString("en-US") + " · 兵役人口 " + cmMilPop(r).toLocaleString("en-US") + " · 经商人口 " + cmMerPop(r).toLocaleString("en-US") + "</div>" +
+      '<div style="font-size:13px;margin-bottom:8px">人口上限：<input id="cmCap" type="number" min="1000" max="9999999" step="1000" value="' + ef.cap + '" style="width:130px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"> <span class="muted" style="font-size:12px">（默认 1,000,000）</span></div>' +
+      '<div style="font-size:13px;margin-bottom:12px">年增长%：<input id="cmGrow" type="number" min="0" max="100" step="0.5" value="' + ef.grow + '" style="width:80px;padding:4px 6px;border:1px solid #2a3547;border-radius:6px;background:rgba(255,255,255,.04);color:#e8ecf3;font-family:inherit"> <span class="muted" style="font-size:12px">（默认 10%/年）</span></div>' +
       '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-      '<button id="pcReset" class="btn" style="padding:6px 14px;margin-right:auto">恢复默认值</button>' +
-      '<button id="pcCancel" class="btn" style="padding:6px 14px">取消</button>' +
-      '<button id="pcOk" class="btn gold" style="padding:6px 14px">确定</button></div></div>';
+      '<button id="cmResetRow" class="btn" style="padding:6px 14px;margin-right:auto">恢复默认</button>' +
+      '<button id="cmCancel" class="btn" style="padding:6px 14px">取消</button>' +
+      '<button id="cmOk" class="btn gold" style="padding:6px 14px">确定</button></div></div>';
     document.body.appendChild(ov);
-    var inp = ov.querySelector("#pcN");
-    inp.focus(); inp.select();
-    ov.querySelector("#pcCancel").onclick = function () { document.body.removeChild(ov); };
-    ov.querySelector("#pcReset").onclick = function () { inp.value = def; };
+    var inpC = ov.querySelector("#cmCap"), inpG = ov.querySelector("#cmGrow");
+    inpC.focus(); inpC.select();
+    ov.querySelector("#cmCancel").onclick = function () { document.body.removeChild(ov); };
+    ov.querySelector("#cmResetRow").onclick = function () { inpC.value = cmDefCap(); inpG.value = cmDefGrow(); };
     function ok() {
-      var v = Math.round(+String(inp.value).replace(/[^0-9]/g, "") || 0);
-      if (v < 1000 || v > 9999999) { admTip("上限需在 1000 ~ 9,999,999 之间", true); return; }
-      popcapEdits[c[0]] = v;
+      var cap = Math.round(+String(inpC.value).replace(/[^0-9]/g, "") || 0);
+      var grow = +String(inpG.value).replace(/[^0-9.]/g, "") || 0;
+      if (cap < 1000 || cap > 9999999) { admTip("上限需在 1,000 ~ 9,999,999 之间", true); return; }
+      if (grow < 0 || grow > 100) { admTip("年增长需在 0 ~ 100 之间", true); return; }
+      cmEdits[r[0]] = { cap: cap, grow: Math.round(grow * 10) / 10 };
       document.body.removeChild(ov);
-      popcapPaint();
+      cmPaint();
     }
-    ov.querySelector("#pcOk").onclick = ok;
-    inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") ok(); if (ev.key === "Escape") document.body.removeChild(ov); });
+    ov.querySelector("#cmOk").onclick = ok;
+    [inpC, inpG].forEach(function (el) {
+      el.addEventListener("keydown", function (ev) { if (ev.key === "Enter") ok(); if (ev.key === "Escape") document.body.removeChild(ov); });
+    });
   }
-  $("#popcapTable").addEventListener("dblclick", function (ev) {
-    var tr = ev.target.closest ? ev.target.closest("tr[data-pcr]") : null;
+  $("#cmTable").addEventListener("dblclick", function (ev) {
+    var tr = ev.target.closest ? ev.target.closest("tr[data-cmr]") : null;
     if (!tr) return;
-    var c = POP_CITIES[parseInt(tr.getAttribute("data-pcr"), 10)];
-    if (c) popcapEditModal(c);
+    var r = CM9[parseInt(tr.getAttribute("data-cmr"), 10)];
+    if (r) cmEditModal(r);
   });
-  $("#popcapTable").addEventListener("click", function (ev) {
-    var th = ev.target.closest ? ev.target.closest("th[data-pcsort]") : null;
+  $("#cmTable").addEventListener("click", function (ev) {
+    var th = ev.target.closest ? ev.target.closest("th[data-cmsort]") : null;
     if (!th) return;
-    var k = th.getAttribute("data-pcsort");
-    popcapSort = (popcapSort === k) ? "" : k;
-    popcapPaint();
+    var k = th.getAttribute("data-cmsort");
+    cmSort = (cmSort === k) ? "" : k;
+    cmPaint();
   });
-  function popcapLoad() {
-    call("sg_cfg_get", { p_key: "popcap" }).then(function (r) {
+  function cmLoad() {
+    $("#cmUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "citymodel" }).then(function (r) {
       var o = null;
       if (r && r.ok && r.data) {
         o = r.data;
         if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        if (r.updated_at) $("#cmUpdated").textContent = "云端更新于 " + dt(r.updated_at);
       }
-      popcapCfg = (o && typeof o === "object") ? o : null;
-      popcapEdits = {};
-      popcapPaint();
-    })["catch"](function () { popcapCfg = null; popcapEdits = {}; popcapPaint(); });
+      cmCfg = (o && typeof o === "object") ? o : null;
+      cmEdits = {};
+      cmPaint();
+    })["catch"](function () { cmCfg = null; cmEdits = {}; cmPaint(); });
   }
-  $("#popcapDefault").addEventListener("click", function () {
-    popcapEdits = {}; popcapPaint();
-    $("#popcapMsg").textContent += "　（已恢复显示默认值：未改动的城回到默认；如需覆盖云端旧值请再点「保存人口上限」）";
+  $("#cmReload").addEventListener("click", cmLoad);
+  $("#cmReset").addEventListener("click", function () {
+    cmEdits = {}; cmPaint();
+    $("#cmMsg").textContent += "　（已恢复显示默认值：上限 100 万 / 增长 10%；如需覆盖云端旧值请再点「保存并全站生效」）";
   });
-  $("#popcapSave").addEventListener("click", function () {
-    var data = {}, over = [];
-    POP_CITIES.forEach(function (c) { data[c[0]] = popEffVal(c); });
-    var luo = data["洛阳"] || popDefCap("洛阳", 42, "都城", 360000);
-    POP_CITIES.forEach(function (c) { if (data[c[0]] > luo) over.push(c[0]); });
-    if (over.length && !confirm("这些城的上限高于洛阳（" + over.slice(0, 5).join("、") + "），仍要保存？")) return;
-    var btn = $("#popcapSave");
+  $("#cmSave").addEventListener("click", function () {
+    var data = {};
+    CM9.forEach(function (r) { var ef = cmEffVal(r); data[r[0]] = { cap: ef.cap, grow: ef.grow }; });
+    var btn = $("#cmSave");
     btn.disabled = true;
-    call("sg_cfg_set", { p_token: token(), p_key: "popcap", p_data: data }).then(function (r) {
+    call("sg_cfg_set", { p_token: token(), p_key: "citymodel", p_data: data }).then(function (r) {
       btn.disabled = false;
-      if (r && r.ok) { popcapCfg = data; popcapEdits = {}; popcapPaint(); admTip("人口上限已保存，全站生效（玩家端刷新或下次打开拉取）"); }
+      if (r && r.ok) { cmCfg = data; cmEdits = {}; cmPaint(); admTip("城市模型已保存，全站生效（玩家端刷新或下次打开拉取）"); }
       else if (r && r.err === "unauthorized") logout();
       else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
     });
   });
+  /* ---------- V81 全站重置加点（云端 key = spreset；原城市人口上限 popcap 页签已由「城市模型」citymodel 接管） ---------- */
   /* ---------- V82 人口增长 · 天灾 · 国策模型（云端 key = popmodel） ---------- */
   var POPM_DEF_A = {
     growYear: 10, chaos: 0.3, disRate: 12, disLoss: 6, disFarm: 25, disGrowthOff: 1,
@@ -2622,6 +2639,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#tab-shop").hidden = state.tab !== "shop";
       $("#tab-econ").hidden = state.tab !== "econ";
       $("#tab-mil").hidden = state.tab !== "mil";
+      $("#tab-citym").hidden = state.tab !== "citym";
       $("#tab-popm").hidden = state.tab !== "popm";
       $("#tab-mig").hidden = state.tab !== "mig";
       if (state.tab === "acc") loadAccounts(true);
@@ -2631,6 +2649,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       if (state.tab === "shop") shopLoad();
       if (state.tab === "econ") ecoLoad();
       if (state.tab === "mil") milLoad();
+      if (state.tab === "citym") cmLoad();
       if (state.tab === "popm") popmLoad();
     });
   });

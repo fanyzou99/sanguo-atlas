@@ -10149,9 +10149,9 @@ var BOTS = [
           }
           return false;
         })["catch"](function () { return false; });
-        /* V81：城市人口上限（key = popcap）与「重置全部加点」时间戳（key = spreset） */
-        var p9 = rpcP("sg_cfg_get", { p_key: "popcap" }).then(function (r) {
-          if (r && r.ok && r.data) { if (applyPopCapCfg(r.data) && me()) { save(); rerender(); } return true; }
+        /* V91：城市模型（后台「城市模型」保存，key = citymodel；原 popcap 由其接管）与「重置全部加点」时间戳（key = spreset） */
+        var p9 = rpcP("sg_cfg_get", { p_key: "citymodel" }).then(function (r) {
+          if (r && r.ok && r.data) { if (applyCityModelCfg(r.data) && me()) { save(); rerender(); } return true; }
           return false;
         })["catch"](function () { return false; });
         var p10 = rpcP("sg_cfg_get", { p_key: "spreset" }).then(function (r) {
@@ -12505,7 +12505,8 @@ var BOTS = [
     if (dis && POPM.disGrowthOff) return dis;
     if (c.popMul == null) c.popMul = 1;
     var st = popStableInfo(u, c), pf = popPolicyOf(c);
-    var rate = (POPM.growYear || 0) / 100 * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0));
+    /* V91：年增长% 优先取「城市模型」逐城配置，否则走「人口·政策」全局 growYear */
+    var rate = cityGrowPctOf(u, c) / 100 * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0));
     if (rate > 0) c.popMul = Math.max(0.2, Math.min(6, c.popMul * (1 + rate)));
     return dis;
   }
@@ -12522,67 +12523,145 @@ var BOTS = [
   }
   function popYearInfo(u, cObj) {
     var c = cObj || ensureCity(u), st = popStableInfo(u, c), pf = popPolicyOf(c);
-    var rate = Math.round((POPM.growYear || 0) * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0)) * 10) / 10;
+    /* V91：增长% 优先取城市模型逐城配置 */
+    var rate = Math.round(cityGrowPctOf(u, c) * (pf.pop || 1) * (st.stable ? 1 : (POPM.chaos || 0)) * 10) / 10;
     var cur = cityPop(u, c), cap = cityPopCap(u, c);
     return { rate: rate, stable: st.stable, why: st.why, cur: cur, cap: cap,
       next: Math.min(cap, Math.round(cur * (1 + rate / 100))), mul: c.popMul || 1,
       loss: c.popLoss || 0, disYear: c.disYear, disKind: c.disKind, disLoss: c.disLoss || 0, pol: pf };
   }
   function applyPopModelCfgPull(o) { return applyPopModelCfg(o); }
-  var POPCAP = null;
-  /* V87：城市人口上限默认表 —— 采用《三国志IX》190 年城市人口数据（sangokushi9.shiyo.info/toshi.html），
-     逐城可改（运营管控台「人口上限」云端 key = popcap 覆盖本表），洛阳 36 万为全图最高。
-     未收录的塞城/边城（临淄、合肥、广陵、番禺、上庸、敦煌、平城、朔方、柳城、伊吾）沿用等级系数推导。 */
-  var POP_CAP_9 = {
-    "洛阳": 360000,
-    "许昌": 330000, "邺": 308000, "成都": 276000, "长安": 248000,
-    "江陵": 242000, "襄阳": 234000, "汝南": 225000, "南皮": 219000,
-    "濮阳": 283000, "下邳": 281000, "陈留": 255000, "汉中": 236000,
-    "北海": 200000, "宛": 205000, "平原": 150000, "蓟": 132000,
-    "会稽": 113000, "寿春": 109000, "长沙": 105000, "庐江": 100000, "交趾": 100000,
-    "吴": 97000, "建业": 95000, "梓潼": 94000,
-    "江州": 199000, "北平": 118000,
-    "晋阳": 83000, "武威": 83000, "永安": 71000,
-    "建宁": 77000, "襄平": 65000, "云南": 65000, "江夏": 66000,
-    "柴桑": 62000, "武陵": 62000,
-    "新野": 59000, "上党": 57000, "天水": 57000,
-    "零陵": 53000, "桂阳": 52000, "安定": 49000
-  };
-  function popCapLuoYang() {
-    var v = (POPCAP && POPCAP["洛阳"]) || POP_CAP_9["洛阳"] || 360000;
-    return Math.max(100000, Math.round(v));
-  }
-  function popCapDefaultOf(name, popWan, lvName) {
-    var hi = popCapLuoYang();
-    if (name === "洛阳") return hi;
-    if (POP_CAP_9[name] > 0) return POP_CAP_9[name];   /* V87：三国志IX 190 年数据优先 */
-    var f = lvName === "都城" ? 2.4 : lvName === "州治" ? 2.0 : lvName === "郡城" ? 1.6 : 1.3;
-    var cap = Math.round((+popWan || 20) * 10000 * f / 5000) * 5000;
-    return Math.max(20000, Math.min(hi, cap));
-  }
-  /* 静态取某城上限（不依赖玩家存档）——云端 popcap 覆盖 > 三国志IX 默认表 > 等级系数推导 */
-  function popCapStatic(cityName) {
-    if (POPCAP && POPCAP[cityName] > 0) return Math.round(POPCAP[cityName]);
-    if (POP_CAP_9[cityName] > 0) return POP_CAP_9[cityName];
-    var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
-    return popCapDefaultOf(cityName, cd ? cd.pop : 20, cd ? cd.lv : "郡城");
-  }
-  function cityPopCap(u, cObj) {
-    var c = cObj || ensureCity(u);
-    var cityName = (c && c.name) || (u && (u.bat.cur || u.bat.spawn)) || "洛阳";
-    return popCapStatic(cityName);
-  }
-  function applyPopCapCfg(o) {
+  var CITYMODEL = null;
+  /* ================= V91：城市模型（后台「城市模型」页签，云端 key = citymodel） =================
+     基础数据取《三国志IX》190 年城池表（45 城）：州 / 特技 / 人口(190年) / 商業 / 開発 / 兵法①② / 耐久 / 隣接都市数。
+     派生：兵役人口 = 基础人口 × 15%；经商人口 = 基础人口 × 商業 ÷ 1000 × 20%。
+     人口上限逐城可改（后台可改，默认 1,000,000）；人口年增长%逐城可改（默认走「人口·政策」growYear）。
+     人口按年增长（城池安定复利），并接收卸甲归田（预备役 / 伤兵退回）人口，总数不超过上限。
+     玩家端主页右侧城市列表 hover 显示本模型数据。 */
+  var CITY_MODEL_9 = [
+    /* [都市, 州, 特技, 人口(IX·190年), 商業, 開発, 兵法①, 兵法②, 耐久, 隣接都市数] */
+    ["襄平", "幽州", "弓骑", 65000, 600, 400, "齐射", "", 600, "3＋乌桓"],
+    ["北平", "幽州", "", 118000, 700, 600, "齐射", "", 800, "3＋乌桓"],
+    ["蓟", "幽州", "", 132000, 800, 600, "连射", "", 700, "3＋乌桓"],
+    ["南皮", "冀州", "步兵", 219000, 700, 600, "齐射", "", 800, "4"],
+    ["平原", "冀州", "", 150000, 500, 700, "心攻", "", 600, "4"],
+    ["邺", "冀州", "", 308000, 1000, 600, "陷阱", "", 800, "6"],
+    ["晋阳", "并州", "", 83000, 500, 600, "齐射", "落石", 700, "3"],
+    ["上党", "并州", "", 57000, 600, 500, "齐射", "落石", 700, "3"],
+    ["北海", "青州", "谋略", 200000, 700, 700, "陷阱", "", 600, "3"],
+    ["濮阳", "兖州", "", 283000, 900, 500, "齐射", "", 800, "5"],
+    ["陈留", "兖州", "", 255000, 800, 600, "齐射", "", 700, "5"],
+    ["下邳", "徐州", "", 281000, 700, 1000, "心攻", "", 800, "5"],
+    ["小沛", "徐州", "", 97000, 400, 700, "心攻", "", 600, "5"],
+    ["许昌", "豫州", "", 330000, 1000, 500, "齐射", "", 800, "4"],
+    ["汝南", "豫州", "知识", 225000, 800, 500, "混乱", "射台", 700, "6"],
+    ["洛阳", "司隶", "", 360000, 1000, 500, "陷阱", "", 800, "7"],
+    ["长安", "雍州", "", 248000, 900, 600, "连射", "", 800, "5"],
+    ["安定", "雍州", "策略", 49000, 400, 700, "齐射", "落石", 600, "5"],
+    ["天水", "雍州", "", 57000, 400, 800, "混乱", "落石", 700, "4＋羌"],
+    ["西平", "凉州", "", 63000, 500, 600, "齐射", "落石", 700, "2＋羌"],
+    ["武威", "凉州", "骑马", 83000, 700, 500, "齐射", "落石", 700, "3"],
+    ["寿春", "扬州", "", 109000, 600, 700, "连射", "", 800, "5"],
+    ["庐江", "扬州", "", 100000, 600, 600, "齐射", "射台", 700, "4"],
+    ["建业", "扬州", "", 95000, 900, 700, "齐射", "", 800, "4"],
+    ["吴", "扬州", "", 97000, 700, 800, "混乱", "", 700, "3"],
+    ["会稽", "扬州", "水军", 113000, 600, 1000, "齐射", "", 700, "3＋山越"],
+    ["柴桑", "扬州", "", 62000, 600, 600, "齐射", "射台", 800, "5＋山越"],
+    ["宛", "荆州", "", 205000, 700, 600, "陷阱", "", 800, "5"],
+    ["新野", "荆州", "", 59000, 400, 500, "陷阱", "", 600, "5"],
+    ["襄阳", "荆州", "", 234000, 900, 700, "混乱", "", 800, "4"],
+    ["江陵", "荆州", "", 242000, 800, 800, "连射", "", 800, "5"],
+    ["江夏", "荆州", "", 66000, 600, 500, "齐射", "射台", 800, "2"],
+    ["长沙", "荆州", "", 105000, 700, 500, "连射", "射台", 700, "3"],
+    ["武陵", "荆州", "", 62000, 400, 600, "齐射", "", 700, "5"],
+    ["桂阳", "荆州", "", 52000, 400, 400, "齐射", "", 600, "4＋山越"],
+    ["零陵", "荆州", "", 53000, 500, 400, "齐射", "", 600, "3"],
+    ["西城", "荆州", "攻城", 57000, 400, 500, "齐射", "", 700, "6"],
+    ["永安", "益州", "", 71000, 700, 500, "陷阱", "射台", 800, "3"],
+    ["汉中", "益州", "", 236000, 700, 1000, "心攻", "落石", 800, "5＋羌"],
+    ["梓潼", "益州", "", 94000, 400, 700, "齐射", "射台", 700, "6"],
+    ["成都", "益州", "", 276000, 800, 900, "连射", "射台", 800, "3"],
+    ["江州", "益州", "", 199000, 500, 700, "齐射", "落石", 600, "3"],
+    ["建宁", "益州", "弩兵", 77000, 400, 700, "连射", "", 600, "4＋南蛮"],
+    ["云南", "益州", "", 65000, 400, 800, "妖术", "", 700, "2＋南蛮"],
+    ["交趾", "交州", "", 100000, 500, 600, "齐射", "", 700, "4＋南蛮"]
+  ];
+  var CM9_MAP = {};
+  CITY_MODEL_9.forEach(function (r) {
+    CM9_MAP[r[0]] = { st: r[1], teq: r[2], pop9: r[3], com: r[4], dev: r[5], bf1: r[6], bf2: r[7], dur: r[8], adj: r[9] };
+  });
+  function cmDefCap() { return 1000000; }
+  function cmDefGrow() { return 10; }
+  function cmMilPop(name) { var m = CM9_MAP[name]; return m ? Math.round(m.pop9 * 0.15) : 0; }
+  function cmMerPop(name) { var m = CM9_MAP[name]; return m ? Math.round(m.pop9 * (m.com || 0) / 1000 * 0.2) : 0; }
+  /* 云端 citymodel 覆盖：{ 城名: { cap, grow } }（兼容旧 popcap 数字格式） */
+  function applyCityModelCfg(o) {
     if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { return false; } }
     if (!o || typeof o !== "object") return false;
     var m = {}, n = 0;
     Object.keys(o).forEach(function (k) {
-      var v = Math.round(+o[k]);
-      if (isFinite(v) && v > 0) { m[k] = v; n++; }
+      var v = o[k];
+      if (typeof v === "number") { m[k] = { cap: Math.round(v) }; n++; return; }   /* 旧 popcap 兼容 */
+      if (v && typeof v === "object") {
+        var e = {};
+        if (+v.cap > 0) e.cap = Math.round(+v.cap);
+        if (v.grow != null && isFinite(+v.grow) && +v.grow >= 0) e.grow = Math.min(100, +v.grow);
+        if (e.cap != null || e.grow != null) { m[k] = e; n++; }
+      }
     });
     if (!n) return false;
-    POPCAP = m;
+    CITYMODEL = m;
     return true;
+  }
+  /* 城市模型静态数据（不依赖玩家存档）：IX 表优先，未收录城从城市图鉴推导 */
+  function cityModelOf(cityName) {
+    var m = CM9_MAP[cityName];
+    if (!m) {
+      var cd = ((window.__SGAtlas && window.__SGAtlas.cityData) || []).filter(function (x) { return x.n === cityName; })[0];
+      m = { st: cd ? cd.py : "", teq: "", pop9: cd ? Math.round(cd.pop * 10000) : 0, com: cd ? cd.com * 10 : 0, dev: 0, bf1: "", bf2: "", dur: 0, adj: "" };
+    }
+    var o = (CITYMODEL && CITYMODEL[cityName]) || {};
+    return {
+      name: cityName, st: m.st, teq: m.teq, pop9: m.pop9, com: m.com, dev: m.dev, bf1: m.bf1, bf2: m.bf2, dur: m.dur, adj: m.adj,
+      mil: Math.round(m.pop9 * 0.15), mer: Math.round(m.pop9 * (m.com || 0) / 1000 * 0.2),
+      cap: (+o.cap > 0) ? Math.round(+o.cap) : cmDefCap(),
+      grow: (o.grow != null && isFinite(+o.grow) && +o.grow >= 0) ? Math.min(100, +o.grow) : null
+    };
+  }
+  function cityNameOf(u, cObj) {
+    var c = cObj || (u && u.bat && u.bat.city) || null;
+    return (c && c.name) || (u && (u.bat.cur || u.bat.spawn)) || "洛阳";
+  }
+  /* 静态取某城人口上限：云端 citymodel 逐城覆盖 > 默认 100 万（V91 起，原三国志IX 上限表废除） */
+  function popCapStatic(cityName) {
+    return cityModelOf(cityName).cap;
+  }
+  function cityPopCap(u, cObj) {
+    var c = cObj || ensureCity(u);
+    return popCapStatic(cityNameOf(u, c));
+  }
+  /* 逐城年增长%：城市模型逐城覆盖 > 「人口·政策」全局 growYear */
+  function cityGrowPctOf(u, cObj) {
+    var cm = cityModelOf(cityNameOf(u, cObj));
+    return cm.grow != null ? cm.grow : (POPM.growYear || 0);
+  }
+  /* V91：城市模型 hover 提示（主页右侧城市列表：州/特技/兵法/耐久/隣接/兵役/经商/人口上限/年增长） */
+  function cityModelTip(cn, opts) {
+    opts = opts || {};
+    var m = cityModelOf(cn);
+    var bf = m.bf1 + (m.bf2 ? "·" + m.bf2 : "");
+    var L = [];
+    L.push("【" + cn + (m.st ? " · " + m.st : "") + (m.teq ? " · 特技：" + m.teq : "") + "】");
+    L.push("兵法：" + (bf || "—") + "　耐久 " + (m.dur || "—") + "　隣接都市数：" + (m.adj || "—"));
+    L.push("人口（190年）" + fmt(m.pop9) + "　商業 " + (m.com || "—") + "　開発 " + (m.dev || "—"));
+    L.push("兵役人口 " + fmt(m.mil) + "　经商人口 " + fmt(m.mer));
+    if (opts.curPop != null) {
+      L.push("当前人口 " + fmt(opts.curPop) + " / 上限 " + fmt(m.cap) + " · 年增长 " + (m.grow != null ? m.grow : cmDefGrow()) + "%");
+    } else {
+      L.push("人口上限 " + fmt(m.cap) + " · 年增长 " + (m.grow != null ? m.grow : cmDefGrow()) + "%");
+    }
+    if (opts.extra) L.push(opts.extra);
+    return L.join("\n");
   }
   function cityPopRaw(u, cObj) {
     var c = cObj || ensureCity(u);
@@ -15507,8 +15586,10 @@ var BOTS = [
       });
     });
     var house = !!c.house;
+    /* V91：hover 显示城市模型 + 预备役/伤兵 */
+    var tip91 = cityModelTip(cn, { curPop: cityPop(u, c), extra: "🏛 " + gt("poolT") + " " + fmt(c.pool || 0) + " · " + gt("infT") + " " + fmt(cityWoundN(c)) });
     return '<button' + (on ? "" : ' data-bat="cityswitch" data-n="' + esc(cn) + '"') +
-      ' class="sg-wrow own' + (on ? " on" : "") + '" title="' + esc(gt("poolT") + " " + fmt(c.pool || 0) + " · " + gt("infT") + " " + fmt(cityWoundN(c))) + '">' +
+      ' class="sg-wrow own' + (on ? " on" : "") + '" title="' + esc(tip91) + '">' +
       '<span class="sg-wbar"></span>' +
       '<span class="sg-wmain"><b>' + esc(cn) + (house ? ' <i class="sg-whouse">🏛</i>' : "") +
       ' <i class="sg-wlv">Lv.' + (c.lv || 1) + "</i></b>" +
@@ -15520,7 +15601,9 @@ var BOTS = [
     if (!c) return "";
     var wl = warlordOf(cn) || { lord: c.lord || "?", color: "#8a8a8a", title: "" };
     var mor = c.morale || 60;
-    return '<button class="sg-wrow foe" data-bat="siege-open" data-n="' + esc(cn) + '" style="--wc:' + wl.color + '">' +
+    /* V91：hover 显示城市模型 + 守军概况 */
+    var tip91 = cityModelTip(cn, { extra: "⚔ " + gt("warGuardT") + " " + fmt(c.troops || 0) + (c.wounded ? " · ⚕ " + fmt(c.wounded) : "") });
+    return '<button class="sg-wrow foe" data-bat="siege-open" data-n="' + esc(cn) + '" style="--wc:' + wl.color + '" title="' + esc(tip91) + '">' +
       '<span class="sg-wbar"></span>' +
       '<span class="sg-wmain"><b>' + esc(cn) + ' <i class="sg-wlv">Lv.' + (c.lv || 5) + "</i></b>" +
       '<small><span>⚔ ' + fmt(c.troops || 0) + "</span><span>" + esc(wl.lord) +
@@ -17237,6 +17320,198 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       "</style></div>";
   }
 
+  /* ================= V91：点将台 · 武将编队 一体化（参考样例卡式布局） =================
+     出战编队（teams）与点将台部队（armies）整合为一个面板，统一用「主将/副将」竖版武将卡：
+     等级角标 + 觉醒标记 + 阵营名 + 兵种适性/带兵双段条 + 技能列表（S 技能名 + 说明，未解锁灰显）。
+     交互全部沿用原有 data-bat 处理器（slot / army-add / army-del / army-fill / team-form …）。 */
+  function genCardColHTML(u, cd, g, roleTxt, lead, ctx) {
+    var c = ctx.c, cb = unitCombatOf(u, cd, c);
+    var tr = TIERS[cardTier(cd)] || TIERS[0];
+    var skN = skUnlocked(cd);
+    var apt = cd.arm ? { k: cd.arm, apt: armApt(g, cd.arm) } : (armProfTop(cd, 1)[0] || null);
+    var armTxt = apt ? (armName(apt.k) + armApt(g, apt.k)) : "—";
+    var capT = cb.regCap + cb.el, tot = cb.reg + cb.el;
+    var full = capT > 0 && tot >= capT;
+    var tip = (g.name || "?") + " Lv." + cardLv(cd) + " · " + tierLabel(tr) +
+      " · " + gt("phLvCapT") + " " + fmt(troopAbilityOf(cd)) +
+      " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
+      " · " + gt("v73CapT", { n: fmt(troopCapEff(cd, g, c)) }) +
+      (cb.el ? " · " + gt("phEliteT") + " " + fmt(cb.el) + "（" + esc(cb.elName) + " ×" + fmt(cb.elPowMul) + "）" : "");
+    var skRows = "";
+    var sku = cd.sku || {};
+    (tr.skills || []).forEach(function (sk, si) {
+      var on = !!sku[si];
+      skRows += '<div class="sg-gskrow' + (on ? "" : " lk") + '"><b>S</b><span>' + esc(sk.n) + "</span></div>" +
+        '<div class="sg-gskd' + (on ? "" : " lk") + '">' + (on ? esc((sk.t || "") + "｜触发 " + (tr.trig || 0) + "% · " + (sk.d || "")) : "未解锁 · 吞噬同名同阶卡 +1 技能点") + "</div>";
+    });
+    var spg = spGroupOf(g);
+    if (spg) skRows += '<div class="sg-gskrow sp"><b style="color:' + spg.color + ';border-color:' + spg.color + '">特</b><span style="color:' + spg.color + '">' + esc(spLabel(spg.k) + "【" + spSkillName(spg.k) + "】") + "</span></div>" +
+      '<div class="sg-gskd sp">触发 ' + spTrig(spg.k, g, skN) + "% · " + esc(gt("spDesc", { p: spTrig(spg.k, g, skN) })) + "</div>";
+    var fac = g.faction || "?";
+    var click = ctx.clickBat ? ' data-bat="' + ctx.clickBat + '" data-t="' + ctx.ti + '"' + (ctx.clickPos ? ' data-p="' + ctx.clickPos + '"' : "") : "";
+    return '<div class="sg-gcard' + (lead ? " lead" : "") + (click ? " clik" : "") + '" title="' + esc(tip) + '" style="--gc:' + tr.c + '"' + click + '>' +
+      '<div class="sg-grole">' + esc(roleTxt) + "</div>" +
+      '<div class="sg-gframe">' +
+        '<span class="sg-glv">' + cardLv(cd) + "</span>" +
+        (skN > 0 ? '<span class="sg-gawake">觉醒</span>' : "") +
+        '<button class="sg-gav" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name || "?") + ' 详情">' + styledArtSVG(g, null, true) + "</button>" +
+        '<div class="sg-gnm"><i class="sg-gfac" style="background:' + facColor(fac) + '">' + esc(String(fac).slice(0, 1)) + "</i>" +
+        "<b>" + esc(g.name || "?") + "</b><i>Lv." + cardLv(cd) + "</i></div>" +
+      "</div>" +
+      '<div class="sg-garm"><b>' + esc(armTxt) + "</b><span>" + fmt(tot) + (full ? " ✅" : "") + "</span></div>" +
+      '<div class="sg-gbar">' + v73SegBar(capT ? Math.max(0, Math.min(100, cb.el / capT * 100)) : 0, capT ? Math.max(0, 100 - cb.el / capT * 100) : 0,
+        troopTxt(tot) + " / " + troopTxt(capT), tip, 8) + "</div>" +
+      '<div class="sg-gskills">' + skRows + "</div>" +
+      (ctx.delBat ? '<button class="sg-gx" data-bat="' + ctx.delBat + '" data-t="' + ctx.ti + '" data-id="' + cd.id + '" title="' + esc(gt("phDelOkT")) + '">×</button>' : "") +
+      "</div>";
+  }
+  function genSlotAddHTML(opts) {
+    return '<button class="sg-gcard add"' + (opts.bat ? ' data-bat="' + opts.bat + '" data-t="' + opts.ti + '"' + (opts.pos ? ' data-p="' + opts.pos + '"' : "") : "") +
+      ' title="' + esc(opts.tip || "") + '">' +
+      '<div class="sg-grole">' + esc(opts.role || "") + "</div>" +
+      '<div class="sg-gframe"><span class="sg-gav sg-gav-e">＋</span><div class="sg-gnm"><b>' + esc(opts.label || "") + "</b></div></div>" +
+      '<div class="sg-garm"><b>' + esc(opts.sub || "") + "</b></div></button>";
+  }
+  function hallUnifiedHTML(u) {
+    var c = ensureCity(u);
+    if (rosterClean(u, c)) { try { save(); } catch (e) {} }
+    if (!c.armies) c.armies = [];
+    if (c.armiesAt !== 83) {
+      try { armyInitCity(u, c); } catch (e) {}
+      c.armiesAt = 83;
+      try { save(); } catch (e) {}
+    }
+    var roster = cityRoster(u);
+    var slotN = armySlotMax(), maxC = armyCapMax();
+    /* ---------- ① 出战编队（teams） ---------- */
+    var trows = (c.teams || []).map(function (t, ti) {
+      var pw = teamPowerOf(u, ti);
+      var tn = t.nm ? esc(t.nm) : (T("teamT") + " " + (ti + 1));
+      var shortN = 0;
+      var cols = TEAM_POS.map(function (p) {
+        var cid = t.slots[p.k], card = cid ? (u.cards || []).filter(function (x) { return x.id === cid; })[0] : null;
+        if (!card) {
+          return genSlotAddHTML({ bat: "slot", ti: ti, pos: p.k, role: posName(p), label: T("slotEmpty"),
+            sub: p.k === "cav" ? T("cavNeed") : p.k === "front" ? T("frontNeed") : posDesc(p), tip: posDesc(p) });
+        }
+        var g = gById(card.gid) || {};
+        var cb = unitCombatOf(u, card, c);
+        if (cb.reg + cb.el < cb.regCap + cb.el) shortN++;
+        var role = p.k === "center" ? "主将 · 中军" : "副将 · " + posName(p);
+        return genCardColHTML(u, card, g, role, p.k === "center", { c: c, ti: ti, clickBat: "slot", clickPos: p.k });
+      }).join("");
+      return '<div class="sg-team2"><div class="sg-team-hd"><b class="sg-team-nm" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚔ ' + tn + "</b>" +
+        '<small class="sg-team-pw" title="' + esc(gt("teamPow", { n: fmt(pw) })) + '">⚡' + fmt(pw) + "</small><small>" + teamSize(u, ti) + "/" + TEAM_POS.length + "</small>" +
+        '<button class="sgbtn sm ghost" data-bat="team-name" data-t="' + ti + '" title="' + esc(gt("teamNmT")) + '">✏</button>' +
+        '<button class="sgbtn sm ghost" data-bat="rec-all" data-t="' + ti + '" title="' + esc(gt("recAllT")) + '"' + (shortN ? "" : " disabled") + ">🩹 " + gt("recAllT") + "</button></div>" +
+        '<div class="sg-formrow">' + FORMS.map(function (f) {
+          var on = (t.f || "yulin") === f.k;
+          return '<button class="sgchip' + (on ? " on" : "") + '" data-bat="team-form" data-t="' + ti + '" data-k="' + f.k + '" title="' + esc(formDesc(f) + " · " + formTag(f)) + '">' + formName(f) + "</button>";
+        }).join("") + "</div>" +
+        '<div class="sg-gwrap">' + cols + "</div></div>";
+    }).join("");
+    /* ---------- ② 点将台部队（armies） ---------- */
+    var arows = (c.armies || []).map(function (a, ai) {
+      var st = armyStat(u, ai), members = armyCards(u, ai);
+      var cols = members.map(function (cd, mi) {
+        var g = gById(cd.gid) || {};
+        var role = mi === 0 ? "主将" : "副将";
+        return genCardColHTML(u, cd, g, role, mi === 0, { c: c, ti: ai, delBat: "army-del" });
+      }).join("");
+      var empt = "";
+      for (var k = members.length; k < slotN; k++) {
+        empt += genSlotAddHTML({ bat: "army-add", ti: ai, role: mi2role(k), label: gt("phAddT"), sub: gt("phPickHintT", { n: troopTxt(maxC) }).slice(0, 26), tip: gt("phPickHintT", { n: troopTxt(maxC) }) });
+      }
+      function mi2role(k2) { return k2 === 0 ? "主将" : "副将"; }
+      var fullBar = st.cap > 0 && st.troop >= st.cap;
+      var ePct = st.cap ? Math.max(0, Math.min(100, st.elite / st.cap * 100)) : 0;
+      var rPct = Math.max(0, 100 - ePct);
+      var tipA73 = gt("v73TroopT", { t: troopTxt(st.troop), e: troopTxt(st.elite), r: troopTxt(st.reg), c: troopTxt(st.cap) }) +
+        (st.over ? " · " + gt("phOverT") : "");
+      var pPct = (st.regPow + st.elPow) ? Math.max(0, Math.min(100, st.elPow / (st.regPow + st.elPow) * 100)) : 0;
+      var pPct2 = Math.max(0, 100 - pPct);
+      var tipP73 = gt("v73PowT", { p: fmt(st.regPow + st.elPow), a: fmt(st.regPow), b: fmt(st.elPow), m: "100~" + fmt(E68.powTop || 1000) });
+      return '<div class="sg-team2"><div class="sg-team-hd"><b>🏯 ' + esc(armyNameOf(a, ai)) + "</b>" +
+        "<small>" + gt("phMemT", { a: members.length, b: slotN }) + "</small>" +
+        '<small class="pw" title="' + esc(gt("phPowerT", { n: fmt(st.power) })) + '">⚡' + fmt(st.power) + "</small>" +
+        '<button class="sgbtn sm ghost" data-bat="army-name" data-t="' + ai + '" title="' + esc(gt("phNameT")) + '">✏</button>' +
+        '<button class="sgbtn sm ghost" data-bat="army-clear" data-t="' + ai + '" title="' + esc(gt("phClearT")) + '">✕</button></div>' +
+        v73SegBar(ePct, rPct, troopTxt(st.troop) + (fullBar ? " ✅" : "") + " / " + troopTxt(st.cap), tipA73, 9) +
+        v73SegBar(pPct, pPct2, "⚡" + fmt(st.regPow + st.elPow), tipP73, 8) +
+        '<small style="display:block;text-align:center;font-size:9px;margin:-2px 0 3px;color:var(--ink-3)">' +
+        '<span style="color:#f0a44a">🟠 ' + gt("phEliteT") + " " + troopTxt(st.elite) + "</span> · " +
+        '<span style="color:#7fd08a">🟢 ' + gt("phRegT") + " " + troopTxt(st.reg) + "</span></small>" +
+        '<div class="sg-gwrap">' + cols + empt + "</div>" +
+        '<div class="sg-army-ft"><span>' + gt("phArmyCapT") + ' <b style="color:#e8c988">' + troopTxt(maxC) + "</b></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm' + (fullBar ? " ghost" : "") + '" data-bat="army-fill" data-t="' + ai + '"' + (fullBar ? " disabled" : "") + ">🩹 " + gt("phFillT") + "</button></div></div>";
+    }).join("");
+    /* ---------- ③ 驻城武将头像墙 ---------- */
+    var usedIds = {};
+    (c.teams || []).forEach(function (t) { TEAM_POS.forEach(function (p) { if (t.slots[p.k]) usedIds[t.slots[p.k]] = 1; }); });
+    (c.armies || []).forEach(function (a) { (a.mem || []).forEach(function (id) { usedIds[id] = 1; }); });
+    var idle = roster.filter(function (card) { return !usedIds[card.id]; });
+    var idleWall = idle.length
+      ? '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🏰 ' + T("rosterT") + ' <small style="color:var(--ink-3);font-weight:400">' + gt("rosterIdle", { n: idle.length }) + "</small></h3></div>" +
+        '<div class="sg-idlewall">' +
+        idle.map(function (card) {
+          var g = gById(card.gid) || {};
+          return '<button class="sg-idlecell" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name) + ' Lv.' + cardLv(card) + '">' +
+            '<span class="sg-idle-av">' + styledArtSVG(g, null, true) + "</span><b>" + esc(g.name) + "</b><i>Lv." + cardLv(card) + "</i></button>";
+        }).join("") + "</div>"
+      : "";
+    return '<div class="sg-panel" style="margin-top:12px">' +
+      '<div class="sg-panel-hd"><h3><i>·</i>🏯 ' + gt("phT") + " · " + T("teamT") +
+      ' <small style="font-weight:400;color:var(--ink-3)">' + gt("phSubT") + "</small></h3><span class=\"sp\"></span>" +
+      '<small style="color:var(--ink-3)">' + T("rosterT") + " " + roster.length + "/" + rosterCap() + " · " + gt("phCntT", { a: (c.armies || []).length, b: armyNumMax() }) + "</small>" +
+      '<button class="sgbtn sm ghost" data-bat="roster" style="margin-left:8px">' + T("addRoster") + "</button>" +
+      '<button class="sgbtn sm ghost" data-bat="army-auto" style="margin-left:6px">⚡ ' + gt("phAutoT") + "</button>" +
+      '<button class="sgbtn sm" data-bat="army-new" style="margin-left:6px">＋ ' + gt("phNewT") + "</button></div>" +
+      (trows ? '<div class="sg-panel-hd" style="margin-top:4px"><h3><i>·</i>⚔ ' + T("teamT") + "（出战编队）</h3><span class=\"sp\"></span>" +
+        '<small style="color:var(--ink-3)">' + (c.teams || []).length + " 队 · " + gt("phRuleT", { n: troopTxt(maxC), s: slotN }) + "</small></div>" + trows : "") +
+      (arows ? '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🏯 ' + gt("phT") + "（" + gt("phSubT") + "）</h3><span class=\"sp\"></span>" +
+        '<small style="color:var(--ink-3)">' + gt("phCntT", { a: (c.armies || []).length, b: armyNumMax() }) + "</small></div>" + arows : "") +
+      ((!(c.teams || []).length && !(c.armies || []).length) ? '<div class="sg-note" style="padding:10px 0">' + gt("phEmptyT") + "</div>" : "") +
+      idleWall +
+      '<div class="sg-note" style="margin-top:7px;font-size:11px;line-height:1.7">' + posName(TEAM_POS[4]) + "：" + posDesc(TEAM_POS[4]) + "　·　" + gt("armProfT") + "：胜 +50 / 险胜 +20 / 负 +5（上限 999）　·　" + gt("eliteMixT") + "</div>" +
+      "<style>" +
+      ".sg-team2{border:1px solid rgba(201,164,92,.35);border-radius:11px;background:linear-gradient(180deg,rgba(201,164,92,.07),rgba(0,0,0,.18));padding:8px 10px;margin-bottom:8px;min-width:0}" +
+      ".sg-team-hd{display:flex;align-items:center;gap:8px;font-size:12px;color:#e8c988;margin-bottom:5px}.sg-team-hd small{color:var(--ink-3);font-size:10px}" +
+      ".sg-team-nm{cursor:help}.sg-team-pw{color:#ffd76a!important;font-weight:700}.sg-team-hd .pw{color:#ffd76a;font-weight:700}" +
+      ".sg-formrow{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 6px}.sg-formrow .sgchip{font-size:10.5px;padding:3px 8px}" +
+      ".sg-gwrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px}" +
+      ".sg-gcard{position:relative;display:flex;flex-direction:column;gap:4px;border:1px solid rgba(201,164,92,.4);border-radius:10px;background:linear-gradient(180deg,rgba(40,32,16,.82),rgba(9,11,17,.92));padding:6px 6px 7px;min-width:0;color:var(--ink-2);text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.4)}" +
+      ".sg-gcard.clik{cursor:pointer;transition:.15s}.sg-gcard.clik:hover{border-color:#e8c988;transform:translateY(-1px)}" +
+      ".sg-gcard.add{border-style:dashed;cursor:pointer;justify-content:flex-start;opacity:.85}.sg-gcard.add:hover{border-color:#e8c988;opacity:1}" +
+      ".sg-grole{align-self:center;font-size:10.5px;letter-spacing:.1em;color:#f5e6c4;background:rgba(201,164,92,.16);border:1px solid rgba(201,164,92,.4);border-radius:99px;padding:1px 10px;font-weight:700}" +
+      ".sg-gcard.lead .sg-grole{background:linear-gradient(180deg,#e8c988,#b98d3e);color:#10131a;border-color:#e8c988}" +
+      ".sg-gframe{position:relative;border:2px solid var(--gc,#c9a45c);border-radius:9px;overflow:hidden;background:#0d1117;box-shadow:inset 0 0 10px rgba(0,0,0,.55)}" +
+      ".sg-glv{position:absolute;top:0;left:0;z-index:3;background:rgba(8,10,14,.88);color:#e8c988;font-size:12px;font-weight:800;padding:1px 7px;border-radius:0 0 7px 0;line-height:1.4}" +
+      ".sg-gawake{position:absolute;right:3px;top:26px;z-index:3;font-size:9.5px;color:#ffe9a8;background:rgba(20,14,4,.8);border:1px solid #e8c988;border-radius:99px;padding:0 7px;text-shadow:0 0 6px rgba(232,201,136,.8);font-weight:700}" +
+      ".sg-gav{display:block;width:100%;height:150px;border:0;padding:0;background:none;cursor:pointer}.sg-gav svg,.sg-gav img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}.sg-gav-e{display:flex;align-items:center;justify-content:center;font-size:22px;color:#5a6172;height:74px}" +
+      ".sg-gnm{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:center;gap:4px;background:rgba(8,10,14,.85);padding:2px 5px;font-size:11px}" +
+      ".sg-gnm b{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:11px}" +
+      ".sg-gnm i{font-style:normal;font-size:9px;color:#e8c988;margin-left:auto}" +
+      ".sg-gfac{font-style:normal;min-width:14px;height:14px;border-radius:3px;color:#10131a;font-size:9px;font-weight:700;line-height:14px;flex:none;text-align:center;padding:0 1px}" +
+      ".sg-garm{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-1)}" +
+      ".sg-garm b{color:#9ec9ff;font-weight:600;letter-spacing:.02em}" +
+      ".sg-gskills{text-align:left;font-size:10px;border-top:1px dashed rgba(201,164,92,.25);padding-top:4px}" +
+      ".sg-gskrow{display:flex;gap:4px;align-items:center;color:#ffe9a8;font-weight:600;line-height:1.5}" +
+      ".sg-gskrow b{border:1px solid #e8c988;border-radius:3px;font-size:9px;padding:0 3px;color:#e8c988;flex:none;line-height:1.5}" +
+      ".sg-gskrow.lk,.sg-gskd.lk{opacity:.42}" +
+      ".sg-gskd{font-size:9px;color:var(--ink-3);line-height:1.4;margin:0 0 3px;padding-left:15px}" +
+      ".sg-gskd.sp{color:var(--ink-2)}" +
+      ".sg-gx{position:absolute;top:3px;right:3px;z-index:5;border:0;background:rgba(0,0,0,.6);color:#e07f7f;border-radius:50%;width:16px;height:16px;line-height:1;font-size:11px;cursor:pointer;padding:0}" +
+      ".sg-army-ft{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10.5px;color:var(--ink-3)}.sg-army-ft .sp{flex:1}" +
+      ".sg-idlewall{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin:6px 0 4px}" +
+      ".sg-idlecell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.22);cursor:pointer;font-size:10px;transition:.15s;min-width:0}" +
+      ".sg-idlecell:hover{border-color:#c9a45c;transform:translateY(-1px)}" +
+      ".sg-idlecell b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:10.5px;font-weight:600}" +
+      ".sg-idlecell i{font-style:normal;color:#e8c988;font-size:9px}" +
+      ".sg-idle-av{width:44px;height:44px;border-radius:8px;overflow:hidden;border:1px solid rgba(201,164,92,.35);background:rgba(0,0,0,.3);display:block}" +
+      ".sg-idle-av svg,.sg-idle-av img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}" +
+      "</style></div>";
+  }
+
   function merchantPanelHTML(u) {
     var mm = merchantOf(u), keys = ["rice", "copper", "iron"];
     var rows = keys.map(function (k) {
@@ -17493,8 +17768,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div style="margin:8px 0 4px">' + homeResBar(u) + "</div>" +
       '<div class="sg-note" style="margin:6px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b></div>" +
       raidBar + mapTog + mapBlock +
-      pointHallHTML(u) +
-      teamPanelHTML(u) +
+      hallUnifiedHTML(u) +
       defLogHTML(u);   /* V61：按需求移除「胡商来市 · 丝路胡商」板块 */
     return '<div style="display:grid;grid-template-columns:1fr 252px;gap:16px;align-items:start" class="bat-grid"><div>' + main +
       "</div><div><div class=\"sg-panel-hd\" style=\"margin-bottom:8px\"><h3><i>·</i>🗺 " + T("myCities") + "</h3></div>" + cityRows +
