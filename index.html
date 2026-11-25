@@ -11525,6 +11525,9 @@ var BOTS = [
       moraleHint: "Training Ground Lv.{n}: morale +{n}×2 per month (cap 100); sortie attack scales with garrison morale (up to +25% at 100); wounded recover 30%/xun",
       osupT: "⚠ Out of supply: {n}", osupShortT: "Out of supply", osupHintT: "Grain exhausted — morale -15~-25 & 10-15% desertion per xun; attack ×0.5 and tactics disabled in battle",
       rosterOutT: "Withdraw from garrison (troops return to reserve)",
+      genMgmtT: "Generals", genDispT: "Dispatch", genDispHintT: "Dispatch idle generals to any owned city — troops travel with them",
+      genNoCityT: "Unassigned", genInBattleT: "In formation", genDispToT: "Dispatch to:", genDispOkT: "{n} dispatched → {m}",
+      genInBattleErrT: "General is in a formation — withdraw first", genAllT: "All", genStationT: "Garrisoned",
       xunRiceT: "Grain per xun -{n} (month -{m})", chaosActT: "{n} is in chaos and cannot act!", chaosHitT: "{n}'s morale breaks — chaos!",
       moraleNoT: "No Training Ground yet: morale decays slowly (floor 60); build one to raise morale and boost proficiency gains",
       eliteLeadT: "Leader", eliteNoLead: "None (need Leadership>80 & Might>80)",
@@ -11625,6 +11628,9 @@ var BOTS = [
       moraleHint: "训练场 Lv.{n}：每月士气 +{n}×2（上限 100），出战攻击随士气提升（+8% 封顶）",
       osupT: "⚠ 断粮：{n}", osupShortT: "断粮", osupHintT: "粮尽——每旬士气 -15~-25、兵力逃亡 10%~15%；出战攻击 ×0.5、战法失效",
       rosterOutT: "撤出驻城（兵力退回预备役）",
+      genMgmtT: "武将管理", genDispT: "派遣", genDispHintT: "将未出战武将派遣到任意已拥有城市——随军兵力一同转移",
+      genNoCityT: "未驻城", genInBattleT: "出战中", genDispToT: "派遣到：", genDispOkT: "已派遣 {n} → {m}",
+      genInBattleErrT: "该武将在编队中，请先撤下再派遣", genAllT: "全部", genStationT: "已驻城",
       xunRiceT: "每旬兵粮 -{n}（月 -{m}）", chaosActT: "{n} 陷入混乱，无法行动！", chaosHitT: "{n} 士气崩溃，陷入混乱！",
       moraleNoT: "尚未建造训练场：士气缓慢回落（下限 60）；建造训练场后每月提升，并使出战熟练度战果额外 +10/级",
       eliteLeadT: "统领", eliteNoLead: "未任命（需 统>80 且 武>80）",
@@ -13592,6 +13598,7 @@ var BOTS = [
       eliteArmOf: eliteArmOf, ELITE_ARM: ELITE_ARM, ELITE_ARM_BONUS: ELITE_ARM_BONUS, troopTxt: troopTxt, fmt: fmt,   /* V103：特种兵↔兵种映射调试句柄 */
       ELITE_TYPES: ELITE_TYPES, corpsOf68: corpsOf68, eliteLossReconcile: eliteLossReconcile, e68ApplyHit: el68ApplyHit,   /* V108：16 营列表 + 战损规则句柄 */
       morKOf: morKOf, supplyAttach: supplyAttach, tickXun: tickXun, xunSettle: xunSettle, xunIdxOf: xunIdxOf, xunRiceCost: xunRiceCost,   /* V110：士气映射 / 断粮挂载 / 旬结算句柄 */
+      genMgmtHTML: genMgmtHTML, dispatchGenTo: dispatchGenTo, genStationOf: genStationOf, genInTeamOf: genInTeamOf, cityObjOf: cityObjOf, rosterCountReal: rosterCountReal,   /* V112：武将管理句柄（函数声明提升，IIFE 后段定义） */
       zfList: function () { return ZF_LIST; }, zfById: zfById, zfCalc: zfCalc, zfAttach: zfAttach, zfTeam: zfTeam, zfCfg: function () { return ZF_CFG; }, applyZFCfg: applyZFCfg,   /* V104：战法体系调试句柄（ZF 数据在 IIFE 后段初始化，取值走函数） */
     };
   } catch (e) {}
@@ -14986,6 +14993,72 @@ var BOTS = [
     var c = ensureCity(u);   /* 不在此清 u.bat.off：官职是全卡池任命，与驻城无关 */
     c.roster = (c.roster || []).filter(function (x) { return x !== cid; });
   }
+  /* ================= V112：大殿武将管理——派遣武将到其他城市 ================= */
+  function cityNamesOf(u) {
+    var names = (u.bat.owned || []).slice();
+    if (u.bat.cur && names.indexOf(u.bat.cur) < 0) names.push(u.bat.cur);
+    return names;
+  }
+  function cityObjOf(u, nm) { return (u.bat.cur === nm) ? u.bat.city : u.bat.cities[nm]; }
+  /* 卡是否在任意城的编队中，返回城名（未出战返回 ""） */
+  function genInTeamOf(u, cid) {
+    if (!u.bat) return "";
+    var hit = "";
+    cityNamesOf(u).forEach(function (nm) {
+      var oc = cityObjOf(u, nm); if (!oc) return;
+      (oc.teams || []).forEach(function (t) {
+        TEAM_POS.forEach(function (p) { if (t.slots[p.k] === cid) hit = nm; });
+      });
+    });
+    return hit;
+  }
+  /* 卡当前驻城名（不在任何城 roster 返回 ""） */
+  function genStationOf(u, cid) {
+    if (!u.bat) return "";
+    var st = "";
+    cityNamesOf(u).forEach(function (nm) {
+      var oc = cityObjOf(u, nm); if (!oc) return;
+      if ((oc.roster || []).indexOf(cid) >= 0) st = nm;
+    });
+    return st;
+  }
+  /* 目标城真实驻城人数（过滤失效 id，与 cityRoster 同口径） */
+  function rosterCountReal(u, c) {
+    var has = {};
+    (u.cards || []).forEach(function (x) { has[x.id] = 1; });
+    var n = 0;
+    (c.roster || []).forEach(function (id) { if (id && has[id]) n++; });
+    return n;
+  }
+  /* 派遣：从所有城 roster 摘除 → 挂到目标城 roster。随军兵力（card.sold）随武将走；出战中禁止 */
+  function dispatchGenTo(u, cid, cityName) {
+    if (!u.bat) return { ok: false, err: "card" };
+    var card = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
+    if (!card) return { ok: false, err: "card" };
+    var inT = genInTeamOf(u, cid);
+    if (inT) return { ok: false, err: "battle", city: inT };
+    var names = cityNamesOf(u);
+    if (names.indexOf(cityName) < 0) return { ok: false, err: "city" };
+    var tc = cityObjOf(u, cityName);
+    if (!tc) return { ok: false, err: "city" };
+    var from = genStationOf(u, cid);
+    rosterClean(u, tc);
+    /* 目标城名额/同将重复预检（先摘后挂，摘除前校验） */
+    var dupIn = (tc.roster || []).some(function (id) {
+      if (id === cid) return false;
+      var cc = (u.cards || []).filter(function (x) { return x.id === id; })[0];
+      return cc && cc.gid === card.gid;
+    });
+    if (dupIn) return { ok: false, err: "dup" };
+    var minus = (tc.roster || []).indexOf(cid) >= 0 ? 1 : 0;
+    if (rosterCountReal(u, tc) - minus >= rosterCap()) return { ok: false, err: "full" };
+    names.forEach(function (nm) {
+      var oc = cityObjOf(u, nm); if (!oc) return;
+      oc.roster = (oc.roster || []).filter(function (x) { return x !== cid; });
+    });
+    tc.roster.push(cid);
+    return { ok: true, from: from, to: cityName };
+  }
   function purgeCardRefs(u, cid) {
     if (!u.bat) return;
     var names = (u.bat.owned || []).slice();
@@ -16053,13 +16126,67 @@ var BOTS = [
       '<div style="max-height:56vh;overflow-y:auto">' + rows + "</div>" +
       '<div style="text-align:center;margin-top:10px"><button class="sgbtn" data-bat="pal-open">' + T("close") + "</button></div>", "wide");
   }
+  /* ================= V112：大殿 · 武将管理页签（清单 + 派遣到其他城市） ================= */
+  function genMgmtHTML(u) {
+    var c = ensureCity(u);
+    if (rosterClean(u, c)) { try { save(); } catch (e) {} }
+    var fk = BATUI.genFilter || "all";
+    if (["all", "battle", "garr", "free"].indexOf(fk) < 0) fk = "all";
+    var dispId = BATUI.genDispId || "";
+    var owned = cityNamesOf(u);
+    var items = (u.cards || []).map(function (card) {
+      return { card: card, g: gById(card.gid) || {}, st: genStationOf(u, card.id), inT: genInTeamOf(u, card.id) };
+    });
+    var nAll = items.length;
+    var nB = items.filter(function (x) { return x.inT; }).length;
+    var nG = items.filter(function (x) { return !x.inT && x.st; }).length;
+    var nF = items.filter(function (x) { return !x.inT && !x.st; }).length;
+    var chips = [["all", gt("genAllT") + " " + nAll], ["battle", gt("genInBattleT") + " " + nB],
+      ["garr", gt("genStationT") + " " + nG], ["free", gt("genNoCityT") + " " + nF]].map(function (t) {
+      return '<button class="sgchip' + (fk === t[0] ? " on" : "") + '" data-bat="gen-filter" data-k="' + t[0] + '">' + t[1] + "</button>";
+    }).join("");
+    var rows = items.filter(function (x) {
+      if (fk === "battle") return x.inT;
+      if (fk === "garr") return !x.inT && x.st;
+      if (fk === "free") return !x.inT && !x.st;
+      return true;
+    }).map(function (x) {
+      var cd = x.card, st = x.st, inT = x.inT;
+      var stBadge = inT ? '<span style="color:#ffd76a">⚔ ' + gt("genInBattleT") + "（" + esc(inT) + "）</span>"
+        : st ? '<span style="color:#8fd694">🏰 ' + esc(st) + "</span>"
+        : '<span style="color:var(--ink-3)">· ' + gt("genNoCityT") + "</span>";
+      var body = "<span><b>" + esc(x.g.name || "?") + "</b> <small style='color:var(--ink-3)'>Lv." + cardLv(cd) +
+        (cd.sold ? " · 🪖 " + troopTxt(cd.sold) : "") + "</small><br><small>" + stBadge + "</small></span>";
+      var dispArea = "";
+      if (inT) {
+        dispArea = '<button class="sgbtn sm ghost" disabled title="' + esc(gt("genInBattleErrT")) + '">' + gt("genDispT") + "</button>";
+      } else if (dispId === cd.id) {
+        var targets = owned.map(function (nm) {
+          var oc = cityObjOf(u, nm); if (!oc) return "";
+          if (nm === st) return "";   /* 当前驻城不显示，无意义 */
+          var n = rosterCountReal(u, oc);
+          return '<button class="sgchip' + (nm === u.bat.cur ? " on" : "") + '" data-bat="gen-disp-go" data-id="' + cd.id + '" data-n="' + esc(nm) + '" title="' + esc(T("rosterT")) + " " + n + "/" + rosterCap() + '">' +
+            (nm === u.bat.cur ? "● " : "") + esc(nm) + " " + n + "/" + rosterCap() + "</button>";
+        }).join("");
+        dispArea = '<span style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;max-width:430px;justify-content:flex-end"><small style="color:var(--ink-3)">' +
+          gt("genDispToT") + "</small>" + targets +
+          '<button class="sgbtn sm ghost" data-bat="gen-disp-x">✕</button></span>';
+      } else {
+        dispArea = '<button class="sgbtn sm primary" data-bat="gen-disp" data-id="' + cd.id + '" title="' + esc(gt("genDispHintT")) + '">' + gt("genDispT") + "</button>";
+      }
+      return '<div class="sg-rankline sg-palrow">' + body + '<span class="sp"></span>' + dispArea + "</div>";
+    }).join("");
+    if (!rows) rows = '<div class="sg-note" style="padding:12px 0">' + gt("phEmptyT") + "</div>";
+    return '<div class="sg-note" style="margin:0 0 8px">' + gt("genDispHintT") + "　·　" + T("rosterFull", { n: rosterCap() }) + "</div>" +
+      '<div class="sgchips" style="margin-bottom:8px">' + chips + "</div>" + rows;
+  }
   function palaceOpen() {
     var u = me(); if (!u) return;
     ensureCity(u);
     var c = u.bat.city, cards = u.cards || [], inc = cityPreview(u);
     /* V64：三页签，避免整页过长把底部按钮顶出屏幕 */
     var tk = BATUI.palTab || "off";
-    if (["off", "city", "gov", "rank", "houses"].indexOf(tk) < 0) tk = "off";
+    if (["off", "city", "gov", "rank", "houses", "gens"].indexOf(tk) < 0) tk = "off";
     var offRows = OFFICES.map(function (o) {
       var cid = u.bat.off[o.k], holder = null, hg = null;
       if (cid) holder = cards.filter(function (x) { return x.id === cid; })[0];
@@ -16083,13 +16210,14 @@ var BOTS = [
     var incLine = '<div class="sg-note" style="margin:4px 0 8px">' + gt("incomeT") + "：🌾 +" + fmt(inc.rice) + " · 🪵 +" + fmt(inc.wood) + " · 🔩 +" + fmt(inc.iron) + " · 🪙 +" + fmt(inc.coin) +
       "　·　👥 " + gt("popGrowYearT", { p: yp.rate, n: fmt(yp.next) }) + '　<small style="color:#8fd694">' + gt("popBonusT", { n: popBonusPct(u) }) + "</small></div>";
     var offN = OFFICES.filter(function (o) { return !!u.bat.off[o.k]; }).length;
-    var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")], ["houses", "🏛 " + gt("warHouseTabT")]]
+    var tabs = [["off", "🎖 " + gt("officeT")], ["rank", "🏅 " + gt("rankT")], ["gens", "👥 " + gt("genMgmtT")], ["city", "🏰 " + gt("cityUpSecT")], ["gov", "📜 " + gt("polT")], ["houses", "🏛 " + gt("warHouseTabT")]]
       .map(function (t) {
         return '<button class="sgchip' + (tk === t[0] ? " on" : "") + '" data-bat="pal-tab" data-k="' + t[0] + '">' + t[1] + "</button>";
       }).join("");
     var body = "";
     if (tk === "off") body = offRows;
     else if (tk === "rank") body = rankBodyHTML(u);
+    else if (tk === "gens") body = genMgmtHTML(u);   /* V112：武将管理（清单 + 派遣） */
     else if (tk === "city") body = cityUpHTML(u, true);
     /* V80：特种兵页签已迁移至招募处 */
     else if (tk === "houses") body = housesTabHTML(u);
@@ -21435,6 +21563,23 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (BATUI.pk && BATUI.pk.mode === "roster") rosterOpen();
         refreshBattle(); return;
       }
+      /* V112：大殿武将管理——派遣 */
+      case "gen-filter": BATUI.genFilter = t.getAttribute("data-k") || "all"; BATUI.genDispId = null; palaceOpen(); return;
+      case "gen-disp": BATUI.genDispId = (BATUI.genDispId === t.getAttribute("data-id")) ? null : t.getAttribute("data-id"); palaceOpen(); return;
+      case "gen-disp-x": BATUI.genDispId = null; palaceOpen(); return;
+      case "gen-disp-go": {
+        var gdCard = (u.cards || []).filter(function (x) { return x.id === t.getAttribute("data-id"); })[0];
+        var gdName = gdCard && gById(gdCard.gid) ? gById(gdCard.gid).name : "?";
+        var gdR = dispatchGenTo(u, t.getAttribute("data-id"), t.getAttribute("data-n"));
+        if (!gdR.ok) {
+          toast(gdR.err === "battle" ? gt("genInBattleErrT") : gdR.err === "full" ? T("rosterFull", { n: rosterCap() }) : gdR.err === "dup" ? T("dupName") : gt("genDispHintT"), "err");
+          return;
+        }
+        BATUI.genDispId = null;
+        save(); refreshBattle(); palaceOpen();
+        toast(gt("genDispOkT", { n: gdName, m: gdR.to }));
+        return;
+      }
       case "mbuy": case "msell": {
         ensureCity(u);
         var mrk = t.getAttribute("data-r"), mqn = +t.getAttribute("data-n") || 200, mpr = merchantPrice(u, mrk);
@@ -21875,6 +22020,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       /* V51 探针导出 */
       recycleLvOk: recycleLvOk, recycleLvMax: function () { return RECYCLE_LV_MAX; }, selCalc: selCalc,
       bldYield: bldYieldAt, officeBonusPct: officeBonusPct, cityPreview: cityPreview, palaceOpen: palaceOpen,
+      genMgmtHTML: genMgmtHTML, dispatchGenTo: dispatchGenTo, genStationOf: genStationOf, genInTeamOf: genInTeamOf, cityObjOf: cityObjOf, rosterCountReal: rosterCountReal,   /* V112：武将管理句柄 */
       /* V65 作战模型导出 */
       forms: function () { return FORMS.map(function (f) { return { k: f.k, n: f.n, atk: f.atk, def: f.def, spd: f.spd }; }); }, teamStatF: teamCombatStat, distPreviewF: distPreview,
       formEdgeF: formEdge, unitOfCtx: function (cid, form, mateIds) {
