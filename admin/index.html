@@ -350,6 +350,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div id="ruleGrp"></div>
       <div style="margin:18px 0 6px;font-weight:600">③ 战法体系（V104：六类 125 战法全局参数）</div>
       <div id="ruleZf"></div>
+      <div style="margin:18px 0 6px;font-weight:600">④ 特种兵战损（V108：非战败封顶 / 战败补足）</div>
+      <div id="ruleEl"></div>
       <div class="hint">
         结算口径：<b>克制</b> —— 出战武将主兵种克制目标武将主兵种时，本次攻击伤害 ×（1 + 克制伤害加成%），战斗日志中显示「克制」提示；<b>同兵种加成</b> —— 队内（编队/部队）同兵种武将达 2 名或 3 名时，该兵种武将伤害按「伤害%」提升、受到的伤害按「减伤%」降低，攻击属性与受伤结算分别乘算。保存后玩家端刷新或下次打开拉取生效。
       </div>
@@ -1549,7 +1551,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 
   /* ---------- V80 军事模型（募兵限制）：参数 CRUD，云端 key = military ---------- */
   var MIL_DEF_A = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, lvBase: 30, unitCap: 100000, armyCap: 50000,
-    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60,
+    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 3000, e68WoundPct: 60,
     uhWu: 5, uhShi: 10, uhDui: 50, uhTun: 100, uhQu: 500, uhBu: 1000, uhYing: 5000, uhJun: 10000,
     uhScaleMid: 1000, uhScaleBig: 10000, uhMinS: 5, uhMinM: 10, uhMinB: 50 };
   var MIL_COLS = [
@@ -1584,7 +1586,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ["e68ExchLo", "普通兵换损档·中士气线", 0, 100, "士气介于两线之间 2 换 1，低于此线 1 换 1（默认 60）"],
     ["e68LeadSt", "营统领·统率门槛", 0, 200, "统领特种兵营所需的统率下限（默认 80）"],
     ["e68LeadWu", "营统领·武力门槛", 0, 200, "统领特种兵营所需的武力下限（默认 80）"],
-    ["e68Cap", "每营特种兵上限（人）", 100, 1000000, "每座城市每档特种兵营的编制上限（默认 10000）"],
+    ["e68Cap", "每营特种兵上限（人）", 100, 3000, "V108：每座城市每个特种兵营的编制上限，全营统一封顶 3000（云端配置高于 3000 也会按 3000 收敛）"],
     ["e68WoundPct", "特种兵伤兵转化率（%）", 0, 100, "战后特种兵战损转化为特种兵伤兵的比例（默认 60%），伤兵单独记录、月度归队"],
     /* ---------- V69 汉制编制层级（两军对战最小管控单元） ---------- */
     ["uhWu", "伍·编制人数", 1, 1000, "最基层作战单位，伍长统辖（默认 5 人）"],
@@ -2021,6 +2023,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ctrDmg: 15,
     beats: { dao: "gong", gong: "qiang", qiang: "qi", qi: "dao" },
     zf: { pow: 1, eventCost: 3 },
+    elLoss: { maxRate: 20, defeatMin: 50 },
     grp: {
       dao:  { a2: 0,   d2: 3.5, a3: 0, d3: 5 },
       qiang:{ a2: 2.1, d2: 1.4, a3: 3, d3: 2 },
@@ -2052,6 +2055,10 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (o.zf && typeof o.zf === "object") {
           if (o.zf.pow != null) ruleRows.zf.pow = ruleNum(o.zf.pow, RULE_DEF.zf.pow, 0.1, 5);
           if (o.zf.eventCost != null) ruleRows.zf.eventCost = ruleNum(o.zf.eventCost, RULE_DEF.zf.eventCost, 1, 20);
+        }
+        if (o.elLoss && typeof o.elLoss === "object") {
+          if (o.elLoss.maxRate != null) ruleRows.elLoss.maxRate = ruleNum(o.elLoss.maxRate, RULE_DEF.elLoss.maxRate, 0, 100);
+          if (o.elLoss.defeatMin != null) ruleRows.elLoss.defeatMin = ruleNum(o.elLoss.defeatMin, RULE_DEF.elLoss.defeatMin, 0, 100);
         }
       }
       rulePaint();
@@ -2089,13 +2096,23 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       '<td><input class="btn rl-in" data-grp="zf" data-f="eventCost" type="number" step="1" min="1" max="20" value="' + ruleRows.zf.eventCost + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
       '<td class="muted" style="font-size:12px">兑换 1 个事件战法消耗的 D 阶（橙）及以上武将卡数量（默认 3；消耗等级最低的卡，编队/守城在用的高等级卡自动避开）。</td></tr>' +
       "</tbody></table>";
-    $$("#ruleCt .rl-in, #ruleGrp .rl-in, #ruleZf .rl-in").forEach(function (inp) {
+    /* ④ 特种兵战损（V108） */
+    $("#ruleEl").innerHTML = '<table style="width:100%"><thead><tr><th style="width:280px">参数</th><th style="width:160px">值</th><th>说明</th></tr></thead><tbody>' +
+      '<tr><td><b>非战败折损封顶（%）</b><div class="muted" style="font-size:11px">elLoss.maxRate</div></td>' +
+      '<td><input class="btn rl-in" data-grp="el" data-f="maxRate" type="number" step="1" min="0" max="100" value="' + ruleRows.elLoss.maxRate + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+      '<td class="muted" style="font-size:12px">胜利 / 平局时，单营特种兵一场战斗的累计折损率封顶（默认 20%）——即使常规兵全部消耗殆尽，特种兵损耗也不会超过该比例。</td></tr>' +
+      '<tr><td><b>战败折损下限（%）</b><div class="muted" style="font-size:11px">elLoss.defeatMin</div></td>' +
+      '<td><input class="btn rl-in" data-grp="el" data-f="defeatMin" type="number" step="1" min="0" max="100" value="' + ruleRows.elLoss.defeatMin + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+      '<td class="muted" style="font-size:12px">战败时，战后结算把单营特种兵折损补足到不低于该比例（默认 50%）；命中少时补差额，命中多时不再削减。</td></tr>' +
+      "</tbody></table>";
+    $$("#ruleCt .rl-in, #ruleGrp .rl-in, #ruleZf .rl-in, #ruleEl .rl-in").forEach(function (inp) {
       inp.addEventListener("input", function () {
         var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k"), v = Number(this.value);
         if (!isFinite(v)) return;
         if (grp === "ctr") ruleRows.ctrDmg = ruleNum(v, RULE_DEF.ctrDmg, 0, 100);
         else if (grp === "grp") ruleRows.grp[k][this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.grp[k][this.getAttribute("data-f")], 0, 100);
         else if (grp === "zf") ruleRows.zf[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.zf[this.getAttribute("data-f")], this.getAttribute("data-f") === "pow" ? 0.1 : 1, this.getAttribute("data-f") === "pow" ? 5 : 20);
+        else if (grp === "el") ruleRows.elLoss[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.elLoss[this.getAttribute("data-f")], 0, 100);
       });
       inp.addEventListener("change", function () {
         var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k");
@@ -2109,7 +2126,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   });
   $("#ruleSave").addEventListener("click", function () {
     if (!ruleRows) return;
-    var out = { ctrDmg: ruleNum(ruleRows.ctrDmg, RULE_DEF.ctrDmg, 0, 100), beats: {}, grp: {}, zf: { pow: ruleNum(ruleRows.zf.pow, RULE_DEF.zf.pow, 0.1, 5), eventCost: Math.round(ruleNum(ruleRows.zf.eventCost, RULE_DEF.zf.eventCost, 1, 20)) } };
+    var out = { ctrDmg: ruleNum(ruleRows.ctrDmg, RULE_DEF.ctrDmg, 0, 100), beats: {}, grp: {}, zf: { pow: ruleNum(ruleRows.zf.pow, RULE_DEF.zf.pow, 0.1, 5), eventCost: Math.round(ruleNum(ruleRows.zf.eventCost, RULE_DEF.zf.eventCost, 1, 20)) }, elLoss: { maxRate: Math.round(ruleNum(ruleRows.elLoss.maxRate, RULE_DEF.elLoss.maxRate, 0, 100)), defeatMin: Math.round(ruleNum(ruleRows.elLoss.defeatMin, RULE_DEF.elLoss.defeatMin, 0, 100)) } };
     RULE_ARMS.forEach(function (a) {
       out.beats[a[0]] = ruleRows.beats[a[0]] || RULE_DEF.beats[a[0]];
       out.grp[a[0]] = {};

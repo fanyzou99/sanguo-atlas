@@ -11930,7 +11930,7 @@ var BOTS = [
   function bldName(b) { var l = lang(); return l === "zh" ? b.n : l === "ja" ? b.nen : b.en; }
   function bldDesc(b) { return (lang() === "en") ? b.den : b.dzh; }
   /* ================= V67 特种兵（七军）/ 训练场 / 城内驻军粮耗减半（V84：极强营·主教练·混编·训练场改版） ================= */
-  var ELITE_CAP = 10000, ELITE_TRAIN_COST = 10, ELITE_LEAD_ST = 80, ELITE_LEAD_WU = 80;
+  var ELITE_CAP = 3000, ELITE_TRAIN_COST = 10, ELITE_LEAD_ST = 80, ELITE_LEAD_WU = 80;
   /* ================= V68：三档特种兵运行参数（由 applyMilCfg 用云端 military.e68* 覆盖） =================
      batch 每批训练人数（预备役投入 = batch × ratio）；ratio 转化比（1 特种兵消耗 ratio 名预备役）；
      pow 战力倍率（普通士兵=1）；months 训练月数（倒计时）；lossDenom 特种兵折损（每受 {n} 点伤害折损 1 名）；
@@ -11940,6 +11940,14 @@ var BOTS = [
     powStd: 100, powMid: 300, powTop: 1000, mStd: 1, mMid: 2, mTop: 3,
     lossDenom: 1000, intImmune: 90, exchHi: 80, exchLo: 60, woundPct: 60 };
   function e68Tier(tk) {
+    /* V108：先按 16 营列表 key 解析（months 按营各自时长），再回退旧 std/mid/top 三档 */
+    var ct = corpsOf68(tk);
+    if (ct) {
+      var b = ct.tier === "mid" ? { batch: E68.batchMid, ratio: E68.ratioMid, pow: E68.powMid }
+        : ct.tier === "top" ? { batch: E68.batchTop, ratio: E68.ratioTop, pow: E68.powTop }
+        : { batch: E68.batchStd, ratio: E68.ratioStd, pow: E68.powStd };
+      return { k: ct.tier, batch: b.batch, ratio: b.ratio, pow: b.pow, months: ct.months };
+    }
     if (tk === "mid") return { k: "mid", batch: E68.batchMid, ratio: E68.ratioMid, pow: E68.powMid, months: E68.mMid };
     if (tk === "top") return { k: "top", batch: E68.batchTop, ratio: E68.ratioTop, pow: E68.powTop, months: E68.mTop };
     return { k: "std", batch: E68.batchStd, ratio: E68.ratioStd, pow: E68.powStd, months: E68.mStd };
@@ -11960,6 +11968,30 @@ var BOTS = [
     "群": ["飞熊军", "白马义从", "西凉铁骑"],
     "汉": ["羽林军", "虎贲军"]
   };
+  /* ================= V108：十六营史实特种兵列表 =================
+     每营独立 key/名称/档位（std=标准 ×100 / mid=精锐 ×300 / top=顶级 ×1000，战力倍率沿用三档参数可后台调）
+     与独立训练月数（按营时长不同，1~4 月/批）；兵种映射沿用 ELITE_ARM（营名 → 作战兵种）。
+     每城默认每营各一（上限 ELITE_CAP 默认 3000），总教练（spCoach）统一督训，统领（lid）按营另选。 */
+  var ELITE_TYPES = [
+    { k: "yulin",    n: "羽林军",   tier: "std", months: 1, tip: "汉室宿卫禁军，郎官宿卫宫殿" },
+    { k: "dajishi",  n: "大戟士",   tier: "std", months: 1, tip: "界桥之战袁绍重戟步卒，结阵拒骑" },
+    { k: "danyang",  n: "丹阳兵",   tier: "std", months: 1, tip: "丹阳山民悍卒，陶谦赖之以守徐州" },
+    { k: "jiefan",   n: "解烦军",   tier: "std", months: 2, tip: "孙权置解烦督，以解危烦，吴军精锐" },
+    { k: "baiy",     n: "白毦兵",   tier: "mid", months: 2, tip: "陈到所督西方上兵，刘备帐下精锐" },
+    { k: "ganshi",   n: "敢死士",   tier: "mid", months: 2, tip: "孙权合肥之战募敢死千人冲阵" },
+    { k: "huben",    n: "虎贲军",   tier: "mid", months: 2, tip: "虎贲宿卫，许褚领之，曹营中军" },
+    { k: "qijun",    n: "七军",     tier: "mid", months: 2, tip: "于禁督七军三万，樊城之围主力" },
+    { k: "wudang",   n: "无当飞军", tier: "mid", months: 3, tip: "王平所领南中劲弩，山地铁壁" },
+    { k: "xiandeng", n: "先登死士", tier: "mid", months: 3, tip: "麴义八百先登，界桥破白马" },
+    { k: "tengjia",  n: "藤甲兵",   tier: "mid", months: 3, tip: "兀突骨藤甲军，渡水不沉刀箭不入" },
+    { k: "feixiong", n: "飞熊军",   tier: "mid", months: 3, tip: "董卓西园飞熊，重甲铁骑" },
+    { k: "xiliang",  n: "西凉铁骑", tier: "top", months: 3, tip: "凉州铁骑，马超麾下冲阵无双" },
+    { k: "baima",    n: "白马义从", tier: "top", months: 3, tip: "公孙瓒轻骑皆乘白马，威震塞外" },
+    { k: "hubao",    n: "虎豹骑",   tier: "top", months: 4, tip: "曹纯督领，天下骁锐，百人将补之" },
+    { k: "xianzhen", n: "陷阵营",   tier: "top", months: 4, tip: "高顺陷阵营，攻无不克，每所攻击无不破者" }
+  ];
+  function corpsOf68(tk) { return ELITE_TYPES.filter(function (x) { return x.k === tk; })[0] || null; }
+  function corpsTierOf(s) { var ct = corpsOf68(s && s.tk); return ct ? ct.tier : ((s && s.tk) || "std"); }
   /* ================= V84：极强特种兵（史实名营）· 主教练 · 常规/特种混编 =================
      极强营：由史实统领亲自督练时，营名与攻击倍率按史实特授（叠在普通特种兵 100 倍之上）；
      主教练：统+武 越高，每名特种兵消耗普通兵越少（10 → 最低 6）；
@@ -11979,7 +12011,8 @@ var BOTS = [
   var ELITE_ARM = {
     "陷阵营": "qiang", "先登死士": "gong", "藤甲兵": "dao", "虎豹骑": "qi", "白毦兵": "qiang",
     "七军": "ji", "虎贲军": "dao", "羽林军": "dao", "解烦军": "dao", "敢死士": "qiang",
-    "丹阳兵": "qiang", "飞熊军": "qi", "白马义从": "qi", "西凉铁骑": "qi", "无当飞军": "nu"
+    "丹阳兵": "qiang", "飞熊军": "qi", "白马义从": "qi", "西凉铁骑": "qi", "无当飞军": "nu",
+    "大戟士": "ji"
   };
   var ELITE_ARM_BONUS = 1.25;
   function eliteArmOf(nm) { return (nm && ELITE_ARM[nm]) || ""; }
@@ -12002,19 +12035,40 @@ var BOTS = [
   /* 该武将名下（任其为统领的营）的特种兵数——混编入部队时计入部队兵力 */
   function cardEliteN(u, cid, cObj) { var c = cObj || ensureCity(u), n = 0; eliteSlots(c).forEach(function (s) { if (s.lid === cid) n += s.n || 0; }); return n; }
   function eliteSlots(c) {
-    if (!c.elites || !c.elites.length) c.elites = [{ n: 0, q: 0, lid: null, tk: "std", tr: null, w: 0 }, { n: 0, q: 0, lid: null, tk: "mid", tr: null, w: 0 }, { n: 0, q: 0, lid: null, tk: "top", tr: null, w: 0 }];
-    /* V68 迁移：V85 双营 → 三档（0=标准 1=精锐 2=顶级）；旧训练点 q 按 10:1 一次性转正 */
-    if (c.elites.length === 2) c.elites.push({ n: 0, q: 0, lid: null, tk: "top", tr: null, w: 0 });
-    c.elites.forEach(function (s, i) {
-      if (!s.tk) { s.tk = ["std", "mid", "top"][i] || "std"; if ((s.q || 0) > 0) { s.n = Math.min(ELITE_CAP, (s.n || 0) + Math.floor(s.q / 10)); s.q = 0; } }
+    /* V108：默认按 16 营列表各建一营（tk = 营 key） */
+    if (!c.elites || !c.elites.length) {
+      c.elites = ELITE_TYPES.map(function (t) { return { n: 0, q: 0, lid: null, tk: t.k, tr: null, w: 0 }; });
+      return c.elites;
+    }
+    /* V108 迁移：旧 2/3 营模型（tk=std/mid/top）→ 16 营列表；
+       旧营兵力/统领/训练/伤兵按档位映射到对应史实营（std→羽林军 mid→白毦兵 top→陷阵营），其余营补齐空营 */
+    if (c.elites.length !== ELITE_TYPES.length) {
+      var oldMap = { std: "yulin", mid: "baiy", top: "xianzhen" };
+      var oldS = c.elites.slice();
+      c.elites = ELITE_TYPES.map(function (t) {
+        for (var i = 0; i < oldS.length; i++) {
+          var s = oldS[i];
+          if (!s || s._mig) continue;
+          if (s.tk === t.k || oldMap[s.tk] === t.k || s.tk == null) {
+            if (s.tk == null) s.tk = t.k;
+            if ((s.q || 0) > 0) { s.n = Math.min(ELITE_CAP, (s.n || 0) + Math.floor(s.q / 10)); s.q = 0; }   /* 旧训练点 10:1 转正 */
+            s.tk = t.k; s._mig = 1;
+            return s;
+          }
+        }
+        return { n: 0, q: 0, lid: null, tk: t.k, tr: null, w: 0 };
+      });
+    }
+    c.elites.forEach(function (s) {
       if (s.w == null) s.w = 0;
       if (!s.tr) s.tr = null;
+      if (!s.tk || !corpsOf68(s.tk)) s.tk = "yulin";
     });
     return c.elites;
   }
   function eliteLeaderOf(u, s) { return s.lid ? (u.cards || []).filter(function (x) { return x.id === s.lid; })[0] : null; }
   function eliteLeadOK(cd) { if (!cd) return false; var g = gById(cd.gid); if (!g) return false; return (g.st || 0) > ELITE_LEAD_ST && (g.wu || 0) > ELITE_LEAD_WU; }
-  function eliteName(u, si, cu) { var c = cu || ensureCity(u), s = eliteSlots(c)[si] || {}, cd = eliteLeaderOf(u, s); var lg = eliteLegendOf(cd); if (lg) return lg.n; if (!cd) return gt("eliteTabT"); var g = gById(cd.gid) || {}; var arr = ELITE_NAMES[g.faction] || ELITE_NAMES["群"]; return arr[si % arr.length]; }
+  function eliteName(u, si, cu) { var c = cu || ensureCity(u), s = eliteSlots(c)[si] || {}, cd = eliteLeaderOf(u, s); var lg = eliteLegendOf(cd); if (lg) return lg.n; var ct = corpsOf68(s.tk); if (ct) return ct.n; var g = cd ? gById(cd.gid) || {} : {}; var arr = ELITE_NAMES[g.faction] || ELITE_NAMES["群"]; return arr[si % arr.length]; }
   /* V68 批量训练：一次投入一个批次预备役（标准/精锐 1000 人、顶级 100 人，可在管控台配置），
      按 1:{ratio} 转化，训练需 1–3 个月倒计时（月度结算推进）；
      教官（主训练官）训练期间不得编队/出战，仅任点将台主训练官 */
@@ -12087,6 +12141,12 @@ var BOTS = [
       var rate = tgt.elite.lossD || E68.lossDenom;
       if (!skillLike && isIntAtk) rate = Math.round(rate / Math.max(0.05, 1 - E68.intImmune / 100));  /* 智力型纯武力 → 近乎免疫 */
       var el = Math.min(tgt.elite.n, Math.floor(dmg / rate));
+      /* V108：非战败折损封顶——战中累计特种兵损耗不超过 elLoss.maxRate%（战败由战后结算补足 defeatMin%） */
+      var rlE = COMBATRULE.elLoss || {};
+      var mxE = Math.max(0, Math.min(100, isFinite(+rlE.maxRate) ? +rlE.maxRate : 20));
+      var capE = Math.round((tgt.elite.n0 || tgt.elite.n) * mxE / 100);
+      var lostE = (tgt.elite.n0 || 0) - tgt.elite.n;
+      if (lostE + el > capE) el = Math.max(0, capE - lostE);
       tgt.elite.n = Math.max(0, tgt.elite.n - el);
     }
     return eff;
@@ -12183,7 +12243,7 @@ var BOTS = [
       var trainable = (c.pool || 0) >= need && coach && !s.tr;
       h += '<div class="sg-palrow" style="border:1px solid rgba(201,164,92,.3);border-radius:10px;padding:9px 11px;margin-bottom:7px;background:rgba(0,0,0,.42)">' +
         '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:#e8c988">🎯 ' + esc(nm) +
-        '<span style="color:#9ec9ff;font-size:11px">（' + esc(e68TierName(s.tk)) + "）</span>" +
+        '<span style="color:#9ec9ff;font-size:11px">（' + esc(e68TierName(corpsTierOf(s))) + "）</span>" +
         (lg ? ' <span style="color:#ff9d6b" title="' + esc(lg.tip) + '">★ ' + gt("eliteLegendT") + " · 攻击 ×" + Math.round(100 * lg.mul) + "</span>" : "") + "</b>" +
         '<small style="color:var(--ink-3)">' + gt("eliteLeadT") + "：" + esc(leadTxt) + (cd ? "（" + (g ? g.faction : "?") + " 统" + (g ? g.st : "?") + " 武" + (g ? g.wu : "?") + "）" : "") + "</small>" +
         '<span style="flex:1"></span><small style="color:var(--ink-3)">' + gt("eliteCapT", { n: fmt(s.n), m: fmt(ELITE_CAP) }) +
@@ -12932,7 +12992,7 @@ var BOTS = [
      armyCap 单支部队带兵上限（V107 默认 5 万：补兵按此值均分给队内武将）/ armyMax 部队数 / armySlot 单部队武将数 /
      lvBase  Lv.1 时「带兵能力」兑现颜色天赋的百分比（升到 Lv.70 兑现 100%） */
   var MIL_DEF = { popPct: 10, cityCap: 1000000, mobCap: 50000, farmRice: 0.02, recRice: 0.5, recCoin: 2, recCopper: 0.003, recIron: 0.004, eliteCost: 10, armyCap: 50000, armyMax: 5, armySlot: 5, lvBase: 30, unitCap: 100000,
-    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 10000, e68WoundPct: 60,
+    e68BatchStd: 1000, e68BatchMid: 1000, e68BatchTop: 100, e68RatioStd: 15, e68RatioMid: 40, e68RatioTop: 100, e68PowStd: 100, e68PowMid: 300, e68PowTop: 1000, e68MStd: 1, e68MMid: 2, e68MTop: 3, e68LossDenom: 1000, e68IntImmune: 90, e68ExchHi: 80, e68ExchLo: 60, e68LeadSt: 80, e68LeadWu: 80, e68Cap: 3000, e68WoundPct: 60,
     uhWu: 5, uhShi: 10, uhDui: 50, uhTun: 100, uhQu: 500, uhBu: 1000, uhYing: 5000, uhJun: 10000,
     uhScaleMid: 1000, uhScaleBig: 10000, uhMinS: 5, uhMinM: 10, uhMinB: 50,
     uhTitles: "伍长,什长,队率,屯长,军候,军司马,校尉,将军" };
@@ -12975,7 +13035,7 @@ var BOTS = [
       e68ExchLo: Math.round(milNum(o.e68ExchLo, d.e68ExchLo, 0, 100)),
       e68LeadSt: Math.round(milNum(o.e68LeadSt, d.e68LeadSt, 0, 200)),
       e68LeadWu: Math.round(milNum(o.e68LeadWu, d.e68LeadWu, 0, 200)),
-      e68Cap: Math.round(milNum(o.e68Cap, d.e68Cap, 100, 1000000)),
+      e68Cap: Math.round(milNum(o.e68Cap, d.e68Cap, 100, 3000)),
       e68WoundPct: Math.round(milNum(o.e68WoundPct, d.e68WoundPct, 0, 100)),
       /* V69：汉制编制层级参数（层级人数 / 规模分档 / 最小管控单位 / 军官职名） */
       uhWu: Math.round(milNum(o.uhWu, d.uhWu, 1, 1000)),
@@ -13198,6 +13258,9 @@ var BOTS = [
   var COMBATRULE = {
     ctrDmg: 15,
     beats: { dao: "gong", gong: "qiang", qiang: "qi", qi: "dao" },
+    /* V108：特种兵战损——非战败（胜利/平局）时单营累计折损封顶 maxRate%（即使常规兵全灭）；
+       战败时战后结算把折损补足到不低于 defeatMin%。两参数均可在管控台「作战规则」远程调整。 */
+    elLoss: { maxRate: 20, defeatMin: 50 },
     grp: {
       dao:  { a2: 0,   d2: 3.5, a3: 0, d3: 5 },
       qiang:{ a2: 2.1, d2: 1.4, a3: 3, d3: 2 },
@@ -13245,7 +13308,30 @@ var BOTS = [
       if (Object.keys(gp).length) COMBATRULE.grp = gp;
     }
     if (o.zf && typeof o.zf === "object") applyZFCfg(o.zf);   /* V104：战法体系远程参数 {pow, eventCost} */
+    if (o.elLoss && typeof o.elLoss === "object") {           /* V108：特种兵战损 {maxRate, defeatMin} */
+      var elR = COMBATRULE.elLoss;
+      if (isFinite(+o.elLoss.maxRate) && +o.elLoss.maxRate >= 0 && +o.elLoss.maxRate <= 100) elR.maxRate = +o.elLoss.maxRate;
+      if (isFinite(+o.elLoss.defeatMin) && +o.elLoss.defeatMin >= 0 && +o.elLoss.defeatMin <= 100) elR.defeatMin = +o.elLoss.defeatMin;
+    }
     return true;
+  }
+  /* V108：战后特种兵折损校正——胜利/平局按战中封顶（≤maxRate%），战败补足到 ≥defeatMin% */
+  function eliteLossReconcile(res, win) {
+    if (!res || !res.units || !res.units.A) return;
+    var rl = COMBATRULE.elLoss || {};
+    var mx = Math.max(0, Math.min(100, isFinite(+rl.maxRate) ? +rl.maxRate : 20));
+    var dm = Math.max(0, Math.min(100, isFinite(+rl.defeatMin) ? +rl.defeatMin : 50));
+    res.units.A.forEach(function (un) {
+      if (!un || !un.elite || !(un.elite.n0 > 0)) return;
+      var n0 = un.elite.n0, cur = Math.max(0, Math.round(un.elite.n)), loss = n0 - cur;
+      if (win) {
+        var cap = Math.min(n0, Math.round(n0 * mx / 100));
+        if (loss > cap) un.elite.n = n0 - cap;
+      } else {
+        var floor = Math.min(n0, Math.round(n0 * dm / 100));
+        if (loss < floor) un.elite.n = n0 - floor;
+      }
+    });
   }
   /* V92：调试/测试句柄（只读引用，供控制台排障与自动化测试）；V94 追加带兵上限相关 */
   try {
@@ -13256,6 +13342,7 @@ var BOTS = [
       unitCapMax: unitCapMax, trimOverTroops: trimOverTroops, armyCapMax: armyCapMax, armyShareOf: armyShareOf,   /* V107：部队总上限/均分份额 */
       unitCombatOf: unitCombatOf, unitAttachElite: unitAttachElite, e68Tier: e68Tier, eliteSlots: eliteSlots, eliteName: eliteName,
       eliteArmOf: eliteArmOf, ELITE_ARM: ELITE_ARM, ELITE_ARM_BONUS: ELITE_ARM_BONUS, troopTxt: troopTxt, fmt: fmt,   /* V103：特种兵↔兵种映射调试句柄 */
+      ELITE_TYPES: ELITE_TYPES, corpsOf68: corpsOf68, eliteLossReconcile: eliteLossReconcile, e68ApplyHit: el68ApplyHit,   /* V108：16 营列表 + 战损规则句柄 */
       zfList: function () { return ZF_LIST; }, zfById: zfById, zfCalc: zfCalc, zfAttach: zfAttach, zfTeam: zfTeam, zfCfg: function () { return ZF_CFG; }, applyZFCfg: applyZFCfg,   /* V104：战法体系调试句柄（ZF 数据在 IIFE 后段初始化，取值走函数） */
     };
   } catch (e) {}
@@ -14240,6 +14327,8 @@ var BOTS = [
       u.mts = (u.mts || []).filter(function (x) { return _gone.indexOf(x) < 0; });
       out.eqWornOut = goneNames;
     }
+    /* V108：战后特种兵折损校正（非战败 ≤maxRate% / 战败 ≥defeatMin%）——先于兵力回写执行保证口径一致 */
+    eliteLossReconcile(res, !!(res && res.win));
     var baseExp = 40 + stage * 18;
     /* V35：游戏时间由日历自走（一局一个月），战斗不再推进月份；月内政按日历月界结算 */
     var monthInc = tickMonth(u);
@@ -17827,12 +17916,15 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     if (spg) skRows += '<div class="sg-gskrow sp"><b style="color:' + spg.color + ';border-color:' + spg.color + '">特</b><span style="color:' + spg.color + '">' + esc(spLabel(spg.k) + "【" + spSkillName(spg.k) + "】") + "</span></div>" +
       '<div class="sg-gskd sp">触发 ' + spTrig(spg.k, g, 0) + "% · " + esc(gt("spDesc", { p: spTrig(spg.k, g, 0) })) + "</div>";
     var fac = g.faction || "?";
-    /* V101：兵力条移到头像上方（不再叠在头像上）——带进度底色，满编绿色 */
+    /* V108：绿色进度条 → 战斗值 / 防御值文字（兵力数量保留在 sg-gdraft 与 sg-garm 文本行） */
+    var unD108 = null;
+    try { unD108 = unitOf(cd, "A", { form: ((c.teams || [])[ctx.ti] || {}).f || "yulin", mates: ctx.ti != null ? teamCards(u, ctx.ti) : null }); } catch (eG108) {}
+    var defV108 = unD108 ? Math.max(0, Math.round(unD108.def || 0)) : 0;
     var dpct = capT > 0 ? Math.max(0, Math.min(100, tot / capT * 100)) : 0;
     var click = ctx.clickBat ? ' data-bat="' + ctx.clickBat + '" data-t="' + ctx.ti + '"' + (ctx.clickPos != null ? ' data-p="' + ctx.clickPos + '"' : "") : "";
     return '<div class="sg-gcard' + (lead ? " lead" : "") + (click ? " clik" : "") + '" title="' + esc(tip) + '" style="--gc:' + tr.c + '"' + click + '>' +
       '<div class="sg-grole">' + esc(roleTxt) + "</div>" +
-      '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '" style="background:linear-gradient(90deg,' + (full ? "rgba(127,208,138,.45)" : "rgba(232,201,136,.35)") + " " + dpct.toFixed(1) + "%,rgba(8,10,14,.55) " + dpct.toFixed(1) + '%)">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
+      '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '" style="background:rgba(8,10,14,.55)">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
       '<div class="sg-gframe">' +
         '<span class="sg-glv">' + cardLv(cd) + "</span>" +
         (zN > 0 ? '<span class="sg-gawake">战法×' + zN + "</span>" : "") +
@@ -17842,8 +17934,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         "<b>" + esc(g.name || "?") + "</b><i>Lv." + cardLv(cd) + "</i></div>" +
       "</div>" +
       '<div class="sg-garm"><b>' + esc(armTxt) + "</b><span>" + fmt(tot) + (full ? " ✅" : "") + "</span></div>" +
-      '<div class="sg-gbar">' + v73SegBar(capT ? Math.max(0, Math.min(100, cb.el / capT * 100)) : 0, capT ? Math.max(0, 100 - cb.el / capT * 100) : 0,
-        troopTxt(tot) + " / " + troopTxt(capT), tip, 8) + "</div>" +
+      /* V108：原绿色兵力进度条 → 战斗值 / 防御值文字行 */
+      '<div class="sg-gstat" title="' + esc(tip) + '" style="display:flex;justify-content:center;gap:10px;padding:4px 6px;margin:3px 0;border:1px solid rgba(201,164,92,.22);border-radius:8px;background:rgba(0,0,0,.30);font-size:10.5px;color:#c8d0dc">⚡ 战斗值 <b style="color:#ffd76a">' + fmt(cb.powSum) + "</b>　🛡 防御 <b style=\"color:#9ec9ff\">" + fmt(defV108) + "</b></div>" +
       '<div class="sg-gskills">' + skRows + "</div>" +
       /* V100：编队操作入口（补兵/配兵/兵种/吞噬）——点击卡片本体只更换选将，不再打开详情 */
       (ctx.ti != null && ctx.clickPos != null ? '<button class="sg-gops" data-bat="slot-ops" data-t="' + ctx.ti + '" data-p="' + ctx.clickPos + '" title="' + esc(gt("sqOpsT")) + '">⚙</button>' : "") +
@@ -17885,10 +17977,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       }).join("");
       var tsBar96 = (function () {
         if (!ts96 || !ts96.cap) return "";
-        var eP = ts96.cap ? Math.max(0, Math.min(100, ts96.el / ts96.cap * 100)) : 0;
-        return v73SegBar(eP, Math.max(0, 100 - eP),
-          troopTxt(ts96.troop) + (ts96.troop >= ts96.cap ? " ✅" : "") + " / " + troopTxt(ts96.cap),
-          gt("teamBarTipT", { a: troopTxt(ts96.troop), b: troopTxt(ts96.cap), p: fmt(ts96.powSum), e: troopTxt(ts96.el), r: troopTxt(ts96.reg), f: formName(ts96.f), m: Math.round((ts96.f.atk - 1) * 100) }), 9) +
+        /* V108：绿色兵力进度条 → 平面兵力徽标（战斗值/防御值由 teamStatT 文字行展示） */
+        return '<div style="display:flex;justify-content:center;margin:4px 0 2px"><span style="padding:3px 12px;border:1px solid rgba(201,164,92,.25);border-radius:99px;background:rgba(0,0,0,.30);font-size:10.5px;color:#c8d0dc">🪖 ' +
+          troopTxt(ts96.troop) + " / " + troopTxt(ts96.cap) + (ts96.troop >= ts96.cap ? " ✅" : "") + "</span></div>" +
           '<small style="display:block;text-align:center;font-size:10px;margin:2px 0 4px;color:var(--ink-3)">' +
           gt("teamStatT", { t: troopTxt(ts96.troop), p: fmt(ts96.powSum), d: fmt(ts96.def) }) + "</small>";
       })();

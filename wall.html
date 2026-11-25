@@ -334,16 +334,38 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
      ② 全量重排（排序/筛选/搜索/显示更多/落定修正）仍走 paint()；
      ③ .card 开启 content-visibility:auto —— 视口外卡片跳过布局/绘制；img decoding=async 异步解码。 */
   var rendered = {};   /* 当前网格中已有的卡（name → 1） */
+  /* ---- V108：视口懒解码（data-src + IntersectionObserver）----
+     716 张 base64 大图全部塞进 DOM 会拖慢解析与首帧；改为卡片进入视口前 600px 才把 data-src 赋给 src，
+     解码量从「全量」降到「所见」，滚动时由 observer 提前预载，肉眼无感。不支持 IO 的浏览器回退直赋。 */
+  var lazyObs = null;
+  if ("IntersectionObserver" in window) {
+    lazyObs = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var im = en.target.querySelector("img[data-src]");
+        if (im) { im.src = im.getAttribute("data-src"); im.removeAttribute("data-src"); }
+        lazyObs.unobserve(en.target);
+      });
+    }, { rootMargin: "600px 0px" });
+  }
+  function wireLazy(rootEl) {
+    if (!lazyObs) {
+      Array.prototype.forEach.call((rootEl || document).querySelectorAll("img[data-src]"), function (im) { im.src = im.getAttribute("data-src"); im.removeAttribute("data-src"); });
+      return;
+    }
+    Array.prototype.forEach.call((rootEl || document).querySelectorAll(".card"), function (el) { lazyObs.observe(el); });
+  }
   function cardEl(g){
     var tr = tierOf(g), f = FACTION[g.faction];
     var d = document.createElement("div");
     d.className = "card";
     d.setAttribute("data-n", g.name);
     d.setAttribute("data-id", g.id);
-    d.innerHTML = '<div class="ph"><img loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
+    d.innerHTML = '<div class="ph"><img loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" data-src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
       '<span class="tier" style="color:' + tr.c + '">' + tr.n + '</span>' +
       '<div class="cap"><b>' + esc(g.name) + '</b><i style="color:' + (f ? f.color : "#8a6a3a") + '">' + (f ? f.name : esc(g.faction)) + '</i></div>';
     d.onclick = function(){ openLb(g.name); };
+    if (lazyObs) lazyObs.observe(d);
     return d;
   }
   function updateMeta(arr){
@@ -395,7 +417,7 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
     grid.innerHTML = shown.length ? shown.map(function(g){
       var tr = tierOf(g), f = FACTION[g.faction];
       return '<div class="card" data-n="' + esc(g.name) + '" data-id="' + esc(g.id) + '">' +
-        '<div class="ph"><img loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
+        '<div class="ph"><img loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" data-src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
         '<span class="tier" style="color:' + tr.c + '">' + tr.n + '</span>' +
         '<div class="cap"><b>' + esc(g.name) + '</b><i style="color:' + (f ? f.color : "#8a6a3a") + '">' + (f ? f.name : esc(g.faction)) + '</i></div></div>';
     }).join("") : '<div class="empty">' + (ptn() ? "没有符合条件的立绘，试试更换筛选条件" : "立绘分片加载中，请稍候…") + '</div>';
@@ -417,6 +439,7 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
     Array.prototype.forEach.call(document.querySelectorAll(".card"), function(el){
       el.onclick = function(){ openLb(el.getAttribute("data-n")); };
     });
+    wireLazy(grid);   /* V108：视口懒解码接管 src 赋值 */
   }
   /* ---- 大图 ---- */
   var lb = document.getElementById("lb");
