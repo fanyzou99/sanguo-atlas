@@ -7328,7 +7328,7 @@ absAutoNone: "没有同名重复的卡牌可吞噬", absAutoKeep: "保留主卡"
     /* V44：本地只作离线缓存。_ready=true（已完成首次云端拉取）后的任何改动都标记 _dirty，
        由云端同步器在 1.5s 内推送到账号档案；_ready 之前的启动期改动不标脏，
        以免本地旧档抢在云端档案之前把服务器覆盖掉（两台电脑进度分叉的根因）。 */
-    try { var _cu = me(); if (_cu) { _cu._sv = (_cu._sv || 0) + 1; if (_cu._ready) _cu._dirty = true; } } catch (e) {}
+    try { var _cu = me(); if (_cu) { _cu._sv = (_cu._sv || 0) + 1; if (_cu._ready) _cu._dirty = true; delete _cu._pulling; delete _cu._pushing; } } catch (e) {}   /* V106：运行时句柄不入档（Promise 序列化成 {} 会让重载后的 statePull/pushNow 报 .then 错） */
     try { localStorage.setItem(KEY, JSON.stringify(DB)); }
     catch (e) { toast(T("saveFail"), "err", 6000); }
     try { if (SGCloud && SGCloud.pushSoon) SGCloud.pushSoon(); } catch (e) {}
@@ -10354,6 +10354,7 @@ var BOTS = [
         pw: u.pw || "", vmail: u.vmail || "", gp: u.gp || null, gh: (Array.isArray(u.gh) ? u.gh : []).slice(-1000), gd: (u.gd || []).slice(-100),
         gb: u.gb || null,                       /* V44 抽卡配额袋：换设备续抽，100 张配额不断档 */
         skn: u.skn || null,
+        zf: u.zf || {}, zfp: u.zfp || 0, zfHist: u.zfHist || {},   /* V106：战法/战法点/拆解史随档同步（跨设备不断档） */
         bat: u.bat || null, shards: u.shards || {}, eqs: u.eqs || [], mts: u.mts || [], res: u.res || null };
     }
     function pushSoon(delay) {
@@ -10373,7 +10374,7 @@ var BOTS = [
       var u = me();
       if (!u || !u.email) return Promise.resolve(false);
       if (!u._ready && !force) { pushSoon(2000); return Promise.resolve(false); }   /* 首次拉取完成前绝不写云端 */
-      if (u._pushing) return u._pushing;
+      if (u._pushing) { if (typeof u._pushing.then === "function") return u._pushing; delete u._pushing; }   /* V106：同 _pulling 防御 */
       if (!u._dirty && !force) return Promise.resolve(false);                       /* 无改动不空推，避免两台设备互踢 updated_at */
       var done = rpcP("sg_state_put", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID,
         p_data: JSON.stringify(stateSnap(u)) }, 15000).then(function (r) {
@@ -10400,6 +10401,7 @@ var BOTS = [
         if ((lb.spU || 0) > (rb.spU || 0)) rb.spU = lb.spU;
         rb.sp = Math.max(0, (rb.spG || 0) - (rb.spU || 0));   /* V41：点数由台账派生，勿对 sp 取 max（会把已分配的点数复活） */
         if (lb.hist) { var hh = rb.hist = rb.hist || {}; Object.keys(lb.hist).forEach(function (k) { if ((lb.hist[k] || 0) > (hh[k] || 0)) hh[k] = lb.hist[k]; }); }
+        if (src.zfHist) { var zh106 = dst.zfHist = dst.zfHist || {}; Object.keys(src.zfHist).forEach(function (k106) { if ((src.zfHist[k106] || 0) > (zh106[k106] || 0)) zh106[k106] = src.zfHist[k106]; }); }   /* V106：拆解史只增不减 */
         function mb(a, b) { if (!a || !b) return; if (a.bld) { var bb = b.bld = b.bld || {}; Object.keys(a.bld).forEach(function (k) { if ((a.bld[k] || 0) > (bb[k] || 0)) bb[k] = a.bld[k]; }); } }
         mb(lb, rb);
         if (lb.city) mb({ bld: lb.city.bld }, { bld: (rb.city = rb.city || {}).bld || (rb.city.bld = {}) });
@@ -10445,7 +10447,7 @@ var BOTS = [
       opts = opts || {};
       var u = me();
       if (!u || !u.email) return Promise.resolve(false);
-      if (u._pulling) return u._pulling;
+      if (u._pulling) { if (typeof u._pulling.then === "function") return u._pulling; delete u._pulling; }   /* V106：旧档里序列化残留的 {} 直接丢弃 */
       var p = rpcP("sg_state_get", { p_email: String(u.email).slice(0, 120), p_site: SITE_ID }, 12000)
         .then(function (r) {
           u._ready = true; u._pulled = true;
@@ -11203,6 +11205,18 @@ var BOTS = [
       if (u.zf == null) u.zf = {};
       u.bat.zfMig = 1;
     }
+    /* V106：历史拆解记录恢复——扫台账文本（拆解/吞噬+武将名），旧版吞过的武将补领传承战法享半价（台账只留 120 条，尽力而为） */
+    if (u.bat.zfHistMig == null) {
+      u.zfHist = u.zfHist || {};
+      (u.ledger || []).forEach(function (l106) {
+        var r106 = (l106 && l106.r) || "";
+        if (!/拆解|吞噬/.test(r106)) return;
+        Object.keys(ZF_GEN_MAP).forEach(function (nm106) {
+          if (r106.indexOf("「" + nm106 + "」") >= 0) u.zfHist[nm106] = (u.zfHist[nm106] || 0) + 1;
+        });
+      });
+      u.bat.zfHistMig = 1;
+    }
     /* V94：单将带兵硬上限校正——旧档里兵营/星级/装备叠加导致单将带兵数十万的，超出部分退回所在城预备役 */
     try { u.bat.trim94 = trimOverTroops(u); } catch (e94) {}
     /* V85：兵随编队走（一次性迁移）——非编队武将的常规兵退回所在城预备役；
@@ -11822,6 +11836,7 @@ var BOTS = [
         zfAbsAllOkT: "批量拆解 {a} 张 → 战法点 +{p}", zfAbsZfT: "｜📜 解锁传承战法「{s}」",
         zfAbsRuleT: "拆解同名同阶卡 → 按品阶获战法点；传承武将（指挥12/主动36/突击8/被动13/兵种10/阵法4 共83位）首次拆解解锁其 S 级战法；事件战法 42 个用 D 阶及以上橙卡兑换。战法 Lv1~5 效果随级增长。",
         zfOwnedHaveT: "该事件战法已获得",
+        zfRetroT: "补领", zfRetroOkT: "已补领传承战法「{n}」（-{m} 战法点）", zfRetroHintT: "📜 未获得的传承战法可用战法点补领（V106：历史吞噬/拆解过对应武将的账号享半价）",
       },
       ja: {
         zfLibT: "戦法", zfLibOpenT: "📖 戦法庫", zfMineT: "マイ戦法", zfAllT: "すべて", zfPtsT: "戦法点",
@@ -11844,6 +11859,7 @@ var BOTS = [
         zfAbsAllOkT: "一括拆解 {a} 枚 → 戦法点 +{p}", zfAbsZfT: "｜📜 継承戦法「{s}」を解放",
         zfAbsRuleT: "同名同階カードを拆解 → 階級に応じ戦法点。継承武将（計83名）の同名カード初回拆解で S 級戦法を解放。イベント戦法42は D 階以上のカードで交換。戦法は Lv1〜5 で効果増加。",
         zfOwnedHaveT: "このイベント戦法は獲得済み",
+        zfRetroT: "補領", zfRetroOkT: "継承戦法「{n}」を補領（-{m} 戦法点）", zfRetroHintT: "📜 未獲得の継承戦法は戦法点で補領可能（過去に同名カードを拆解済みなら半額）",
       },
       en: {
         zfLibT: "Tactics", zfLibOpenT: "📖 Tactics Library", zfMineT: "My Tactics", zfAllT: "All", zfPtsT: "Tactic Pts",
@@ -11866,6 +11882,7 @@ var BOTS = [
         zfAbsAllOkT: "Batch-dismantled {a} cards → +{p} tactic pts", zfAbsZfT: " | 📜 Unlocked tactic [{s}]",
         zfAbsRuleT: "Dismantle same-name duplicates → tactic points by grade; 83 legacy generals unlock their S tactic on first dismantle; 42 event tactics via D+ card exchange. Tactics scale from Lv1 to Lv5.",
         zfOwnedHaveT: "This event tactic is already owned",
+        zfRetroT: "Redeem", zfRetroOkT: "Redeemed legacy tactic \"{n}\" (-{m} pts)", zfRetroHintT: "📜 Unowned legacy tactics can be redeemed with tactic points (half price if you ever dismantled that general, incl. before V106)",
       }
     };
     Object.keys(ADD).forEach(function (lg) {
@@ -14702,12 +14719,13 @@ var BOTS = [
      每将 2 个战法槽，同一战法全账号只能佩戴一人；战法 Lv1~5 用战法点升级。
      战斗口径：主动=每回合判定追加伤害段；突击=普攻后判定；被动/兵种=自身常驻攻防；
      指挥/阵法=主将位提供全队常驻攻防速。 */
-  var ZF_CFG = { pow: 1, eventCost: 3 };   /* 全局效果倍率 / 事件战法兑换橙卡数（云端 combatrule.zf 可远程调整） */
+  var ZF_CFG = { pow: 1, eventCost: 3, retroCost: 20 };   /* 全局效果倍率 / 事件战法兑换橙卡数 / 传承战法补领价（云端 combatrule.zf 可远程调整） */
   function applyZFCfg(o) {
     if (typeof o === "string") { try { o = JSON.parse(o); } catch (e104) { return false; } }
     if (!o || typeof o !== "object") return false;
     if (isFinite(+o.pow) && +o.pow > 0 && +o.pow <= 5) ZF_CFG.pow = +o.pow;
     if (isFinite(+o.eventCost) && +o.eventCost >= 1 && +o.eventCost <= 20) ZF_CFG.eventCost = +o.eventCost;
+    if (isFinite(+o.retroCost) && +o.retroCost >= 1 && +o.retroCost <= 60) ZF_CFG.retroCost = Math.round(+o.retroCost);   /* V106：补领价 */
     return true;
   }
   var ZF_CATS = [
@@ -14764,11 +14782,15 @@ var BOTS = [
   ];
   var ZF_LIST = [], ZF_GEN_MAP = {};
   (function () {
-    var catIx = {};
+    /* V106：按战法名哈希选档 + 逐项数值 ±12% 确定性扰动——同类别 125 个战法不再千篇一律 */
+    function zfH(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; h = Math.imul(h ^ (h >>> 13), 0x5bd1e995) >>> 0; h = (h ^ (h >>> 15)) >>> 0; return h; }   /* djb2 + murmur 终结（保证非负）：避免中文名 mod 取桶聚集 */
     ZF_SEED.forEach(function (s, i) {
-      var cat = s[1], ix = catIx[cat] = (catIx[cat] || 0) + 1;
-      var t = ZF_TIER[cat][ix % 3], e = {};
-      Object.keys(t).forEach(function (k) { e[k] = t[k]; });
+      var cat = s[1];
+      var t = ZF_TIER[cat][zfH(cat + ":" + s[0]) % 3], e = {};
+      Object.keys(t).forEach(function (k) {
+        var kv = zfH(s[0] + "#" + k);
+        e[k] = Math.round(t[k] * (0.85 + (kv % 31) * 0.01) * 100) / 100;
+      });
       var ca = ZF_CATS.filter(function (x) { return x.k === cat; })[0];
       var zf = { id: "zf" + (i + 1), n: s[0], cat: cat, ev: !s[2], from: s[2] || "", c: ca.c, icon: ca.icon, catN: ca.n, e: e };
       if (cat === "act") zf.e.st = ZF_INT[s[0]] ? "in" : "wu";
@@ -14816,6 +14838,19 @@ var BOTS = [
       u.cards = (u.cards || []).filter(function (y) { return y.id !== x.id; });
     });
     zfGive(u, id);
+    return { ok: true, zf: zf, cost: cost };
+  }
+  /* ---------- V106：传承战法补领——历史已吞噬同名卡的账号也能拿到战法 ---------- */
+  function zfRetroCost(u, zf) {
+    var base = Math.max(1, Math.round(ZF_CFG.retroCost || 20));
+    return (((u && u.zfHist) || {})[zf.from] > 0) ? Math.max(1, Math.round(base / 2)) : base;
+  }
+  function zfRetroBuy(u, id) {
+    var zf = zfById(id); if (!zf || zf.ev) return { ok: false, err: "no" };
+    if (zfLvOf(u, id)) return { ok: false, err: "owned" };
+    var cost = zfRetroCost(u, zf);
+    if ((u.zfp || 0) < cost) return { ok: false, err: "pts", need: cost };
+    u.zfp -= cost; zfGive(u, id);
     return { ok: true, zf: zf, cost: cost };
   }
   function zfDescOf(zf, lv) {
@@ -14908,6 +14943,7 @@ var BOTS = [
       html += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">' + cats104.map(function (ca) {
         return '<button class="sgbtn sm ' + (_zfLibCat104 === ca.k ? "primary" : "ghost") + '" data-gs="zf-cat" data-k="' + ca.k + '" data-id="' + (c ? c.id : "") + '">' + ca.icon + " " + ca.n + "</button>";
       }).join("") + "</div>";
+      html += '<div class="sg-note" style="margin:0 0 8px">' + gt("zfRetroHintT") + "</div>";
       ZF_LIST.filter(function (z) { return _zfLibCat104 === "all" || z.cat === _zfLibCat104; }).forEach(function (zf) {
         var lv = zfLvOf(u, zf.id), owned = lv > 0, holder = owned ? zfEquippedBy(u, zf.id) : null;
         var isOn = c && (zfEquipOf(c).indexOf(zf.id) >= 0);
@@ -14917,7 +14953,14 @@ var BOTS = [
           '<button class="sgbtn sm ghost" data-gs="zf-off" data-slot="' + zfEquipOf(c).indexOf(zf.id) + '" data-id="' + c.id + '">' + gt("zfOffT") + "</button>";
         else if (owned && c) acts = '<button class="sgbtn sm primary" data-gs="zf-eq" data-k="' + zf.id + '" data-kn="' + esc(zf.n) + '" data-id="' + c.id + '" ' + (holder && holder.id !== c.id ? "disabled" : "") + ">" + gt("zfEquipT") + "</button>" +
           '<button class="sgbtn sm ghost" data-gs="zf-up" data-k="' + zf.id + '" data-id="' + c.id + '" ' + (lv >= 5 || zfp < zfUpCost(lv + 1) ? "disabled" : "") + ">⬆ " + gt("zfUpT") + " " + (lv < 5 ? zfUpCost(lv + 1) : "") + "</button>";
-        else if (!owned) acts = '<small style="color:var(--ink-3)">' + gt("zfNoOwnT") + (zf.ev ? "" : " · " + srcTxt) + "</small>";
+        else if (!owned) {
+          if (zf.ev) acts = '<small style="color:var(--ink-3)">' + gt("zfNoOwnT") + "</small>";
+          else {
+            var rc106 = zfRetroCost(u, zf);
+            acts = '<small style="color:var(--ink-3)">' + srcTxt + "</small>" +
+              '<button class="sgbtn sm ghost" data-gs="zf-retro" data-k="' + zf.id + '" data-kn="' + esc(zf.n) + '" data-id="' + (c ? c.id : "") + '" ' + (zfp >= rc106 ? "" : "disabled") + ">📜 " + gt("zfRetroT") + " " + rc106 + "</button>";
+          }
+        }
         html += '<div class="sg-rankline" style="' + (owned ? "" : "opacity:.62") + '"><span class="i" style="background:' + zf.c + ';color:#10131a">' + zf.icon + "</span>" +
           '<span><b>' + esc(zf.n) + "</b> <small style='color:" + zf.c + "'>" + zf.catN + (owned ? " · Lv." + lv : "") + "</small> <small style='color:var(--ink-3)'>" + esc(zfDescOf(zf, lv || 1)) + "</small>" +
           "<br><small style='color:var(--ink-3)'>" + esc(srcTxt) + (holder && !isOn ? " · ⚑ " + ((gById(holder.gid) || {}).name || "") : "") + "</small></span><span class=\"sp\"></span>" + acts + "</div>";
@@ -14955,6 +14998,7 @@ var BOTS = [
     var pts104 = ZF_RECY_PTS[cardTier(victim)] || 2;
     u.zfp = (u.zfp || 0) + pts104;
     var gname104 = (gById(victim.gid) || {}).name || "", zf104 = "";
+    if (gname104) { u.zfHist = u.zfHist || {}; u.zfHist[gname104] = (u.zfHist[gname104] || 0) + 1; }   /* V106：拆解史（补领半价依据，随档同步） */
     var zfId104 = ZF_GEN_MAP[gname104];
     if (zfId104 && zfGive(u, zfId104)) zf104 = zfById(zfId104).n;
     addPoints(u, 0, "拆解「" + gname104 + "」→ 战法点 +" + pts104 + (zf104 ? " · 解锁传承战法「" + zf104 + "」" : ""));
@@ -18167,10 +18211,16 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var zeq = zfEquipOf(card);
       for (var zi = 0; zi < 2; zi++) {
         var zid = zeq[zi], zf = zid ? zfById(zid) : null;
-        if (!zf) { h += '<div class="v105-sk lk"><b class="v105-skic">' + (zi + 1) + '</b><div><b>' + esc(gt("zfSlotEmptyT")) + "</b><small>—</small></div></div>"; continue; }
+        /* V106：战法槽行内直接给「装备/更换」按钮——弹窗内即可进战法库调整（此前只能去武将详情页） */
+        if (!zf) { h += '<div class="v105-sk lk"><b class="v105-skic">' + (zi + 1) + '</b><div><b>' + esc(gt("zfSlotEmptyT")) + "</b><small>" + esc(gt("zfSlotHintT")) + "</small></div>" +
+          '<button class="sgbtn sm" data-gs="zf-lib" data-slot="' + zi + '" data-id="' + card.id + '">＋ ' + esc(gt("zfEquipT")) + "</button></div>"; continue; }
         var zlv = zfLvOf(u, zid);
-        h += '<div class="v105-sk"><b class="v105-skic" style="background:' + zf.c + ';color:#10131a">' + zf.icon + '</b><div><b>' + esc(zf.n) + " Lv." + zlv + "</b><small>" + esc(zf.catN + " · " + zfDescOf(zf, zlv)) + "</small></div></div>";
+        h += '<div class="v105-sk"><b class="v105-skic" style="background:' + zf.c + ';color:#10131a">' + zf.icon + '</b><div><b>' + esc(zf.n) + " Lv." + zlv + "</b><small>" + esc(zf.catN + " · " + zfDescOf(zf, zlv)) + "</small></div>" +
+          '<button class="sgbtn sm ghost" data-gs="zf-lib" data-slot="' + zi + '" data-id="' + card.id + '">⇄ ' + esc(gt("zfEquipT")) + "</button></div>";
       }
+      /* V106：战法库总入口行（战法点 + 已获数一目了然） */
+      h += '<div class="v105-sk"><b class="v105-skic" style="background:#c9a45c;color:#10131a">📖</b><div><b>' + esc(gt("zfLibOpenT")) + '</b><small>' + esc(gt("zfOwnedN", { n: zfOwnedN(u) })) + " · " + esc(gt("zfPtsT")) + " " + fmt(u.zfp || 0) + " · " + esc(gt("zfRetroHintT")) + "</small></div>" +
+        '<button class="sgbtn sm" data-gs="zf-lib" data-id="' + card.id + '">' + esc(gt("zfLibT")) + "</button></div>";
       if (spg) h += '<div class="v105-sk"><b class="v105-skic" style="background:' + spg.color + ';color:#10131a">特</b><div><b style="color:' + spg.color + '">' + esc(spLabel(spg.k) + "【" + spSkillName(spg.k) + "】") + "</b><small>触发 " + spTrig(spg.k, g, 0) + "% · " + esc(gt("spDesc", { p: spTrig(spg.k, g, 0) })) + "</small></div></div>";
       return h;
     })();
@@ -18242,6 +18292,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '.v105-sk{display:flex;gap:6px;align-items:flex-start;font-size:10.5px}' +
       '.v105-skic{flex:0 0 18px;width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1px solid rgba(201,164,92,.4);background:rgba(0,0,0,.3);color:#e8c988}' +
       '.v105-sk>div{min-width:0;flex:1}.v105-sk b{font-size:11px;color:#f2f6fa;display:block}.v105-sk small{color:var(--ink-3);font-size:9.5px;line-height:1.5;display:block}.v105-sk.lk{opacity:.55}' +
+      '.v105-sk .sgbtn{margin-left:auto;flex:0 0 auto}' +
       '.v105-five{font-size:10px;color:var(--ink-3);text-align:center}' +
       '.v105-armlist{display:flex;flex-direction:column;gap:5px;margin-top:4px}' +
       '.v105-armrow{display:flex;align-items:center;gap:6px;width:100%;justify-content:flex-start;text-align:left}' +
@@ -20207,6 +20258,11 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var zb = zfEventBuy(u, t.getAttribute("data-k"));
         if (!zb.ok) return toast(zb.err === "owned" ? gt("zfOwnedHaveT") : gt("zfEventNoT", { n: zb.need || ZF_CFG.eventCost, m: zb.have != null ? zb.have : zfEventCards(u).length }), "err");
         save(); toast(gt("zfEventOkT", { n: zb.zf.n }) + "（-" + zb.cost + "）", "ok", 5600); zfLibOpen(u, c, -1, _zfLibEv104); return;
+      }
+      case "zf-retro": {   /* V106：传承战法补领（历史拆解过对应武将享半价） */
+        var zr = zfRetroBuy(u, t.getAttribute("data-k"));
+        if (!zr.ok) return toast(zr.err === "owned" ? gt("zfOwnedHaveT") : gt("zfNoPtsT", { n: zr.need || ZF_CFG.retroCost }), "err");
+        save(); toast(gt("zfRetroOkT", { n: zr.zf.n, m: zr.cost }), "ok", 5200); zfLibOpen(u, c, -1, _zfLibEv104); return;
       }
       case "absorb": {
         var azr = absorbDup(u, cid, null);
