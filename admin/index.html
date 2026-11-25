@@ -131,6 +131,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     <button class="tab" data-tab="shop">商店配置</button>
     <button class="tab" data-tab="econ">经济模型</button>
     <button class="tab" data-tab="mil">军事模型</button>
+    <button class="tab" data-tab="mkt">集市模型</button>
+    <button class="tab" data-tab="nob">爵位模型</button>
     <button class="tab" data-tab="citym">城市模型</button>
     <button class="tab" data-tab="rule">作战规则</button>
     <button class="tab" data-tab="popm">人口·政策</button>
@@ -282,6 +284,40 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         计算链路：<b>城市人口 ÷ 户均人口 = 户数</b>；<b>户数 × 每户每月上缴 = 本月官府实收粮食</b>；木/铜/铁/钱按「每户每月」产出同比例增长。<b>农田及各类建筑产出是附加收入</b>，在户口上缴之外叠加（粮再乘「农田附加系数」）。<br>
         默认口径：一户农家一年产 30 石、自留 24 石、上缴 6 石 —— 即每户每月上缴 0.5 石。改这里即改全站所有城市的产出，玩家端下次打开或刷新后生效。<br>
         <b>卸甲归田</b>（玩家端 招募处 → 人口）每归田 1 名兵员就 +1 人口，人口增长会直接变成新的纳税户，因此「归田」现在是增产手段；人口年增长率与天灾见「人口·政策」页签。
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-mkt" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">集市模型 · 全资源月度行情（全站生效） <span class="muted" id="mktUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="mktReload">刷新</button>
+        <button class="btn" id="mktReset">恢复默认</button>
+        <button class="btn gold" id="mktSave">保存并全站生效</button>
+      </div>
+      <div id="mktTable"></div>
+      <div class="muted" style="font-size:12px;margin-top:10px">
+        集市整合粮草/木头/铜/铁全部资源 ⇄ 铜钱交易。单价 = 基准价 × 当月系数 × 当月随机浮动（±10%）；
+        玩家买入价 = 单价 × 买入上浮、卖出价 = 单价 × 卖出折价。月度系数留空 = 按四季默认（秋收粮贱铜铁贵、冬季粮贵铜铁贱）。
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-nob" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <h3 style="margin:0">爵位模型 · 官职封赏（全站生效） <span class="muted" id="nobUpdated" style="font-weight:400"></span></h3>
+        <span style="flex:1"></span>
+        <button class="btn" id="nobReload">刷新</button>
+        <button class="btn" id="nobReset">恢复默认</button>
+        <button class="btn gold" id="nobSave">保存并全站生效</button>
+      </div>
+      <div id="nobTable"></div>
+      <div class="muted" style="font-size:12px;margin-top:10px">
+        官职表内置 80 职（文官 36 · 武官 40 · 特殊 4，底本：三国志Ⅸ 官爵表）。玩家端「爵位封赏」页列表式任命，每职一人、月度结算扣俸禄；
+        指挥上限 ≥ 4 万的官职（安东/镇/征将军、大都督、丞相等）解锁超过带兵成长曲线的 4 万+ 带兵能力。
       </div>
     </div>
   </section>
@@ -1696,6 +1732,153 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
   });
 
+  /* ---------- V109 集市模型（云端 key = mkt）：基准价 / 买卖价差 / 12 月系数 ---------- */
+  var MKT_DEF_A = { buyMul: 1.1, sellMul: 0.9, rice: 2, wood: 3, copper: 8, iron: 6 };
+  var MKT_COLS = [
+    ["buyMul", "买入上浮倍率", 1, 5, "买入单价 = 行情价 × 此倍率（向上取整），默认 1.1（贵 10%）"],
+    ["sellMul", "卖出折价倍率", 0.05, 1, "卖出单价 = 行情价 × 此倍率（向下取整），默认 0.9（折价 10%）"],
+    ["rice", "粮草基准价（钱/石）", 0.1, 100000, "行情价 = 基准价 × 当月系数 × 当月随机浮动（±10%）"],
+    ["wood", "木头基准价（钱/斤）", 0.1, 100000, "V109 起木头可在集市买卖"],
+    ["copper", "铜基准价（钱/斤）", 0.1, 100000, "铸造用铜的基准价"],
+    ["iron", "铁基准价（钱/斤）", 0.1, 100000, "兵器甲胄用铁的基准价"]
+  ];
+  var mktRows = null, mktSeason = ["", "", "", "", "", "", "", "", "", "", "", ""];
+  function mktNum(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
+  function mktLoad() {
+    $("#mktUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "mkt" }).then(function (r) {
+      mktRows = JSON.parse(JSON.stringify(MKT_DEF_A));
+      mktSeason = ["", "", "", "", "", "", "", "", "", "", "", ""];
+      if (r && r.ok && r.data) {
+        var o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        if (o && typeof o === "object") {
+          MKT_COLS.forEach(function (col) { if (o[col[0]] != null) mktRows[col[0]] = Number(o[col[0]]); });
+          if (o.base && typeof o.base === "object") ["rice", "wood", "copper", "iron"].forEach(function (k) { if (o.base[k] != null) mktRows[k] = Number(o.base[k]); });
+          if (Object.prototype.toString.call(o.season) === "[object Array]" && o.season.length === 12) mktSeason = o.season.map(function (x) { return x === null || x === undefined ? "" : String(x); });
+        }
+        if (r.updated_at) $("#mktUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      }
+      mktPaint();
+    });
+  }
+  function mktPaint() {
+    if (!mktRows) mktRows = JSON.parse(JSON.stringify(MKT_DEF_A));
+    var rows = MKT_COLS.map(function (c) {
+      return '<tr><td><b>' + esc(c[1]) + '</b><div class="muted" style="font-size:11px">' + c[0] + "</div></td>" +
+        '<td><input class="btn mkt-in" data-k="' + c[0] + '" type="number" step="0.1" min="' + c[2] + '" max="' + c[3] + '" value="' + mktRows[c[0]] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+        "<td class=\"muted\" style=\"font-size:12px\">" + esc(c[4]) + "</td></tr>";
+    }).join("");
+    var season = '<tr><td><b>月度系数（1~12 月）</b><div class="muted" style="font-size:11px">season[12]</div></td><td colspan="2">' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' + mktSeason.map(function (v, i) {
+        return '<label style="font-size:11px">' + (i + 1) + '月 <input class="btn mkt-sea" data-mo="' + i + '" type="number" step="0.1" min="0.05" max="20" value="' + esc(v) + '" placeholder="默认" style="width:74px;text-align:right;padding:5px 6px"></label>';
+      }).join("") + "</div>" +
+      '<div class="muted" style="font-size:11px;margin-top:5px">留空 = 四季默认（春 1.15/0.9 · 夏 0.9/1.15 · 秋收 0.55/1.6 · 冬 1.7/0.55）。填写后所有资源统一按该月系数。</div></td></tr>';
+    $("#mktTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' + rows + season + "</tbody></table>";
+    $$("#mktTable .mkt-in").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var k = this.getAttribute("data-k"), col = MKT_COLS.filter(function (x) { return x[0] === k; })[0];
+        mktRows[k] = mktNum(this.value, MKT_DEF_A[k], col[2], col[3]);
+      });
+    });
+    $$("#mktTable .mkt-sea").forEach(function (inp) {
+      inp.addEventListener("input", function () { mktSeason[+this.getAttribute("data-mo")] = this.value; });
+    });
+  }
+  $("#mktReload").addEventListener("click", mktLoad);
+  $("#mktReset").addEventListener("click", function () {
+    mktRows = JSON.parse(JSON.stringify(MKT_DEF_A)); mktSeason = ["", "", "", "", "", "", "", "", "", "", "", ""];
+    $("#mktUpdated").textContent = "已恢复默认值（尚未保存）"; mktPaint();
+  });
+  $("#mktSave").addEventListener("click", function () {
+    if (!mktRows) return;
+    var out = {};
+    MKT_COLS.forEach(function (col) { out[col[0]] = mktNum(mktRows[col[0]], MKT_DEF_A[col[0]], col[2], col[3]); });
+    out.base = { rice: out.rice, wood: out.wood, copper: out.copper, iron: out.iron };
+    var filled = mktSeason.filter(function (x) { return String(x).trim() !== "" && isFinite(+x); });
+    out.season = filled.length === 12 ? mktSeason.map(function (x) { return mktNum(x, 1, 0.05, 20); }) : null;
+    var btn = $("#mktSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "mkt", p_data: out }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        admTip("集市模型已保存，全站生效（玩家端刷新或下次打开拉取）");
+        if (r.updated_at) $("#mktUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
+  /* ---------- V109 爵位模型（云端 key = nobility）：俸禄 / 上限 / 加成倍率 + 官职微调 ---------- */
+  var NOB_DEF_A = { salMul: 1, capMul: 1, bonusMul: 1 };
+  var NOB_COLS = [
+    ["salMul", "俸禄倍率（全局）", 0, 20, "所有官职月俸 × 此倍率，默认 1；月度结算从玩家铜钱扣除（扣到 0 为止）"],
+    ["capMul", "指挥上限倍率（全局）", 0.1, 10, "所有官职指挥上限 × 此倍率，默认 1；≥4 万的官职解锁超曲线带兵"],
+    ["bonusMul", "属性加成倍率（全局）", 0, 20, "文官（智/政）与特殊官职（统/武/智/政）加成 × 此倍率，默认 1"]
+  ];
+  var nobRows = null, nobOvr = "{}";
+  function nobNum(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
+  function nobLoad() {
+    $("#nobUpdated").textContent = "";
+    call("sg_cfg_get", { p_key: "nobility" }).then(function (r) {
+      nobRows = JSON.parse(JSON.stringify(NOB_DEF_A)); nobOvr = "{}";
+      if (r && r.ok && r.data) {
+        var o = r.data;
+        if (typeof o === "string") { try { o = JSON.parse(o); } catch (e) { o = null; } }
+        if (o && typeof o === "object") {
+          NOB_COLS.forEach(function (col) { if (o[col[0]] != null) nobRows[col[0]] = Number(o[col[0]]); });
+          if (o.ovr && typeof o.ovr === "object") nobOvr = JSON.stringify(o.ovr);
+        }
+        if (r.updated_at) $("#nobUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      }
+      nobPaint();
+    });
+  }
+  function nobPaint() {
+    if (!nobRows) nobRows = JSON.parse(JSON.stringify(NOB_DEF_A));
+    var rows = NOB_COLS.map(function (c) {
+      return '<tr><td><b>' + esc(c[1]) + '</b><div class="muted" style="font-size:11px">' + c[0] + "</div></td>" +
+        '<td><input class="btn nob-in" data-k="' + c[0] + '" type="number" step="0.1" min="' + c[2] + '" max="' + c[3] + '" value="' + nobRows[c[0]] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+        "<td class=\"muted\" style=\"font-size:12px\">" + esc(c[4]) + "</td></tr>";
+    }).join("");
+    var ovr = '<tr><td><b>官职微调（JSON，可选）</b><div class="muted" style="font-size:11px">ovr</div></td><td colspan="2">' +
+      '<textarea id="nobOvrIn" rows="4" style="width:100%;max-width:720px;padding:6px 8px;font-family:monospace;font-size:12px">' + esc(nobOvr) + "</textarea>" +
+      '<div class="muted" style="font-size:11px;margin-top:5px">按官职 id 覆盖俸禄/上限，如 {"M136":{"sal":40},"S101":{"cap":60000}}。id 规则：文官 W101~W136、武官 M101~M140、特殊 S101~S104（顺序同玩家端列表）。</div></td></tr>';
+    $("#nobTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' + rows + ovr + "</tbody></table>";
+    $$("#nobTable .nob-in").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        var k = this.getAttribute("data-k"), col = NOB_COLS.filter(function (x) { return x[0] === k; })[0];
+        nobRows[k] = nobNum(this.value, NOB_DEF_A[k], col[2], col[3]);
+      });
+    });
+    var ta = $("#nobOvrIn");
+    if (ta) ta.addEventListener("input", function () { nobOvr = this.value; });
+  }
+  $("#nobReload").addEventListener("click", nobLoad);
+  $("#nobReset").addEventListener("click", function () {
+    nobRows = JSON.parse(JSON.stringify(NOB_DEF_A)); nobOvr = "{}";
+    $("#nobUpdated").textContent = "已恢复默认值（尚未保存）"; nobPaint();
+  });
+  $("#nobSave").addEventListener("click", function () {
+    if (!nobRows) return;
+    var out = {};
+    NOB_COLS.forEach(function (col) { out[col[0]] = nobNum(nobRows[col[0]], NOB_DEF_A[col[0]], col[2], col[3]); });
+    try {
+      var ov = JSON.parse(nobOvr || "{}");
+      out.ovr = (ov && typeof ov === "object" && Object.keys(ov).length) ? ov : {};
+    } catch (e) { out.ovr = {}; }
+    var btn = $("#nobSave");
+    btn.disabled = true;
+    call("sg_cfg_set", { p_token: token(), p_key: "nobility", p_data: out }).then(function (r) {
+      btn.disabled = false;
+      if (r && r.ok) {
+        admTip("爵位模型已保存，全站生效（玩家端刷新或下次打开拉取）");
+        if (r.updated_at) $("#nobUpdated").textContent = "云端更新于 " + dt(r.updated_at);
+      } else if (r && r.err === "unauthorized") logout();
+      else admTip("保存失败：" + ((r && (r.err || r.msg)) || "网络异常") + "，请重试", true);
+    });
+  });
+
   /* ---------- V91 城市模型（云端 key = citymodel）----------
      基础数据取《三国志IX》190 年城池表（州/都市/特技/人口/商業/開発/兵法①②/耐久/隣接都市数）。
      新增派生列：兵役人口 = 基础人口 × 15%；经商人口 = 基础人口 × 商業 ÷ 1000 × 20%。
@@ -2770,6 +2953,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       $("#tab-shop").hidden = state.tab !== "shop";
       $("#tab-econ").hidden = state.tab !== "econ";
       $("#tab-mil").hidden = state.tab !== "mil";
+      $("#tab-mkt").hidden = state.tab !== "mkt";
+      $("#tab-nob").hidden = state.tab !== "nob";
       $("#tab-citym").hidden = state.tab !== "citym";
       $("#tab-rule").hidden = state.tab !== "rule";
       $("#tab-popm").hidden = state.tab !== "popm";
@@ -2781,6 +2966,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       if (state.tab === "shop") shopLoad();
       if (state.tab === "econ") ecoLoad();
       if (state.tab === "mil") milLoad();
+      if (state.tab === "mkt") mktLoad();
+      if (state.tab === "nob") nobLoad();
       if (state.tab === "citym") cmLoad();
       if (state.tab === "rule") ruleLoad();
       if (state.tab === "popm") popmLoad();
@@ -2884,7 +3071,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           migLog("② 账号 " + acc.rows.length + " 条（total " + acc.total + "）");
           return migFetchAll("sg_admin_events", { p_token: t, p_kind: "" }, 50000).then(function (evt) {
             migLog("③ 事件 " + evt.rows.length + " 条（total " + evt.total + "）");
-            var keys = ["tiers", "gacha", "troopgrow", "econ", "military", "shop", "sprites"];
+            var keys = ["tiers", "gacha", "troopgrow", "econ", "military", "shop", "sprites", "mkt", "nobility"];
             return Promise.all(keys.map(function (k) {
               return migCall("sg_cfg_get", { p_key: k }).then(function (r) { return [k, r && r.ok ? r.data : null]; });
             })).then(function (prs) {
