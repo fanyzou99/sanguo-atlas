@@ -11524,6 +11524,7 @@ var BOTS = [
       recPoolNoT: "Reserve pool empty — recruit soldiers at the Recruit Hall (Soldiers tab)",
       moraleHint: "Training Ground Lv.{n}: morale +{n}×2 per month (cap 100); sortie attack scales with garrison morale (up to +25% at 100); wounded recover 30%/xun",
       osupT: "⚠ Out of supply: {n}", osupShortT: "Out of supply", osupHintT: "Grain exhausted — morale -15~-25 & 10-15% desertion per xun; attack ×0.5 and tactics disabled in battle",
+      rosterOutT: "Withdraw from garrison (troops return to reserve)",
       xunRiceT: "Grain per xun -{n} (month -{m})", chaosActT: "{n} is in chaos and cannot act!", chaosHitT: "{n}'s morale breaks — chaos!",
       moraleNoT: "No Training Ground yet: morale decays slowly (floor 60); build one to raise morale and boost proficiency gains",
       eliteLeadT: "Leader", eliteNoLead: "None (need Leadership>80 & Might>80)",
@@ -11623,6 +11624,7 @@ var BOTS = [
       recPoolNoT: "预备役不足——请到招募处「募兵」页签募兵",
       moraleHint: "训练场 Lv.{n}：每月士气 +{n}×2（上限 100），出战攻击随士气提升（+8% 封顶）",
       osupT: "⚠ 断粮：{n}", osupShortT: "断粮", osupHintT: "粮尽——每旬士气 -15~-25、兵力逃亡 10%~15%；出战攻击 ×0.5、战法失效",
+      rosterOutT: "撤出驻城（兵力退回预备役）",
       xunRiceT: "每旬兵粮 -{n}（月 -{m}）", chaosActT: "{n} 陷入混乱，无法行动！", chaosHitT: "{n} 士气崩溃，陷入混乱！",
       moraleNoT: "尚未建造训练场：士气缓慢回落（下限 60）；建造训练场后每月提升，并使出战熟练度战果额外 +10/级",
       eliteLeadT: "统领", eliteNoLead: "未任命（需 统>80 且 武>80）",
@@ -13373,10 +13375,12 @@ var BOTS = [
         st.des = des; st.osup = true;
         if (!was) out.osupNew.push(cn);
       } else if (c.osup) { c.osup = 0; st.osup = false; }
-      /* 士气：训练场回补 / 自然衰减（无训练场下限 60，维持原口径） */
+      /* 士气：训练场回补 / 自然衰减（无训练场下限 60，维持原口径）。
+         V111：断粮城市跳过回补与 60 下限——GDD 断粮士气暴跌不被维护抵消，只按旬自然 -2 继续下探 */
       var tr = (c.bld && c.bld.train) || 0, mo0 = (c.morale == null ? 60 : c.morale);
       var mdec = isFinite(+K.morDecay) ? +K.morDecay : 2;
-      if (tr > 0) c.morale = Math.min(100, mo0 + Math.round(tr * 2 / 3));
+      if (c.osup) c.morale = Math.max(0, mo0 - mdec);
+      else if (tr > 0) c.morale = Math.min(100, mo0 + Math.round(tr * 2 / 3));
       else c.morale = Math.max(60, mo0 - mdec);
       /* 伤兵康复：每旬 healRate%（训练场≥1 视为医疗设施 → healRateMed%），先到月批次优先 */
       var wN0 = cityWoundN(c);
@@ -14914,7 +14918,7 @@ var BOTS = [
      原先上限 40 散落在「是否满员 / 界面显示 / 勾选上限」5 处，各自硬编码；
      且回收/赠予/吞噬删除卡牌时不清理 roster，残留 id 会虚占名额：
      界面显示 10/40，却提示「单城最多驻扎 40 名武将」无法继续派驻。 */
-  var ROSTER_MAX = 40;
+  var ROSTER_MAX = 60;   /* V111：驻城武将上限 40 → 60 */
   function rosterCap() { return ROSTER_MAX; }
   function rosterRoom(u) { u = u || me(); return Math.max(0, rosterCap() - cityRoster(u).length); }
   /* 清掉指向已不存在卡牌的驻城 id（去重），返回清理条数 */
@@ -15979,6 +15983,8 @@ var BOTS = [
   }
   /* ================= V109 爵位封赏：列表式任命（文官/武官/特殊三页签） =================
      每个官职一行：指挥上限 / 属性加成 / 俸禄 / 在任者；每职一人，任命即封赏，罢免即腾缺。 */
+  /* ================= V111：爵位封赏二维表（参考《三国志Ⅸ》军事·官爵画面） =================
+     每行一个官爵：官爵 / 职级 / 指挥兵力 / 加成 / 俸禄 / 在任武将 / 操作——一屏纵览全表。 */
   function nobBonTxt(r) {
     var ZH = { st: "统", wu: "武", "in": "智", po: "政" };
     var ks = Object.keys(r.bon || {}).filter(function (k) { return r.bon[k]; });
@@ -15990,16 +15996,17 @@ var BOTS = [
   function nobRowHTML(u, r) {
     var hold = nobHolder(u, r.id), hg = hold ? gById(hold.gid) : null;
     var unlock = nobCapOf(r) >= RANK_UNLOCK_TROOP;
-    return '<div class="sg-rankline sg-palrow">' +
-      '<span class="i" style="background:' + (r.ty === "s" ? "#7a4fd0" : r.ty === "m" ? "#5b4a2f" : "#3f5b6b") + ';color:#f5e6c4">' + (r.ty === "s" ? "特" : r.ty === "m" ? "武" : "文") + "</span>" +
-      "<span><b>" + esc(r.n) + "</b> <small style='color:var(--ink-3)'>Lv" + r.lv + " 职</small><br>" +
-      '<small style="color:#e8c988">指挥上限 ' + fmt(nobCapOf(r)) + (unlock ? " 🔓" : "") + " · 加成 " + esc(nobBonTxt(r)) + " · 俸禄 " + fmt(nobSalOf(r)) + " 钱/月</small>" +
-      "<br><small>" + (hg ? '<b style="color:#8fd694">' + esc(hg.name || "?") + "</b> Lv." + cardLv(hold) + "（在任）" : '<span style="color:var(--ink-3)">空缺</span>') +
-      (unlock ? ' <span style="color:#e3b34f">· 解锁 4 万+ 带兵</span>' : "") + "</small></span>" +
-      '<span class="sp"></span>' +
-      '<button class="sgbtn sm primary" data-bat="nob-open" data-rank="' + r.id + '">封赏</button>' +
-      (hg ? '<button class="sgbtn sm ghost" data-bat="nob-revoke" data-rank="' + r.id + '">罢免</button>' : "") +
-      "</div>";
+    /* V111：二维表行——官爵 / 职级 / 指挥兵力 / 加成 / 俸禄 / 在任武将 / 操作 */
+    return "<tr>" +
+      '<td class="sgnb-nm"><b>' + esc(r.n) + "</b></td>" +
+      '<td class="sgnb-lv">' + r.lv + "</td>" +
+      '<td class="sgnb-cap">' + fmt(nobCapOf(r)) + (unlock ? ' <i class="sgnb-unlk" title="解锁 4 万+ 带兵">🔓</i>' : "") + "</td>" +
+      '<td class="sgnb-bon">' + esc(nobBonTxt(r)) + "</td>" +
+      '<td class="sgnb-sal">' + fmt(nobSalOf(r)) + "</td>" +
+      '<td class="sgnb-hold">' + (hg ? '<b style="color:#8fd694">' + esc(hg.name || "?") + '</b> <small style="color:var(--ink-3)">Lv.' + cardLv(hold) + "</small>" : '<span style="color:var(--ink-3)">空缺</span>') + "</td>" +
+      '<td class="sgnb-op"><button class="sgbtn sm primary" data-bat="nob-open" data-rank="' + r.id + '">封赏</button>' +
+      (hg ? '<button class="sgbtn sm ghost" data-bat="nob-revoke" data-rank="' + r.id + '" style="margin-left:4px">罢免</button>' : "") + "</td>" +
+      "</tr>";
   }
   function rankBodyHTML(u) {
     var tk = BATUI.nobTab || "m";
@@ -16012,7 +16019,18 @@ var BOTS = [
     var rows = NOB_LIST.filter(function (r) { return r.ty === tk; }).map(function (r) { return nobRowHTML(u, r); }).join("");
     return '<div class="sg-note" style="margin:0 0 8px">' + gt("rankHintT") + "　·　" +
       gt("nobSalSumT", { n: fmt(nobSalTotal(u)) }) + "　·　" + gt("nobCapHintT") + "</div>" +
-      '<div class="sgchips" style="margin-bottom:8px">' + tabs + "</div>" + rows;
+      '<div class="sgchips" style="margin-bottom:8px">' + tabs + "</div>" +
+      /* V111：三国志Ⅸ 式二维表——一屏纵览全表，单元格 hover 有分隔线 */
+      '<div style="max-height:52vh;overflow-y:auto;border:1px solid rgba(201,164,92,.3);border-radius:9px;background:rgba(0,0,0,.22)">' +
+      '<table class="sg-nobtbl"><thead><tr>' +
+      "<th>官爵</th><th>职级</th><th>指挥兵力</th><th>加成</th><th>俸禄/月</th><th>在任武将</th><th>操作</th>" +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+      '<style>.sg-nobtbl{width:100%;border-collapse:collapse;font-size:11.5px}' +
+      ".sg-nobtbl th{position:sticky;top:0;z-index:2;background:#3a2f1c;color:#f5e6c4;font-weight:700;padding:6px 8px;text-align:left;border-bottom:1px solid rgba(201,164,92,.45);font-size:11px;letter-spacing:.06em;white-space:nowrap}" +
+      ".sg-nobtbl td{padding:5px 8px;border-bottom:1px solid rgba(201,164,92,.14);color:var(--ink-1);white-space:nowrap}" +
+      ".sg-nobtbl tbody tr:hover td{background:rgba(201,164,92,.09)}" +
+      ".sg-nobtbl .sgnb-nm b{color:#ffe9a8}.sg-nobtbl .sgnb-lv{color:#e8c988}.sg-nobtbl .sgnb-cap{color:#9ec9ff;font-weight:600}.sg-nobtbl .sgnb-bon{color:#8fd694}.sg-nobtbl .sgnb-sal{color:#c8d0dc}.sg-nobtbl .sgnb-unlk{font-style:normal;cursor:help}" +
+      ".sg-nobtbl .sgnb-op{white-space:nowrap}@media(max-width:640px){.sg-nobtbl .sgnb-bon,.sg-nobtbl th:nth-child(4){display:none}}</style>";
   }
   /* 封赏任命弹窗：列出武将（品阶/等级排序），点选即任命 */
   function nobPickOpen(u, rankId) {
@@ -18218,8 +18236,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         /* V51：按卡牌 id 去重——同一武将在不同城可能有多张卡，渲染层不能按 gid 合并 */
         idle.map(function (card) {
           var g = gById(card.gid) || {};
-          return '<button class="sg-idlecell" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name) + ' Lv.' + cardLv(card) + '">' +
-            '<span class="sg-idle-av">' + styledArtSVG(g, null, true) + "</span><b>" + esc(g.name) + "</b><i>Lv." + cardLv(card) + "</i></button>";
+          /* V111：同 hallUnifiedHTML——未出战驻城武将 ✕ 直接撤出驻城 */
+          return '<span class="sg-idlecell"><button class="sg-idle-main" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name) + ' Lv.' + cardLv(card) + '">' +
+            '<span class="sg-idle-av">' + styledArtSVG(g, null, true) + "</span><b>" + esc(g.name) + "</b><i>Lv." + cardLv(card) + "</i></button>" +
+            '<button class="sg-idle-x" data-bat="roster-del" data-id="' + card.id + '" title="' + esc(gt("rosterOutT")) + '">✕</button></span>';
         }).join("") + "</div>"
       : "";
     return '<div class="sg-panel-hd"><h3><i>·</i>⚔ ' + T("teamT") + "</h3><span class=\"sp\"></span>" +
@@ -18248,7 +18268,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-slot.on{background:linear-gradient(180deg,rgba(201,164,92,.18),rgba(0,0,0,.3));box-shadow:0 2px 10px rgba(0,0,0,.45)}" +
       ".sg-slot-av{border-color:rgba(201,164,92,.5);box-shadow:inset 0 0 8px rgba(0,0,0,.5)}" +
       ".sg-idlewall{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin:6px 0 4px}" +
-      ".sg-idlecell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.22);cursor:pointer;font-size:10px;transition:.15s;min-width:0}" +
+      ".sg-idlecell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.22);cursor:pointer;font-size:10px;transition:.15s;min-width:0;position:relative}" +
+      /* V111：驻城头像墙 ✕ 撤出按钮（未出战武将） */
+      ".sg-idle-main{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0;width:100%}" +
+      ".sg-idle-x{position:absolute;top:2px;right:2px;z-index:4;border:0;background:rgba(0,0,0,.65);color:#e07f7f;border-radius:50%;width:15px;height:15px;line-height:1;font-size:10px;cursor:pointer;padding:0}.sg-idle-x:hover{background:#e07f7f;color:#10131a}" +
       ".sg-idlecell:hover{border-color:#c9a45c;transform:translateY(-1px)}" +
       ".sg-idlecell b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:10.5px;font-weight:600}" +
       ".sg-idlecell i{font-style:normal;color:#e8c988;font-size:9px}" +
@@ -18336,8 +18359,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         "<b>" + esc(g.name || "?") + "</b><i>Lv." + cardLv(cd) + "</i></div>" +
       "</div>" +
       '<div class="sg-garm"><b>' + esc(armTxt) + "</b><span>" + fmt(tot) + (full ? " ✅" : "") + "</span></div>" +
-      /* V108：原绿色兵力进度条 → 战斗值 / 防御值文字行 */
-      '<div class="sg-gstat" title="' + esc(tip) + '" style="display:flex;justify-content:center;gap:10px;padding:4px 6px;margin:3px 0;border:1px solid rgba(201,164,92,.22);border-radius:8px;background:rgba(0,0,0,.30);font-size:10.5px;color:#c8d0dc">⚡ 战斗值 <b style="color:#ffd76a">' + fmt(cb.powSum) + "</b>　🛡 防御 <b style=\"color:#9ec9ff\">" + fmt(defV108) + "</b></div>" +
+      /* V108：原绿色兵力进度条 → 战斗值 / 防御值文字行。V111：只显示图标+数值，汉字 hover 显示 */
+      '<div class="sg-gstat" title="' + esc((tip ? tip + "\n" : "") + "⚡ 战斗值 " + fmt(cb.powSum) + " · 🛡 防御 " + fmt(defV108)) + '" style="display:flex;justify-content:center;gap:10px;padding:4px 6px;margin:3px 0;border:1px solid rgba(201,164,92,.22);border-radius:8px;background:rgba(0,0,0,.30);font-size:10.5px;color:#c8d0dc">⚡ <b style="color:#ffd76a">' + fmt(cb.powSum) + "</b>　🛡 <b style=\"color:#9ec9ff\">" + fmt(defV108) + "</b></div>" +
       '<div class="sg-gskills">' + skRows + "</div>" +
       /* V100：编队操作入口（补兵/配兵/兵种/吞噬）——点击卡片本体只更换选将，不再打开详情 */
       (ctx.ti != null && ctx.clickPos != null ? '<button class="sg-gops" data-bat="slot-ops" data-t="' + ctx.ti + '" data-p="' + ctx.clickPos + '" title="' + esc(gt("sqOpsT")) + '">⚙</button>' : "") +
@@ -18410,8 +18433,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         '<div class="sg-idlewall">' +
         idle.map(function (card) {
           var g = gById(card.gid) || {};
-          return '<button class="sg-idlecell" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name) + ' Lv.' + cardLv(card) + '">' +
-            '<span class="sg-idle-av">' + styledArtSVG(g, null, true) + "</span><b>" + esc(g.name) + "</b><i>Lv." + cardLv(card) + "</i></button>";
+          /* V111：未出战驻城武将可直接 ✕ 撤出驻城（兵力退回预备役）；本体仍点开武将详情 */
+          return '<span class="sg-idlecell"><button class="sg-idle-main" data-sgact="card-open" data-id="' + g.id + '" title="' + esc(g.name) + ' Lv.' + cardLv(card) + '">' +
+            '<span class="sg-idle-av">' + styledArtSVG(g, null, true) + "</span><b>" + esc(g.name) + "</b><i>Lv." + cardLv(card) + "</i></button>" +
+            '<button class="sg-idle-x" data-bat="roster-del" data-id="' + card.id + '" title="' + esc(gt("rosterOutT")) + '">✕</button></span>';
         }).join("") + "</div>"
       : "";
     return '<div class="sg-panel" style="margin-top:12px">' +
@@ -18455,7 +18480,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-gops{position:absolute;top:3px;right:3px;z-index:5;border:1px solid rgba(201,164,92,.5);background:rgba(8,10,14,.8);color:#e8c988;border-radius:50%;width:18px;height:18px;line-height:1;font-size:10px;cursor:pointer;padding:0}.sg-gops:hover{background:#c9a45c;color:#10131a}" +
       ".sg-army-ft{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10.5px;color:var(--ink-3)}.sg-army-ft .sp{flex:1}" +
       ".sg-idlewall{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin:6px 0 4px}" +
-      ".sg-idlecell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.22);cursor:pointer;font-size:10px;transition:.15s;min-width:0}" +
+      ".sg-idlecell{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.22);cursor:pointer;font-size:10px;transition:.15s;min-width:0;position:relative}" +
+      /* V111：驻城头像墙 ✕ 撤出按钮（未出战武将） */
+      ".sg-idle-main{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0;width:100%}" +
+      ".sg-idle-x{position:absolute;top:2px;right:2px;z-index:4;border:0;background:rgba(0,0,0,.65);color:#e07f7f;border-radius:50%;width:15px;height:15px;line-height:1;font-size:10px;cursor:pointer;padding:0}.sg-idle-x:hover{background:#e07f7f;color:#10131a}" +
       ".sg-idlecell:hover{border-color:#c9a45c;transform:translateY(-1px)}" +
       ".sg-idlecell b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:10.5px;font-weight:600}" +
       ".sg-idlecell i{font-style:normal;color:#e8c988;font-size:9px}" +
@@ -21402,7 +21430,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       case "roster-del": {
         ensureCity(u);
         removeFromCity(u, t.getAttribute("data-id"));
-        save(); rosterOpen(); refreshBattle(); return;
+        save();
+        /* V111：驻城管理弹窗内重开弹窗刷新列表；头像墙 ✕ 撤出时不弹窗，只刷编队页 */
+        if (BATUI.pk && BATUI.pk.mode === "roster") rosterOpen();
+        refreshBattle(); return;
       }
       case "mbuy": case "msell": {
         ensureCity(u);

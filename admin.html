@@ -1819,6 +1819,51 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     ["bonusMul", "属性加成倍率（全局）", 0, 20, "文官（智/政）与特殊官职（统/武/智/政）加成 × 此倍率，默认 1"]
   ];
   var nobRows = null, nobOvr = "{}";
+  /* V111：内置 80 职官爵数据（与玩家端 NOB_LIST 同源，底本：三国志Ⅸ 官爵表）——直接形成二维表展示 */
+  var NOB_DATA9 = (function () {
+    var W = [["主簿",1,4],["谏议大夫",1,4],["侍郎",1,4],["中郎",1,4],["奋威校尉",1,4],["宣信校尉",1,4],["破贼校尉",1,4],["武卫校尉",1,4],
+      ["太乐令",2,8],["大仓令",2,8],["武仓令",2,8],["卫士令",2,8],["郎中",2,12],["从事中郎",2,12],["长史",2,12],["司马",2,12],
+      ["谒者仆射",3,16],["都尉",3,16],["黄门侍郎",3,16],["太史令",3,16],["秘书令",3,20],["侍中",3,20],["留府长史",3,20],["太学博士",3,20],
+      ["中书令",4,24],["御史中丞",4,24],["执金吾",4,24],["少府",4,24],["尚书令",4,28],["太仆",4,28],["太常",4,28],["光禄大夫",4,28],
+      ["光禄勋",4,32],["大司农",4,32],["卫尉",4,32],["廷尉",4,32]];
+    var M = [["忠义校尉",1,15000,4],["昭信校尉",1,15000,4],["儒林校尉",1,15000,4],["建议校尉",1,15000,4],["奋威校尉",1,15000,4],["宣信校尉",1,15000,4],["破贼校尉",1,15000,4],["武卫校尉",1,15000,4],
+      ["牙门将军",2,20000,8],["护军",2,20000,8],["偏将军",2,20000,8],["裨将军",2,20000,8],
+      ["威东将军",2,25000,12],["威南将军",2,25000,12],["威西将军",2,25000,12],["威北将军",2,25000,12],
+      ["军师将军",3,30000,16],["安国将军",3,30000,16],["破虏将军",3,30000,16],["讨逆将军",3,30000,16],
+      ["左将军",3,35000,20],["右将军",3,35000,20],["前将军",3,35000,20],["后将军",3,35000,20],
+      ["安东将军",4,40000,24],["安南将军",4,40000,24],["安西将军",4,40000,24],["安北将军",4,40000,24],
+      ["镇东将军",4,45000,28],["镇南将军",4,45000,28],["镇西将军",4,45000,28],["镇北将军",4,45000,28],
+      ["征东将军",4,50000,32],["征南将军",4,50000,32],["征西将军",4,50000,32],["征北将军",4,50000,32],
+      ["大都督",5,55000,36],["卫将军",5,55000,36],["骠骑将军",5,55000,36],["车骑将军",5,55000,36]];
+    var S = [["丞相",55000,"统+5 武+5 智+5 政+5",36],["司空",55000,"智+5 政+5",36],["太尉",55000,"智+5 政+5",36],["司徒",55000,"智+5 政+5",36]];
+    var out = [];
+    W.forEach(function (r, i) { out.push({ id: "W" + (101 + i), ty: "文官", n: r[0], lv: r[1], cap: 10000, sal: r[2], bon: "智+" + r[1] + " 政+" + r[1] }); });
+    M.forEach(function (r, i) { out.push({ id: "M" + (101 + i), ty: "武官", n: r[0], lv: r[1], cap: r[2], sal: r[3], bon: "—" }); });
+    S.forEach(function (r, i) { out.push({ id: "S" + (101 + i), ty: "特殊", n: r[0], lv: 5, cap: r[1], sal: r[3], bon: r[2] }); });
+    return out;
+  })();
+  function nobDataHTML() {
+    var rows = NOB_DATA9.map(function (r, ix) {
+      var unlock = r.cap >= 40000;
+      return '<tr' + (ix % 2 ? ' style="background:rgba(255,255,255,.025)"' : "") + ">" +
+        '<td class="muted" style="font-size:11px;font-family:monospace">' + r.id + "</td>" +
+        "<td>" + r.ty + "</td><td><b>" + esc(r.n) + "</b></td><td style=\"text-align:center\">" + r.lv + "</td>" +
+        '<td style="text-align:right;font-family:monospace">' + r.cap.toLocaleString() + (unlock ? ' <span style="color:#e3b34f">🔓</span>' : "") + "</td>" +
+        '<td style="text-align:right;font-family:monospace">' + r.sal.toLocaleString() + "</td>" +
+        '<td style="color:#8fd694">' + esc(r.bon) + "</td></tr>";
+    }).join("");
+    return '<div style="margin:20px 0 6px;font-weight:600">内置官爵表（80 职 · 只读）</div>' +
+      '<div class="muted" style="font-size:12px;margin-bottom:6px">底本：三国志Ⅸ 官爵表。俸禄 / 指挥上限为默认值，全局倍率与「官职微调 ovr」在此基础上生效；指挥上限 ≥ 4 万（🔓）的官职解锁超成长曲线带兵。</div>' +
+      '<div style="max-height:480px;overflow-y:auto;border:1px solid var(--line,#333)"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
+      '<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">id</th>' +
+      '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">类型</th>' +
+      '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">官爵</th>' +
+      '<th style="text-align:center;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">职级</th>' +
+      '<th style="text-align:right;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">指挥上限</th>' +
+      '<th style="text-align:right;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">俸禄/月</th>' +
+      '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">属性加成</th>' +
+      "</tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
   function nobNum(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function nobLoad() {
     $("#nobUpdated").textContent = "";
@@ -1846,7 +1891,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     var ovr = '<tr><td><b>官职微调（JSON，可选）</b><div class="muted" style="font-size:11px">ovr</div></td><td colspan="2">' +
       '<textarea id="nobOvrIn" rows="4" style="width:100%;max-width:720px;padding:6px 8px;font-family:monospace;font-size:12px">' + esc(nobOvr) + "</textarea>" +
       '<div class="muted" style="font-size:11px;margin-top:5px">按官职 id 覆盖俸禄/上限，如 {"M136":{"sal":40},"S101":{"cap":60000}}。id 规则：文官 W101~W136、武官 M101~M140、特殊 S101~S104（顺序同玩家端列表）。</div></td></tr>';
-    $("#nobTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' + rows + ovr + "</tbody></table>";
+    $("#nobTable").innerHTML = '<table style="width:100%"><thead><tr><th style="width:230px">参数</th><th style="width:150px">数值</th><th>说明</th></tr></thead><tbody>' + rows + ovr + "</tbody></table>" + nobDataHTML();
     $$("#nobTable .nob-in").forEach(function (inp) {
       inp.addEventListener("input", function () {
         var k = this.getAttribute("data-k"), col = NOB_COLS.filter(function (x) { return x[0] === k; })[0];
