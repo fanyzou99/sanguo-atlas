@@ -348,6 +348,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div id="ruleCt"></div>
       <div style="margin:18px 0 6px;font-weight:600">② 兵种加成（按出战队伍内同兵种武将人数，含自身；≥3 名取 3 名档）</div>
       <div id="ruleGrp"></div>
+      <div style="margin:18px 0 6px;font-weight:600">③ 战法体系（V104：六类 125 战法全局参数）</div>
+      <div id="ruleZf"></div>
       <div class="hint">
         结算口径：<b>克制</b> —— 出战武将主兵种克制目标武将主兵种时，本次攻击伤害 ×（1 + 克制伤害加成%），战斗日志中显示「克制」提示；<b>同兵种加成</b> —— 队内（编队/部队）同兵种武将达 2 名或 3 名时，该兵种武将伤害按「伤害%」提升、受到的伤害按「减伤%」降低，攻击属性与受伤结算分别乘算。保存后玩家端刷新或下次打开拉取生效。
       </div>
@@ -2017,6 +2019,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   var RULE_DEF = {
     ctrDmg: 15,
     beats: { dao: "gong", gong: "qiang", qiang: "qi", qi: "dao" },
+    zf: { pow: 1, eventCost: 3 },
     grp: {
       dao:  { a2: 0,   d2: 3.5, a3: 0, d3: 5 },
       qiang:{ a2: 2.1, d2: 1.4, a3: 3, d3: 2 },
@@ -2045,6 +2048,10 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           var src = o.grp[k] || {};
           ["a2", "d2", "a3", "d3"].forEach(function (f) { if (src[f] != null) ruleRows.grp[k][f] = ruleNum(src[f], RULE_DEF.grp[k][f], 0, 100); });
         });
+        if (o.zf && typeof o.zf === "object") {
+          if (o.zf.pow != null) ruleRows.zf.pow = ruleNum(o.zf.pow, RULE_DEF.zf.pow, 0.1, 5);
+          if (o.zf.eventCost != null) ruleRows.zf.eventCost = ruleNum(o.zf.eventCost, RULE_DEF.zf.eventCost, 1, 20);
+        }
       }
       rulePaint();
     })["catch"](function () { ruleRows = ruleDefA(); rulePaint(); });
@@ -2072,12 +2079,22 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
           }).join("") + "</tr>";
       }).join("") + "</tbody></table>" +
       '<div class="muted" style="font-size:12px;margin-top:6px">填 0 表示该项无效果。默认：盾兵只减伤（3.5%/5%）、弓兵只增伤（3.5%/5%）、枪兵与骑兵增伤 + 减伤兼有。</div>';
-    $$("#ruleCt .rl-in, #ruleGrp .rl-in").forEach(function (inp) {
+    /* ③ 战法体系（V104） */
+    $("#ruleZf").innerHTML = '<table style="width:100%"><thead><tr><th style="width:280px">参数</th><th style="width:160px">值</th><th>说明</th></tr></thead><tbody>' +
+      '<tr><td><b>战法效果总倍率</b><div class="muted" style="font-size:11px">zfPow</div></td>' +
+      '<td><input class="btn rl-in" data-grp="zf" data-f="pow" type="number" step="0.1" min="0.1" max="5" value="' + ruleRows.zf.pow + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+      '<td class="muted" style="font-size:12px">全体 125 个战法的攻防%/伤害倍率/触发率统一乘算（默认 1）。调低削弱战法强度、调高增强，1 以上到 5。</td></tr>' +
+      '<tr><td><b>事件战法兑换卡数</b><div class="muted" style="font-size:11px">eventCost</div></td>' +
+      '<td><input class="btn rl-in" data-grp="zf" data-f="eventCost" type="number" step="1" min="1" max="20" value="' + ruleRows.zf.eventCost + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+      '<td class="muted" style="font-size:12px">兑换 1 个事件战法消耗的 D 阶（橙）及以上武将卡数量（默认 3；消耗等级最低的卡，编队/守城在用的高等级卡自动避开）。</td></tr>' +
+      "</tbody></table>";
+    $$("#ruleCt .rl-in, #ruleGrp .rl-in, #ruleZf .rl-in").forEach(function (inp) {
       inp.addEventListener("input", function () {
         var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k"), v = Number(this.value);
         if (!isFinite(v)) return;
         if (grp === "ctr") ruleRows.ctrDmg = ruleNum(v, RULE_DEF.ctrDmg, 0, 100);
         else if (grp === "grp") ruleRows.grp[k][this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.grp[k][this.getAttribute("data-f")], 0, 100);
+        else if (grp === "zf") ruleRows.zf[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.zf[this.getAttribute("data-f")], this.getAttribute("data-f") === "pow" ? 0.1 : 1, this.getAttribute("data-f") === "pow" ? 5 : 20);
       });
       inp.addEventListener("change", function () {
         var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k");
@@ -2091,7 +2108,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   });
   $("#ruleSave").addEventListener("click", function () {
     if (!ruleRows) return;
-    var out = { ctrDmg: ruleNum(ruleRows.ctrDmg, RULE_DEF.ctrDmg, 0, 100), beats: {}, grp: {} };
+    var out = { ctrDmg: ruleNum(ruleRows.ctrDmg, RULE_DEF.ctrDmg, 0, 100), beats: {}, grp: {}, zf: { pow: ruleNum(ruleRows.zf.pow, RULE_DEF.zf.pow, 0.1, 5), eventCost: Math.round(ruleNum(ruleRows.zf.eventCost, RULE_DEF.zf.eventCost, 1, 20)) } };
     RULE_ARMS.forEach(function (a) {
       out.beats[a[0]] = ruleRows.beats[a[0]] || RULE_DEF.beats[a[0]];
       out.grp[a[0]] = {};

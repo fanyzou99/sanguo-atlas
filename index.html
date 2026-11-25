@@ -8614,7 +8614,7 @@ var BOTS = [
         var ga = gById(a.gid) || {}, gb = gById(b.gid) || {};
         switch (sortKey) {
           case "tierlv": {
-            var faD = skUnlocked(a) >= 3, fbD = skUnlocked(b) >= 3;
+            var faD = zfEquipOf(a).filter(Boolean).length >= 2, fbD = zfEquipOf(b).filter(Boolean).length >= 2;
             if (faD !== fbD) return faD ? -1 : 1; /* V28：金龙（全技能解锁）置顶 */
             var dTier = cardTier(a) - cardTier(b); if (dTier) return dTier;          /* S(0) → F(6) */
             var dSt = (gb.st || 0) - (ga.st || 0); if (dSt) return dSt;              /* 同色：统帅降序 */
@@ -8809,7 +8809,7 @@ var BOTS = [
     var g = gById(c.gid);
     if (!g) return "";
     var ti = cardTier(c), tr = TIERS[ti], sk = tierSkill(g, ti);
-    var skN = skUnlocked(c), skA = c.skabs || 0, skFull = skN >= 3; /* V28 标记 */
+    var zN = zfEquipOf(c).filter(Boolean).length, skA = c.skabs || 0, skFull = zN >= 2; /* V104：战法佩戴数标记（替代旧技能解锁数） */
     var spg = spGroupOf(g); /* V29 特殊武将标记 */
     var picking = !!UI.selR && !!withGift, on = !!(picking && UI.selR[c.id]);
     /* V51：等级超过回收门槛的卡在批量模式下显示锁定角标（显式告知「为什么点不动」） */
@@ -8824,7 +8824,7 @@ var BOTS = [
       '<div class="sg-card-zi">' + (g.zi ? "字 " + esc(g.zi) : esc(g.title || "")) + "</div>" +
       '<div class="sg-card-tags">' +
       (spg ? '<span class="sg-tag t-sp" style="--spc:' + spg.color + '">' + spg.icon + " " + spLabel(spg.k) + "</span>" : "") +
-      ((skN || skA) ? '<span class="sg-tag t-sk">' + (skFull ? "🐉" : "✨") + skN + "/3" + (skA ? " ☉" + skA : "") + "</span>" : "") +
+      ((zN || skA) ? '<span class="sg-tag t-sk">' + (skFull ? "🐉" : "✨") + zN + "/2" + (skA ? " ☉" + skA : "") + "</span>" : "") +
       (function () { /* V36 卡片墙展示熟悉兵种：熟悉度最高的兵种 + 当前兵种 */
         var tops = armProfTop(c, 3); if (!tops.length) return "";
         var cur = c.arm ? tops.filter(function (x) { return x.k === c.arm; })[0] : null;
@@ -8958,7 +8958,7 @@ var BOTS = [
     var u = me(); if (!u) return closeModal();
     var plan = absorbAutoPlan(u);
     if (!plan.length) { closeModal(); return toast(T("absAutoNone"), "err"); }
-    var totA = 0, totU = 0;
+    var totA = 0, totP = 0, totZ = "";
     plan.forEach(function (p) {
       p.victims.slice().forEach(function (vx) {
         var cur = (u.cards || []).filter(function (x) { return x.id === p.keeper.id; })[0];
@@ -8967,13 +8967,12 @@ var BOTS = [
         if (!victim || victim.gid !== p.gid) return;
         var r = absorbDup(u, p.keeper.id, vx.id);
         if (!r || !r.ok) return;
-        totA++;
-        for (var si = 0; si < 3; si++) { var ur = unlockSkill(u, p.keeper.id, si); if (ur.ok) totU++; }
+        totA++; totP += r.pts || 0; if (r.zf) totZ = r.zf;
       });
     });
     closeModal();
     if (!totA) return toast(T("absAutoNone"), "err");
-    save(); toast(T("absAllOk", { a: totA, s: totU }), "ok", 5200); rerender();
+    save(); toast(gt("zfAbsAllOkT", { a: totA, p: totP }) + (totZ ? gt("zfAbsZfT", { s: totZ }) : ""), "ok", 5600); rerender();
   }
   function openBulkRecycle() {
     var u = me(); if (!u || !UI.selR) return;
@@ -11188,6 +11187,22 @@ var BOTS = [
       try { u.bat.capInit = initCardCaps(u); } catch (e83) {}
       u.bat.capVer = 83;
     }
+    /* V104：技能修炼 → 战法体系一次性迁移（skp 折算战法点 ×2；已解锁技能 ×8 补偿） */
+    if (u.bat.zfMig == null) {
+      var _zfp104 = 0;
+      (u.cards || []).forEach(function (c104) {
+        if (c104.skp != null || c104.sku != null) {
+          var o104 = c104.sku || {}, n104 = 0;
+          Object.keys(o104).forEach(function (k104) { if (o104[k104]) n104++; });
+          _zfp104 += (c104.skp || 0) * 2 + n104 * 8;
+          delete c104.skp; delete c104.sku;
+        }
+      });
+      if (u.zfp == null) u.zfp = 0;
+      u.zfp += _zfp104;
+      if (u.zf == null) u.zf = {};
+      u.bat.zfMig = 1;
+    }
     /* V94：单将带兵硬上限校正——旧档里兵营/星级/装备叠加导致单将带兵数十万的，超出部分退回所在城预备役 */
     try { u.bat.trim94 = trimOverTroops(u); } catch (e94) {}
     /* V85：兵随编队走（一次性迁移）——非编队武将的常规兵退回所在城预备役；
@@ -11455,7 +11470,7 @@ var BOTS = [
       mobsT: "Outlaws Around the City", mobHint: "Click an outlaw camp outside the walls to scout it, then organize a squad to hunt it down",
       mobLead: "Leader", mobTroop: "Troops", mobLoot: "Plunder if victorious", mobFight: "Organize Squad & Attack", mobGone: "This band has been wiped out — new outlaws may appear next month", recruitT: "Recruit Hall", recruitDesc: "Recruit heroes here: each draw picks one of three generals; duplicate shards can be synthesized into cards.", recruitHint: "Heroes can be recruited", recruitGo: "Recruit Now", recruitQuota: "Recruit quotas", recruitQuotaHint: "earned via check-ins and points", recruitSynth: "Duplicate generals turn into shards — synthesize them in the card wall.", campCap: "Troop cap +{n}%", mobTeamT: "Deploy Formation", mobTeamRow: "Formation {n}", mobTeamOn: "selected", mobTeamSel: "Formation {n} deploys", mobCenterRule: "3+ generals incl. a Center; if the Center falls, the battle is lost", mobLackN: "need {n} more", mobLackCenter: "no Center", mobNoTeam: "No formation qualifies — at least 3 generals including a Center are required.", mobCenterDown: "Center routed — the whole army retreats",
       wmCityT: "City", wmWorldT: "World Map", wmHint: "Click an outlaw camp to scout it · click a pass to view or campaign · click a neighboring city to travel", passT: "Pass", passGuard: "Garrison strength", passGo: "Go to Campaign", passNear: "Guards the road out of {c}",
-      recAllT: "Replenish All", recAllOk: "Formation fully replenished", recNone: "Troops already at full strength", sqRecT: "Replenish", sqAbsorbT: "Devour & Upgrade", sqNoDup: "No same-name same-grade card available to devour", sqAbsOk: "Devoured {n} card(s), {s} skill(s) unlocked",
+      recAllT: "Replenish All", recAllOk: "Formation fully replenished", recNone: "Troops already at full strength", sqRecT: "Replenish", sqAbsorbT: "Dismantle", sqNoDup: "No same-name same-grade card available to dismantle", sqAbsOk: "Dismantled, see tactic points ledger",
       autoT: "Auto Farm", autoTarget: "Target general level", autoStart: "Start", autoStop: "Stop", autoStopT: "Stop auto farming",
       autoDone: "Auto farm finished — average level {n} reached target {m} in {r} battles", autoFail: "Auto farm halted — {r} consecutive defeats, train up and retry",
       autoTroop: "Auto farm halted — cannot replenish troops (pool and resources exhausted)", autoMax: "Auto farm halted — battle cap reached",
@@ -11552,7 +11567,7 @@ var BOTS = [
       mobsT: "周边野怪", mobHint: "点击城外的贼寇查看情报，组织麾下武将出征讨伐",
       mobLead: "首领", mobTroop: "兵力", mobLoot: "战胜可缴获", mobFight: "组织队伍讨伐", mobGone: "这股贼寇已被讨灭，下月或有新的贼寇出没", recruitT: "招募处", recruitDesc: "在此招募天下英杰：每次招募从三位武将中择一收入麾下，亦可用碎片合成武将。", recruitHint: "可招募武将", recruitGo: "前往招募", recruitQuota: "招募次数", recruitQuotaHint: "签到与积分兑换可获取", recruitSynth: "重复武将自动转为碎片，可在卡牌墙合成。", campCap: "带兵上限 +{n}%", mobTeamT: "出战编队", mobTeamRow: "编队 {n}", mobTeamOn: "已选", mobTeamSel: "编队 {n} 出战", mobCenterRule: "至少 3 将且须含中军；中军被击溃即判负", mobLackN: "缺 {n} 人", mobLackCenter: "缺中军", mobNoTeam: "没有可出战的编队：需至少 3 名武将且含中军。", mobCenterDown: "中军被击溃 · 全军败退",
       wmCityT: "城内", wmWorldT: "城外地图", wmHint: "点击贼寇营地查看情报 · 点击关卡查看与出征 · 点击邻近城池前往", passT: "关卡", passGuard: "守军兵力", passGo: "前往出征", passNear: "扼守 {c} 出境要道",
-      recAllT: "一键补兵", recAllOk: "编队补兵完成", recNone: "兵力已满", sqRecT: "补满兵力", sqAbsorbT: "吞噬升级", sqNoDup: "没有同名同阶的卡牌可吞噬", sqAbsOk: "已吞噬 {n} 张，解锁技能 {s} 个",
+      recAllT: "一键补兵", recAllOk: "编队补兵完成", recNone: "兵力已满", sqRecT: "补满兵力", sqAbsorbT: "拆解", sqNoDup: "没有同名同阶的卡牌可拆解", sqAbsOk: "已拆解，战法点见台账",
       autoT: "自动刷本", autoTarget: "目标武将等级", autoStart: "开始", autoStop: "停止", autoStopT: "停止自动刷本",
       autoDone: "自动刷本完成——平均等级 {n} 已达目标 {m}，共 {r} 战", autoFail: "自动刷本中止——连续 {r} 战失败，请提升实力后再试",
       autoTroop: "自动刷本中止——兵员无法补充（兵池与资源已耗尽）", autoMax: "自动刷本中止——已达单次战斗上限",
@@ -11783,7 +11798,94 @@ var BOTS = [
       Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
     });
   })();
-  /* 官职（参考三国志9 文武官衔），任命后被动生效 */
+  /* ================= V104：战法体系词条（注入 GT；战法名为专有名词保留中文） ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        zfLibT: "战法", zfLibOpenT: "📖 战法库", zfMineT: "我的战法", zfAllT: "全部", zfPtsT: "战法点",
+        zfOwnedN: "已获 {n}/125", zfEquipT: "装备", zfEquipOkT: "已装备战法「{n}」", zfOffT: "卸下", zfOffOkT: "已卸下「{n}」",
+        zfUpT: "升级", zfUpOkT: "{n} 升至 Lv.{m}", zfMaxT: "已满级（Lv.5）", zfNoPtsT: "战法点不足（需 {n}）",
+        zfOnlyOneT: "同一战法全账号只能佩戴一人（{n} 已在 {m} 身上）",
+        zfOnT: "佩戴中", zfSlotEmptyT: "空战法槽", zfSlotHintT: "从战法库装备已获得的战法", zfSlotPickT: "正在为战法槽 {n} 选择战法",
+        zfEventT: "事件战法", zfEventHintT: "消耗 {n} 张 D 阶（橙）及以上武将卡兑换一个事件战法（不可逆）", zfEventHaveT: "现有 {m} 张可耗卡",
+        zfEventOkT: "已兑换事件战法「{n}」", zfEventNoT: "D 阶及以上武将卡不足（需 {n} 张，现有 {m} 张）", zfEventSrcT: "事件战法 · 卡牌兑换",
+        zfNoOwnT: "尚未获得", zfFromT: "传承自 {n}（拆解该武将同名卡解锁）",
+        zfIntT: "谋略", zfWuT: "武力",
+        zfDescCmd: "指挥 · 我军全体 攻+{a}% 防+{d}% 速+{s}%（主将位常驻）",
+        zfDescAct: "主动 · 每回合 {tr}% 概率发动 {m}× 战法伤害（{st}系）",
+        zfDescChg: "突击 · 普攻后 {tr}% 概率追加 {m}× 突击伤害",
+        zfDescPsv: "被动 · 自身 攻+{a}% 防+{d}%（常驻）",
+        zfDescArm: "兵种 · 率领{arm}时自身 攻+{a}% 防+{d}%（常驻）",
+        zfDescFmz: "阵法 · 主将位时我军全体 攻+{a}% 防+{d}% 速+{s}%（常驻）",
+        zfActT: "⚔ {n} 发动【{s}】！战法伤害 {d}", zfChgT: "🐎 {n} 突击【{s}】！追加伤害 {d}",
+        zfRecOkT: "拆解完成 → 战法点 +{p}", zfAbsNoneT: "没有可拆解的同名同阶卡",
+        zfAbsAllOkT: "批量拆解 {a} 张 → 战法点 +{p}", zfAbsZfT: "｜📜 解锁传承战法「{s}」",
+        zfAbsRuleT: "拆解同名同阶卡 → 按品阶获战法点；传承武将（指挥12/主动36/突击8/被动13/兵种10/阵法4 共83位）首次拆解解锁其 S 级战法；事件战法 42 个用 D 阶及以上橙卡兑换。战法 Lv1~5 效果随级增长。",
+        zfOwnedHaveT: "该事件战法已获得",
+      },
+      ja: {
+        zfLibT: "戦法", zfLibOpenT: "📖 戦法庫", zfMineT: "マイ戦法", zfAllT: "すべて", zfPtsT: "戦法点",
+        zfOwnedN: "獲得 {n}/125", zfEquipT: "装備", zfEquipOkT: "戦法「{n}」を装備", zfOffT: "外す", zfOffOkT: "「{n}」を外した",
+        zfUpT: "強化", zfUpOkT: "{n} が Lv.{m} に", zfMaxT: "最大レベル（Lv.5）", zfNoPtsT: "戦法点が不足（{n} 必要）",
+        zfOnlyOneT: "同一戦法は一人のみ装備可能（{n} は {m} が装備中）",
+        zfOnT: "装備中", zfSlotEmptyT: "空きスロット", zfSlotHintT: "戦法庫から獲得済み戦法を装備", zfSlotPickT: "戦法スロット {n} を選択中",
+        zfEventT: "イベント戦法", zfEventHintT: "D階（橙）以上の武将カード {n} 枚と交換（不可逆）", zfEventHaveT: "交換可能なカード {m} 枚",
+        zfEventOkT: "イベント戦法「{n}」を交換した", zfEventNoT: "D階以上の武将カードが不足（{n} 枚必要、現在 {m} 枚）", zfEventSrcT: "イベント戦法 · カード交換",
+        zfNoOwnT: "未獲得", zfFromT: "{n} が継承（同名カード拆解で解放）",
+        zfIntT: "知略", zfWuT: "武勇",
+        zfDescCmd: "指揮 · 味方全体 攻+{a}% 防+{d}% 速+{s}%（主将位で常時）",
+        zfDescAct: "主動 · 毎ターン {tr}% で {m}× 戦法ダメージ（{st}系）",
+        zfDescChg: "突出 · 通常攻撃後 {tr}% で {m}× 追加ダメージ",
+        zfDescPsv: "被動 · 自身 攻+{a}% 防+{d}%（常時）",
+        zfDescArm: "兵種 · {arm}率いる時 攻+{a}% 防+{d}%（常時）",
+        zfDescFmz: "陣法 · 主将位で味方全体 攻+{a}% 防+{d}% 速+{s}%（常時）",
+        zfActT: "⚔ {n} が【{s}】発動！戦法ダメージ {d}", zfChgT: "🐎 {n} の突出【{s}】！追加ダメージ {d}",
+        zfRecOkT: "拆解完了 → 戦法点 +{p}", zfAbsNoneT: "拆解できる同名カードがない",
+        zfAbsAllOkT: "一括拆解 {a} 枚 → 戦法点 +{p}", zfAbsZfT: "｜📜 継承戦法「{s}」を解放",
+        zfAbsRuleT: "同名同階カードを拆解 → 階級に応じ戦法点。継承武将（計83名）の同名カード初回拆解で S 級戦法を解放。イベント戦法42は D 階以上のカードで交換。戦法は Lv1〜5 で効果増加。",
+        zfOwnedHaveT: "このイベント戦法は獲得済み",
+      },
+      en: {
+        zfLibT: "Tactics", zfLibOpenT: "📖 Tactics Library", zfMineT: "My Tactics", zfAllT: "All", zfPtsT: "Tactic Pts",
+        zfOwnedN: "Owned {n}/125", zfEquipT: "Equip", zfEquipOkT: "Equipped tactic \"{n}\"", zfOffT: "Unequip", zfOffOkT: "Unequipped \"{n}\"",
+        zfUpT: "Upgrade", zfUpOkT: "{n} → Lv.{m}", zfMaxT: "Max level (Lv.5)", zfNoPtsT: "Not enough tactic points (need {n})",
+        zfOnlyOneT: "A tactic can only be worn by one general ({n} is on {m})",
+        zfOnT: "Worn", zfSlotEmptyT: "Empty slot", zfSlotHintT: "Equip an owned tactic from the library", zfSlotPickT: "Choosing tactic for slot {n}",
+        zfEventT: "Event Tactics", zfEventHintT: "Exchange {n} general cards of grade D (orange) or above (irreversible)", zfEventHaveT: "{m} eligible cards",
+        zfEventOkT: "Exchanged event tactic \"{n}\"", zfEventNoT: "Not enough D+ cards (need {n}, have {m})", zfEventSrcT: "Event tactic · card exchange",
+        zfNoOwnT: "Not owned yet", zfFromT: "Inherited from {n} (dismantle a duplicate of this general)",
+        zfIntT: "INT", zfWuT: "WU",
+        zfDescCmd: "Command · All allies ATK+{a}% DEF+{d}% SPD+{s}% (while leading)",
+        zfDescAct: "Active · Each round {tr}% chance to deal {m}x tactic damage ({st}-type)",
+        zfDescChg: "Assault · After a normal attack {tr}% chance for {m}x extra damage",
+        zfDescPsv: "Passive · Self ATK+{a}% DEF+{d}% (permanent)",
+        zfDescArm: "Unit · While leading {arm}: self ATK+{a}% DEF+{d}% (permanent)",
+        zfDescFmz: "Formation · While leading: all allies ATK+{a}% DEF+{d}% SPD+{s}% (permanent)",
+        zfActT: "⚔ {n} unleashes [{s}]! Tactic damage {d}", zfChgT: "🐎 {n} assaults with [{s}]! Extra damage {d}",
+        zfRecOkT: "Dismantled → +{p} tactic pts", zfAbsNoneT: "No same-name duplicate to dismantle",
+        zfAbsAllOkT: "Batch-dismantled {a} cards → +{p} tactic pts", zfAbsZfT: " | 📜 Unlocked tactic [{s}]",
+        zfAbsRuleT: "Dismantle same-name duplicates → tactic points by grade; 83 legacy generals unlock their S tactic on first dismantle; 42 event tactics via D+ card exchange. Tactics scale from Lv1 to Lv5.",
+        zfOwnedHaveT: "This event tactic is already owned",
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+    /* 旧「吞噬」词条改口径为「拆解」（覆盖 L 主字典，含 zh/ja/en） */
+    try {
+      ["zh", "ja", "en"].forEach(function (lg) {
+        var D = (typeof L !== "undefined" && L[lg]) || null; if (!D) return;
+        D.absorbT = lg === "zh" ? "拆解" : lg === "ja" ? "拆解" : "Dismantle";
+        D.absAllT = lg === "zh" ? "批量拆解" : lg === "ja" ? "一括拆解" : "Batch dismantle";
+        D.absorbRule = ADD[lg].zfAbsRuleT;
+        D.absAutoBtn = lg === "zh" ? "一键拆解" : lg === "ja" ? "一括拆解" : "Auto-Dismantle";
+        D.absAutoTitle = lg === "zh" ? "一键拆解同名卡" : lg === "ja" ? "一括拆解（同名カード）" : "Auto-Dismantle Duplicates";
+        D.absAutoTip = lg === "zh" ? "按武将分组：等级最高的一张自动拆解其余同名同 id 卡牌（获战法点/解锁传承战法）" : lg === "ja" ? "武将ごとにグループ化：最高レベルのカードが他の同名カードを自動拆解" : "Group by general: the highest-level card dismantles all duplicates (gains tactic pts / unlocks legacy tactics)";
+        D.absAutoAsk = lg === "zh" ? "同名同 id 的重复卡牌将归入等级最高的主卡：共拆解 {n} 张，获得战法点并解锁对应传承战法。" : lg === "ja" ? "同名同 id の重複カードを最高レベルの主カードに統合：{n} 枚を拆解し戦法点を獲得。" : "Duplicates will be merged into the highest-level card: {n} card(s) dismantled for tactic points.";
+      });
+    } catch (eL104) {}
+  })();
   var OFFICES = [
     { k: "juns", n: "军师",   nen: "軍師",     en: "Military Advisor", st: "in", stN: "智", inc: 0.10, dzh: "产出 +10%", den: "Yield +10%" },
     { k: "sin",  n: "大司农", nen: "大司農",   en: "Minister of Agriculture", st: "po", stN: "政", farm: 0.15, dzh: "粮产 +15%", den: "Grain +15%" },
@@ -13125,6 +13227,7 @@ var BOTS = [
       });
       if (Object.keys(gp).length) COMBATRULE.grp = gp;
     }
+    if (o.zf && typeof o.zf === "object") applyZFCfg(o.zf);   /* V104：战法体系远程参数 {pow, eventCost} */
     return true;
   }
   /* V92：调试/测试句柄（只读引用，供控制台排障与自动化测试）；V94 追加带兵上限相关 */
@@ -13136,6 +13239,7 @@ var BOTS = [
       unitCapMax: unitCapMax, trimOverTroops: trimOverTroops,
       unitCombatOf: unitCombatOf, unitAttachElite: unitAttachElite, e68Tier: e68Tier, eliteSlots: eliteSlots, eliteName: eliteName,
       eliteArmOf: eliteArmOf, ELITE_ARM: ELITE_ARM, ELITE_ARM_BONUS: ELITE_ARM_BONUS, troopTxt: troopTxt, fmt: fmt,   /* V103：特种兵↔兵种映射调试句柄 */
+      zfList: function () { return ZF_LIST; }, zfById: zfById, zfCalc: zfCalc, zfAttach: zfAttach, zfTeam: zfTeam, zfCfg: function () { return ZF_CFG; }, applyZFCfg: applyZFCfg,   /* V104：战法体系调试句柄（ZF 数据在 IIFE 后段初始化，取值走函数） */
     };
   } catch (e) {}
   function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
@@ -13418,7 +13522,7 @@ var BOTS = [
         distGoT: "确定配兵", distCancelT: "取消",
         distDoneT: "配兵完成：常规兵 {a} / {c}{x}", distBackT: "退回预备役 {n}", distLackT: "预备役不足，实补 {n}", distCarryT: "特种兵携带 {a} / {b}",
         distCarryRowT: "携带 <b>{a}</b> / 营内 {b}（留守本城 {k}）", distCarryHintT: "· 可在「⚙ 配兵」里调整常规兵与特种兵数量",
-        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 5 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", sqOpsT: "编队操作（补兵/配兵/兵种/吞噬）",
+        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 5 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", sqOpsT: "编队操作（补兵/配兵/兵种/拆解）",
         distElSelT: "🎯 特种兵类型与携带数量",
         distFormT: "按阵型「{f}」实时核算（阵型攻 ×{a}%）",
         distTotT: "👥 总带兵 <b>{n}</b>", distPowT: "⚡ 总战斗值 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -13436,7 +13540,7 @@ var BOTS = [
         distGoT: "Apply", distCancelT: "Cancel",
         distDoneT: "Troops set: regular {a} / {c}{x}", distBackT: "returned {n} to reserve", distLackT: "reserve short, got {n}", distCarryT: "elite carried {a} / {b}",
         distCarryRowT: "Carried <b>{a}</b> / corps {b} (left in city {k})", distCarryHintT: "· adjust regular & elite numbers in \"⚙ Troops\"",
-        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 5); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", sqOpsT: "Unit ops (refill / assign troops / arm / absorb)",
+        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 5); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", sqOpsT: "Unit ops (refill / assign troops / arm / dismantle)",
         distElSelT: "🎯 Elite corps type & carried number",
         distFormT: "Calculated live with formation \"{f}\" (form atk ×{a}%)",
         distTotT: "👥 Total troops <b>{n}</b>", distPowT: "⚡ Total power <b>{n}</b>", distDefT: "🛡 Defense <b>{n}</b>",
@@ -13839,7 +13943,7 @@ var BOTS = [
   function unitOf(c, side, ctx) {
     var g = gById(c.gid); if (!g) return null;
     var lv = cardLv(c), ti = cardTier(c), tr = TIERS[ti], spa = c.spa || {}, eq = eqOf(c), mt = mountOf(c), stars = c.stars || 0;
-    var ab = armBonus(g, c.arm) + armProfBonus(c, c.arm), skb = skBonus(c); /* V36：兵种适性 + 熟悉度加成 */
+    var ab = armBonus(g, c.arm) + armProfBonus(c, c.arm), zfc = zfCalc(c); /* V36：兵种适性 + 熟悉度；V104：战法被动/兵种加成 */
     var ctxO = ctx || {}, mates = ctxO.mates || [];
     /* V65 副将修正：同队其他武将中武/统高于本人的高出部分，按 30% 计入（义兄弟/夫妻等羁绊 50%） */
     var myWu = g.wu + (spa.wu || 0), mySt = g.st + (spa.st || 0);
@@ -13874,10 +13978,10 @@ var BOTS = [
     var form = ctxO.form ? formOf(ctxO.form) : null;
     var fA = form ? form.atk : 1, fD = form ? form.def : 1;
     var growA = 0, growD = 0;   /* V66：等级不再提供属性点成长（用户要求：默认不按等级加成属性） */ /* 线性成长减半，余额改由指挥乘算 */
-    var atk = Math.round((myWu + subA + (g["in"] || 0) * 0.3 + growA) * (1 + 0.08 * stars) * (1 + ab) * (1 + skb.atk)) + eq.atk;
+    var atk = Math.round((myWu + subA + (g["in"] || 0) * 0.3 + growA) * (1 + 0.08 * stars) * (1 + ab) * (1 + zfc.a)) + eq.atk;
     var kp = tr.kp || 1;                       /* V46：品级杀伤力倍率（S3.375/A2.25/B1.5/C1）——同等兵力以一敌多 */
     atk = Math.round(atk * kp);
-    var def = Math.round((mySt + subD + (g.ch || 0) * 0.1 + growD) * (1 + 0.08 * stars) * (1 + skb.def)) + eq.def;
+    var def = Math.round((mySt + subD + (g.ch || 0) * 0.1 + growD) * (1 + 0.08 * stars) * (1 + zfc.d)) + eq.def;
     var eqsk = eqSkillsBonus(c);
     atk = Math.round(atk * (1 + eqsk.atk / 100) * cAtk * agb.atk * fA);
     def = Math.round(def * (1 + eqsk.def / 100) * cDef * fD);
@@ -13890,10 +13994,12 @@ var BOTS = [
        之后升级/升爵/升兵营抬高的上限不再自动变成兵力，进度条如实显示招募缺口 */
     if (c.sold == null && side === "A") c.sold = cap;
     var troop = (c.sold == null ? cap : Math.min(c.sold, cap));
-    var spg = spGroupOf(g), spT = spg ? spTrig(spg.k, g, skb.n) : 0; /* V29 特殊武将 */
+    var spg = spGroupOf(g), spT = spg ? spTrig(spg.k, g, 0) : 0; /* V29 特殊武将；V104：技能解锁数并入战法体系 */
+    var _zatt104 = zfAttach(c);   /* V104：主动/突击战法判定段；指挥/阵法由 zfTeam 在出战时对全队生效 */
     return { side: side, cid: c.id || "", gid: g.id, name: g.name, ti: ti, lv: lv, atk: atk, def: def, spd: spd, arm: c.arm || "",
       st: g.st + (spa.st || 0), wu: g.wu + (spa.wu || 0), "in": g["in"] + (spa["in"] || 0), prof: c.arm ? armProf(c, c.arm) : 0,
-      troop: troop, troopMax: cap, trig: Math.min(92, tr.trig + skb.trig), sk: tierSkill(g, ti), alive: true, skn: skb.n, kp: kp, skd: tr.skd || 0, sp: spg ? spg.k : null, spT: spT,
+      troop: troop, troopMax: cap, trig: Math.min(92, tr.trig), sk: tierSkill(g, ti), alive: true, skn: 0, kp: kp, skd: tr.skd || 0, sp: spg ? spg.k : null, spT: spT,
+      zfm: zfTeam(c), zfA: _zatt104.act, zfC: _zatt104.chg,
       /* V65 */
       morale: morale, moraleMax: moraleMax, atk0: atk0, form: form ? form.k : "", subA: subA, subD: subD, bond: !!(bondA || bondD), cAtk: cAtk, rk: rankOf(c), rkN: rankName(rankOf(c)), bondArm: bondArmN,
       /* V92：兵种克制系数（armGA 出战时按 armGrpBonusOf 的 atk 已乘入 atk；armGD 受伤系数在 simulate 结算） */
@@ -13941,6 +14047,7 @@ var BOTS = [
     var muA69 = uhMinUnit(totA69), muB69 = uhMinUnit(totB69);
     A.forEach(function (u, i) { u.ix = i; u._mu = muA69; u.uh = uhTitleOf(u.troopMax); });
     B.forEach(function (u, i) { u.ix = i; u._mu = muB69; u.uh = uhTitleOf(u.troopMax); });
+    zfTeamBuff(A); zfTeamBuff(B);   /* V104：主将位指挥/阵法战法 → 全队常驻攻防速 */
     while (round < 30) {
       round++;
       /* V65：每回合开始全体回气（士气向基准缓慢回升） */
@@ -14002,8 +14109,27 @@ var BOTS = [
           var exC69 = tgt.elite ? el68ApplyHit(tgt, ex, true, false, tgt._mu || 1) : uhQuant(ex, tgt._mu || 1);
           if (!tgt.elite) tgt.troop -= exC69;
           line.rem = Math.max(0, tgt.troop); line.ex = exC69; line.spk = spSkillName(u.sp);
-          line.sd = (line.sd ? line.sd + " " : "") + gt("spAct", { n: u.name, s: line.spk, d: fmt(ex) }) + (skillHit ? " " + gt("spSyn") : "");
+          line.sd = (line.sd ? line.sd + " " : "") + gt("spAct", { n: u.name, s: line.spk, d: fmt(exC69) }) + (skillHit ? " " + gt("spSyn") : "");
         }
+        /* V104：战法判定——主动战法每回合判定；突击战法普攻（非技能）后判定 */
+        var zfX104 = "";
+        if (u.zfA && Math.random() * 100 < u.zfA.tr) {
+          var zfAEx104 = tgt.elite ? el68ApplyHit(tgt, Math.round(dmg * u.zfA.m * 0.7), true, isIntAtk68, tgt._mu || 1) : uhQuant(Math.round(dmg * u.zfA.m * 0.7), tgt._mu || 1);
+          if (!tgt.elite) tgt.troop -= zfAEx104;
+          line.rem = Math.max(0, tgt.troop);
+          zfX104 = gt("zfActT", { n: u.name, s: u.zfA.n, d: fmt(zfAEx104) });
+        } else if (!skillHit && u.zfC && u.zfC.length) {
+          for (var zci104 = 0; zci104 < u.zfC.length; zci104++) {
+            var zc104 = u.zfC[zci104];
+            if (Math.random() * 100 >= zc104.tr) continue;
+            var zfCEx104 = tgt.elite ? el68ApplyHit(tgt, Math.round(dmg * zc104.m * 0.6), true, isIntAtk68, tgt._mu || 1) : uhQuant(Math.round(dmg * zc104.m * 0.6), tgt._mu || 1);
+            if (!tgt.elite) tgt.troop -= zfCEx104;
+            line.rem = Math.max(0, tgt.troop);
+            zfX104 = gt("zfChgT", { n: u.name, s: zc104.n, d: fmt(zfCEx104) });
+            break;
+          }
+        }
+        if (zfX104) line.sd = (line.sd ? line.sd + " " : "") + zfX104;
         if (tgt.troop <= 0) {
           tgt.troop = 0; tgt.alive = false; line.dead = tgt.name;
           if (u.morale != null) u.morale = Math.min(u.moraleMax || 100, u.morale + 8);   /* V65：击溃敌军，士气大振 */
@@ -14567,11 +14693,236 @@ var BOTS = [
       '<button class="sgbtn primary" data-bat="auto-start" data-mode="' + mode + '">▶ ' + gt("autoStart") + "</button></div>" +
       '<div class="sg-note" style="margin-top:10px;text-align:center">🩹 ' + gt("recFreeT") + "　·　⏹ " + gt("autoStopT") + "</div>", "narrow");
   }
-  /* ---------- V27 技能修炼：吞噬同名同阶卡牌 ---------- */
-  var SK_COST = [1, 1, 1]; /* V28：每吞噬一张同名同阶卡即可解锁一个技能 */
-  function skPts(c) { return c.skp || 0; }
-  function skUnlocked(c) { var o = c.sku || {}, n = 0; Object.keys(o).forEach(function (k) { if (o[k]) n++; }); return n; }
-  function skBonus(c) { var n = skUnlocked(c); return { n: n, atk: 0.05 * n, def: 0.04 * n, trig: 5 * n }; }
+  /* ---------- V104 战法体系：替换 V27 技能修炼 ----------
+     六类 S 级战法 125 个（指挥 19 / 主动 50 / 突击 10 / 被动 22 / 兵种 16 / 阵法 8）：
+     83 个橙将拆解传承 + 42 个事件战法（D 阶及以上橙卡兑换）。
+     每将 2 个战法槽，同一战法全账号只能佩戴一人；战法 Lv1~5 用战法点升级。
+     战斗口径：主动=每回合判定追加伤害段；突击=普攻后判定；被动/兵种=自身常驻攻防；
+     指挥/阵法=主将位提供全队常驻攻防速。 */
+  var ZF_CFG = { pow: 1, eventCost: 3 };   /* 全局效果倍率 / 事件战法兑换橙卡数（云端 combatrule.zf 可远程调整） */
+  function applyZFCfg(o) {
+    if (typeof o === "string") { try { o = JSON.parse(o); } catch (e104) { return false; } }
+    if (!o || typeof o !== "object") return false;
+    if (isFinite(+o.pow) && +o.pow > 0 && +o.pow <= 5) ZF_CFG.pow = +o.pow;
+    if (isFinite(+o.eventCost) && +o.eventCost >= 1 && +o.eventCost <= 20) ZF_CFG.eventCost = +o.eventCost;
+    return true;
+  }
+  var ZF_CATS = [
+    { k: "cmd", n: "指挥", icon: "🧭", c: "#e0aaff" },
+    { k: "act", n: "主动", icon: "⚔", c: "#ff8f6b" },
+    { k: "chg", n: "突击", icon: "🐎", c: "#ffd76a" },
+    { k: "psv", n: "被动", icon: "🛡", c: "#5fbf8a" },
+    { k: "arm", n: "兵种", icon: "🪖", c: "#9ec9ff" },
+    { k: "fmz", n: "阵法", icon: "📐", c: "#c9a45c" }
+  ];
+  var ZF_INT = { "刮骨疗毒": 1, "夺魂挟魄": 1, "临机制胜": 1, "杯蛇鬼车": 1, "焰逐风飞": 1, "伪书相间": 1, "风助火势": 1, "熯天炽地": 1, "四面楚歌": 1, "沉沙决水": 1, "形机军略": 1, "倾国倾城": 1, "运筹决算": 1, "乘敌不虞": 1, "黄天泰平": 1, "智计": 1, "结盟": 1, "益其金鼓": 1, "竭力佐谋": 1, "定谋贵决": 1, "因利制权": 1, "疾风骤雨": 1, "上兵伐谋": 1 };
+  var ZF_ARM = { "虎豹骑": "qi", "西凉铁骑": "qi", "象兵": "xiang", "白马义从": "gong", "无当飞军": "nu", "白毦兵": "qiang", "大戟士": "ji", "陷阵营": "qiang", "藤甲兵": "dao", "先登死士": "gong", "青州兵": "qiang", "锦帆军": "shui", "虎卫军": "dao", "丹阳兵": "qiang", "飞熊军": "qi", "解烦卫": "ji" };
+  /* 三档数值循环（强/中/弱）：S 级内部按史实强度分档 */
+  var ZF_TIER = {
+    cmd: [{ a: 14, d: 10, s: 3 }, { a: 11, d: 8, s: 2 }, { a: 9, d: 12, s: 0 }],
+    act: [{ tr: 45, m: 2.6 }, { tr: 38, m: 2.2 }, { tr: 32, m: 1.9 }],
+    chg: [{ tr: 40, m: 2.2 }, { tr: 32, m: 1.8 }, { tr: 25, m: 1.5 }],
+    psv: [{ a: 18, d: 14 }, { a: 15, d: 12 }, { a: 12, d: 16 }],
+    arm: [{ a: 28, d: 22 }, { a: 24, d: 18 }, { a: 20, d: 26 }],
+    fmz: [{ a: 14, d: 10, s: 5 }, { a: 11, d: 9, s: 3 }, { a: 9, d: 12, s: 0 }]
+  };
+  /* [名称, 类别, 传承武将]；0 = 事件战法 */
+  var ZF_SEED = [
+    ["暂避其锋", "cmd", "司马懿"], ["盛气凌敌", "cmd", "孙策"], ["用武神通", "cmd", "徐晃"], ["横戈跃马", "cmd", "夏侯惇"],
+    ["守而必固", "cmd", "曹仁"], ["奇计良谋", "cmd", "郭嘉"], ["挫锐", "cmd", "沮授"], ["舌战群儒", "cmd", "诸葛亮"],
+    ["梦中杀臣", "cmd", "曹操"], ["义心昭烈", "cmd", "刘备"], ["锋芒毕露", "cmd", "马忠[蜀]"], ["赴汤蹈火", "cmd", "孙坚"],
+    ["抚辑军民", "cmd", 0], ["铁骑驱驰", "cmd", 0], ["非攻制胜", "cmd", 0], ["临危救主", "cmd", 0], ["众志成城", "cmd", 0], ["知己知彼", "cmd", 0], ["蓄势待发", "cmd", 0],
+    ["威谋靡亢", "act", "张辽"], ["破军威胜", "act", "华雄"], ["刮骨疗毒", "act", "华佗"], ["夺魂挟魄", "act", "贾诩"],
+    ["横扫千军", "act", "张飞"], ["破阵摧坚", "act", "乐进"], ["所向披靡", "act", "吕布"], ["诱敌深入", "act", "陆逊"],
+    ["临机制胜", "act", "庞统"], ["杯蛇鬼车", "act", "田丰"], ["焰逐风飞", "act", "周瑜"], ["伪书相间", "act", "蒋干"],
+    ["卧薪尝胆", "act", "孙权"], ["风助火势", "act", "黄盖"], ["熯天炽地", "act", "张宝"], ["万箭齐发", "act", "袁绍"],
+    ["四面楚歌", "act", "项籍（项羽）"], ["一力拒守", "act", "郝昭"], ["沉沙决水", "act", "郭淮"], ["形机军略", "act", "钟会"],
+    ["倾国倾城", "act", "貂蝉"], ["瞋目横矛", "act", "太史慈"], ["运筹决算", "act", "荀攸"], ["乘敌不虞", "act", "邓艾"],
+    ["黄天泰平", "act", "张角"], ["兵锋", "act", "文聘"], ["智计", "act", "鲁肃"], ["结盟", "act", "诸葛瑾"],
+    ["益其金鼓", "act", "吕蒙"], ["竭力佐谋", "act", "荀彧"], ["定谋贵决", "act", "许攸"], ["因利制权", "act", "刘晔"],
+    ["疾风骤雨", "act", "张梁"], ["上兵伐谋", "act", "曹真"], ["万军夺帅", "act", "马超"], ["移花接木", "act", "马岱"],
+    ["草船借箭", "act", 0], ["婴城自守", "act", 0], ["火炽原燎", "act", 0], ["据水断桥", "act", 0], ["绝其汲道", "act", 0],
+    ["焚辎营垒", "act", 0], ["决水溃城", "act", 0], ["击其惰归", "act", 0], ["独行赴斗", "act", 0], ["临锋决敌", "act", 0],
+    ["掣刀斫敌", "act", 0], ["众望所归", "act", 0], ["梳妆掷戟", "act", 0], ["灵机一动", "act", 0],
+    ["一骑当千", "chg", "赵云"], ["暴戾无仁", "chg", "董卓"], ["百骑劫营", "chg", "甘宁"], ["折冲御梅", "chg", "周泰"],
+    ["速乘其利", "chg", "夏侯渊"], ["先成其虑", "chg", "程昱"], ["克敌制胜", "chg", "文鸯"], ["勇者得前", "chg", "魏延"],
+    ["当锋摧决", "chg", 0], ["鬼神霆威", "chg", 0],
+    ["士别三日", "psv", "吕蒙"], ["兵无常势", "psv", "孙膑"], ["绝地反击", "psv", "韩信"], ["文武双全", "psv", "姜维"],
+    ["合军聚众", "psv", "张燕"], ["乘胜长驱", "psv", "庞德"], ["士争先赴", "psv", "关兴"], ["魅惑", "psv", "邹氏"],
+    ["忠勇义烈", "psv", "关羽"], ["整军经武", "psv", "皇甫嵩"], ["臻于至善", "psv", "王异"], ["功不唐捐", "psv", "黄月英"], ["以寡敌众", "psv", "典韦"],
+    ["太平道法", "psv", 0], ["裸衣血战", "psv", 0], ["虎踞鹰扬", "psv", 0], ["引弦力战", "psv", 0], ["血刃争锋", "psv", 0],
+    ["气凌三军", "psv", 0], ["刚勇无前", "psv", 0], ["众动万计", "psv", 0], ["千里走单骑", "psv", 0],
+    ["虎豹骑", "arm", "曹纯"], ["西凉铁骑", "arm", "马腾"], ["象兵", "arm", "孟获"], ["白马义从", "arm", "公孙瓒"],
+    ["无当飞军", "arm", "王平"], ["白毦兵", "arm", "陈到"], ["大戟士", "arm", "张郃"], ["陷阵营", "arm", "高顺"],
+    ["藤甲兵", "arm", "兀突骨"], ["先登死士", "arm", "麴义"],
+    ["青州兵", "arm", 0], ["锦帆军", "arm", 0], ["虎卫军", "arm", 0], ["丹阳兵", "arm", 0], ["飞熊军", "arm", 0], ["解烦卫", "arm", 0],
+    ["锋矢阵", "fmz", "于禁"], ["箕形阵", "fmz", "满宠"], ["八门金锁阵", "fmz", "徐庶"], ["鱼鳞阵", "fmz", "法正"],
+    ["三势阵", "fmz", 0], ["形一阵", "fmz", 0], ["武锋阵", "fmz", 0], ["潜龙阵", "fmz", 0]
+  ];
+  var ZF_LIST = [], ZF_GEN_MAP = {};
+  (function () {
+    var catIx = {};
+    ZF_SEED.forEach(function (s, i) {
+      var cat = s[1], ix = catIx[cat] = (catIx[cat] || 0) + 1;
+      var t = ZF_TIER[cat][ix % 3], e = {};
+      Object.keys(t).forEach(function (k) { e[k] = t[k]; });
+      var ca = ZF_CATS.filter(function (x) { return x.k === cat; })[0];
+      var zf = { id: "zf" + (i + 1), n: s[0], cat: cat, ev: !s[2], from: s[2] || "", c: ca.c, icon: ca.icon, catN: ca.n, e: e };
+      if (cat === "act") zf.e.st = ZF_INT[s[0]] ? "in" : "wu";
+      if (cat === "arm") zf.e.arm = ZF_ARM[s[0]] || "dao";
+      ZF_LIST.push(zf);
+      if (!zf.ev) ZF_GEN_MAP[s[2]] = zf.id;
+    });
+  })();
+  function zfById(id) { return ZF_LIST.filter(function (z) { return z.id === id; })[0] || null; }
+  function zfLvOf(u, id) { return (u && u.zf && u.zf[id]) || 0; }
+  function zfMul(lv) { return 1 + 0.15 * ((lv || 1) - 1); }
+  function zfUpCost(lv) { return ({ 2: 8, 3: 16, 4: 28, 5: 45 })[lv] || 0; }
+  function zfEquipOf(c) { return (c && c.zfs) || []; }
+  function zfOwnedN(u) { var n = 0; if (u && u.zf) Object.keys(u.zf).forEach(function (k) { if (u.zf[k]) n++; }); return n; }
+  function zfGive(u, id) { if (!u || !id) return false; u.zf = u.zf || {}; if (u.zf[id]) return false; u.zf[id] = 1; return true; }
+  function zfEquippedBy(u, id) { var r = null; (u.cards || []).forEach(function (x) { if ((x.zfs || []).indexOf(id) >= 0) r = x; }); return r; }
+  function zfWear(u, c, id) {
+    var zf = zfById(id); if (!zf) return { ok: false, err: "no" };
+    if (!zfLvOf(u, id)) return { ok: false, err: "notown" };
+    var other = zfEquippedBy(u, id);
+    if (other && other.id !== c.id) return { ok: false, err: "dup", other: other };
+    c.zfs = c.zfs || [null, null];
+    if (c.zfs.indexOf(id) >= 0) return { ok: true, zf: zf, slot: c.zfs.indexOf(id) };
+    var zi = c.zfs.indexOf(null); if (zi < 0) zi = 0;
+    c.zfs[zi] = id;
+    return { ok: true, zf: zf, slot: zi };
+  }
+  function zfTakeOff(u, c, zi) { if (!c || !c.zfs) return { ok: false }; var id = c.zfs[zi]; c.zfs[zi] = null; return { ok: true, id: id }; }
+  function zfUpgrade(u, id) {
+    var lv = zfLvOf(u, id); if (!lv || lv >= 5) return { ok: false, err: "max" };
+    var cost = zfUpCost(lv + 1);
+    if ((u.zfp || 0) < cost) return { ok: false, err: "pts", need: cost };
+    u.zfp -= cost; u.zf[id] = lv + 1;
+    return { ok: true, lv: lv + 1, cost: cost };
+  }
+  function zfEventCards(u) { return (u.cards || []).filter(function (x) { return cardTier(x) <= 4; }); }   /* D 阶（橙）及以上 */
+  function zfEventBuy(u, id) {
+    var zf = zfById(id); if (!zf || !zf.ev) return { ok: false, err: "no" };
+    if (zfLvOf(u, id)) return { ok: false, err: "owned" };
+    var pool = zfEventCards(u), cost = Math.max(1, Math.round(ZF_CFG.eventCost || 3));
+    if (pool.length < cost) return { ok: false, err: "cards", need: cost, have: pool.length };
+    /* 消耗等级最低的 D+ 卡（守城/编队在用的高等级卡自动避开） */
+    pool.sort(function (a, b) { return cardLv(a) - cardLv(b); }).slice(0, cost).forEach(function (x) {
+      purgeCardRefs(u, x.id);
+      u.cards = (u.cards || []).filter(function (y) { return y.id !== x.id; });
+    });
+    zfGive(u, id);
+    return { ok: true, zf: zf, cost: cost };
+  }
+  function zfDescOf(zf, lv) {
+    var e = zf.e, m = zfMul(lv || 1) * (ZF_CFG.pow || 1);
+    var p = function (v) { return Math.round(v * m * 10) / 10; };
+    var trm = Math.min(1.5, m);
+    switch (zf.cat) {
+      case "cmd": return gt("zfDescCmd", { a: p(e.a), d: p(e.d), s: p(e.s || 0) });
+      case "act": return gt("zfDescAct", { tr: Math.round(e.tr * trm), m: p(e.m), st: e.st === "in" ? gt("zfIntT") : gt("zfWuT") });
+      case "chg": return gt("zfDescChg", { tr: Math.round(e.tr * trm), m: p(e.m) });
+      case "psv": return gt("zfDescPsv", { a: p(e.a), d: p(e.d) });
+      case "arm": return gt("zfDescArm", { arm: armName(e.arm), a: p(e.a), d: p(e.d) });
+      case "fmz": return gt("zfDescFmz", { a: p(e.a), d: p(e.d), s: p(e.s || 0) });
+    }
+    return "";
+  }
+  function zfCalc(c) {   /* 被动 / 兵种战法 → 自身常驻攻防加成（比例，供 unitOf 乘算） */
+    var out = { a: 0, d: 0 };
+    if (!c || !c.zfs) return out;
+    var u2 = me();
+    c.zfs.forEach(function (zid) {
+      var zf = zfById(zid); if (!zf) return;
+      var lv = zfLvOf(u2, zid); if (!lv) return;
+      var m = zfMul(lv) * (ZF_CFG.pow || 1) / 100;
+      if (zf.cat === "psv") { out.a += zf.e.a * m; out.d += zf.e.d * m; }
+      else if (zf.cat === "arm" && c.arm && zf.e.arm === c.arm) { out.a += zf.e.a * m; out.d += zf.e.d * m; }
+    });
+    return out;
+  }
+  function zfAttach(c) {  /* 主动 / 突击战法 → 战斗追加判定段 */
+    var out = { act: null, chg: [] };
+    if (!c || !c.zfs) return out;
+    var u2 = me();
+    c.zfs.forEach(function (zid) {
+      var zf = zfById(zid); if (!zf) return;
+      var lv = zfLvOf(u2, zid); if (!lv) return;
+      var m = zfMul(lv) * (ZF_CFG.pow || 1);
+      if (zf.cat === "act" && !out.act) out.act = { n: zf.n, tr: Math.min(75, Math.round(zf.e.tr * Math.min(1.5, m))), m: zf.e.m * m };
+      else if (zf.cat === "chg") out.chg.push({ n: zf.n, tr: Math.min(70, Math.round(zf.e.tr * Math.min(1.5, m))), m: zf.e.m * m });
+    });
+    return out;
+  }
+  function zfTeam(c) {   /* 指挥 / 阵法战法 → 主将位全队常驻加成 */
+    var out = [];
+    if (!c || !c.zfs) return out;
+    var u2 = me();
+    c.zfs.forEach(function (zid) {
+      var zf = zfById(zid); if (!zf) return;
+      var lv = zfLvOf(u2, zid); if (!lv) return;
+      if (zf.cat !== "cmd" && zf.cat !== "fmz") return;
+      var m = zfMul(lv) * (ZF_CFG.pow || 1) / 100;
+      out.push({ n: zf.n, a: zf.e.a * m, d: zf.e.d * m, s: (zf.e.s || 0) * m });
+    });
+    return out;
+  }
+  function zfTeamBuff(side) {  /* V104：编队首位（主将）的指挥/阵法战法对全队生效 */
+    var lead = side[0];
+    if (!lead || !lead.zfm || !lead.zfm.length) return;
+    lead.zfm.forEach(function (z) {
+      side.forEach(function (un) {
+        if (!un.alive) return;
+        un.atk = Math.round(un.atk * (1 + z.a)); un.atk0 = Math.round((un.atk0 || un.atk) * (1 + z.a));
+        un.def = Math.round(un.def * (1 + z.d));
+        if (z.s) un.spd = Math.round(un.spd * (1 + z.s));
+      });
+    });
+  }
+  var ZF_RECY_PTS = [15, 12, 10, 8, 6, 4, 2];   /* V104：拆解战法点（按品阶 紫15/蓝12/绿10/黄8/橙6/赤4/白2） */
+  var _zfLibEv104 = 0, _zfLibCat104 = "all";   /* 战法库弹层状态：事件页 / 类别筛选 */
+  function zfLibOpen(u, c, slot, ev) {
+    _zfLibEv104 = ev ? 1 : 0;
+    var zfp = u.zfp || 0, ownN = zfOwnedN(u);
+    var tabMain = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px">' +
+      '<button class="sgbtn sm ' + (!_zfLibEv104 ? "primary" : "ghost") + '" data-gs="zf-lib" data-id="' + (c ? c.id : "") + '">📚 ' + gt("zfMineT") + "（" + ownN + "/125）</button>" +
+      '<button class="sgbtn sm ' + (_zfLibEv104 ? "primary" : "ghost") + '" data-gs="zf-lib" data-ev="1" data-id="' + (c ? c.id : "") + '">⚡ ' + gt("zfEventT") + "</button></div>";
+    var evCards = zfEventCards(u), evCost = Math.max(1, Math.round(ZF_CFG.eventCost || 3));
+    var html = '<h3>⚔ ' + gt("zfLibT") + ' · ' + gt("zfPtsT") + ' <span style="color:#e8c988">' + fmt(zfp) + "</span></h3>" + tabMain;
+    if (_zfLibEv104) {
+      html += '<div class="sg-note">' + gt("zfEventHintT", { n: evCost }) + "（" + gt("zfEventHaveT", { m: evCards.length }) + "）</div>";
+      ZF_LIST.filter(function (z) { return z.ev; }).forEach(function (zf) {
+        var owned = zfLvOf(u, zf.id) > 0;
+        html += '<div class="sg-rankline"><span class="i" style="background:' + zf.c + ';color:#10131a">' + zf.icon + "</span>" +
+          '<span><b>' + esc(zf.n) + "</b> <small style='color:" + zf.c + "'>" + zf.catN + (owned ? " · Lv." + zfLvOf(u, zf.id) : "") + "</small> <small style='color:var(--ink-3)'>" + esc(zfDescOf(zf, owned ? zfLvOf(u, zf.id) : 1)) + "</small></span><span class=\"sp\"></span>" +
+          (owned ? '<small style="color:#7fce9f">✓</small>' :
+            '<button class="sgbtn sm primary" data-gs="zf-event" data-k="' + zf.id + '" data-id="' + (c ? c.id : "") + '" ' + (evCards.length >= evCost ? "" : "disabled") + ">" + gt("zfEventT") + "</button>") +
+          "</div>";
+      });
+    } else {
+      var cats104 = [{ k: "all", n: gt("zfAllT"), icon: "📚", c: "#c9a45c" }].concat(ZF_CATS);
+      html += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">' + cats104.map(function (ca) {
+        return '<button class="sgbtn sm ' + (_zfLibCat104 === ca.k ? "primary" : "ghost") + '" data-gs="zf-cat" data-k="' + ca.k + '" data-id="' + (c ? c.id : "") + '">' + ca.icon + " " + ca.n + "</button>";
+      }).join("") + "</div>";
+      ZF_LIST.filter(function (z) { return _zfLibCat104 === "all" || z.cat === _zfLibCat104; }).forEach(function (zf) {
+        var lv = zfLvOf(u, zf.id), owned = lv > 0, holder = owned ? zfEquippedBy(u, zf.id) : null;
+        var isOn = c && (zfEquipOf(c).indexOf(zf.id) >= 0);
+        var srcTxt = zf.ev ? gt("zfEventSrcT") : gt("zfFromT", { n: zf.from });
+        var acts = "";
+        if (isOn) acts = '<small style="color:#7fce9f">✓ ' + gt("zfOnT") + "</small>" +
+          '<button class="sgbtn sm ghost" data-gs="zf-off" data-slot="' + zfEquipOf(c).indexOf(zf.id) + '" data-id="' + c.id + '">' + gt("zfOffT") + "</button>";
+        else if (owned && c) acts = '<button class="sgbtn sm primary" data-gs="zf-eq" data-k="' + zf.id + '" data-kn="' + esc(zf.n) + '" data-id="' + c.id + '" ' + (holder && holder.id !== c.id ? "disabled" : "") + ">" + gt("zfEquipT") + "</button>" +
+          '<button class="sgbtn sm ghost" data-gs="zf-up" data-k="' + zf.id + '" data-id="' + c.id + '" ' + (lv >= 5 || zfp < zfUpCost(lv + 1) ? "disabled" : "") + ">⬆ " + gt("zfUpT") + " " + (lv < 5 ? zfUpCost(lv + 1) : "") + "</button>";
+        else if (!owned) acts = '<small style="color:var(--ink-3)">' + gt("zfNoOwnT") + (zf.ev ? "" : " · " + srcTxt) + "</small>";
+        html += '<div class="sg-rankline" style="' + (owned ? "" : "opacity:.62") + '"><span class="i" style="background:' + zf.c + ';color:#10131a">' + zf.icon + "</span>" +
+          '<span><b>' + esc(zf.n) + "</b> <small style='color:" + zf.c + "'>" + zf.catN + (owned ? " · Lv." + lv : "") + "</small> <small style='color:var(--ink-3)'>" + esc(zfDescOf(zf, lv || 1)) + "</small>" +
+          "<br><small style='color:var(--ink-3)'>" + esc(srcTxt) + (holder && !isOn ? " · ⚑ " + ((gById(holder.gid) || {}).name || "") : "") + "</small></span><span class=\"sp\"></span>" + acts + "</div>";
+      });
+    }
+    if (c && !_zfLibEv104 && slot != null && slot >= 0) html += '<div class="sg-note" style="margin-top:8px">🎯 ' + gt("zfSlotPickT", { n: slot + 1 }) + "</div>";
+    modal(html, "wide");
+  }
   /* ---------- V29 特殊武将：五虎上将 / 五子良将 / 王佐谋主 ---------- */
   var SP_GROUPS = [
     { k: "wuhu", icon: "🐯", color: "#ffd76a", ex: 0.6, names: ["关羽", "张飞", "赵云", "马超", "黄忠"] },
@@ -14597,22 +14948,14 @@ var BOTS = [
     if (!victim) return { ok: false, err: "none" };
     purgeCardRefs(u, victim.id);
     u.cards = (u.cards || []).filter(function (x) { return x.id !== victim.id; });
-    c.skp = (c.skp || 0) + 1; c.skabs = (c.skabs || 0) + 1; /* V28 累计吞噬数 */
-    addPoints(u, 0, "吞噬「" + (gById(c.gid) || {}).name + "」同阶卡 → 技能点 +1");
-    return { ok: true, victim: victim, pts: c.skp };
-  }
-  function unlockSkill(u, cid, idx) {
-    var c = (u.cards || []).filter(function (x) { return x.id === cid; })[0];
-    if (!c) return { ok: false, err: "card" };
-    var g = gById(c.gid); if (!g) return { ok: false, err: "card" };
-    var tr = TIERS[cardTier(c)], sk = tr.skills[idx];
-    if (!sk) return { ok: false, err: "skill" };
-    c.sku = c.sku || {};
-    if (c.sku[idx]) return { ok: false, err: "owned" };
-    var cost = SK_COST[idx] || 2;
-    if ((c.skp || 0) < cost) return { ok: false, err: "pts", need: cost };
-    c.skp -= cost; c.sku[idx] = 1;
-    return { ok: true, sk: sk };
+    /* V104：拆解 → 战法点（按品阶）；传承武将首次拆解解锁其 S 级战法 */
+    var pts104 = ZF_RECY_PTS[cardTier(victim)] || 2;
+    u.zfp = (u.zfp || 0) + pts104;
+    var gname104 = (gById(victim.gid) || {}).name || "", zf104 = "";
+    var zfId104 = ZF_GEN_MAP[gname104];
+    if (zfId104 && zfGive(u, zfId104)) zf104 = zfById(zfId104).n;
+    addPoints(u, 0, "拆解「" + gname104 + "」→ 战法点 +" + pts104 + (zf104 ? " · 解锁传承战法「" + zf104 + "」" : ""));
+    return { ok: true, victim: victim, pts: pts104, zf: zf104 };
   }
   /* ---------- V27 等距立体建筑（率土之滨风格） ---------- */
   var BLD_PAL = {
@@ -17401,7 +17744,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   function genCardColHTML(u, cd, g, roleTxt, lead, ctx) {
     var c = ctx.c, cb = unitCombatOf(u, cd, c);
     var tr = TIERS[cardTier(cd)] || TIERS[0];
-    var skN = skUnlocked(cd);
+    var zN = zfEquipOf(cd).filter(Boolean).length;   /* V104：战法佩戴数替代旧「觉醒」（技能解锁数） */
     var apt = cd.arm ? { k: cd.arm, apt: armApt(g, cd.arm) } : (armProfTop(cd, 1)[0] || null);
     var armTxt = apt ? (armName(apt.k) + armApt(g, apt.k)) : "—";
     var capT = cb.regCap + cb.el, tot = cb.reg + cb.el;
@@ -17411,16 +17754,24 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
       " · " + gt("v73CapT", { n: fmt(troopCapEff(cd, g, c)) }) +
       (cb.el ? " · " + gt("phEliteT") + " " + fmt(cb.el) + "（" + esc(cb.elName) + " ×" + fmt(cb.elPowMul) + "）" : "");
-    var skRows = "";
-    var sku = cd.sku || {};
-    (tr.skills || []).forEach(function (sk, si) {
-      var on = !!sku[si];
-      skRows += '<div class="sg-gskrow' + (on ? "" : " lk") + '"><b>S</b><span>' + esc(sk.n) + "</span></div>" +
-        '<div class="sg-gskd' + (on ? "" : " lk") + '">' + (on ? esc((sk.t || "") + "｜触发 " + (tr.trig || 0) + "% · " + (sk.d || "")) : "未解锁 · 吞噬同名同阶卡 +1 技能点") + "</div>";
-    });
+    /* V104：战法行——自带技（品阶技能）+ 2 个战法槽 */
+    var skRows = (function () {
+      var own = tierSkill(g, cardTier(cd));
+      var h = '<div class="sg-gskrow"><b>S</b><span>' + esc(own.n) + "</span></div>" +
+        '<div class="sg-gskd">自带 · 触发 ' + (tr.trig || 0) + "% · " + esc(own.d || "") + "</div>";
+      var zeq = zfEquipOf(cd);
+      for (var zi = 0; zi < 2; zi++) {
+        var zid = zeq[zi], zf = zid ? zfById(zid) : null;
+        if (!zf) { h += '<div class="sg-gskrow lk"><b>' + (zi + 1) + '</b><span>' + gt("zfSlotEmptyT") + "</span></div>"; continue; }
+        var zlv = zfLvOf(u, zid);
+        h += '<div class="sg-gskrow"><b style="color:' + zf.c + ';border-color:' + zf.c + '">' + zf.icon + '</b><span>' + esc(zf.n) + ' <small>Lv.' + zlv + "</small></span></div>" +
+          '<div class="sg-gskd">' + esc(zf.catN + " · " + zfDescOf(zf, zlv)) + "</div>";
+      }
+      return h;
+    })();
     var spg = spGroupOf(g);
     if (spg) skRows += '<div class="sg-gskrow sp"><b style="color:' + spg.color + ';border-color:' + spg.color + '">特</b><span style="color:' + spg.color + '">' + esc(spLabel(spg.k) + "【" + spSkillName(spg.k) + "】") + "</span></div>" +
-      '<div class="sg-gskd sp">触发 ' + spTrig(spg.k, g, skN) + "% · " + esc(gt("spDesc", { p: spTrig(spg.k, g, skN) })) + "</div>";
+      '<div class="sg-gskd sp">触发 ' + spTrig(spg.k, g, 0) + "% · " + esc(gt("spDesc", { p: spTrig(spg.k, g, 0) })) + "</div>";
     var fac = g.faction || "?";
     /* V101：兵力条移到头像上方（不再叠在头像上）——带进度底色，满编绿色 */
     var dpct = capT > 0 ? Math.max(0, Math.min(100, tot / capT * 100)) : 0;
@@ -17430,7 +17781,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '" style="background:linear-gradient(90deg,' + (full ? "rgba(127,208,138,.45)" : "rgba(232,201,136,.35)") + " " + dpct.toFixed(1) + "%,rgba(8,10,14,.55) " + dpct.toFixed(1) + '%)">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
       '<div class="sg-gframe">' +
         '<span class="sg-glv">' + cardLv(cd) + "</span>" +
-        (skN > 0 ? '<span class="sg-gawake">觉醒</span>' : "") +
+        (zN > 0 ? '<span class="sg-gawake">战法×' + zN + "</span>" : "") +
         /* V100：头像不再跳转武将详情——点击落在卡片上走「更换选将」，保留在编队页 */
         '<span class="sg-gav" title="' + esc(g.name || "?") + '">' + styledArtSVG(g, null, true) + "</span>" +
         '<div class="sg-gnm"><i class="sg-gfac" style="background:' + facColor(fac) + '">' + esc(String(fac).slice(0, 1)) + "</i>" +
@@ -17613,7 +17964,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<td class="l">' + (c.arm ? armName(c.arm) : "—") + "</td>" +
       "<td>" + g.st + "</td><td>" + g.wu + "</td><td>" + g["in"] + "</td><td>" + g.po + "</td><td>" + g.ch + "</td>" +
       "<td>" + troopTxt(troopOfCard(c, g)) + "</td>" +
-      '<td class="l" style="font-size:10px">' + (why ? '<span style="color:#e07f7f">✕</span>' : skUnlocked(c) ? '<span style="color:#ffe9a8">✨' + skUnlocked(c) + "</span>" : "") + "</td></tr>";
+      '<td class="l" style="font-size:10px">' + (why ? '<span style="color:#e07f7f">✕</span>' : zfEquipOf(c).filter(Boolean).length ? '<span style="color:#ffe9a8">⚔' + zfEquipOf(c).filter(Boolean).length + "</span>" : "") + "</td></tr>";
   }
   function pickTableHTML(cards, bad) {
     var pk = BATUI.pk || {};
@@ -17808,7 +18159,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         return '<button class="sgbtn sm ' + (on ? "primary" : "ghost") + '" data-bat="arm-set" data-k="' + a.k + '" data-t="' + ti + '" data-p="' + pos + '" title="' + esc(gt("gsArmNote")) + '">' +
           armName(a.k) + (elArmMark === a.k ? " 🎯" : "") + " <b style='color:" + (on ? "#10131a" : "#ffd76a") + "'>" + pf + "</b> <small style='color:" + (on ? "#10131a" : "#9ec9ff") + "'>" + apt + "</small></button>";
       }).join("") + "</div>" +
-      (spg ? '<div class="sg-note" style="color:' + spg.color + ';margin-top:8px">' + spg.icon + " " + spLabel(spg.k) + "【" + spSkillName(spg.k) + "】 · " + gt("spDesc", { p: spTrig(spg.k, g, skUnlocked(card)) }) + "</div>" : "") +
+      (spg ? '<div class="sg-note" style="color:' + spg.color + ';margin-top:8px">' + spg.icon + " " + spLabel(spg.k) + "【" + spSkillName(spg.k) + "】 · " + gt("spDesc", { p: spTrig(spg.k, g, 0) }) + "</div>" : "") +
       '<div class="sg-note" style="margin-top:8px">' + posDesc(p) + "</div>" + dupHTML;
     /* 右栏：配兵——常规兵数量 + 特种兵营选择与携行数（确定后写入 card.sold / card.el68 / card.el68n） */
     var distCol = '<div class="sg-panel-hd"><h3><i>·</i>' + gt("cfgDistT") + "</h3></div>" +
@@ -19577,19 +19928,22 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var gint = (g["in"] || 0) + (spa["in"] || 0);
     var lvM = Math.min(5, 1 + (lv - 1) * 0.25);
     var bnsTot = Math.round((1 + gint * 0.01) * lvM * 100);
-    /* V27 技能修炼 */
-    var skOwn = c.sku || {}, skp = skPts(c), dupList = dupCards(u, c), dupN = dupList.length;
+    /* V104 战法体系（替换 V27 技能修炼）：2 战法槽 + 拆解行 + 战法库/事件战法入口 */
+    var zfp104 = u.zfp || 0, zeq104 = zfEquipOf(c), dupList = dupCards(u, c), dupN = dupList.length;
     var dupHi = dupList.reduce(function (m, x) { return Math.max(m, cardLv(x)); }, 0); /* V31 同名卡最高等级 */
     var spgD = spGroupOf(g); /* V29 特殊武将 */
     var spRow = spgD ? '<div class="sg-rankline" style="border:1px solid ' + spgD.color + '55;border-radius:9px;padding:6px 9px;background:rgba(232,201,136,.05)"><span class="i" style="background:' + spgD.color + ';color:#10131a">★</span>' +
-      "<span><b>" + spgD.icon + " " + spLabel(spgD.k) + " · " + spSkillName(spgD.k) + '</b> <small style="color:var(--ink-3)">' + T("spDesc", { p: spTrig(spgD.k, g, skUnlocked(c)) }) + "</small></span></div>" : "";
-    var skHTML = tr.skills.map(function (sk2, si) {
-      var own = !!skOwn[si], cost = SK_COST[si] || 2;
-      return '<div class="sg-rankline"><span class="i" style="background:' + tr.c + ';color:#10131a">' + esc(sk2.t) + "</span>" +
-        "<span><b>" + esc(sk2.n) + "</b> <small style='color:var(--ink-3)'>" + esc(sk2.d) + "</small></span><span class=\"sp\"></span>" +
-        (own ? '<small style="color:#7fce9f">✓ ' + T("skUnlocked") + "</small>" :
-          '<small style="color:var(--ink-3)">' + T("skNeed", { n: cost }) + "</small>　" +
-          '<button class="sgbtn sm primary" data-gs="sku" data-i="' + si + '" data-id="' + c.id + '"' + (skp >= cost ? "" : " disabled") + ">" + T("skUnlock") + "</button>") + "</div>";
+      "<span><b>" + spgD.icon + " " + spLabel(spgD.k) + " · " + spSkillName(spgD.k) + '</b> <small style="color:var(--ink-3)">' + T("spDesc", { p: spTrig(spgD.k, g, 0) }) + "</small></span></div>" : "";
+    var zfSlotHTML = [0, 1].map(function (zi) {
+      var zid = zeq104[zi], zf = zid ? zfById(zid) : null;
+      if (!zf) return '<div class="sg-rankline"><span class="i" style="background:#2f3a4c;color:#9ec9ff">' + (zi + 1) + "</span>" +
+        "<span><b>" + gt("zfSlotEmptyT") + "</b> <small style='color:var(--ink-3)'>" + gt("zfSlotHintT") + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm primary" data-gs="zf-lib" data-slot="' + zi + '" data-id="' + c.id + '">＋ ' + gt("zfEquipT") + "</button></div>";
+      var zlv = zfLvOf(u, zid);
+      return '<div class="sg-rankline"><span class="i" style="background:' + zf.c + ';color:#10131a">' + zf.icon + "</span>" +
+        "<span><b>" + esc(zf.n) + '</b> <small style="color:' + zf.c + '">' + zf.catN + " · Lv." + zlv + "</small> <small style='color:var(--ink-3)'>" + esc(zfDescOf(zf, zlv)) + "</small></span><span class=\"sp\"></span>" +
+        '<button class="sgbtn sm ghost" data-gs="zf-up" data-k="' + zf.id + '" data-id="' + c.id + '" ' + (zlv >= 5 ? "disabled" : (zfp104 >= zfUpCost(zlv + 1) ? "" : "disabled")) + ">⬆ " + gt("zfUpT") + "</button>" +
+        '<button class="sgbtn sm ghost" data-gs="zf-off" data-slot="' + zi + '" data-id="' + c.id + '">' + gt("zfOffT") + "</button></div>";
     }).join("");
     var dupRow = '<div class="sg-rankline" style="border-top:1px dashed var(--line-2,#333a46);margin-top:6px;padding-top:8px"><span class="i" style="background:#5b4a2f;color:#f5e6c4">✦</span>' +
       "<span><b>" + T("absorbT") + '</b> <small style="color:var(--ink-3)">' + T("dupsN", { n: dupN }) + " · Lv." + lv + (dupHi > lv ? ' · <b style="color:#e8c988">' + T("dupHigh", { n: dupHi }) + "</b>" : "") + "</small></span><span class=\"sp\"></span>" +
@@ -19658,9 +20012,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-note" style="margin-bottom:8px">' + (spLeft > 0 ? T("spAlloc", { n: spLeft }) : T("gsNoSp")) +
       (c.spG ? ' <small style="color:var(--ink-3)">' + gt("spCardAuditT", { g: c.spG, u: spUsedOf(c) }) + "</small>" : "") + "</div>" + spHTML +
       '<div class="sg-note" style="margin-top:10px">' + T("gsCapNote") + "</div></div>" +
-      '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>✨ ' + T("skillUpT") + " · " + T("skPointT") + ' <span style="color:#e8c988">' + skp + "</span></h3></div>" +
-      spRow + skHTML + dupRow +
-      '<div class="sg-note" style="margin-top:8px;font-size:11px">' + T("absorbRule") + "</div></div>" +
+      '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>⚔ ' + gt("zfLibT") + ' · ' + gt("zfPtsT") + ' <span style="color:#e8c988">' + fmt(zfp104) + "</span></h3></div>" +
+      zfSlotHTML + spRow + dupRow +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+      '<button class="sgbtn sm primary" data-gs="zf-lib" data-id="' + c.id + '">' + gt("zfLibOpenT") + ' <small>' + gt("zfOwnedN", { n: zfOwnedN(u) }) + "</small></button>" +
+      '<button class="sgbtn sm ghost" data-gs="zf-lib" data-ev="1" data-id="' + c.id + '">' + gt("zfEventT") + "</button></div>" +
+      '<div class="sg-note" style="margin-top:8px;font-size:11px">' + gt("zfAbsRuleT") + "</div></div>" +
       "</div>" +
       '<div class="sg-panel"><div class="sg-panel-hd"><h3><i>·</i>' + T("gsArm") + "</h3></div>" +
       '<div class="sgchips" style="margin-bottom:8px">' + armHTML + "</div>" +
@@ -19778,28 +20135,50 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         save(); toast(T("gsArmOk", { n: armName(c.arm) }), "ok");
         rg(); return;
       }
-      case "sku": {
-        var skr = unlockSkill(u, cid, +t.getAttribute("data-i"));
-        if (!skr.ok) return toast(skr.err === "pts" ? T("skNeed", { n: skr.need || 0 }) : T("skUnlocked"), "err");
-        save(); toast(T("skOk", { n: skr.sk.n }), "ok"); rg(); return;
+      /* ---------- V104 战法体系处理器 ---------- */
+      case "zf-cat": { _zfLibCat104 = t.getAttribute("data-k") || "all"; zfLibOpen(u, c, -1, 0); return; }
+      case "zf-lib": {
+        var zlSlot = t.getAttribute("data-slot") != null ? +t.getAttribute("data-slot") : (t.getAttribute("data-ev") ? -2 : -1);
+        zfLibOpen(u, c, zlSlot, t.getAttribute("data-ev") ? 1 : 0); return;
+      }
+      case "zf-eq": {
+        var zw = zfWear(u, c, t.getAttribute("data-k"));
+        if (!zw.ok) return toast(zw.err === "notown" ? gt("zfNoOwnT") : gt("zfOnlyOneT", { n: t.getAttribute("data-kn") || "", m: (zw.other ? ((gById(zw.other.gid) || {}).name || "") : "") }), "err");
+        save(); toast(gt("zfEquipOkT", { n: zw.zf.n }), "ok"); zfLibOpen(u, c, -1, _zfLibEv104); return;
+      }
+      case "zf-off": {
+        var zo = zfTakeOff(u, c, +t.getAttribute("data-slot"));
+        if (zo.ok && zo.id) { save(); toast(gt("zfOffOkT", { n: (zfById(zo.id) || {}).n || "" }), "ok"); }
+        rg(); return;
+      }
+      case "zf-up": {
+        var zu = zfUpgrade(u, t.getAttribute("data-k"));
+        if (!zu.ok) return toast(zu.err === "max" ? gt("zfMaxT") : gt("zfNoPtsT", { n: zu.need || zfUpCost(2) }), "err");
+        save(); toast(gt("zfUpOkT", { n: (zfById(t.getAttribute("data-k")) || {}).n || "", m: zu.lv }), "ok"); zfLibOpen(u, c, -1, _zfLibEv104); return;
+      }
+      case "zf-event": {
+        var zb = zfEventBuy(u, t.getAttribute("data-k"));
+        if (!zb.ok) return toast(zb.err === "owned" ? gt("zfOwnedHaveT") : gt("zfEventNoT", { n: zb.need || ZF_CFG.eventCost, m: zb.have != null ? zb.have : zfEventCards(u).length }), "err");
+        save(); toast(gt("zfEventOkT", { n: zb.zf.n }) + "（-" + zb.cost + "）", "ok", 5600); zfLibOpen(u, c, -1, _zfLibEv104); return;
       }
       case "absorb": {
         var azr = absorbDup(u, cid, null);
-        if (!azr.ok) return toast(T("absorbNone"), "err");
-        /* V31：若被吞卡等级高于本卡，提示建议由高等级同名卡执行吞噬 */
+        if (!azr.ok) return toast(gt("zfAbsNoneT"), "err");
+        /* V104：若被拆卡等级高于本卡，提示建议由高等级同名卡执行拆解；解锁传承战法时提示 */
         var sug = cardLv(azr.victim) > cardLv(c) ? "｜💡 " + T("absorbSug", { n: cardLv(azr.victim) }) : "";
-        save(); toast(T("absorbOk", { n: (gById(azr.victim.gid) || {}).name || "" }) + sug, "ok", sug ? 6200 : 3200); rg(); return;
+        if (azr.zf) sug += gt("zfAbsZfT", { s: azr.zf });
+        save(); toast(gt("zfRecOkT", { n: (gById(azr.victim.gid) || {}).name || "", p: azr.pts }) + sug, "ok", azr.zf ? 6200 : 3600); rg(); return;
       }
       case "absorb-all": {
-        /* V28 批量吞噬同名同阶 + 自动顺序解锁技能 */
+        /* V104 批量拆解同名同阶 → 战法点 + 传承战法解锁 */
         var gX = gById(c.gid); if (!gX) return;
-        var totA = 0, totU = 0;
+        var totA = 0, totP = 0, totZ = "";
         while (dupCards(u, c).length) {
-          var arX = absorbDup(u, cid, null); if (!arX.ok) break; totA++;
-          for (var siX = 0; siX < 3; siX++) { var urX = unlockSkill(u, cid, siX); if (urX.ok) totU++; }
+          var arX = absorbDup(u, cid, null); if (!arX.ok) break; totA++; totP += arX.pts || 0;
+          if (arX.zf) totZ = arX.zf;
         }
-        if (!totA) return toast(T("absorbNone"), "err");
-        save(); toast(T("absAllOk", { a: totA, s: totU }), "ok", 5200); rg(); return;
+        if (!totA) return toast(gt("zfAbsNoneT"), "err");
+        save(); toast(gt("zfAbsAllOkT", { a: totA, p: totP }) + (totZ ? gt("zfAbsZfT", { s: totZ }) : ""), "ok", 5600); rg(); return;
       }
       case "rec": {
         var g = gById(c.gid); if (!g) return;
@@ -19984,9 +20363,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       }
       case "sq-absorb": {
         var cidA = t.getAttribute("data-id"), dupA = t.getAttribute("data-dup");
-        var rA = absorbDup(u, cidA, dupA); if (!rA || !rA.ok) return toast(T("absorbNone"), "err");
-        var unA = 0; for (var sA = 0; sA < 3; sA++) { var urA = unlockSkill(u, cidA, sA); if (urA && urA.ok) unA++; }
-        save(); toast(gt("sqAbsOk", { n: 1, s: unA }), "ok");
+        var rA = absorbDup(u, cidA, dupA); if (!rA || !rA.ok) return toast(gt("zfAbsNoneT"), "err");
+        save(); toast(gt("zfRecOkT", { n: (gById(rA.victim.gid) || {}).name || "", p: rA.pts }) + (rA.zf ? gt("zfAbsZfT", { s: rA.zf }) : ""), "ok", rA.zf ? 6200 : 3600);
         var cAb = (u.cards || []).filter(function (x) { return x.id === cidA; })[0];
         var tiAb = t.getAttribute("data-t"), posAb = t.getAttribute("data-p");
         refreshBattle();
@@ -19996,10 +20374,10 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       case "sq-absorb-all": {
         var cidB = t.getAttribute("data-id");
         var cB = (u.cards || []).filter(function (x) { return x.id === cidB; })[0]; if (!cB) return;
-        var totB = 0, unB = 0;
-        while (dupCards(u, cB).length) { var rB = absorbDup(u, cidB, null); if (!rB || !rB.ok) break; totB++; for (var sB = 0; sB < 3; sB++) { var urB = unlockSkill(u, cidB, sB); if (urB && urB.ok) unB++; } }
-        if (!totB) return toast(T("absorbNone"), "err");
-        save(); toast(gt("sqAbsOk", { n: totB, s: unB }), "ok", 5200);
+        var totB = 0, totPB = 0, totZB = "";
+        while (dupCards(u, cB).length) { var rB = absorbDup(u, cidB, null); if (!rB || !rB.ok) break; totB++; totPB += rB.pts || 0; if (rB.zf) totZB = rB.zf; }
+        if (!totB) return toast(gt("zfAbsNoneT"), "err");
+        save(); toast(gt("zfAbsAllOkT", { a: totB, p: totPB }) + (totZB ? gt("zfAbsZfT", { s: totZB }) : ""), "ok", 5600);
         var tiB = t.getAttribute("data-t"), posB = t.getAttribute("data-p");
         refreshBattle();
         if (tiB != null && posB) slotBigCard(u, cB, +tiB, posB);
@@ -20768,7 +21146,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     _tiers: TIERS,
     _bat: function () { return { ui: BATUI, ensure: ensureBat, sim: simulate, unitOf: unitOf, stageEnemies: stageEnemies, fightKey: fightKeyCards, stageBoss: stageBoss, marketPrices: marketPrices, gameDate: gameDate, ensureRes: ensureRes, gMonth: gMonth, ensureCity: ensureCity, ensureMobs: ensureMobs, mobEnemies: mobEnemies, cityPop: cityPop, cityPopNat: cityPopNatural, cityPopCapF: cityPopCap, householdsF: households, releaseF: releaseToField, eliteCarryF: eliteCarryN, eliteAttachF: eliteAttachSquad, distOpenF: distOpen, homeTabF: function (uu) { return batHomeTab(uu); }, popPanelF: popPanelHTML, wallCost: wallCost,
       switchCity: switchCity, unlockCity: unlockCity, transportRes: transportRes, addToCity: addToCity, removeFromCity: removeFromCity,
-      rosterCap: rosterCap, rosterRoom: rosterRoom, rosterClean: rosterClean, recycleF: doRecycle, teamPanelHTML: teamPanelHTML, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, unlockSkill: unlockSkill, skPts: skPts, skUnlocked: skUnlocked, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard, growOpen: growOpen, catCounts: cardTierCounts, catOpen: openCatRecycle, catRun: doCatRecycle,
+      rosterCap: rosterCap, rosterRoom: rosterRoom, rosterClean: rosterClean, recycleF: doRecycle, teamPanelHTML: teamPanelHTML, slotSet: slotSet, cityRoster: cityRoster, teamSize: teamSize, merchantOf: merchantOf, merchantPrice: merchantPrice, dupCards: dupCards, absorbDup: absorbDup, zfById: zfById, zfGive: zfGive, zfLvOf: zfLvOf, zfEquipOf: zfEquipOf, zfWear: zfWear, zfOwnedN: zfOwnedN, zfList: function () { return ZF_LIST; }, zfUpgrade: zfUpgrade, zfEventBuy: zfEventBuy, zfEventCards: zfEventCards, cityResPool: cityResPool, cardCav: cardCav, cardInf: cardInf, isoBld: isoBld, pkOpen: pkOpen, pickSort: pickSort, slotBigCard: slotBigCard, growOpen: growOpen, catCounts: cardTierCounts, catOpen: openCatRecycle, catRun: doCatRecycle,
       /* V49 六项需求探针导出 */
       troopRaw: troopRawAt, troopOf: troopOfCard, troopCapInfo: troopCapInfo, troopGain: troopGainLv, TROOP_GROWTH: TROOP_GROWTH,
       resHover: resHoverHTML, wallText: function (k) { return T(k); }, setLang: function (l) { localStorage.setItem("sg_lang", l); return l; }, resMarket: resMarketInfo, cityResOut: cityResOut, cityResIn: cityResIn, resPill: resPill,
@@ -20831,7 +21209,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         arr.sort(function (a, b) {
           var ga = gById(a.gid) || {}, gb = gById(b.gid) || {};
           if (key === "tierlv" || key === "tier") {
-            var faD = skUnlocked(a) >= 3, fbD = skUnlocked(b) >= 3;
+            var faD = zfEquipOf(a).filter(Boolean).length >= 2, fbD = zfEquipOf(b).filter(Boolean).length >= 2;
             if (faD !== fbD) return faD ? -1 : 1;
             var dT = cardTier(a) - cardTier(b); if (dT) return dT;
           }
