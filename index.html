@@ -12137,15 +12137,15 @@ var BOTS = [
   ];
   function posName(p) { var l = lang(); return l === "zh" ? p.n : l === "ja" ? p.nen : p.en; }
   function posDesc(p) { return lang() === "en" ? p.den : p.dzh; }
-  /* V100：编队规模（3/5/7，默认 3），按队伍持久化 */
+  /* V101：编队规模（3/5/7，默认 5），按队伍持久化 */
   var TEAM_SIZES = [3, 5, 7];
-  function teamSizeOf(t) { var s = t && +t.size; return TEAM_SIZES.indexOf(s) >= 0 ? s : 3; }
+  function teamSizeOf(t) { var s = t && +t.size; return TEAM_SIZES.indexOf(s) >= 0 ? s : 5; }
   function teamPosList(t) { return TEAM_POS.slice(0, teamSizeOf(t)); }
   function defaultTeams(prev) {
     var arr = [];
     for (var i = 0; i < 5; i++) {
       /* V97：3 槽（中军/左军/右军）——旧档前锋→左军、骑军→右军，特种兵槽丢弃；
-         V100：size 编队规模（3/5/7）持久化，默认 3 */
+         V100/V101：size 编队规模（3/5/7）持久化，默认 5 */
       var p0 = prev && prev[i], ps = (p0 && p0.slots) || {};
       var t = { n: i + 1, nm: (p0 && p0.nm) || "", size: teamSizeOf(p0), slots: { center: ps.center || null, left: ps.left || ps.front || null, right: ps.right || ps.cav || null, s4: ps.s4 || null, s5: ps.s5 || null, s6: ps.s6 || null, s7: ps.s7 || null } };
       arr.push(t);
@@ -13403,7 +13403,7 @@ var BOTS = [
         distGoT: "确定配兵", distCancelT: "取消",
         distDoneT: "配兵完成：常规兵 {a} / {c}{x}", distBackT: "退回预备役 {n}", distLackT: "预备役不足，实补 {n}", distCarryT: "特种兵携带 {a} / {b}",
         distCarryRowT: "携带 <b>{a}</b> / 营内 {b}（留守本城 {k}）", distCarryHintT: "· 可在「⚙ 配兵」里调整常规兵与特种兵数量",
-        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 3 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", sqOpsT: "编队操作（补兵/配兵/兵种/吞噬）",
+        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 5 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", sqOpsT: "编队操作（补兵/配兵/兵种/吞噬）",
         distElSelT: "🎯 特种兵类型与携带数量",
         distFormT: "按阵型「{f}」实时核算（阵型攻 ×{a}%）",
         distTotT: "👥 总带兵 <b>{n}</b>", distPowT: "⚡ 总战斗值 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -13421,7 +13421,7 @@ var BOTS = [
         distGoT: "Apply", distCancelT: "Cancel",
         distDoneT: "Troops set: regular {a} / {c}{x}", distBackT: "returned {n} to reserve", distLackT: "reserve short, got {n}", distCarryT: "elite carried {a} / {b}",
         distCarryRowT: "Carried <b>{a}</b> / corps {b} (left in city {k})", distCarryHintT: "· adjust regular & elite numbers in \"⚙ Troops\"",
-        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 3); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", sqOpsT: "Unit ops (refill / assign troops / arm / absorb)",
+        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 5); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", sqOpsT: "Unit ops (refill / assign troops / arm / absorb)",
         distElSelT: "🎯 Elite corps type & carried number",
         distFormT: "Calculated live with formation \"{f}\" (form atk ×{a}%)",
         distTotT: "👥 Total troops <b>{n}</b>", distPowT: "⚡ Total power <b>{n}</b>", distDefT: "🛡 Defense <b>{n}</b>",
@@ -13439,7 +13439,7 @@ var BOTS = [
         distGoT: "確定", distCancelT: "キャンセル",
         distDoneT: "設定完了：通常兵 {a} / {c}{x}", distBackT: "予備へ {n} 返却", distLackT: "予備不足、実補 {n}", distCarryT: "特殊兵携行 {a} / {b}",
         distCarryRowT: "携行 <b>{a}</b> / 営内 {b}（城に残す {k}）", distCarryHintT: "·「⚙ 兵数設定」で通常兵と特殊兵の数を調整できます",
-        phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 編隊は固定スロット方式：空きスロットで編入、選択済み武将で交代（詳細ページへ移動しません）；規模 3/5/7 人切替可（既定 3 人）。縮小時は余分な武将が自動的に外れ、兵は予備役へ戻る", teamSizeT: "編隊規模 {n} 人", teamSizeOkT: "編隊規模を {n} 人に変更しました", sqOpsT: "編隊操作（補兵/配兵/兵種/吸収）",
+        phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 編隊は固定スロット方式：空きスロットで編入、選択済み武将で交代（詳細ページへ移動しません）；規模 3/5/7 人切替可（既定 5 人）。縮小時は余分な武将が自動的に外れ、兵は予備役へ戻る", teamSizeT: "編隊規模 {n} 人", teamSizeOkT: "編隊規模を {n} 人に変更しました", sqOpsT: "編隊操作（補兵/配兵/兵種/吸収）",
         distElSelT: "🎯 特殊兵の種類と携行数",
         distFormT: "陣形「{f}」でリアルタイム計算（陣形攻 ×{a}%）",
         distTotT: "👥 総兵数 <b>{n}</b>", distPowT: "⚡ 総戦闘値 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -17372,15 +17372,17 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     if (spg) skRows += '<div class="sg-gskrow sp"><b style="color:' + spg.color + ';border-color:' + spg.color + '">特</b><span style="color:' + spg.color + '">' + esc(spLabel(spg.k) + "【" + spSkillName(spg.k) + "】") + "</span></div>" +
       '<div class="sg-gskd sp">触发 ' + spTrig(spg.k, g, skN) + "% · " + esc(gt("spDesc", { p: spTrig(spg.k, g, skN) })) + "</div>";
     var fac = g.faction || "?";
+    /* V101：兵力条移到头像上方（不再叠在头像上）——带进度底色，满编绿色 */
+    var dpct = capT > 0 ? Math.max(0, Math.min(100, tot / capT * 100)) : 0;
     var click = ctx.clickBat ? ' data-bat="' + ctx.clickBat + '" data-t="' + ctx.ti + '"' + (ctx.clickPos != null ? ' data-p="' + ctx.clickPos + '"' : "") : "";
     return '<div class="sg-gcard' + (lead ? " lead" : "") + (click ? " clik" : "") + '" title="' + esc(tip) + '" style="--gc:' + tr.c + '"' + click + '>' +
       '<div class="sg-grole">' + esc(roleTxt) + "</div>" +
+      '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '" style="background:linear-gradient(90deg,' + (full ? "rgba(127,208,138,.45)" : "rgba(232,201,136,.35)") + " " + dpct.toFixed(1) + "%,rgba(8,10,14,.55) " + dpct.toFixed(1) + '%)">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
       '<div class="sg-gframe">' +
         '<span class="sg-glv">' + cardLv(cd) + "</span>" +
         (skN > 0 ? '<span class="sg-gawake">觉醒</span>' : "") +
         /* V100：头像不再跳转武将详情——点击落在卡片上走「更换选将」，保留在编队页 */
         '<span class="sg-gav" title="' + esc(g.name || "?") + '">' + styledArtSVG(g, null, true) + "</span>" +
-        '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
         '<div class="sg-gnm"><i class="sg-gfac" style="background:' + facColor(fac) + '">' + esc(String(fac).slice(0, 1)) + "</i>" +
         "<b>" + esc(g.name || "?") + "</b><i>Lv." + cardLv(cd) + "</i></div>" +
       "</div>" +
@@ -17491,7 +17493,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       ".sg-gnm b{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-1);font-size:11px}" +
       ".sg-gnm i{font-style:normal;font-size:9px;color:#e8c988;margin-left:auto}" +
       ".sg-gfac{font-style:normal;min-width:14px;height:14px;border-radius:3px;color:#10131a;font-size:9px;font-weight:700;line-height:14px;flex:none;text-align:center;padding:0 1px}" +
-      ".sg-gdraft{position:absolute;left:0;right:0;top:36%;z-index:2;background:rgba(8,10,14,.74);color:#e8c988;font-size:9.5px;font-weight:700;text-align:center;padding:1px 0;letter-spacing:.03em;text-shadow:0 1px 2px rgba(0,0,0,.9)}" +
+      ".sg-gdraft{display:block;border:1px solid rgba(201,164,92,.35);border-radius:6px;color:#e8c988;font-size:9.5px;font-weight:700;text-align:center;padding:1.5px 0;letter-spacing:.03em;text-shadow:0 1px 2px rgba(0,0,0,.9);overflow:hidden;white-space:nowrap}" +
       ".sg-sizerow{display:flex;gap:4px;margin-left:auto}.sg-sizerow .sgchip{font-size:10px;padding:2px 8px}" +
       ".sg-garm{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-1)}" +
       ".sg-garm b{color:#9ec9ff;font-weight:600;letter-spacing:.02em}" +
@@ -17656,7 +17658,15 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     /* V73：双段进度条（兵力 MAX+特种兵 / 战斗值换算，hover 数值） */
     var cbS = unitCombatOf(u, card, ensureCity(u));
     var barsS = v73BarsHTML(cbS, { h: 10, hp: 8 });
-    var stats = un ? '<div class="sg-note">⚔ ' + T("lbAttr") + "：攻 " + un.atk + " · 防 " + un.def + " · 速 " + un.spd + "　·　" + T("lbTroop") + " " + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "　·　🏅 " + rankName(rankOf(card)) + "（" + gt("rankCapT") + " " + fmt(rankTroop(card)) + "）　·　⚡ " + gt("teamPow", { n: fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) }).replace(/^战力 /, "").replace(/^Power /, "").replace(/^戦力 /, "") + "（统 " + (un.st || 0) + "）</div>" : "";
+    /* V101：属性行改分格徽章（原来长句换行难读） */
+    var stats = un ? '<div class="sg-statgrid">' +
+      "<span>⚔ 攻 <b>" + un.atk + "</b></span>" +
+      "<span>🛡 防 <b>" + un.def + "</b></span>" +
+      "<span>🐎 速 <b>" + un.spd + "</b></span>" +
+      "<span>🪖 兵力 <b>" + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "</b></span>" +
+      "<span>🏅 " + esc(rankName(rankOf(card))) + " <b>上限 " + fmt(rankTroop(card)) + "</b></span>" +
+      "<span>⚡ <b>" + fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) + "</b> <small>统 " + (un.st || 0) + "</small></span>" +
+      "</div>" : "";
     /* V35：编队内快捷操作——补兵 / 吞噬升级（无需回卡牌墙）；V37：正常兵池优先免费 */
     var capQ = troopCapEff(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
     var addQ = capQ - curQ;
@@ -17677,9 +17687,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         }).join("") + (dupsQ.length > 4 ? '<div class="sg-note">… +' + (dupsQ.length - 4) + "</div>" : "")
       : '<div class="sg-note" style="margin-top:10px">' + gt("sqNoDup") + "</div>";
     var spRow = spg ? '<div class="sg-note" style="color:' + spg.color + '">' + spg.icon + " " + spLabel(spg.k) + "【" + spSkillName(spg.k) + "】 · " + gt("spDesc", { p: spTrig(spg.k, g, skUnlocked(card)) }) + "</div>" : "";
-    /* V36 兵种选择：编队武将卡处直接切换当前兵种，展示熟悉度与适性 */
+    /* V36 兵种选择：编队武将卡处直接切换当前兵种，展示熟悉度与适性（V101：自适应网格，不再长短不一地折行） */
     var armRow = '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>⚔ ' + esc(gt("armNow")) + " <small style='color:var(--ink-3)'>（" + esc(gt("armProfT")) + "）</small></h3></div>" +
-      '<div style="display:flex;flex-wrap:wrap;gap:5px">' +
+      '<div class="sg-armgrid">' +
       GS_ARMS.map(function (a) {
         var pf = armProf(card, a.k), apt = armApt(g, a.k);
         var on = card.arm === a.k;
@@ -17720,7 +17730,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<button class="sgbtn sm ghost" data-bat="pk-open" data-mode="slot" data-t="' + ti + '" data-p="' + pos + '">⇄ ' + T("pkSwap") + "</button>" +
       '<button class="sgbtn sm ghost" data-bat="slot-clear" data-t="' + ti + '" data-p="' + pos + '">✕ ' + T("slotRemove") + "</button>" +
       "</div>" + dupHTML + "</div></div>" +
-      '<style>@media(max-width:760px){.bigcard-grid{grid-template-columns:1fr!important}}</style>', "wide");
+      '<style>.sg-statgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0 4px}' +
+      '.sg-statgrid span{display:flex;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(201,164,92,.3);border-radius:7px;background:rgba(0,0,0,.22);padding:4px 2px;font-size:10.5px;color:var(--ink-3);min-width:0;white-space:nowrap}' +
+      '.sg-statgrid b{color:#ffd76a;font-size:11.5px;overflow:hidden;text-overflow:ellipsis}.sg-statgrid small{color:var(--ink-3);font-size:9px}' +
+      '.sg-armgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:5px}' +
+      '.sg-armgrid .sgbtn{text-align:left;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}' +
+      '@media(max-width:760px){.bigcard-grid{grid-template-columns:1fr!important}}</style>', "wide");
   }
   /* ================= V95：编队二级配兵 =================
      一键补兵是「补满」，本弹窗负责「带多少」：常规兵 0~带兵上限（增兵从本城预备役划拨、减兵退回预备役）；
