@@ -388,6 +388,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       <div id="ruleZf"></div>
       <div style="margin:18px 0 6px;font-weight:600">④ 特种兵战损（V108：非战败封顶 / 战败补足）</div>
       <div id="ruleEl"></div>
+      <div style="margin:18px 0 6px;font-weight:600">⑤ 作战消耗模型（V110：旬结算 · 断粮状态机 · 士气映射 · 战损分流）</div>
+      <div id="ruleCons"></div>
       <div class="hint">
         结算口径：<b>克制</b> —— 出战武将主兵种克制目标武将主兵种时，本次攻击伤害 ×（1 + 克制伤害加成%），战斗日志中显示「克制」提示；<b>同兵种加成</b> —— 队内（编队/部队）同兵种武将达 2 名或 3 名时，该兵种武将伤害按「伤害%」提升、受到的伤害按「减伤%」降低，攻击属性与受伤结算分别乘算。保存后玩家端刷新或下次打开拉取生效。
       </div>
@@ -2207,6 +2209,15 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     beats: { dao: "gong", gong: "qiang", qiang: "qi", qi: "dao" },
     zf: { pow: 1, eventCost: 3 },
     elLoss: { maxRate: 20, defeatMin: 50 },
+    morK: { lo: 0.5, hi: 1.0 },
+    cons: {
+      rBase: 0.0556, marchMul: 1.5, woundFood: 0, morDecay: 2,
+      osupMorMin: 15, osupMorMax: 25, desertMin: 10, desertMax: 15, osupAtk: 50,
+      healRate: 15, healRateMed: 30,
+      woundRate: 60, woundSiege: 30, medBonus: 10,
+      chaosThr: 30, chaosPMax: 35, chaosDefCut: 30,
+      killGain: 8, surroundMor: 3, dmgCap: 80
+    },
     grp: {
       dao:  { a2: 0,   d2: 3.5, a3: 0, d3: 5 },
       qiang:{ a2: 2.1, d2: 1.4, a3: 3, d3: 2 },
@@ -2242,6 +2253,13 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         if (o.elLoss && typeof o.elLoss === "object") {
           if (o.elLoss.maxRate != null) ruleRows.elLoss.maxRate = ruleNum(o.elLoss.maxRate, RULE_DEF.elLoss.maxRate, 0, 100);
           if (o.elLoss.defeatMin != null) ruleRows.elLoss.defeatMin = ruleNum(o.elLoss.defeatMin, RULE_DEF.elLoss.defeatMin, 0, 100);
+        }
+        if (o.morK && typeof o.morK === "object") {
+          if (o.morK.lo != null) ruleRows.morK.lo = ruleNum(o.morK.lo, RULE_DEF.morK.lo, 0, 2);
+          if (o.morK.hi != null) ruleRows.morK.hi = ruleNum(o.morK.hi, RULE_DEF.morK.hi, 0, 2);
+        }
+        if (o.cons && typeof o.cons === "object") {
+          Object.keys(ruleRows.cons).forEach(function (f110) { if (o.cons[f110] != null) ruleRows.cons[f110] = ruleNum(o.cons[f110], RULE_DEF.cons[f110], 0, f110 === "dmgCap" ? 100 : (f110 === "rBase" ? 1 : (f110 === "marchMul" ? 5 : 100))); });
         }
       }
       rulePaint();
@@ -2288,7 +2306,45 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       '<td><input class="btn rl-in" data-grp="el" data-f="defeatMin" type="number" step="1" min="0" max="100" value="' + ruleRows.elLoss.defeatMin + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
       '<td class="muted" style="font-size:12px">战败时，战后结算把单营特种兵折损补足到不低于该比例（默认 50%）；命中少时补差额，命中多时不再削减。</td></tr>' +
       "</tbody></table>";
-    $$("#ruleCt .rl-in, #ruleGrp .rl-in, #ruleZf .rl-in, #ruleEl .rl-in").forEach(function (inp) {
+    /* ⑤ 作战消耗模型（V110） */
+    var consDesc = {
+      rBase: ["基础耗粮系数 rBase", "粮/旬·人（城内待命部队）。每旬结算一次；默认 0.0556 ≈ 旧口径 0.25 粮/月·人。"],
+      marchMul: ["出征倍率 marchMul", "在编带兵（可出战）部队耗粮 = rBase × 该倍率（GDD 默认 1.5，即出征耗粮 +50%）。"],
+      woundFood: ["随军伤兵耗粮折算 woundFood", "伤兵计入旬耗的折算比例（GDD 建议 0~0.5）；0 = 不计入，伤兵维持月度疗养耗口径。"],
+      morDecay: ["士气自然衰减 morDecay", "无训练场城市每旬士气衰减点数（下限 60）；有训练场按旬回补 等级×2/3。"],
+      osupMorMin: ["断粮士气损失下限 osupMorMin", "粮尽之城每旬额外掉士气下限（GDD 15~25 点/旬）。"],
+      osupMorMax: ["断粮士气损失上限 osupMorMax", "粮尽之城每旬额外掉士气上限。"],
+      desertMin: ["断粮逃亡下限 desertMin", "粮尽之城每旬健康兵力（预备役+在编）逃亡比例下限 %，直接销毁不转伤兵。"],
+      desertMax: ["断粮逃亡上限 desertMax", "粮尽之城每旬逃亡比例上限 %。"],
+      osupAtk: ["断粮攻击降幅 osupAtk", "断粮之城出征部队攻击力降幅 %（默认 50% 即 ×0.5），同时战法（兵法）发动率强制归零。"],
+      healRate: ["伤兵旬康复 healRate", "无医疗设施城市，伤兵每旬转化为健康兵的比例 %（GDD 默认 15%）。"],
+      healRateMed: ["伤兵旬康复·医疗 healRateMed", "有训练场（视为医疗设施）城市，伤兵每旬康复比例 %（GDD 默认 30%）。"],
+      woundRate: ["伤兵转化率·常规 woundRate", "战后我军战损转化为伤兵的比例 %（常规野战默认 60%，其余阵亡）。"],
+      woundSiege: ["伤兵转化率·致命 woundSiege", "遭到投石车/火计类杀伤时的伤兵转化率 %（默认 30%，阵亡率 70%）。"],
+      medBonus: ["医疗战法加成 medBonus", "主将佩戴医疗类战法（刮骨疗毒/抚辑军民等）时，伤兵转化率额外 +xx%。"],
+      chaosThr: ["混乱检定阈值 chaosThr", "士气低于该值时，每次受击触发混乱检定（GDD 默认 30）。"],
+      chaosPMax: ["混乱概率上限 chaosPMax", "士气为 0 时的混乱触发概率上限 %，按 (阈值-士气)/阈值 线性折减；混乱单位跳过行动、受伤 +chaosDefCut%。"],
+      chaosDefCut: ["混乱减防 chaosDefCut", "混乱状态部队防御削减 %（受伤相应放大，默认 30%）。"],
+      killGain: ["击破回复士气 killGain", "击破敌方部队立即回复的士气点数（GDD 5~10，默认 8）。"],
+      surroundMor: ["包围掉士气 surroundMor", "同一回合被第 2 个及以上单位命中时，每次额外损失的士气（GDD 2~4，默认 3）。"],
+      dmgCap: ["单次伤害钳制 dmgCap", "单次技能/战法/特殊技能伤害不超过目标当前兵力的该比例 %（GDD 防秒杀钳制，默认 80%）。"]
+    };
+    $("#ruleCons").innerHTML = '<table style="width:100%"><thead><tr><th style="width:280px">参数</th><th style="width:160px">值</th><th>说明</th></tr></thead><tbody>' +
+      Object.keys(consDesc).map(function (f) {
+        var d = consDesc[f];
+        var step = (f === "rBase" || f === "marchMul" || f === "woundFood") ? "0.01" : "1";
+        return '<tr><td><b>' + d[0] + '</b><div class="muted" style="font-size:11px">cons.' + f + '</div></td>' +
+          '<td><input class="btn rl-in" data-grp="cons" data-f="' + f + '" type="number" step="' + step + '" min="0" value="' + ruleRows.cons[f] + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+          '<td class="muted" style="font-size:12px">' + d[1] + "</td></tr>";
+      }).join("") +
+      '<tr><td><b>士气战力下限 morK.lo</b><div class="muted" style="font-size:11px">morK.lo</div></td>' +
+      '<td><input class="btn rl-in" data-grp="mk" data-f="lo" type="number" step="0.05" min="0" max="2" value="' + ruleRows.morK.lo + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+      '<td class="muted" style="font-size:12px">士气 0 时的战力发挥系数（GDD 默认 0.5）。</td></tr>' +
+      '<tr><td><b>士气战力上限 morK.hi</b><div class="muted" style="font-size:11px">morK.hi</div></td>' +
+      '<td><input class="btn rl-in" data-grp="mk" data-f="hi" type="number" step="0.05" min="0" max="2" value="' + ruleRows.morK.hi + '" style="width:130px;text-align:right;padding:6px 8px"></td>' +
+      '<td class="muted" style="font-size:12px">士气 100 时的战力发挥系数（GDD 默认 1.0）。K = lo + (hi-lo)×士气/100。</td></tr>' +
+      "</tbody></table>";
+    $$("#ruleCt .rl-in, #ruleGrp .rl-in, #ruleZf .rl-in, #ruleEl .rl-in, #ruleCons .rl-in").forEach(function (inp) {
       inp.addEventListener("input", function () {
         var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k"), v = Number(this.value);
         if (!isFinite(v)) return;
@@ -2296,6 +2352,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
         else if (grp === "grp") ruleRows.grp[k][this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.grp[k][this.getAttribute("data-f")], 0, 100);
         else if (grp === "zf") ruleRows.zf[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.zf[this.getAttribute("data-f")], this.getAttribute("data-f") === "pow" ? 0.1 : 1, this.getAttribute("data-f") === "pow" ? 5 : 20);
         else if (grp === "el") ruleRows.elLoss[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.elLoss[this.getAttribute("data-f")], 0, 100);
+        else if (grp === "cons") ruleRows.cons[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.cons[this.getAttribute("data-f")], 0, 100);
+        else if (grp === "mk") ruleRows.morK[this.getAttribute("data-f")] = ruleNum(v, RULE_DEF.morK[this.getAttribute("data-f")], 0, 2);
       });
       inp.addEventListener("change", function () {
         var grp = this.getAttribute("data-grp"), k = this.getAttribute("data-k");
@@ -2310,6 +2368,13 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
   $("#ruleSave").addEventListener("click", function () {
     if (!ruleRows) return;
     var out = { ctrDmg: ruleNum(ruleRows.ctrDmg, RULE_DEF.ctrDmg, 0, 100), beats: {}, grp: {}, zf: { pow: ruleNum(ruleRows.zf.pow, RULE_DEF.zf.pow, 0.1, 5), eventCost: Math.round(ruleNum(ruleRows.zf.eventCost, RULE_DEF.zf.eventCost, 1, 20)) }, elLoss: { maxRate: Math.round(ruleNum(ruleRows.elLoss.maxRate, RULE_DEF.elLoss.maxRate, 0, 100)), defeatMin: Math.round(ruleNum(ruleRows.elLoss.defeatMin, RULE_DEF.elLoss.defeatMin, 0, 100)) } };
+    /* V110：作战消耗模型（rBase/marchMul/woundFood/morK 保留两位小数，其余取整） */
+    out.morK = { lo: ruleNum(ruleRows.morK.lo, RULE_DEF.morK.lo, 0, 2), hi: ruleNum(ruleRows.morK.hi, RULE_DEF.morK.hi, 0, 2) };
+    out.cons = {};
+    Object.keys(ruleRows.cons).forEach(function (f110) {
+      var dec = (f110 === "rBase" || f110 === "marchMul" || f110 === "woundFood");
+      out.cons[f110] = dec ? ruleNum(ruleRows.cons[f110], RULE_DEF.cons[f110], 0, 100) : Math.round(ruleNum(ruleRows.cons[f110], RULE_DEF.cons[f110], 0, 100));
+    });
     RULE_ARMS.forEach(function (a) {
       out.beats[a[0]] = ruleRows.beats[a[0]] || RULE_DEF.beats[a[0]];
       out.grp[a[0]] = {};
