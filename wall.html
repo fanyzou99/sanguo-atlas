@@ -32,7 +32,7 @@ select{padding:8px 10px;border-radius:8px;border:1px solid var(--line);backgroun
 .chip{padding:5px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink2);font-size:13px;cursor:pointer}
 .chip.on{background:var(--gold);color:#241c0c;font-weight:700;border-color:transparent}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
-.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s;content-visibility:auto;contain-intrinsic-size:auto 252px}
 .card:hover{transform:translateY(-3px);border-color:#c9a45c}
 .card .ph{aspect-ratio:3/4;background:#10131a;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .card .ph::before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(100deg,#10131a 30%,#1d2433 50%,#10131a 70%);background-size:200% 100%;animation:shimmer 1.3s infinite linear}
@@ -196,7 +196,7 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
           idbSet(f, { t: t, at: Date.now() });
           okCount[f] = 1; activeNet--;
           paintProgress();
-          if (!ptReady || !state.loaded) paint();   /* 新片到达即补渲染 */
+          paintInc();   /* V102：新片到达增量追加，不再全量重建网格 */
           settled(); pumpNet();
           return;
         }
@@ -218,19 +218,20 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
     }
   }
 
-  /* 缓存水合：命中分片逐帧执行（不阻塞 UI），缺失/损坏片转网络 */
+  /* 缓存水合：命中分片逐片执行（V102：requestIdleCallback 空闲调度，滚动/输入优先；缺失/损坏片转网络） */
+  function idleJob(fn, to){ if (window.requestIdleCallback) requestIdleCallback(fn, { timeout: to || 300 }); else setTimeout(fn, 16); }
   var evalQueue = [], evalBusy = false;
   function drainEval(){
     if (!evalQueue.length || evalBusy) return;
     evalBusy = true;
-    setTimeout(function(){
+    idleJob(function(){
       evalBusy = false;
       var it = evalQueue.shift();
       if (okCount[it.f]) { drainEval(); return; }   /* 网络已抢先到位 */
       if (evalShard(it.t, it.f)) {
         okCount[it.f] = 1;
         paintProgress();
-        if (!ptReady || !state.loaded) paint();
+        paintInc();   /* V102：缓存片执行后增量追加 */
         settled();
         drainEval();
       } else {
@@ -238,7 +239,7 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
         fetchShard(it.f, 0);
         drainEval();
       }
-    }, 16);
+    });
   }
   function boot(){
     var got = 0, misses = [];
@@ -326,6 +327,47 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
     else arr.sort(function(a,b){ return b.sum - a.sum; });
     return arr;
   }
+  /* ---- V102 渲染：增量追加 + 交互/落定才全量重排 ----
+     旧逻辑：每个分片到达都 paint() 全量 innerHTML 重建网格（最多 16 次），96+ 张 base64 大图 DOM
+     反复推倒重建 → 主线程连续抖动卡顿。新逻辑：
+     ① 数据到达走 paintInc()：只把新到的立绘追加进网格（cardEl 逐卡创建、已渲染的跳过），已有卡零重建；
+     ② 全量重排（排序/筛选/搜索/显示更多/落定修正）仍走 paint()；
+     ③ .card 开启 content-visibility:auto —— 视口外卡片跳过布局/绘制；img decoding=async 异步解码。 */
+  var rendered = {};   /* 当前网格中已有的卡（name → 1） */
+  function cardEl(g){
+    var tr = tierOf(g), f = FACTION[g.faction];
+    var d = document.createElement("div");
+    d.className = "card";
+    d.setAttribute("data-n", g.name);
+    d.setAttribute("data-id", g.id);
+    d.innerHTML = '<div class="ph"><img loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
+      '<span class="tier" style="color:' + tr.c + '">' + tr.n + '</span>' +
+      '<div class="cap"><b>' + esc(g.name) + '</b><i style="color:' + (f ? f.color : "#8a6a3a") + '">' + (f ? f.name : esc(g.faction)) + '</i></div>';
+    d.onclick = function(){ openLb(g.name); };
+    return d;
+  }
+  function updateMeta(arr){
+    var left = arr.length - Math.min(arr.length, state.limit);
+    document.getElementById("more").innerHTML = left > 0 ? '<button id="moreBtn">显示更多（还有 ' + left + ' 位）</button>' : '';
+    document.getElementById("cnt").textContent = "已配图 " + ptn() + " / " + G.length + " · 筛选结果 " + arr.length + " 位";
+    var mb = document.getElementById("moreBtn");
+    if (mb) mb.onclick = function(){ state.limit += 120; savePref(); paint(); };
+  }
+  function paintInc(){
+    if (!state.loaded) return;
+    var arr = list(), grid = document.getElementById("grid");
+    if (!grid) return;
+    var emptyEl = grid.querySelector(".empty"), shown = 0, added = 0;
+    for (var i = 0; i < arr.length && shown < state.limit; i++) {
+      shown++;
+      if (rendered[arr[i].name]) continue;
+      if (emptyEl) { if (emptyEl.parentNode) emptyEl.parentNode.removeChild(emptyEl); emptyEl = null; }
+      grid.appendChild(cardEl(arr[i]));
+      rendered[arr[i].name] = 1;
+      added++;
+    }
+    if (added) updateMeta(arr);
+  }
   function paint(){
     state.loaded = true;
     var arr = list(), shown = arr.slice(0, state.limit);
@@ -347,14 +389,20 @@ window.WALL_FILES = ["pt/pt00_59a27172.js", "pt/pt01_abfc3202.js", "pt/pt02_7932
       th += '<button class="chip' + (on?" on":"") + '" data-t="' + t.n + '" style="border-color:' + t.c + '66;color:' + (on ? "#14161c" : t.c) + (on ? ";background:"+t.c+";font-weight:700" : "") + '">' + t.n + ' ' + tcCount[t.n] + '</button>';
     });
     document.getElementById("tierChips").innerHTML = th;
-    /* 网格 */
-    document.getElementById("grid").innerHTML = shown.length ? shown.map(function(g){
+    /* 网格（全量重排：清空 rendered 记录，img 异步解码） */
+    var grid = document.getElementById("grid");
+    rendered = {};
+    grid.innerHTML = shown.length ? shown.map(function(g){
       var tr = tierOf(g), f = FACTION[g.faction];
       return '<div class="card" data-n="' + esc(g.name) + '" data-id="' + esc(g.id) + '">' +
-        '<div class="ph"><img loading="lazy" onload="this.classList.add(\'ld\')" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
+        '<div class="ph"><img loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" src="' + window.__SG_PT__[g.name] + '" alt="' + esc(g.name) + '"></div>' +
         '<span class="tier" style="color:' + tr.c + '">' + tr.n + '</span>' +
         '<div class="cap"><b>' + esc(g.name) + '</b><i style="color:' + (f ? f.color : "#8a6a3a") + '">' + (f ? f.name : esc(g.faction)) + '</i></div></div>';
     }).join("") : '<div class="empty">' + (ptn() ? "没有符合条件的立绘，试试更换筛选条件" : "立绘分片加载中，请稍候…") + '</div>';
+    shown.forEach(function(g){ rendered[g.name] = 1; });
+    Array.prototype.forEach.call(grid.querySelectorAll(".card"), function(el){
+      el.onclick = function(){ openLb(el.getAttribute("data-n")); };
+    });
     var left = arr.length - shown.length;
     document.getElementById("more").innerHTML = left > 0 ? '<button id="moreBtn">显示更多（还有 ' + left + ' 位）</button>' : '';
     document.getElementById("cnt").textContent = "已配图 " + ptn() + " / " + G.length + " · 筛选结果 " + arr.length + " 位";
