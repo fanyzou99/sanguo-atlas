@@ -9383,7 +9383,7 @@ var BOTS = [
   }
 
   /* ---------------- 弹窗 ---------------- */
-  function closeModal() { var m = $("#sgMask"); if (m) m.parentNode.removeChild(m); }
+  function closeModal() { var m = $("#sgMask"); if (m) m.parentNode.removeChild(m); try { if (!_slotDraftHold) _slotDraft = null; _slotDraftHold = false; _distCtx = null; } catch (eCM103) {} }   /* V103：关闭弹窗清空配兵草稿（保持中的草稿待重渲染消费） */
   function modal(html, wide) {
     var cn = typeof wide === "string" ? wide : (wide ? "wide" : "");
     /* V61：已有遮罩时原地换内容，不再「删掉再新建」——那会漏出一帧无遮罩画面，
@@ -11853,6 +11853,17 @@ var BOTS = [
     "陈到": { n: "白毦兵", mul: 1.5, tip: "西方上兵，名震白毦——攻击再 ×1.5" }
   };
   function eliteLegendOf(cd) { if (!cd) return null; var g = gById(cd.gid); return (g && ELITE_LEGEND[g.name]) || null; }
+  /* ================= V103：特种兵 ↔ 兵种映射 =================
+     每个特种兵营对应一个作战兵种（按史实：虎豹骑/白马义从/西凉铁骑/飞熊军=骑兵、无当飞军=弩兵、
+     先登死士=弓箭兵、陷阵营/丹阳兵/敢死士/白毦兵=枪兵、七军=戟兵、藤甲兵/虎贲军/羽林军/解烦军=刀盾兵）。
+     武将所选兵种 = 营映射兵种 → 特种兵单兵战力 ×ELITE_ARM_BONUS（出战伤害、面板数值、队伍合计同步生效）。 */
+  var ELITE_ARM = {
+    "陷阵营": "qiang", "先登死士": "gong", "藤甲兵": "dao", "虎豹骑": "qi", "白毦兵": "qiang",
+    "七军": "ji", "虎贲军": "dao", "羽林军": "dao", "解烦军": "dao", "敢死士": "qiang",
+    "丹阳兵": "qiang", "飞熊军": "qi", "白马义从": "qi", "西凉铁骑": "qi", "无当飞军": "nu"
+  };
+  var ELITE_ARM_BONUS = 1.25;
+  function eliteArmOf(nm) { return (nm && ELITE_ARM[nm]) || ""; }
   function eliteCoachOf(u, c) { var cc = c || ensureCity(u); return cc.spCoach ? (u.cards || []).filter(function (x) { return x.id === cc.spCoach; })[0] : null; }
   /* V68：主训练官（教官）在特种兵训练倒计时期间不得编队/出战，仅任点将台主训练官 */
   function e68CoachOnDuty(u, cObj, cid) {
@@ -11937,7 +11948,9 @@ var BOTS = [
       var take68 = eliteCarryN(cd, s);
       if (take68 <= 0) return;
       var t68 = e68Tier(s.tk);
-      un.elite = { name: eliteName(u, si, c), n: take68, n0: take68, ci: si, mul: (eliteLegendOf(lead) || {}).mul || 1, pow: t68.pow, lossD: E68.lossDenom };
+      /* V103：兵种契合——出战伤害与面板同口径（武将所选兵种 = 营映射兵种 → ×ELITE_ARM_BONUS） */
+      var nmA68 = eliteName(u, si, c), amA68 = eliteArmOf(nmA68), mA68 = !!(amA68 && cd.arm === amA68);
+      un.elite = { name: nmA68, n: take68, n0: take68, ci: si, mul: (eliteLegendOf(lead) || {}).mul || 1, pow: Math.round(t68.pow * (mA68 ? ELITE_ARM_BONUS : 1)), lossD: E68.lossDenom, am: amA68, amMatch: mA68 };
       un.troop += take68; un.troopMax += take68;
       s.n = Math.max(0, (s.n || 0) - take68);
     });
@@ -13121,6 +13134,8 @@ var BOTS = [
       unitOf: unitOf, simulate: simulate, me: me,
       applyMilCfg: applyMilCfg, troopCapEff: troopCapEff, troopOfCard: troopOfCard, troopAbilityOf: troopAbilityOf,
       unitCapMax: unitCapMax, trimOverTroops: trimOverTroops,
+      unitCombatOf: unitCombatOf, unitAttachElite: unitAttachElite, e68Tier: e68Tier, eliteSlots: eliteSlots, eliteName: eliteName,
+      eliteArmOf: eliteArmOf, ELITE_ARM: ELITE_ARM, ELITE_ARM_BONUS: ELITE_ARM_BONUS, troopTxt: troopTxt, fmt: fmt,   /* V103：特种兵↔兵种映射调试句柄 */
     };
   } catch (e) {}
   function wtypeOf(g) { return WTYPES[hashNum(g.id || g.name || "x") % WTYPES.length]; }
@@ -13447,6 +13462,37 @@ var BOTS = [
         teamBarTipT: "配置兵 {a} / 帯兵上限 {b} · 戦闘値 {p}（特殊兵 {e} / 通常 {r}）· 陣形「{f}」攻×{m}%",
         homeCapT: "上限 {c}", homeRelT: "帰農 {n} 含む", chipRelT: "帰農 +{n}",
         popNatureT: "自然 {a} / 上限 {b}", popRelT: "帰農人口 {n}", popRelNoteT: "（帰農人口は上限の対象外）"
+      }
+    };
+    Object.keys(ADD).forEach(function (lg) {
+      if (!GT[lg]) GT[lg] = {};
+      Object.keys(ADD[lg]).forEach(function (k) { GT[lg][k] = ADD[lg][k]; });
+    });
+  })();
+
+  /* ================= V103 三语词条：横版武将配置页 + 特种兵兵种映射 ================= */
+  (function () {
+    var ADD = {
+      zh: {
+        cfgArmT: "⚔ 兵种选择", cfgArmHintT: "适性 · 熟悉度 · 🎯 = 随队特种兵营的映射兵种，选中后特种兵战力 ×{m}",
+        cfgDistT: "🪖 配兵", cfgElLabT: "🎯 特种兵营与携行数",
+        cfgStatT: "📊 本将数值（实时）", cfgTeamT: "⚔ 队伍合计 · {n} 人",
+        cfgMatchT: "兵种契合 ×{m}", cfgNoMatchT: "映射兵种 {a} · 未契合", cfgNoArmT: "该营无映射兵种",
+        cfgRegRowT: "常规兵", cfgElRowT: "特种兵", cfgTotRowT: "总兵力", cfgAtkRowT: "攻击", cfgDefRowT: "防御", cfgPowRowT: "战斗值", cfgBrkT: "明细 🪖+🎯"
+      },
+      en: {
+        cfgArmT: "⚔ Arm selection", cfgArmHintT: "aptitude · proficiency · 🎯 = the attached elite corps' mapped arm; matching grants elite power ×{m}",
+        cfgDistT: "🪖 Troops", cfgElLabT: "🎯 Elite corps & carried number",
+        cfgStatT: "📊 This general (live)", cfgTeamT: "⚔ Team total · {n}",
+        cfgMatchT: "arm match ×{m}", cfgNoMatchT: "mapped arm {a} · no match", cfgNoArmT: "no mapped arm",
+        cfgRegRowT: "regular", cfgElRowT: "elite", cfgTotRowT: "troops", cfgAtkRowT: "atk", cfgDefRowT: "def", cfgPowRowT: "power", cfgBrkT: "detail 🪖+🎯"
+      },
+      ja: {
+        cfgArmT: "⚔ 兵種選択", cfgArmHintT: "適性 · 熟練度 · 🎯 = 随伴特殊兵営の対応兵種。一致すると特殊兵戦力 ×{m}",
+        cfgDistT: "🪖 配兵", cfgElLabT: "🎯 特殊兵営と携行数",
+        cfgStatT: "📊 この武将の数値（リアルタイム）", cfgTeamT: "⚔ 隊合計 · {n} 人",
+        cfgMatchT: "兵種一致 ×{m}", cfgNoMatchT: "対応兵種 {a} · 未一致", cfgNoArmT: "対応兵種なし",
+        cfgRegRowT: "通常兵", cfgElRowT: "特殊兵", cfgTotRowT: "総兵力", cfgAtkRowT: "攻撃", cfgDefRowT: "防御", cfgPowRowT: "戦闘値", cfgBrkT: "内訳 🪖+🎯"
       }
     };
     Object.keys(ADD).forEach(function (lg) {
@@ -17159,12 +17205,16 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   }
   function unitAttachElite(u, card, cObj) {
     var c = cObj || ensureCity(u);
-    if (!card || card.el68 == null || card.el68 < 0) return { n: 0, pow: 0, tk: "", name: "" };
-    var s = eliteSlots(c)[card.el68]; if (!s) return { n: 0, pow: 0, tk: "", name: "" };
-    var lead = eliteLeaderOf(u, s); if (!lead || !eliteLeadOK(lead)) return { n: 0, pow: 0, tk: "", name: "" };
+    var none = { n: 0, pow: 0, tk: "", name: "", am: "", amMatch: false };
+    if (!card || card.el68 == null || card.el68 < 0) return none;
+    var s = eliteSlots(c)[card.el68]; if (!s) return none;
+    var lead = eliteLeaderOf(u, s); if (!lead || !eliteLeadOK(lead)) return none;
     var gl = gById(lead.gid), gc = gById(card.gid);
-    if (!gl || !gc || gl.faction !== gc.faction) return { n: 0, pow: 0, tk: "", name: "" };
-    return { n: eliteCarryN(card, s), have: s.n || 0, w: s.w || 0, pow: (e68Tier(s.tk) || {}).pow || 100, tk: s.tk || "std", name: eliteName(u, card.el68, c) };
+    if (!gl || !gc || gl.faction !== gc.faction) return none;
+    /* V103：兵种契合——武将所选兵种 = 营映射兵种时特种兵单兵战力 ×ELITE_ARM_BONUS */
+    var nm = eliteName(u, card.el68, c);
+    var am = eliteArmOf(nm), mB = !!(am && card.arm === am);
+    return { n: eliteCarryN(card, s), have: s.n || 0, w: s.w || 0, pow: Math.round(((e68Tier(s.tk) || {}).pow || 100) * (mB ? ELITE_ARM_BONUS : 1)), tk: s.tk || "std", name: nm, am: am, amMatch: mB };
   }
   function unitCombatOf(u, card, cObj) {
     var c = cObj || ensureCity(u), g = gById(card.gid) || {};
@@ -17649,24 +17699,86 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<button class="sgbtn primary" data-bat="pk-apply">' + T("pkApply") + "</button></div>";
     modal(head + note + mine + pickTableHTML(pk.cards, pk.bad) + foot, "xwide");
   }
-  /* ---------- V30 编队槽位：放大武将卡 ---------- */
+  /* ================= V103：编队武将配置页（横版三栏） =================
+     左：画像 + 数值面板（本将配兵 / 队伍合计，全数字实时核算，无进度条）；
+     中：兵种选择（🎯 标记随队特种兵营的映射兵种）；
+     右：配兵（常规兵数量 + 特种兵营与携行数）。
+     特种兵 ↔ 兵种映射（ELITE_ARM）：武将所选兵种 = 营映射兵种时，特种兵单兵战力 ×ELITE_ARM_BONUS（出战伤害与面板同步生效）。
+     配兵输入未确认前存入 _slotDraft：切换兵种 / 特种兵营 / 补兵 / 吞噬后重渲染不丢输入。 */
+  var _slotDraft = null, _slotDraftHold = false;
+  function slotDraftRead() {
+    var ctx = _distCtx, rI = document.getElementById("sgDistReg"), eI = document.getElementById("sgDistEl");
+    if (!ctx || !ctx.card || !rI) { _slotDraft = null; return; }
+    _slotDraft = { cid: ctx.card.id, ti: ctx.ti,
+      reg: Math.max(0, Math.round(+rI.value || 0)),
+      elIdx: (ctx.elIdx != null) ? ctx.elIdx : -1,
+      elN: Math.max(0, Math.round(+(eI ? eI.value : 0) || 0)) };
+    _slotDraftHold = true;   /* V103：arm-set 后 refreshBattle→closeModal 不清这份草稿，待 slotBigCard 消费 */
+  }
+  function slotDraftUse(card, ti) { return (_slotDraft && _slotDraft.cid === card.id && _slotDraft.ti === ti) ? _slotDraft : null; }
+  /* 数值面板：本将（实时草稿口径）+ 队伍合计（其余武将取已确认数值） */
+  function v103StatHTML(u, card, ti, reg, elIdx, elN) {
+    var c = ensureCity(u), g = gById(card.gid) || {};
+    var pv = distPreview(u, card, ti, reg, elIdx, elN);
+    var capR = troopCapEff(card, g, c);
+    var elName = pv.elIdx >= 0 ? eliteName(u, pv.elIdx, c) : "";
+    var amK = elName ? eliteArmOf(elName) : "";
+    var mTxt = !elName ? "" : (amK
+      ? (card.arm === amK ? '<span style="color:#7fd08a">' + gt("cfgMatchT", { m: ELITE_ARM_BONUS }) + "</span>"
+                          : '<span style="color:#e8c988">' + gt("cfgNoMatchT", { a: armName(amK) }) + "</span>")
+      : '<span style="color:var(--ink-3)">' + gt("cfgNoArmT") + "</span>");
+    var t = (c.teams || [])[ti], f = t ? formOf(t.f || "yulin") : formOf("yulin");
+    var tReg = 0, tEl = 0, tRP = 0, tEP = 0, tDef = 0, tN = 0;
+    TEAM_POS.forEach(function (p) {
+      var id = t && t.slots[p.k]; if (!id) return;
+      var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cd) return;
+      if (cd.id === card.id) { tReg += Math.max(0, reg); tEl += Math.max(0, Math.round(elN || 0)); tRP += pv.regPow; tEP += pv.elPow; tDef += pv.def; }
+      else {
+        var cb = unitCombatOf(u, cd, c);
+        tReg += cb.reg; tEl += cb.el; tRP += cb.regPow * f.atk; tEP += cb.elPow * f.atk;
+        var un2 = unitOf(cd, "A", { form: t.f || "yulin", mates: teamCards(u, ti) });
+        if (un2) tDef += un2.def;
+      }
+      tN++;
+    });
+    var row = function (lab, val) { return '<div class="v103-row"><span>' + lab + "</span><b>" + val + "</b></div>"; };
+    return '<div id="sgV103Stat" class="v103-stat">' +
+      '<div class="v103-stt">' + gt("cfgStatT") + (mTxt ? '<small style="font-weight:400;font-size:9.5px;display:block;margin-top:2px">' + mTxt + "</small>" : "") + "</div>" +
+      row("🪖 " + gt("cfgRegRowT"), troopTxt(reg) + " / " + troopTxt(capR)) +
+      row("🎯 " + gt("cfgElRowT"), elName ? troopTxt(Math.max(0, Math.round(elN || 0))) + "（" + esc(elName) + "）" : "0") +
+      row("👥 " + gt("cfgTotRowT"), troopTxt(Math.max(0, reg) + Math.max(0, Math.round(elN || 0)))) +
+      row("⚔ " + gt("cfgAtkRowT"), fmt(pv.atk)) +
+      row("🛡 " + gt("cfgDefRowT"), fmt(pv.def)) +
+      row("⚡ " + gt("cfgPowRowT"), fmt(pv.powSum)) +
+      row("└ " + gt("cfgBrkT"), fmt(pv.regPow) + " + " + fmt(pv.elPow) + (pv.el > 0 ? " ×" + fmt(pv.elPowMul) : "")) +
+      (tN ? '<div class="v103-stt v103-tt">' + gt("cfgTeamT", { n: tN }) + "</div>" +
+        row("👥 " + gt("cfgTotRowT"), troopTxt(tReg + tEl)) +
+        row("🪖 " + gt("cfgRegRowT") + " / 🎯 " + gt("cfgElRowT"), troopTxt(tReg) + " / " + troopTxt(tEl)) +
+        row("⚡ " + gt("cfgPowRowT"), fmt(Math.round(tRP + tEP))) +
+        row("🛡 " + gt("cfgDefRowT"), fmt(Math.round(tDef))) : "") +
+      "</div>";
+  }
   function slotBigCard(u, card, ti, pos) {
     var p = TEAM_POS.filter(function (x) { return x.k === pos; })[0] || TEAM_POS[0];
-    var un = unitOf(card, "A");
     var g = gById(card.gid) || {};
     var spg = spGroupOf(g);
-    /* V73：双段进度条（兵力 MAX+特种兵 / 战斗值换算，hover 数值） */
-    var cbS = unitCombatOf(u, card, ensureCity(u));
-    var barsS = v73BarsHTML(cbS, { h: 10, hp: 8 });
-    /* V101：属性行改分格徽章（原来长句换行难读） */
-    var stats = un ? '<div class="sg-statgrid">' +
-      "<span>⚔ 攻 <b>" + un.atk + "</b></span>" +
-      "<span>🛡 防 <b>" + un.def + "</b></span>" +
-      "<span>🐎 速 <b>" + un.spd + "</b></span>" +
-      "<span>🪖 兵力 <b>" + troopTxt(un.troop) + "/" + troopTxt(un.troopMax) + "</b></span>" +
-      "<span>🏅 " + esc(rankName(rankOf(card))) + " <b>上限 " + fmt(rankTroop(card)) + "</b></span>" +
-      "<span>⚡ <b>" + fmt(un.troop + Math.round(un.troop * (un.st || 0) / 100)) + "</b> <small>统 " + (un.st || 0) + "</small></span>" +
-      "</div>" : "";
+    var c103 = ensureCity(u);
+    /* V103：配兵初值——未确认草稿优先，否则已确认值 */
+    var capQ = troopCapEff(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
+    var dft = slotDraftUse(card, ti);
+    var reg0 = dft ? Math.max(0, Math.min(capQ, dft.reg)) : curQ;
+    var slots68 = eliteSlots(c103);
+    var curIdx = dft ? dft.elIdx : ((card.el68 != null && card.el68 >= 0) ? card.el68 : -1);
+    if (curIdx >= 0 && !slots68[curIdx]) curIdx = -1;
+    var sSel = curIdx >= 0 ? slots68[curIdx] : null;
+    var have0 = sSel ? (sSel.n || 0) : 0;
+    var elN0 = dft ? Math.max(0, Math.min(have0, dft.elN)) : (sSel ? eliteCarryN(card, sSel) : 0);
+    var pool0 = Math.max(0, c103.pool || 0);
+    /* 左栏：画像 + 全数字数值面板（不再用进度条） */
+    var port = '<div class="v103-portrait">' +
+      '<div class="v103-art">' + (styledArtSVG(g, card.style, false) || "") + "</div>" +
+      '<div class="v103-pnm"><b>' + esc(g.name || "?") + '</b><span>Lv.' + (card.lv || 1) + ((card.stars || 0) ? " +" + card.stars + "★" : "") + "</span></div>" +
+      '<div class="v103-pmeta" style="color:' + TIERS[cardTier(card)].c + '">' + tierLabel(TIERS[cardTier(card)]) + " · " + esc(g.faction || "") + "</div></div>";
     /* V35：编队内快捷操作——补兵 / 吞噬升级（无需回卡牌墙）；V37：正常兵池优先免费 */
     var capQ = troopCapEff(card, g), curQ = (card.sold == null ? capQ : Math.min(card.sold, capQ));
     var addQ = capQ - curQ;
@@ -17686,56 +17798,73 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
             '<button class="sgbtn sm ghost" data-bat="sq-absorb" data-id="' + card.id + '" data-dup="' + d2.id + '" data-t="' + ti + '" data-p="' + pos + '">' + gt("sqAbsorbT") + "</button></div>";
         }).join("") + (dupsQ.length > 4 ? '<div class="sg-note">… +' + (dupsQ.length - 4) + "</div>" : "")
       : '<div class="sg-note" style="margin-top:10px">' + gt("sqNoDup") + "</div>";
-    var spRow = spg ? '<div class="sg-note" style="color:' + spg.color + '">' + spg.icon + " " + spLabel(spg.k) + "【" + spSkillName(spg.k) + "】 · " + gt("spDesc", { p: spTrig(spg.k, g, skUnlocked(card)) }) + "</div>" : "";
-    /* V36 兵种选择：编队武将卡处直接切换当前兵种，展示熟悉度与适性（V101：自适应网格，不再长短不一地折行） */
-    var armRow = '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>⚔ ' + esc(gt("armNow")) + " <small style='color:var(--ink-3)'>（" + esc(gt("armProfT")) + "）</small></h3></div>" +
-      '<div class="sg-armgrid">' +
+    /* 中栏：兵种选择——🎯 标记随队特种兵营的映射兵种，选中它可获得特种兵战力加成 */
+    var elArmMark = sSel ? eliteArmOf(eliteName(u, curIdx, c103)) : "";
+    var armCol = '<div class="sg-panel-hd"><h3><i>·</i>' + gt("cfgArmT") + "</h3></div>" +
+      '<div class="sg-note"><small>' + gt("cfgArmHintT", { m: ELITE_ARM_BONUS }) + "</small></div>" +
+      '<div class="sg-armgrid v103-armgrid">' +
       GS_ARMS.map(function (a) {
-        var pf = armProf(card, a.k), apt = armApt(g, a.k);
-        var on = card.arm === a.k;
+        var pf = armProf(card, a.k), apt = armApt(g, a.k), on = card.arm === a.k;
         return '<button class="sgbtn sm ' + (on ? "primary" : "ghost") + '" data-bat="arm-set" data-k="' + a.k + '" data-t="' + ti + '" data-p="' + pos + '" title="' + esc(gt("gsArmNote")) + '">' +
-          armName(a.k) + " <b style='color:" + (on ? "#10131a" : "#ffd76a") + "'>" + pf + "</b> <small style='color:" + (on ? "#10131a" : "#9ec9ff") + "'>" + apt + "</small></button>";
-      }).join("") + "</div>";
-    /* V68：随队特种兵开关——编队时明确是否带特种兵，只能带本阵营（营统领阵营）预备役，单独计数 */
-    var c68 = ensureCity(u), slots68 = eliteSlots(c68);
-    var attRow = '<div class="sg-panel-hd" style="margin-top:10px"><h3><i>·</i>🎯 ' + esc(gt("e68AttT")) + "</h3></div>" +
-      '<div class="sg-note"><small>' + esc(gt("e68AttHintT")) + "</small></div>" +
+          armName(a.k) + (elArmMark === a.k ? " 🎯" : "") + " <b style='color:" + (on ? "#10131a" : "#ffd76a") + "'>" + pf + "</b> <small style='color:" + (on ? "#10131a" : "#9ec9ff") + "'>" + apt + "</small></button>";
+      }).join("") + "</div>" +
+      (spg ? '<div class="sg-note" style="color:' + spg.color + ';margin-top:8px">' + spg.icon + " " + spLabel(spg.k) + "【" + spSkillName(spg.k) + "】 · " + gt("spDesc", { p: spTrig(spg.k, g, skUnlocked(card)) }) + "</div>" : "") +
+      '<div class="sg-note" style="margin-top:8px">' + posDesc(p) + "</div>" + dupHTML;
+    /* 右栏：配兵——常规兵数量 + 特种兵营选择与携行数（确定后写入 card.sold / card.el68 / card.el68n） */
+    var distCol = '<div class="sg-panel-hd"><h3><i>·</i>' + gt("cfgDistT") + "</h3></div>" +
+      '<div class="v103-lab">' + gt("distRegT") + "</div>" +
+      '<div class="sg-note"><small>' + gt("distRegHintT", { c: fmt(capQ), n: fmt(curQ), p: fmt(pool0) }) + "</small></div>" +
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
+      '<input id="sgDistReg" type="number" min="0" max="' + capQ + '" step="1" value="' + reg0 + '" style="width:118px;padding:6px 9px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit;text-align:right">' +
+      distQuick("reg", capQ, gt("distFullT", { c: fmt(capQ) })) + distQuick("reg", Math.min(capQ, curQ + pool0), gt("distPoolT", { p: fmt(Math.min(capQ, curQ + pool0)) })) + distQuick("reg", 0, gt("distZeroT")) + "</div>" +
+      '<div class="v103-lab" style="margin-top:10px">' + gt("cfgElLabT") + "</div>" +
       '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:6px 0">' +
-      '<button class="sgbtn sm ' + (card.el68 == null || card.el68 < 0 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="-1" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">' + esc(gt("e68AttNoneT")) + "</button>" +
+      '<button class="sgbtn sm ' + (curIdx < 0 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="-1" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">' + esc(gt("e68AttNoneT")) + "</button>" +
       slots68.map(function (s68, si68) {
         var ld68 = eliteLeaderOf(u, s68), lg68 = eliteLegendOf(ld68);
         var gg68 = ld68 ? gById(ld68.gid) : null;
         var same = !!(gg68 && g.faction && gg68.faction === g.faction);
-        return '<button class="sgbtn sm ' + (card.el68 === si68 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="' + si68 + '" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '"' +
-          (same ? "" : ' title="' + esc(gt("e68FactionNoT")) + '"') + ">" + esc(eliteName(u, si68, c68) + (lg68 ? " ★" : "")) +
-          " · " + (s68.n ? fmt(s68.n) : "0") + (s68.tr ? " ⏳" : "") + (same ? "" : " 🚫") + "</button>";
+        var mapArm68 = eliteArmOf(eliteName(u, si68, c103));
+        return '<button class="sgbtn sm ' + (curIdx === si68 ? "primary" : "ghost") + '" data-bat="el68-att" data-si="' + si68 + '" data-c="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '"' +
+          (same ? "" : ' title="' + esc(gt("e68FactionNoT")) + '"') + ">" + esc(eliteName(u, si68, c103) + (lg68 ? " ★" : "")) +
+          " · " + (s68.n ? fmt(s68.n) : "0") + (s68.tr ? " ⏳" : "") + (mapArm68 ? " ⚔" + armName(mapArm68) : "") + (same ? "" : " 🚫") + "</button>";
       }).join("") + "</div>" +
-      /* V95：随队特种兵配兵数量（默认全营，可只带一部分） */
-      (function () {
-        var sSel = (card.el68 != null && card.el68 >= 0) ? slots68[card.el68] : null;
-        if (!sSel) return "";
-        var have = sSel.n || 0, carry = eliteCarryN(card, sSel);
-        return '<div class="sg-note" style="margin:0 0 4px">' + gt("distCarryRowT", { a: fmt(carry), b: fmt(have), k: fmt(Math.max(0, have - carry)) }) +
-          '<small style="color:var(--ink-3)">' + gt("distCarryHintT") + "</small></div>";
-      })();
-    modal("<h3>⚔ " + T("teamT") + " " + (ti + 1) + " · " + posName(p) + "</h3>" +
-      '<div style="display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start" class="bigcard-grid">' +
-      '<div style="width:300px;max-width:100%;margin:0 auto">' + cardHTML(card, false) + "</div>" +
-      "<div>" + stats + '<div style="margin:7px 0">' + barsS.troop + barsS.pow +
-      '<small style="color:var(--ink-3);font-size:9.5px;display:block;text-align:center">🟠 ' + esc(gt("barEliteT")) + "　🟢 " + esc(gt("barRegT")) + "</small></div>" +
-      spRow + armRow + attRow +
-      '<div class="sg-note">' + posDesc(p) + "</div>" +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' +
-      '<button class="sgbtn sm primary" data-bat="dist-open" data-id="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">⚙ ' + gt("distT") + "</button>" + recBtn +
+      (sSel
+        ? '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
+          '<input id="sgDistEl" type="number" min="0" max="' + have0 + '" step="1" value="' + elN0 + '" style="width:118px;padding:6px 9px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit;text-align:right">' +
+          distQuick("el", have0, gt("distAllT", { n: fmt(have0) })) + distQuick("el", 0, gt("distNoneT")) + "</div>" +
+          '<div class="sg-note" style="margin:4px 0 0"><small>' + gt("distCarryRowT", { a: fmt(elN0), b: fmt(have0), k: fmt(Math.max(0, have0 - elN0)) }) + " · " + gt("distElHintT", { n: have0 }) + "</small></div>"
+        : '<div class="sg-note"><small>' + gt("distNoElT") + "</small></div>") +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">' +
+      '<button class="sgbtn sm primary" data-bat="dist-go" data-id="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">' + gt("distGoT") + "</button>" + recBtn +
       '<button class="sgbtn sm ghost" data-bat="pk-open" data-mode="slot" data-t="' + ti + '" data-p="' + pos + '">⇄ ' + T("pkSwap") + "</button>" +
       '<button class="sgbtn sm ghost" data-bat="slot-clear" data-t="' + ti + '" data-p="' + pos + '">✕ ' + T("slotRemove") + "</button>" +
-      "</div>" + dupHTML + "</div></div>" +
-      '<style>.sg-statgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0 4px}' +
-      '.sg-statgrid span{display:flex;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(201,164,92,.3);border-radius:7px;background:rgba(0,0,0,.22);padding:4px 2px;font-size:10.5px;color:var(--ink-3);min-width:0;white-space:nowrap}' +
-      '.sg-statgrid b{color:#ffd76a;font-size:11.5px;overflow:hidden;text-overflow:ellipsis}.sg-statgrid small{color:var(--ink-3);font-size:9px}' +
+      "</div>";
+    modal("<h3>⚔ " + T("teamT") + " " + (ti + 1) + " · " + posName(p) + " · " + esc(g.name || "?") + "</h3>" +
+      '<div class="v103-grid">' + port + v103StatHTML(u, card, ti, reg0, curIdx, elN0) + armCol + distCol + "</div>" +
+      '<style>.v103-grid{display:grid;grid-template-columns:206px minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}' +
+      '.v103-portrait{border:1px solid rgba(201,164,92,.35);border-radius:10px;background:rgba(0,0,0,.22);padding:8px;text-align:center}' +
+      '.v103-art{height:150px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.35);line-height:0}' +
+      '.v103-art .sg-artwrap svg,.v103-art svg{width:100%;height:100%}' +
+      '.v103-pnm{margin-top:6px;font-size:13px;color:#e8c988}.v103-pnm span{color:var(--ink-3);font-size:10px;margin-left:4px}' +
+      '.v103-pmeta{font-size:10px;margin-top:1px}' +
+      '.v103-stat{border:1px solid rgba(201,164,92,.35);border-radius:10px;background:rgba(0,0,0,.22);padding:7px 9px;margin-top:8px}' +
+      '.v103-stt{font-size:11px;color:#ffd76a;margin-bottom:3px}' +
+      '.v103-tt{margin-top:7px;padding-top:6px;border-top:1px dashed rgba(201,164,92,.3);color:#7fd08a}' +
+      '.v103-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:10.5px;color:var(--ink-3);padding:2.5px 0}' +
+      '.v103-row+.v103-row{border-top:1px dashed rgba(201,164,92,.12)}' +
+      '.v103-row b{color:#f2f6fa;font-size:11.5px;text-align:right;white-space:nowrap}' +
+      '.v103-lab{font-size:11px;color:#ffd76a;margin-top:2px}' +
       '.sg-armgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:5px}' +
       '.sg-armgrid .sgbtn{text-align:left;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}' +
-      '@media(max-width:760px){.bigcard-grid{grid-template-columns:1fr!important}}</style>', "wide");
+      '.v103-armgrid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:4px}' +
+      '@media(max-width:860px){.v103-grid{grid-template-columns:1fr!important}}</style>', "xwide");
+    /* V103：实时核算——常规兵 / 特种兵携行数任一变化都重算左栏数值面板 */
+    _distCtx = { u: u, card: card, ti: ti, pos: pos, elIdx: curIdx };
+    ["sgDistReg", "sgDistEl"].forEach(function (id) {
+      var elx = document.getElementById(id);
+      if (elx) elx.addEventListener("input", distRecalc);
+    });
   }
   /* ================= V95：编队二级配兵 =================
      一键补兵是「补满」，本弹窗负责「带多少」：常规兵 0~带兵上限（增兵从本城预备役划拨、减兵退回预备役）；
@@ -17760,7 +17889,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var lead = eliteLeaderOf(u, s);
         var gl = lead ? gById(lead.gid) : null, gc = gById(card.gid);
         if (lead && eliteLeadOK(lead) && gl && gc && gl.faction === gc.faction) {
-          elPowMul = (e68Tier(s.tk) || {}).pow || 100;
+          /* V103：兵种契合加成（与 unitAttachElite / 出战挂载同口径） */
+          var nmD68 = eliteName(u, elIdx, c), amD68 = eliteArmOf(nmD68);
+          elPowMul = Math.round(((e68Tier(s.tk) || {}).pow || 100) * (amD68 && card.arm === amD68 ? ELITE_ARM_BONUS : 1));
           elN = Math.max(0, Math.min(elN, s.n));
           elPow = Math.round(elN * elPowMul * fm * kp * f.atk);
         } else elIdx = -1;
@@ -17782,12 +17913,17 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var regI = document.getElementById("sgDistReg"), elI = document.getElementById("sgDistEl"), elS = document.getElementById("sgDistElSel");
     var cap = troopCapEff(dCard, gById(dCard.gid) || {});
     var reg = Math.max(0, Math.min(cap, Math.round(+(regI ? regI.value : 0) || 0)));
-    var elIdx = elS ? (function () { var _v = Math.round(+elS.value); return isFinite(_v) ? _v : -1; })() : ((dCard.el68 != null && dCard.el68 >= 0) ? dCard.el68 : -1);
+    var elIdx = elS ? (function () { var _v = Math.round(+elS.value); return isFinite(_v) ? _v : -1; })()
+      : ((_distCtx.elIdx != null) ? _distCtx.elIdx : ((dCard.el68 != null && dCard.el68 >= 0) ? dCard.el68 : -1));   /* V103：无下拉时取配置页当前营位 */
     var slot = elIdx >= 0 ? eliteSlots(ensureCity(dU))[elIdx] : null;
     var have = slot ? (slot.n || 0) : 0;
     var elN = Math.max(0, Math.min(have, Math.round(+(elI ? elI.value : 0) || 0)));
-    var box = document.getElementById("sgDistCalc");
-    if (box) box.outerHTML = distCalcHTML(distPreview(dU, dCard, dTi, reg, elIdx, elN));
+    var box = document.getElementById("sgV103Stat");
+    if (box) box.outerHTML = v103StatHTML(dU, dCard, dTi, reg, elIdx, elN);
+    else {
+      var dc0 = document.getElementById("sgDistCalc");
+      if (dc0) dc0.outerHTML = distCalcHTML(distPreview(dU, dCard, dTi, reg, elIdx, elN));
+    }
   }
   function distOpen(u, card, ti, pos) {
     var g = gById(card.gid) || {};
@@ -19838,6 +19974,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         }
         c6.sold = Math.min(cap6, cur6 + rc6.freeN + (full6 ? rc6.newN : 0));
         var got6 = c6.sold - cur6;
+        if (_slotDraft && _slotDraft.cid === c6.id) _slotDraft.reg = c6.sold;   /* V103：补兵后草稿同步为已确认值 */
         save();
         toast(T("gsRecOk", { n: fmt(got6) }) + "（" + gt("recFreeT") + " " + fmt(Math.min(rc6.freeN, got6)) + (full6 && rc6.newN ? " · " + gt("recNewT", { n: fmt(rc6.newN), a: fmt(rc6.needR), b: fmt(rc6.needC) }) : "") + "）", "ok", 5200);
         var ti6 = t.getAttribute("data-t"), pos6 = t.getAttribute("data-p");
@@ -19950,6 +20087,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         if (!asC || !asK) return;
         asC.arm = asK;
         save(); toast(T("gsArmOk", { n: armName(asK) }) + " · " + gt("armProfT") + " " + armProf(asC, asK), "ok");
+        if (asT != null && asP) slotDraftRead();   /* V103：refreshBattle 会 closeModal 清草稿，必须先读 */
         refreshBattle();
         if (asT != null && asP) slotBigCard(u, asC, asT, asP);
         return;
@@ -20314,12 +20452,26 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
           dCard.el68 = dIdx; dCard.el68n = dEl;
           dNote.push(gt("distCarryT", { a: fmt(dEl), b: fmt(dS.n || 0) }));
         } else { dCard.el68 = -1; dCard.el68n = 0; }
-        save(); closeModal(); _distCtx = null; refreshBattle();
-        /* V96：确认后回到主城编队页面（不再重开武将大卡），由编队行汇总整队总人数 / 总战斗值 */
+        save(); _slotDraft = null; refreshBattle();
+        /* V103：确认后留在配置页——左栏数值面板转为已确认口径（队伍合计同步刷新） */
+        slotBigCard(u, dCard, dTi, dPos);
         toast(gt("distDoneT", { a: fmt(dCard.sold), c: fmt(dCap), x: dNote.length ? "（" + dNote.join(" · ") + "）" : "" }), "ok", 5200);
         return;
       }
-      case "el68-att": { var siA68 = +t.getAttribute("data-si"); var cidA68 = t.getAttribute("data-c"); var cdA68 = (u.cards || []).filter(function (x) { return x.id === cidA68; })[0]; if (cdA68) { cdA68.el68 = (cdA68.el68 === siA68) ? -1 : siA68; save(); } if (cdA68) slotBigCard(u, cdA68, +t.getAttribute("data-t"), t.getAttribute("data-p")); return; }
+      case "el68-att": {
+        var siA68 = +t.getAttribute("data-si"); var cidA68 = t.getAttribute("data-c"); var cdA68 = (u.cards || []).filter(function (x) { return x.id === cidA68; })[0];
+        if (cdA68) {
+          slotDraftRead();   /* V103：切换特种兵营前保留未确认的常规兵输入 */
+          cdA68.el68 = (cdA68.el68 === siA68) ? -1 : siA68;
+          if (_slotDraft && _slotDraft.cid === cdA68.id) {
+            _slotDraft.elIdx = cdA68.el68;
+            var sl68d = cdA68.el68 >= 0 ? eliteSlots(ensureCity(u))[cdA68.el68] : null;
+            _slotDraft.elN = sl68d ? (sl68d.n || 0) : 0;   /* 换营默认全带 */
+          }
+          save();
+        }
+        if (cdA68) slotBigCard(u, cdA68, +t.getAttribute("data-t"), t.getAttribute("data-p")); return;
+      }
       case "elite-lid": { var c67 = ensureCity(u), s67 = eliteSlots(c67)[n]; if (s67) { var lid67 = t.getAttribute("data-c") || null; s67.lid = (s67.lid === lid67) ? null : lid67; save(); } recruitOpen(); return; }
       case "elite-coach": { var cEC = ensureCity(u); var idEC = t.getAttribute("data-c") || null; cEC.spCoach = (cEC.spCoach === idEC) ? null : idEC; save(); recruitOpen(); return; }
       case "lg-go": BATUI.res = null; location.hash = "#/battle/f/l" + n; return;
