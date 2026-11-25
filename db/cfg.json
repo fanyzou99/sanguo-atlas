@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-25T05:42:41.063Z"
+  "updated": "2026-11-25T09:20:16.344Z"
  },
  "econ": {
   "coin": 0.012,
@@ -562,5 +562,11 @@
    "cap": 300000,
    "grow": 10
   }
+ },
+ "nobility": {
+  "salMul": 10,
+  "capMul": 1,
+  "bonusMul": 2,
+  "ovr": {}
  }
 }
