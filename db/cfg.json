@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-24T05:03:14.947Z"
+  "updated": "2026-11-25T05:41:16.669Z"
  },
  "econ": {
   "coin": 0.012,
@@ -47,9 +47,7 @@
   "recCopper": 1,
   "recIron": 2,
   "eliteCost": 10,
-  "armyCap": 100000,
-  "armyMax": 5,
-  "armySlot": 5,
+  "unitCap": 60000,
   "lvBase": 30,
   "e68BatchStd": 1000,
   "e68BatchMid": 1000,
