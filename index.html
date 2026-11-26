@@ -13659,8 +13659,9 @@ var BOTS = [
       var ct = cityObj || (c && cardCityOf(cu, c.id)) || (cu && cu.bat && cu.bat.city);
       if (ct && ct.bld) cap = Math.round(cap * (1 + 0.02 * (ct.bld.camp || 0)));
     } catch (e) {}
-    /* V94：兵营加成后仍不得超过后台「单将带兵上限」 */
-    return Math.min(unitCapMax(), Math.round(cap));
+    /* V115：上限口径=爵位模型>卡牌配置>军事模型——军事模型 unitCap 低于卡牌曲线/爵位上限时忽略（仅参考），
+       高于两者时也只是名义兜底（实际带兵上限即前两者取大），不再用 unitCap 往下钳制 */
+    return Math.round(cap);
   }
   /* ================= V83：全将带兵数初始化 =================
      为每张卡写入 cap（实际带兵上限）/ capA（带兵能力）/ capR（爵位上限）；
@@ -13898,6 +13899,7 @@ var BOTS = [
         distAllT: "全带 {n}", distNoneT: "不带", distNoElT: "未选择随队特种兵营——先在上方「🎯 随队特种兵」里选一个营，再回来配兵。",
         distGoT: "确定配兵", distCancelT: "取消",
         distDoneT: "配兵完成：常规兵 {a} / {c}{x}", distBackT: "退回预备役 {n}", distLackT: "预备役不足，实补 {n}", distCarryT: "特种兵携带 {a} / {b}",
+        distCapClampT: "总带兵超上限，常规兵调整为 {n}（上限 {c} 含特种兵携行）",
         distCarryRowT: "携带 <b>{a}</b> / 营内 {b}（留守本城 {k}）", distCarryHintT: "· 可在「⚙ 配兵」里调整常规兵与特种兵数量",
         phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 5 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", troopPctT: "兵力进度 {n}%（半隐式填充）", sqOpsT: "编队操作（补兵/配兵/兵种/拆解）",
         distElSelT: "🎯 特种兵类型与携带数量",
@@ -13916,6 +13918,7 @@ var BOTS = [
         distAllT: "All {n}", distNoneT: "None", distNoElT: "No elite corps available in this city — train one and appoint a leader under \"Recruit · Elite corps\" first.",
         distGoT: "Apply", distCancelT: "Cancel",
         distDoneT: "Troops set: regular {a} / {c}{x}", distBackT: "returned {n} to reserve", distLackT: "reserve short, got {n}", distCarryT: "elite carried {a} / {b}",
+        distCapClampT: "total over troop cap, regular adjusted to {n} (cap {c} incl. elite carry)",
         distCarryRowT: "Carried <b>{a}</b> / corps {b} (left in city {k})", distCarryHintT: "· adjust regular & elite numbers in \"⚙ Troops\"",
         phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 5); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", troopPctT: "Troop progress {n}% (semi-hidden fill)", sqOpsT: "Unit ops (refill / assign troops / arm / dismantle)",
         distElSelT: "🎯 Elite corps type & carried number",
@@ -13934,6 +13937,7 @@ var BOTS = [
         distAllT: "全携行 {n}", distNoneT: "携行なし", distNoElT: "この城に随伴可能な特殊兵営がありません——まず「募兵 · 特殊兵」で訓練し営統領を任命してください。",
         distGoT: "確定", distCancelT: "キャンセル",
         distDoneT: "設定完了：通常兵 {a} / {c}{x}", distBackT: "予備へ {n} 返却", distLackT: "予備不足、実補 {n}", distCarryT: "特殊兵携行 {a} / {b}",
+        distCapClampT: "総兵力が上限超過、通常兵を {n} に調整（上限 {c} は特殊兵携行込み）",
         distCarryRowT: "携行 <b>{a}</b> / 営内 {b}（城に残す {k}）", distCarryHintT: "·「⚙ 兵数設定」で通常兵と特殊兵の数を調整できます",
         phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 編隊は固定スロット方式：空きスロットで編入、選択済み武将で交代（詳細ページへ移動しません）；規模 3/5/7 人切替可（既定 5 人）。縮小時は余分な武将が自動的に外れ、兵は予備役へ戻る", teamSizeT: "編隊規模 {n} 人", teamSizeOkT: "編隊規模を {n} 人に変更しました", troopPctT: "兵力進捗 {n}%（半表示フィル）", sqOpsT: "編隊操作（補兵/配兵/兵種/吸収）",
         distElSelT: "🎯 特殊兵の種類と携行数",
@@ -14234,8 +14238,8 @@ var BOTS = [
     return Math.max(1000, t);
   }
   function troopCapOf(c) { return c ? Math.min(troopAbilityOf(c), rankTroop(c)) : 0; }
-  /* V109：展示用的「等级带兵」——改按成长曲线口径（与实际带兵上限同源），受单将上限约束 */
-  function troopAbilityDisp(c) { return Math.min(unitCapMax(), troopCurveCap(c)); }
+  /* V109：展示用的「等级带兵」——按成长曲线口径（与实际带兵上限同源）；V115：不再受单将上限约束 */
+  function troopAbilityDisp(c) { return troopCurveCap(c); }
   /* 关卡守军总兵力（与 stageEnemies 同口径，仅用于展示） */
   function stageGuardN(n) {
     var lv = n <= 3 ? 1 : Math.max(2, Math.round(n * 2.2));
@@ -14265,9 +14269,10 @@ var BOTS = [
   }
   function troopOfCard(c, g) {
     if (!c) return 0;
-    /* V109：优先按「带兵成长曲线」判断；封赏封爵（指挥上限 ≥ 4 万）才解锁 4 万以上带兵能力。
-       仍受后台「单将带兵上限」硬约束（军事模型 unitCap，默认 10 万）。 */
-    return Math.min(unitCapMax(), Math.max(troopCurveCap(c), nobUnlockCap(c)));
+    /* V115：上限口径=爵位模型>卡牌配置>军事模型——无爵位按卡牌成长曲线（等级）限定最高带兵，
+       爵位（含封赏官职）指挥上限≥4万才解锁超越曲线的带兵；军事模型 unitCap 不再往下钳制
+       （低于前两者=可忽略的参考值，高于前两者=名义兜底，实际不生效） */
+    return Math.max(troopCurveCap(c), nobUnlockCap(c));
   }
   function unitCapMax() { return Math.max(1000, Math.round(+MIL.unitCap || 100000)); }
   /* V107：单支部队总带兵上限（默认 5 万）与均分份额——补兵按「总上限 ÷ 队内武将数」分配，
@@ -14502,7 +14507,7 @@ var BOTS = [
       var cd = (u.cards || []).filter(function (x) { return x.id === id; })[0]; if (!cd) return;
       var cb = unitCombatOf(u, cd, c); n++;
       reg += cb.reg; el += cb.el; regCap += cb.regCap;
-      if (cb.el > 0) { var s = eliteSlots(c)[cd.el68]; elCap += s ? (s.n || 0) : cb.el; }
+      if (cb.el > 0) { var s = eliteSlots(c)[cd.el68]; elCap += s ? Math.min(s.n || 0, ELITE_CARRY_MAX) : cb.el; }   /* V115：特种兵上限能力=营人数与硬顶取小 */
       regPow += cb.regPow * f.atk; elPow += cb.elPow * f.atk;
       var un = unitOf(cd, "A", { form: t.f || "yulin", mates: mates });
       if (un) defSum += un.def;
@@ -18461,8 +18466,13 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var zN = zfEquipOf(cd).filter(Boolean).length;   /* V104：战法佩戴数替代旧「觉醒」（技能解锁数） */
     var apt = cd.arm ? { k: cd.arm, apt: armApt(g, cd.arm) } : (armProfTop(cd, 1)[0] || null);
     var armTxt = apt ? (armName(apt.k) + armApt(g, apt.k)) : "—";
-    var capT = cb.regCap + cb.el, tot = cb.reg + cb.el;
+    /* V115：上限口径=常规带兵上限+特种兵携行能力（营内可战人数与 3000 硬顶取小）；
+       实际带兵=常规 sold+特种兵携行——徽标进度条按两者比例填充 */
+    var elCapB = 0;
+    if (cd.el68 != null && cd.el68 >= 0) { var sB = eliteSlots(c)[cd.el68]; elCapB = sB ? Math.min(sB.n || 0, ELITE_CARRY_MAX) : 0; }
+    var capT = cb.regCap + elCapB, tot = cb.reg + cb.el;
     var full = capT > 0 && tot >= capT;
+    var pctB = capT > 0 ? Math.max(0, Math.min(100, Math.round(tot / capT * 100))) : 0;
     var tip = (g.name || "?") + " Lv." + cardLv(cd) + " · " + tierLabel(tr) +
       " · " + gt("phLvCapT") + " " + fmt(troopAbilityDisp(cd)) +
       " · " + gt("phRankCapT") + " " + fmt(rankTroop(cd)) +
@@ -18495,7 +18505,9 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     var click = ctx.clickBat ? ' data-bat="' + ctx.clickBat + '" data-t="' + ctx.ti + '"' + (ctx.clickPos != null ? ' data-p="' + ctx.clickPos + '"' : "") : "";
     return '<div class="sg-gcard' + (lead ? " lead" : "") + (click ? " clik" : "") + '" title="' + esc(tip) + '" style="--gc:' + tr.c + '"' + click + '>' +
       '<div class="sg-grole">' + esc(roleTxt) + "</div>" +
-      '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT)) + '" style="background:rgba(8,10,14,.55)">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</div>" +
+      '<div class="sg-gdraft" title="' + esc(gt("phRegT") + " " + fmt(tot) + " / " + fmt(capT) + (cb.el ? " · " + gt("phEliteT") + " " + fmt(cb.el) + "/" + fmt(elCapB) : "")) + '" style="background:rgba(8,10,14,.55);position:relative;overflow:hidden">' +
+        '<span aria-hidden="true" style="position:absolute;left:0;top:0;bottom:0;width:' + pctB + '%;background:linear-gradient(90deg,rgba(143,214,148,.32),rgba(143,214,148,.10));opacity:.55;transition:width .25s"></span>' +
+        '<span style="position:relative">兵力 ' + fmt(tot) + ":" + fmt(capT) + (full ? " ✅" : "") + "</span></div>" +
       '<div class="sg-gframe">' +
         '<span class="sg-glv">' + cardLv(cd) + "</span>" +
         (zN > 0 ? '<span class="sg-gawake">战法×' + zN + "</span>" : "") +
@@ -18542,7 +18554,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         }
         var g = gById(card.gid) || {};
         var cb = unitCombatOf(u, card, c);
-        if (cb.reg + cb.el < cb.regCap + cb.el) shortN++;
+        if (cb.reg < cb.regCap) shortN++;   /* V115：一键补兵只补常规兵——缺口=常规兵 < 常规上限 */
         var role = posName(p);
         return genCardColHTML(u, card, g, role, p.k === "center", { c: c, ti: ti, clickBat: "slot", clickPos: p.k });
       }).join("");
@@ -18870,7 +18882,11 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="v103-stt">' + gt("cfgStatT") + (mTxt ? '<small style="font-weight:400;font-size:9.5px;display:block;margin-top:2px">' + mTxt + "</small>" : "") + "</div>" +
       row("🪖 " + gt("cfgRegRowT"), troopTxt(reg) + " / " + troopTxt(capR)) +
       row("🎯 " + gt("cfgElRowT"), elName ? troopTxt(Math.max(0, Math.round(elN || 0))) + "（" + esc(elName) + "）" : "0") +
-      row("👥 " + gt("cfgTotRowT"), troopTxt(Math.max(0, reg) + Math.max(0, Math.round(elN || 0)))) +
+      (function () {   /* V115：总兵力=常规+特种 对照带兵上限，超编标红 */
+        var totN = Math.max(0, reg) + Math.max(0, Math.round(elN || 0));
+        var overN = totN > capR;
+        return row("👥 " + gt("cfgTotRowT"), '<span style="color:' + (overN ? "#e07f7f" : "#f2f6fa") + '">' + troopTxt(totN) + " / " + troopTxt(capR) + (overN ? " ⚠" : "") + "</span>");
+      })() +
       row("⚔ " + gt("cfgAtkRowT"), fmt(pv.atk)) +
       row("🛡 " + gt("cfgDefRowT"), fmt(pv.def)) +
       row("⚡ " + gt("cfgPowRowT"), fmt(pv.powSum)) +
@@ -18911,7 +18927,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     if (!card.arm && bestArm) { card.arm = bestArm; save(); }   /* V105：默认其最厉害的兵种 */
     /* V35：编队内快捷操作——补兵 / 拆解升级（无需回卡牌墙）；V37：正常兵池优先免费 */
     var capQ2 = troopCapEff(card, g), curQ2 = (card.sold == null ? capQ : Math.min(card.sold, capQ));
-    var addQ = capQ2 - curQ2;
+    var addQ = Math.max(0, capQ2 - curQ2 - unitCombatOf(u, card, c103).el);   /* V115：满配补兵配额扣特种兵携行 */
     var rcQ0 = addQ > 0 ? refillCalc(u, addQ) : { freeN: 0, newN: 0, needR: 0, needC: 0 };
     var recBtn = addQ > 0
       ? '<button class="sgbtn sm primary" data-bat="sq-rec" data-id="' + card.id + '" data-t="' + ti + '" data-p="' + pos + '">🩹 ' + gt("sqRecT") + " " + fmt(addQ) +
@@ -21177,6 +21193,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
           var n6 = tm6 ? TEAM_POS.filter(function (p) { return tm6.slots[p.k]; }).length : 0;
           if (n6 > 0) cap6 = Math.min(cap6, armyShareOf(n6));
         }
+        cap6 = Math.max(0, cap6 - unitCombatOf(u, c6).el);   /* V115：常规兵配额=上限−特种兵携行（总带兵不超上限） */
         var cur6 = (c6.sold == null ? cap6 : Math.min(c6.sold, cap6));
         var add6 = cap6 - cur6;
         if (add6 <= 0) return toast(gt("recNone"), "err");
@@ -21229,7 +21246,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var adds = [], shareC = armyShareOf(cardsC.length);
         cardsC.forEach(function (cc) {
           var gg = gById(cc.gid); if (!gg) return;
-          var cap2 = Math.min(troopCapEff(cc, gg), shareC), cur2 = (cc.sold == null ? cap2 : Math.min(cc.sold, cap2));
+          var cap2 = Math.max(0, Math.min(troopCapEff(cc, gg), shareC) - unitCombatOf(u, cc).el), cur2 = (cc.sold == null ? cap2 : Math.min(cc.sold, cap2));   /* V115：扣特种兵携行 */
           var ad = cap2 - cur2; if (ad <= 0) return;
           adds.push([cc, cap2, cur2, ad]);
         });
@@ -21674,11 +21691,19 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var dCid = t.getAttribute("data-id"), dTi = +t.getAttribute("data-t"), dPos = t.getAttribute("data-p");
         var dCard = (u.cards || []).filter(function (x) { return x.id === dCid; })[0]; if (!dCard) return;
         var dG = gById(dCard.gid) || {};
-        var dCap = troopCapEff(dCard, dG), dCur = (dCard.sold == null ? dCap : Math.min(dCard.sold, dCap));
         var dCty = ensureCity(u), dPool = Math.max(0, dCty.pool || 0);
+        /* V115：先确认特种兵（营+携行），再按 带兵上限−携行 给常规兵配额——总带兵（常规+特种）不得超上限 */
+        var dSlots = eliteSlots(dCty);
+        var dIdx = (dCard.el68 != null && dCard.el68 >= 0 && dSlots[dCard.el68] && dSlots[dCard.el68].n > 0) ? dCard.el68 : -1;
+        var dElInp = document.getElementById("sgDistEl");
+        var dEl = dIdx >= 0 ? Math.max(0, Math.min(dSlots[dIdx].n || 0, ELITE_CARRY_MAX, Math.round(+(dElInp ? dElInp.value : 0) || 0))) : 0;
+        var dCap = troopCapEff(dCard, dG), dCur = (dCard.sold == null ? dCap : Math.min(dCard.sold, dCap));
         var dRegInp = document.getElementById("sgDistReg");
-        var dWant = Math.max(0, Math.min(dCap, Math.round(+(dRegInp ? dRegInp.value : dCur) || 0)));
+        var dRegRaw = Math.max(0, Math.round(+(dRegInp ? dRegInp.value : dCur) || 0));
+        var dRegRoom = Math.max(0, dCap - dEl);   /* V115：常规兵配额=带兵上限−特种兵携行 */
+        var dWant = Math.min(dRegRoom, dRegRaw);
         var dDelta = dWant - dCur, dNote = [];
+        if (dRegRaw > dRegRoom) dNote.push(gt("distCapClampT", { n: fmt(dWant), c: fmt(dCap) }));
         if (dDelta > 0) {
           var dTake = Math.min(dDelta, dPool);
           dCty.pool = dPool - dTake;
@@ -21689,16 +21714,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
           dNote.push(gt("distBackT", { n: fmt(-dDelta) }));
         }
         dCard.sold = dWant;
-        /* V96：特种兵类型与携行数一并确认（弹窗内先选类型、再定数量） */
-        var dSel = document.getElementById("sgDistElSel"), dSlots = eliteSlots(dCty);
-        var _dSelV = dSel ? Math.round(+dSel.value) : NaN;
-        var dIdx = isFinite(_dSelV) ? _dSelV : ((dCard.el68 != null && dCard.el68 >= 0) ? dCard.el68 : -1);
-        if (dIdx >= 0 && dSlots[dIdx] && dSlots[dIdx].n > 0) {
-          var dS = dSlots[dIdx], dElInp = document.getElementById("sgDistEl");
-          var dEl = Math.max(0, Math.min(dS.n || 0, ELITE_CARRY_MAX, Math.round(+(dElInp ? dElInp.value : 0) || 0)));
-          dCard.el68 = dIdx; dCard.el68n = dEl;
-          dNote.push(gt("distCarryT", { a: fmt(dEl), b: fmt(dS.n || 0) }));
-        } else { dCard.el68 = -1; dCard.el68n = 0; }
+        dCard.el68 = dIdx; dCard.el68n = dEl;   /* V115：特种兵营与携行数与常规兵同一次确认落盘 */
+        if (dIdx >= 0) dNote.push(gt("distCarryT", { a: fmt(dEl), b: fmt(dSlots[dIdx].n || 0) }));
         save(); _slotDraft = null; refreshBattle();
         /* V103：确认后留在配置页——左栏数值面板转为已确认口径（队伍合计同步刷新） */
         slotBigCard(u, dCard, dTi, dPos);
