@@ -1,7 +1,7 @@
 {
  "_meta": {
   "note": "V82 added popmodel (growth/disaster/policy); military adds recCopper/recIron",
-  "updated": "2026-11-26T09:30:29.492Z"
+  "updated": "2026-11-26T09:31:39.370Z"
  },
  "econ": {
   "coin": 0.012,
@@ -810,5 +810,33 @@
     "sal": 400
    }
   }
+ },
+ "mkt": {
+  "buyMul": 1.1,
+  "sellMul": 0.9,
+  "rice": 2,
+  "wood": 3,
+  "copper": 8,
+  "iron": 6,
+  "base": {
+   "rice": 2,
+   "wood": 3,
+   "copper": 8,
+   "iron": 6
+  },
+  "season": [
+   0.05,
+   0.25,
+   0.65,
+   0.05,
+   0.35,
+   0.45,
+   0.25,
+   0.35,
+   0.05,
+   0.05,
+   0.05,
+   0.05
+  ]
  }
 }
