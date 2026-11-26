@@ -12480,6 +12480,14 @@ var BOTS = [
     ["rice", "wood", "copper", "iron", "coin"].forEach(function (k) { if (c.res[k] == null) c.res[k] = 0; });
     u.res = c.res;
     if (!c.teams || c.teams.length !== 5) c.teams = defaultTeams(c.teams);
+    /* V113：V100 时代编队规模默认 3 且被持久化，V101 改默认 5 只兜底了缺 size 的队伍——
+       一次性把所有已拥有城市的遗留 size:3 迁移为 5（迁移后手动切 3/5/7 仍随意） */
+    if (!u.bat.szMig113) {
+      var _mig113 = function (cc) { ((cc && cc.teams) || []).forEach(function (t) { if (t && +t.size === 3) t.size = 5; }); };
+      _mig113(c);
+      (u.bat.owned || []).forEach(function (nm) { if (u.bat.cur !== nm) _mig113(u.bat.cities[nm]); });
+      u.bat.szMig113 = 1;
+    }
     if (!c.roster) c.roster = [];
     /* V100：点将台功能删除——旧档 armies 成员士兵全额退回本城预备役后清空（幂等） */
     if (c.armies && c.armies.length) {
@@ -13597,7 +13605,7 @@ var BOTS = [
       unitCombatOf: unitCombatOf, unitAttachElite: unitAttachElite, e68Tier: e68Tier, eliteSlots: eliteSlots, eliteName: eliteName,
       eliteArmOf: eliteArmOf, ELITE_ARM: ELITE_ARM, ELITE_ARM_BONUS: ELITE_ARM_BONUS, troopTxt: troopTxt, fmt: fmt,   /* V103：特种兵↔兵种映射调试句柄 */
       ELITE_TYPES: ELITE_TYPES, corpsOf68: corpsOf68, eliteLossReconcile: eliteLossReconcile, e68ApplyHit: el68ApplyHit,   /* V108：16 营列表 + 战损规则句柄 */
-      morKOf: morKOf, supplyAttach: supplyAttach, tickXun: tickXun, xunSettle: xunSettle, xunIdxOf: xunIdxOf, xunRiceCost: xunRiceCost,   /* V110：士气映射 / 断粮挂载 / 旬结算句柄 */
+      morKOf: morKOf, supplyAttach: supplyAttach, tickXun: tickXun, xunSettle: xunSettle, xunIdxOf: xunIdxOf, xunRiceCost: xunRiceCost, teamCombatStat: teamCombatStat,   /* V110：士气映射 / 断粮挂载 / 旬结算句柄；V113：整队核算 */
       genMgmtHTML: genMgmtHTML, dispatchGenTo: dispatchGenTo, genStationOf: genStationOf, genInTeamOf: genInTeamOf, cityObjOf: cityObjOf, rosterCountReal: rosterCountReal,   /* V112：武将管理句柄（函数声明提升，IIFE 后段定义） */
       zfList: function () { return ZF_LIST; }, zfById: zfById, zfCalc: zfCalc, zfAttach: zfAttach, zfTeam: zfTeam, zfCfg: function () { return ZF_CFG; }, applyZFCfg: applyZFCfg,   /* V104：战法体系调试句柄（ZF 数据在 IIFE 后段初始化，取值走函数） */
     };
@@ -13882,7 +13890,7 @@ var BOTS = [
         distGoT: "确定配兵", distCancelT: "取消",
         distDoneT: "配兵完成：常规兵 {a} / {c}{x}", distBackT: "退回预备役 {n}", distLackT: "预备役不足，实补 {n}", distCarryT: "特种兵携带 {a} / {b}",
         distCarryRowT: "携带 <b>{a}</b> / 营内 {b}（留守本城 {k}）", distCarryHintT: "· 可在「⚙ 配兵」里调整常规兵与特种兵数量",
-        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 5 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", sqOpsT: "编队操作（补兵/配兵/兵种/拆解）",
+        phRepT: "更换", phRepHintT: "点击候选武将即更换该槽位：被换下者士兵退回预备役", phSlotWayT: "🏯 编队固定槽位配置：点击空位编入、点击已选武将直接更换（不跳转详情页）；规模 3/5/7 人可切换（默认 5 人），缩小规模时多余武将自动退编、士兵退回预备役", teamSizeT: "编队规模 {n} 人", teamSizeOkT: "编队规模已调整为 {n} 人", troopPctT: "兵力进度 {n}%（半隐式填充）", sqOpsT: "编队操作（补兵/配兵/兵种/拆解）",
         distElSelT: "🎯 特种兵类型与携带数量",
         distFormT: "按阵型「{f}」实时核算（阵型攻 ×{a}%）",
         distTotT: "👥 总带兵 <b>{n}</b>", distPowT: "⚡ 总战斗值 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -13900,7 +13908,7 @@ var BOTS = [
         distGoT: "Apply", distCancelT: "Cancel",
         distDoneT: "Troops set: regular {a} / {c}{x}", distBackT: "returned {n} to reserve", distLackT: "reserve short, got {n}", distCarryT: "elite carried {a} / {b}",
         distCarryRowT: "Carried <b>{a}</b> / corps {b} (left in city {k})", distCarryHintT: "· adjust regular & elite numbers in \"⚙ Troops\"",
-        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 5); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", sqOpsT: "Unit ops (refill / assign troops / arm / dismantle)",
+        phRepT: "Replace", phRepHintT: "Click a candidate to replace this slot; the replaced general's soldiers return to the reserve", phSlotWayT: "🏯 Hall teams use fixed slots: click an empty slot to add, click a selected general to replace (no detail page); team size 3/5/7 switchable (default 5); shrinking auto-unassigns extra generals and returns their troops", teamSizeT: "Team size {n}", teamSizeOkT: "Team size set to {n}", troopPctT: "Troop progress {n}% (semi-hidden fill)", sqOpsT: "Unit ops (refill / assign troops / arm / dismantle)",
         distElSelT: "🎯 Elite corps type & carried number",
         distFormT: "Calculated live with formation \"{f}\" (form atk ×{a}%)",
         distTotT: "👥 Total troops <b>{n}</b>", distPowT: "⚡ Total power <b>{n}</b>", distDefT: "🛡 Defense <b>{n}</b>",
@@ -13918,7 +13926,7 @@ var BOTS = [
         distGoT: "確定", distCancelT: "キャンセル",
         distDoneT: "設定完了：通常兵 {a} / {c}{x}", distBackT: "予備へ {n} 返却", distLackT: "予備不足、実補 {n}", distCarryT: "特殊兵携行 {a} / {b}",
         distCarryRowT: "携行 <b>{a}</b> / 営内 {b}（城に残す {k}）", distCarryHintT: "·「⚙ 兵数設定」で通常兵と特殊兵の数を調整できます",
-        phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 編隊は固定スロット方式：空きスロットで編入、選択済み武将で交代（詳細ページへ移動しません）；規模 3/5/7 人切替可（既定 5 人）。縮小時は余分な武将が自動的に外れ、兵は予備役へ戻る", teamSizeT: "編隊規模 {n} 人", teamSizeOkT: "編隊規模を {n} 人に変更しました", sqOpsT: "編隊操作（補兵/配兵/兵種/吸収）",
+        phRepT: "交代", phRepHintT: "候補の武将をクリックするとこのスロットと交代：交代された武将の兵は予備役に戻る", phSlotWayT: "🏯 編隊は固定スロット方式：空きスロットで編入、選択済み武将で交代（詳細ページへ移動しません）；規模 3/5/7 人切替可（既定 5 人）。縮小時は余分な武将が自動的に外れ、兵は予備役へ戻る", teamSizeT: "編隊規模 {n} 人", teamSizeOkT: "編隊規模を {n} 人に変更しました", troopPctT: "兵力進捗 {n}%（半表示フィル）", sqOpsT: "編隊操作（補兵/配兵/兵種/吸収）",
         distElSelT: "🎯 特殊兵の種類と携行数",
         distFormT: "陣形「{f}」でリアルタイム計算（陣形攻 ×{a}%）",
         distTotT: "👥 総兵数 <b>{n}</b>", distPowT: "⚡ 総戦闘値 <b>{n}</b>", distDefT: "🛡 防御 <b>{n}</b>",
@@ -18530,9 +18538,14 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       }).join("");
       var tsBar96 = (function () {
         if (!ts96 || !ts96.cap) return "";
-        /* V108：绿色兵力进度条 → 平面兵力徽标（战斗值/防御值由 teamStatT 文字行展示） */
-        return '<div style="display:flex;justify-content:center;margin:4px 0 2px"><span style="padding:3px 12px;border:1px solid rgba(201,164,92,.25);border-radius:99px;background:rgba(0,0,0,.30);font-size:10.5px;color:#c8d0dc">🪖 ' +
-          troopTxt(ts96.troop) + " / " + troopTxt(ts96.cap) + (ts96.troop >= ts96.cap ? " ✅" : "") + "</span></div>" +
+        /* V108：绿色兵力进度条 → 平面兵力徽标（战斗值/防御值由 teamStatT 文字行展示）
+           V113：徽标内加半隐式进度填充——淡色渐变按 兵力/上限 比例填充，文字悬浮其上 */
+        var pct113 = Math.max(0, Math.min(100, Math.round(ts96.troop / ts96.cap * 100)));
+        return '<div style="display:flex;justify-content:center;margin:4px 0 2px"><span title="' + esc(gt("troopPctT", { n: pct113 })) +
+          '" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;padding:3px 12px;border:1px solid rgba(201,164,92,.25);border-radius:99px;background:rgba(0,0,0,.30);font-size:10.5px;color:#c8d0dc">' +
+          '<span aria-hidden="true" style="position:absolute;left:0;top:0;bottom:0;width:' + pct113 + '%;background:linear-gradient(90deg,rgba(143,214,148,.32),rgba(143,214,148,.10));opacity:.55;border-radius:99px;transition:width .25s"></span>' +
+          '<span style="position:relative">🪖 ' +
+          troopTxt(ts96.troop) + " / " + troopTxt(ts96.cap) + (ts96.troop >= ts96.cap ? " ✅" : "") + "</span></span></div>" +
           '<small style="display:block;text-align:center;font-size:10px;margin:2px 0 4px;color:var(--ink-3)">' +
           gt("teamStatT", { t: troopTxt(ts96.troop), p: fmt(ts96.powSum), d: fmt(ts96.def) }) + "</small>";
       })();
