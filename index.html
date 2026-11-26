@@ -13659,9 +13659,11 @@ var BOTS = [
       var ct = cityObj || (c && cardCityOf(cu, c.id)) || (cu && cu.bat && cu.bat.city);
       if (ct && ct.bld) cap = Math.round(cap * (1 + 0.02 * (ct.bld.camp || 0)));
     } catch (e) {}
-    /* V115：上限口径=爵位模型>卡牌配置>军事模型——军事模型 unitCap 低于卡牌曲线/爵位上限时忽略（仅参考），
-       高于两者时也只是名义兜底（实际带兵上限即前两者取大），不再用 unitCap 往下钳制 */
-    return Math.round(cap);
+    /* V116：兵营加成乘算后复核硬顶——爵位/官职指挥上限是绝对上限，unitCap 兜底，
+       修复兵营 +2%/级 把爵位上限再度乘爆的旁路 */
+    var nob = nobUnlockCap(c);
+    if (nob > 0) cap = Math.min(cap, nob);
+    return Math.round(Math.min(cap, unitCapMax()));
   }
   /* ================= V83：全将带兵数初始化 =================
      为每张卡写入 cap（实际带兵上限）/ capA（带兵能力）/ capR（爵位上限）；
@@ -14269,10 +14271,14 @@ var BOTS = [
   }
   function troopOfCard(c, g) {
     if (!c) return 0;
-    /* V115：上限口径=爵位模型>卡牌配置>军事模型——无爵位按卡牌成长曲线（等级）限定最高带兵，
-       爵位（含封赏官职）指挥上限≥4万才解锁超越曲线的带兵；军事模型 unitCap 不再往下钳制
-       （低于前两者=可忽略的参考值，高于前两者=名义兜底，实际不生效） */
-    return Math.max(troopCurveCap(c), nobUnlockCap(c));
+    /* V116：带兵上限口径=爵位模型>卡牌配置>军事模型（修复 V115 曲线值直通千万级的缺口）——
+       有爵位/官职（指挥上限≥4万解锁档）：爵位指挥上限是绝对硬顶，卡牌成长曲线、
+       星级/装备/坐骑乘算、兵营加成后都不得突破（如爵位上限 55000 → 上限恒 55000）；
+       无爵位：按卡牌配置的等级成长曲线限定最高带兵；
+       军事模型 unitCap 作兜底封顶（高于口径值时不生效，低于时防曲线异常膨胀）。 */
+    var curve = troopCurveCap(c), nob = nobUnlockCap(c);
+    if (nob > 0) return Math.min(nob, unitCapMax());   /* 爵位硬顶（爵位解锁超越曲线的带兵能力） */
+    return Math.min(troopCurveCap(c), unitCapMax());
   }
   function unitCapMax() { return Math.max(1000, Math.round(+MIL.unitCap || 100000)); }
   /* V107：单支部队总带兵上限（默认 5 万）与均分份额——补兵按「总上限 ÷ 队内武将数」分配，
