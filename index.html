@@ -13616,6 +13616,7 @@ var BOTS = [
       ELITE_TYPES: ELITE_TYPES, corpsOf68: corpsOf68, eliteLossReconcile: eliteLossReconcile, e68ApplyHit: el68ApplyHit,   /* V108：16 营列表 + 战损规则句柄 */
       morKOf: morKOf, supplyAttach: supplyAttach, tickXun: tickXun, xunSettle: xunSettle, xunIdxOf: xunIdxOf, xunRiceCost: xunRiceCost, teamCombatStat: teamCombatStat,   /* V110：士气映射 / 断粮挂载 / 旬结算句柄；V113：整队核算 */
       genMgmtHTML: genMgmtHTML, dispatchGenTo: dispatchGenTo, genStationOf: genStationOf, genInTeamOf: genInTeamOf, cityObjOf: cityObjOf, rosterCountReal: rosterCountReal,   /* V112：武将管理句柄（函数声明提升，IIFE 后段定义） */
+      pkOpenCustom: pkOpenCustom, pkRender: pkRender,   /* V117：通用武将选择组件（编队选将同款勾选表格，任意单选/多选场景复用） */
       zfList: function () { return ZF_LIST; }, zfById: zfById, zfCalc: zfCalc, zfAttach: zfAttach, zfTeam: zfTeam, zfCfg: function () { return ZF_CFG; }, applyZFCfg: applyZFCfg,   /* V104：战法体系调试句柄（ZF 数据在 IIFE 后段初始化，取值走函数） */
     };
   } catch (e) {}
@@ -16133,26 +16134,32 @@ var BOTS = [
       ".sg-nobtbl .sgnb-nm b{color:#ffe9a8}.sg-nobtbl .sgnb-lv{color:#e8c988}.sg-nobtbl .sgnb-cap{color:#9ec9ff;font-weight:600}.sg-nobtbl .sgnb-bon{color:#8fd694}.sg-nobtbl .sgnb-sal{color:#c8d0dc}.sg-nobtbl .sgnb-unlk{font-style:normal;cursor:help}" +
       ".sg-nobtbl .sgnb-op{white-space:nowrap}@media(max-width:640px){.sg-nobtbl .sgnb-bon,.sg-nobtbl th:nth-child(4){display:none}}</style>";
   }
-  /* 封赏任命弹窗：列出武将（品阶/等级排序），点选即任命 */
+  /* 封赏任命弹窗：V117 改用通用武将选择组件（编队选将同款勾选表格，单选=点新替换旧），确认后任命 */
   function nobPickOpen(u, rankId) {
     var r = nobById(rankId); if (!r) return;
     var cards = (u.cards || []).slice().sort(function (a, b) {
       var ta = cardTier(a), tb = cardTier(b);
       return ta !== tb ? ta - tb : cardLv(b) - cardLv(a);
-    }).slice(0, 200);
-    var rows = cards.map(function (c) {
-      var g = gById(c.gid); if (!g) return "";
-      var cur = nobOf(c);
-      return '<div class="sg-rankline"><span class="i" style="background:' + TIERS[cardTier(c)].c + ';color:#10131a">' + esc(TIERS[cardTier(c)].grade) + "</span>" +
-        "<span><b>" + esc(g.name) + "</b> <small>Lv." + cardLv(c) + " · 等级带兵 " + fmt(troopAbilityDisp(c)) + "</small>" +
-        (cur ? '<br><small style="color:#e8c988">现任 ' + esc(nobName(cur)) + "</small>" : "") + "</span>" +
-        '<span class="sp"></span>' +
-        '<button class="sgbtn sm primary" data-bat="nob-appoint" data-rank="' + r.id + '" data-id="' + c.id + '">任命</button></div>';
-    }).join("");
-    modal("<h3>🏅 " + esc(nobName(r)) + " · 封赏</h3>" +
-      '<div class="sg-note" style="margin:0 0 8px">指挥上限 ' + fmt(nobCapOf(r)) + " · 加成 " + esc(nobBonTxt(r)) + " · 俸禄 " + fmt(nobSalOf(r)) + " 钱/月 · " + gt("nobPickHintT") + "</div>" +
-      '<div style="max-height:56vh;overflow-y:auto">' + rows + "</div>" +
-      '<div style="text-align:center;margin-top:10px"><button class="sgbtn" data-bat="pal-open">' + T("close") + "</button></div>", "wide");
+    });
+    var curMap = {};
+    cards.forEach(function (c) { var cur = nobOf(c); if (cur) curMap[c.id] = nobName(cur); });
+    pkOpenCustom({
+      title: "<h3>🏅 " + esc(nobName(r)) + " · 封赏</h3>",
+      note: '<div class="sg-note" style="margin:6px 0">指挥上限 ' + fmt(nobCapOf(r)) + " · 加成 " + esc(nobBonTxt(r)) + " · 俸禄 " + fmt(nobSalOf(r)) + " 钱/月 · " + gt("nobPickHintT") + "</div>",
+      cards: cards,
+      noteFn: function (c) { return curMap[c.id] ? '<span style="color:#e8c988">现任 ' + esc(curMap[c.id]) + "</span>" : ""; },
+      max: 1,
+      apply: function (ids) {
+        var c = (u.cards || []).filter(function (x) { return x.id === ids[0]; })[0];
+        closeModal();
+        if (!c) return;
+        var na = nobAppoint(u, c.id, r.id);
+        if (!na.ok) return toast(gt("mktQtyT"), "err");
+        save();
+        toast(gt("nobAppOkT", { n: (gById(na.c.gid) || {}).name || "?", m: na.r.n, s: fmt(nobSalOf(na.r)) }), "ok", 5600);
+        refreshBattle(); palaceOpen();
+      }
+    });
   }
   /* ================= V112：大殿 · 武将管理页签（清单 + 派遣到其他城市） ================= */
   function genMgmtHTML(u) {
@@ -18745,8 +18752,15 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   function pickRowHTML(c, bad) {
     var g = gById(c.gid); if (!g) return "";
     var tr = TIERS[cardTier(c)], spg = spGroupOf(g);
+    var pk = BATUI.pk || {};
     var on = !!(BATUI.pk && BATUI.pk.sel[c.id]);
     var why = bad ? bad(c, g) : null;
+    var note2 = "";
+    if (why) note2 = '<span style="color:#e07f7f">✕</span>';
+    else {
+      var nv = pk.noteFn ? pk.noteFn(c, g) : "";   /* V117：通用组件——场景可自定义备注列（如「现任 xx」） */
+      note2 = nv || (zfEquipOf(c).filter(Boolean).length ? '<span style="color:#ffe9a8">⚔' + zfEquipOf(c).filter(Boolean).length + "</span>" : "");
+    }
     return '<tr class="pkrow' + (on ? " on" : "") + (why ? " dis" : "") + '" data-bat="pk-tog" data-id="' + c.id + '"' + (why ? ' title="' + esc(why) + '"' : "") + ">" +
       '<td><span class="pkcb">' + (on ? "✓" : "") + "</span></td>" +
       '<td><span class="pk-pill" style="border-color:' + tr.c + ';color:' + tr.c + '">' + tierLabel(tr) + "</span></td>" +
@@ -18755,7 +18769,7 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<td class="l">' + (c.arm ? armName(c.arm) : "—") + "</td>" +
       "<td>" + g.st + "</td><td>" + g.wu + "</td><td>" + g["in"] + "</td><td>" + g.po + "</td><td>" + g.ch + "</td>" +
       "<td>" + troopTxt(troopOfCard(c, g)) + "</td>" +
-      '<td class="l" style="font-size:10px">' + (why ? '<span style="color:#e07f7f">✕</span>' : zfEquipOf(c).filter(Boolean).length ? '<span style="color:#ffe9a8">⚔' + zfEquipOf(c).filter(Boolean).length + "</span>" : "") + "</td></tr>";
+      '<td class="l" style="font-size:10px">' + note2 + "</td></tr>";
   }
   function pickTableHTML(cards, bad) {
     var pk = BATUI.pk || {};
@@ -18811,11 +18825,32 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
     BATUI.pk = { mode: mode, ti: ti || 0, pos: pos || "", sel: sel, cards: cards, bad: bad };
     pkRender();
   }
+  /* ---------- V117 通用武将选择组件（pkOpenCustom） ----------
+     任意「单选/多选武将」场景复用编队选将的勾选表格：可排序列头 / 置灰原因 / 自定义备注列 /
+     单选自动替换 / 勾选防闪动全部同源。opts = { title, note, cards, bad, max, apply(selIds),
+     noteFn(c,g), sel(预选), sort, emptyT }；apply 由场景自定义（确认后自行 closeModal/save/toast）。 */
+  function pkOpenCustom(opts) {
+    var u = me(); if (!u) return;
+    var cards = opts.cards || (u.cards || []).slice();
+    if (!cards.length) return toast(opts.emptyT || T("pkEmpty"), "err");
+    var sel = {};
+    Object.keys(opts.sel || {}).forEach(function (k2) { if (opts.sel[k2]) sel[k2] = 1; });
+    BATUI.pk = {
+      mode: "custom", ti: 0, pos: "", sel: sel,
+      cards: cards, bad: opts.bad || null,
+      max: Math.max(1, opts.max || 1), apply: opts.apply || null,
+      title: opts.title || "", note: opts.note || "",
+      noteFn: opts.noteFn || null, sort: opts.sort || null
+    };
+    pkRender();
+  }
   function pkRender() {
     var u = me(), pk = BATUI.pk; if (!u || !pk) return;
-    var max = pk.mode === "squad" ? 5 : pk.mode === "roster" ? rosterRoom(u) : 1;   /* V70：可派名额=上限-已驻城 */
+    var max = pk.mode === "squad" ? 5 : pk.mode === "roster" ? rosterRoom(u) : pk.mode === "custom" ? (pk.max || 1) : 1;   /* V117：custom 上限由场景给定 */
     var head, note = "", mine = "";
-    if (pk.mode === "slot") {
+    if (pk.mode === "custom") {   /* V117：通用组件——标题/说明由场景传入 */
+      head = pk.title; note = pk.note;
+    } else if (pk.mode === "slot") {
       var p = TEAM_POS.filter(function (x) { return x.k === pk.pos; })[0] || TEAM_POS[0];
       head = "<h3>⚔ " + T("teamT") + " " + (pk.ti + 1) + " · " + posName(p) + "</h3>";
       note = '<div class="sg-note" style="margin:6px 0">' + posDesc(p) + "　·　" + (pk.pos === "cav" ? T("cavNeed") : pk.pos === "front" ? T("frontNeed") : T("pickHint")) + "</div>";
@@ -21566,15 +21601,23 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
           }
         }
         else if (pkT.sel[cidT]) delete pkT.sel[cidT];
-        else if (Object.keys(pkT.sel).length >= (pkT.mode === "squad" ? 5 : 1)) {
+        else if (Object.keys(pkT.sel).length >= (pkT.mode === "squad" ? 5 : pkT.mode === "custom" ? (pkT.max || 1) : 1)) {
           if (pkT.mode === "slot") { pkT.sel = {}; pkT.sel[cidT] = 1; }
+          else if (pkT.mode === "custom") {   /* V117：单选（max=1）点新替换旧并同步清旧行勾选；多选超上限则提示 */
+            if ((pkT.max || 1) <= 1) {
+              pkT.sel = {}; pkT.sel[cidT] = 1;
+              Array.prototype.forEach.call(document.querySelectorAll(".pktb .pkrow.on"), function (r2) {
+                if (r2.getAttribute("data-id") !== cidT) { r2.classList.remove("on"); var cb2 = r2.querySelector(".pkcb"); if (cb2) cb2.textContent = ""; }
+              });
+            } else return toast(T("squadDesc"), "err");
+          }
           else return toast(T("squadDesc"), "err");
         } else pkT.sel[cidT] = 1;
         /* V37 防闪动：局部更新勾选行与计数，不整表重渲染 */
         var onT = !!pkT.sel[cidT];
         t.classList.toggle("on", onT);
         var cbT = t.querySelector(".pkcb"); if (cbT) cbT.textContent = onT ? "✓" : "";
-        var cntT = Object.keys(pkT.sel).length, maxT = pkT.mode === "squad" ? 5 : pkT.mode === "roster" ? rosterRoom(u) : 1;
+        var cntT = Object.keys(pkT.sel).length, maxT = pkT.mode === "squad" ? 5 : pkT.mode === "roster" ? rosterRoom(u) : pkT.mode === "custom" ? (pkT.max || 1) : 1;
         var cntEl = document.getElementById("pkSelCnt");
         if (cntEl) cntEl.textContent = cntT;
         else { pkRender(); return; }
@@ -21585,6 +21628,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
         var pkA = BATUI.pk; if (!pkA) return;
         var idsA = Object.keys(pkA.sel);
         if (!idsA.length) return toast(T("pkNone"), "err");
+        if (pkA.mode === "custom") {   /* V117：通用组件——确认后交回场景回调（自行 closeModal/save/toast） */
+          var fnA = pkA.apply;
+          BATUI.pk = null;
+          if (typeof fnA === "function") { fnA(idsA); return; }
+          closeModal(); return;
+        }
         if (pkA.mode === "slot") {
           ensureCity(u);
           var szA = slotSet(u, pkA.ti, pkA.pos, idsA[0]);
