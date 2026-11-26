@@ -682,20 +682,41 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
             /* V76：派生真实统计（注册/发放/事件），访问类指标仍以静态快照为准 */
             var rows = G.derive(rs[1], rs[2], rs[3]);
             var t = o.totals = o.totals || {};
-            var today = new Date().toISOString().slice(0, 10);
+            /* V119：本地时区日期（原 toISOString 为 UTC，北京 0-8 点「今日」会错位成昨天） */
+            var today = (function () { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
             var regs = rows.filter(function (r) { return r.event === "register"; });
             t.regs_all = Math.max(t.regs_all || 0, regs.length);
             t.regs_today = regs.filter(function (r) { return String(r.ts || "").slice(0, 10) === today; }).length;
             t.events_all = Math.max(t.events_all || 0, rows.length);
-            if (!(o.daily || []).length) {
-              var byDay = {};
-              rows.forEach(function (r) {
-                var k = String(r.ts || "").slice(0, 10); if (!k) return;
-                byDay[k] = byDay[k] || { day: k, visits: 0, regs: 0, events: 0 };
-                byDay[k].events++; if (r.event === "register") byDay[k].regs++;
-              });
-              o.daily = Object.keys(byDay).sort().slice(-30).map(function (k) { return byDay[k]; });
+            /* V119：近 30 天 daily 始终实时重派生——修复静态快照固化导致的三处异常：
+               ①快照中的空日期条目（day:""）剔除；②以「今天往前 30 天」为轴逐日补零对齐（停用埋点期间不再出现断轴空白）；
+               ③每日 visits/regs/events = 实时派生值与静态快照取大（快照来自停用前的真实埋点，取大防重复计数） */
+            var stDaily = {};
+            (o.daily || []).forEach(function (dd) { if (dd && dd.day) stDaily[dd.day] = dd; });
+            var axis = [], byDay = {};
+            for (var _i = 29; _i >= 0; _i--) {
+              var _d = new Date(); _d.setDate(_d.getDate() - _i);
+              var _k = _d.getFullYear() + "-" + String(_d.getMonth() + 1).padStart(2, "0") + "-" + String(_d.getDate()).padStart(2, "0");
+              axis.push(_k); byDay[_k] = { day: _k, visits: 0, regs: 0, events: 0 };
             }
+            rows.forEach(function (r) {
+              var k = String(r.ts || "").slice(0, 10);
+              if (!byDay[k]) return;
+              byDay[k].events++;
+              if (r.event === "register") byDay[k].regs++;
+              else if (r.event === "visit") byDay[k].visits++;
+            });
+            axis.forEach(function (k) {
+              var s = stDaily[k];
+              if (s) {
+                byDay[k].visits = Math.max(byDay[k].visits, s.visits || 0);
+                byDay[k].regs = Math.max(byDay[k].regs, s.regs || 0);
+                byDay[k].events = Math.max(byDay[k].events, s.events || 0);
+              }
+            });
+            o.daily = axis.map(function (k) { return byDay[k]; });
+            t.visits_today = Math.max(t.visits_today || 0, byDay[today].visits);
+            o._fresh = rows.length ? String(rows[0].ts || "").slice(0, 10) : "";   /* 数据新鲜度（事件流最新日期） */
             if (!(o.events || []).length) {
               var byEv = {};
               rows.forEach(function (r) { byEv[r.event] = (byEv[r.event] || 0) + 1; });
@@ -1000,7 +1021,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       { l: "今日独立访客", v: t.uniq_today, d: "累计 " + num(t.uniq_all) },
       { l: "今日登录", v: t.logins_today, d: "登录事件" },
       { l: "今日注册", v: t.regs_today, d: "累计 " + num(t.regs_all) },
-      { l: "账号总数", v: t.regs_all, d: "含邮箱/手机号" },
+      { l: "账号总数", v: t.regs_all, d: "仓库快照口径 · 云库通道恢复后补齐" },
       { l: "事件总量", v: t.events_all, d: "访问+点击+登录" }
     ];
     $("#kpis").innerHTML = items.map(function (i) {
@@ -1047,7 +1068,8 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
       "</svg>" +
       '<div class="hint" style="display:flex;gap:16px"><span style="color:#f2c14e">■ 访问量</span>' +
       '<span style="color:#5b9bd5">— 新增注册</span>' +
-      '<span class="muted">' + (key === "all" ? "全部地区" : key === "cn" ? "仅国内" : "仅海外") + "</span></div>";
+      '<span class="muted">' + (key === "all" ? "全部地区" : key === "cn" ? "仅国内" : "仅海外") + "</span>" +
+      '<span class="muted" style="margin-left:auto">V119：30 天轴实时派生（缺日补零）· 玩家埋点通道停用期间访问为快照值 · 事件流截至 ' + (o._fresh || "—") + "</span></div>";
   }
 
   function renderRegions(list) {
