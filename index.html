@@ -899,6 +899,15 @@ footer.foot{
 .sg-rankline{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-2);padding:4px 0}
 .sg-rankline .i{width:15px;text-align:center;color:var(--ink-3);font-size:10px}
 .sg-rankline .sp{margin-left:auto;color:var(--gold-2);font-variant-numeric:tabular-nums}
+/* V114：集市交易行改双行卡片——弹窗拉宽，行距拉开不再拥挤 */
+.sg-mktrow{border:1px solid var(--line-2,#333a46);border-radius:10px;padding:11px 13px;margin-bottom:9px;background:rgba(0,0,0,.25)}
+.sg-mktrow .sg-mkt-top{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.sg-mktrow .sg-mkt-top .i{width:26px;height:26px;line-height:26px;text-align:center;border-radius:7px;font-size:14px;flex:none}
+.sg-mktrow .sg-mkt-top .sp{flex:1}
+.sg-mktrow .sg-mkt-pr{color:#e8c988;font-size:11.5px;white-space:nowrap}
+.sg-mktrow .sg-mkt-ops{display:flex;align-items:center;gap:6px;margin-top:9px;padding-left:34px;flex-wrap:wrap}
+.sg-mktrow .sg-mkt-qty{width:96px;padding:7px 9px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit;font-size:13px;text-align:right}
+.sg-mktrow .sgchip{cursor:pointer}
 
 /* 帖子详情 */
 .sg-post{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:20px 22px}
@@ -16298,7 +16307,8 @@ var BOTS = [
       '<button class="sgbtn sm primary" data-bat="build-up" data-k="' + k + '"' + (can ? "" : " disabled") + ">" + (max ? gt("bldMax") : (lv <= 0 ? gt("bldNew") : gt("bldOptT"))) + "</button>" +
       (k === "recruit" && lv > 0 ? '<button class="sgbtn sm ghost" data-bat="recruit-go">' + gt("recruitGo") + "</button>" : "") +
       '<button class="sgbtn sm ghost" data-bat="demolish" data-k="' + k + '">' + gt("demT") + "</button></div>" +
-      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>");
+      '<div style="text-align:center;margin-top:12px"><button class="sgbtn" data-sgact="close">' + T("close") + "</button></div>",
+      k === "market" ? "wide" : "");   /* V114：集市页拉宽 430→560，双行卡片不再拥挤 */
   }
   /* V34：兵营（参考率土式营房）——显示编队与带兵加成 */
   function campExtraHTML(u) {
@@ -18637,18 +18647,28 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
   var MKT_KEYS = ["rice", "wood", "copper", "iron"];
   function mktTradeHTML(u) {
     var gd = gameDate(gMonth(u));
+    /* V114：单行 .sg-rankline 改双行 .sg-mktrow 卡片——上行资源+行情、下行数量+快捷档+买卖，行距拉开 */
     var rows = MKT_KEYS.map(function (k) {
       var q = mktQuote(k), meta = RES_META[k];
-      return '<div class="sg-rankline"><span class="i" style="background:#8a6d3b;color:#f5e6c4">' + resIcon(k) + "</span>" +
-        "<span><b>" + esc(resName(k)) + "</b> <small style='color:var(--ink-3)'>" + T("gsHave") + " " + fmt(u.res[k] || 0) + meta.unit + "</small><br>" +
-        '<small style="color:#e8c988">🛒 ' + gt("mktBuyPrcT", { n: fmt(q.buy) }) + "　·　💰 " + gt("mktSellPrcT", { n: fmt(q.sell) }) + "</small></span>" +
-        '<input id="mktQ_' + k + '" type="number" min="1" step="1" value="100" style="width:86px;padding:5px 7px;border:1px solid var(--line-2,#333a46);border-radius:8px;background:rgba(0,0,0,.2);color:var(--ink-1);font-family:inherit;text-align:right">' +
-        '<button class="sgbtn sm primary" data-bat="mkt-buy" data-r="' + k + '">' + T("merchantBuy") + "</button>" +
-        '<button class="sgbtn sm ghost" data-bat="mkt-sell" data-r="' + k + '">' + T("merchantSell") + "</button></div>";
+      return '<div class="sg-mktrow">' +
+        '<div class="sg-mkt-top"><span class="i" style="background:#8a6d3b;color:#f5e6c4">' + resIcon(k) + "</span>" +
+        "<b>" + esc(resName(k)) + "</b>" +
+        '<small style="color:var(--ink-3)">' + T("gsHave") + " " + fmt(u.res[k] || 0) + meta.unit + "</small>" +
+        '<span class="sp"></span>' +
+        '<small class="sg-mkt-pr">🛒 ' + gt("mktBuyPrcT", { n: fmt(q.buy) }) + "</small>" +
+        '<small class="sg-mkt-pr" style="margin-left:10px">💰 ' + gt("mktSellPrcT", { n: fmt(q.sell) }) + "</small></div>" +
+        '<div class="sg-mkt-ops">' +
+        '<input id="mktQ_' + k + '" type="number" min="1" step="1" value="100" class="sg-mkt-qty">' +
+        '<button class="sgchip" data-bat="mkt-q" data-r="' + k + '" data-n="100">' + fmt(100) + "</button>" +
+        '<button class="sgchip" data-bat="mkt-q" data-r="' + k + '" data-n="1000">' + fmt(1000) + "</button>" +
+        '<button class="sgchip" data-bat="mkt-q" data-r="' + k + '" data-n="5000">' + fmt(5000) + "</button>" +
+        '<span style="flex:1"></span>' +
+        '<button class="sgbtn primary" data-bat="mkt-buy" data-r="' + k + '">' + T("gsBuy") + "</button>" +
+        '<button class="sgbtn ghost" data-bat="mkt-sell" data-r="' + k + '">' + T("gsSell") + "</button></div></div>";
     }).join("");
-    return '<div class="sg-panel-hd" style="margin:12px 0 4px"><h3><i>·</i>🏪 ' + gt("mktTradeT") + "</h3><span class=\"sp\"></span>" +
+    return '<div class="sg-panel-hd" style="margin:12px 0 8px"><h3><i>·</i>🏪 ' + gt("mktTradeT") + "</h3><span class=\"sp\"></span>" +
       '<small style="color:var(--ink-3)">' + gd.y + "年" + gd.mo + "月 · " + gt("mktSeasonT") + "</small></div>" + rows +
-      '<div class="sg-note" style="margin-top:6px"><small>' + gt("mktHintT") + "</small></div>";
+      '<div class="sg-note" style="margin-top:8px"><small>' + gt("mktHintT") + "</small></div>";
   }
   function mktTradeDo(u, k, isBuy) {
     var el = document.getElementById("mktQ_" + k);
@@ -18677,8 +18697,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       var label = k === "rice" ? T("gsGrain") : k === "copper" ? T("gsCopper") : T("gsIron");
       return '<div class="sg-rankline"><span class="i" style="background:#8a6d3b;color:#f5e6c4">' + resIcon(k) + "</span>" +
         "<span><b>" + label + "</b> <small style='color:var(--ink-3)'>" + T("merchantPrice", { a: pr.buy, b: pr.sell }) + " · " + T("gsHave") + " " + fmt(u.res[k]) + "</small></span><span class=\"sp\"></span>" +
-        '<button class="sgbtn sm primary" data-bat="mbuy" data-r="' + k + '" data-n="200">' + T("merchantBuy") + " 200</button>" +
-        '<button class="sgbtn sm ghost" data-bat="msell" data-r="' + k + '" data-n="200">' + T("merchantSell") + " 200</button></div>";
+        '<button class="sgbtn sm primary" data-bat="mbuy" data-r="' + k + '" data-n="200">' + T("gsBuy") + " 200</button>" +
+        '<button class="sgbtn sm ghost" data-bat="msell" data-r="' + k + '" data-n="200">' + T("gsSell") + " 200</button></div>";
     }).join("");
     return '<div class="sg-panel-hd"><h3><i>·</i>' + mm.m.icon + " " + T("merchantT") + " · " + esc(mm.mn || mm.m.n) + "</h3><span class=\"sp\"></span>" +
       '<small style="color:var(--ink-3)">' + T("merchantFrom", { n: esc(mm.m.from) }) + "</small></div>" + rows +
@@ -21610,6 +21630,12 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       case "mkt-buy": case "mkt-sell": {
         ensureRes(u);
         mktTradeDo(u, t.getAttribute("data-r"), act === "mkt-buy");
+        return;
+      }
+      /* V114：集市快捷数量档（100/1000/5000）一键填入输入框 */
+      case "mkt-q": {
+        var mqi = document.getElementById("mktQ_" + t.getAttribute("data-r"));
+        if (mqi) mqi.value = t.getAttribute("data-n") || "";
         return;
       }
       case "bagtab": BATUI.bagTab = v; refreshBattle(); return;
