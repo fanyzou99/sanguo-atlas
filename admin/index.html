@@ -1864,27 +1864,70 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     S.forEach(function (r, i) { out.push({ id: "S" + (101 + i), ty: "特殊", n: r[0], lv: 5, cap: r[1], sal: r[3], bon: r[2] }); });
     return out;
   })();
+  function nobOvrObj() {
+    try { var o = JSON.parse(nobOvr || "{}"); return (o && typeof o === "object") ? o : {}; } catch (e) { return {}; }
+  }
   function nobDataHTML() {
+    var ov = nobOvrObj();
     var rows = NOB_DATA9.map(function (r, ix) {
       var unlock = r.cap >= 40000;
+      var o = ov[r.id] || {};
+      var salOvr = isFinite(+o.sal) ? +o.sal : null;
+      var salEff = salOvr != null ? salOvr : r.sal;
       return '<tr' + (ix % 2 ? ' style="background:rgba(255,255,255,.025)"' : "") + ">" +
         '<td class="muted" style="font-size:11px;font-family:monospace">' + r.id + "</td>" +
         "<td>" + r.ty + "</td><td><b>" + esc(r.n) + "</b></td><td style=\"text-align:center\">" + r.lv + "</td>" +
         '<td style="text-align:right;font-family:monospace">' + r.cap.toLocaleString() + (unlock ? ' <span style="color:#e3b34f">🔓</span>' : "") + "</td>" +
-        '<td style="text-align:right;font-family:monospace">' + r.sal.toLocaleString() + "</td>" +
+        '<td class="nob-sal" data-id="' + r.id + '" data-base="' + r.sal + '" title="双击修改俸禄（写入「官职微调 ovr」，保存后生效）" style="text-align:right;font-family:monospace;cursor:cell;white-space:nowrap">' + salEff.toLocaleString() + (salOvr != null ? ' <span style="color:#e3b34f;font-size:10px" title="已按 ovr 覆盖（默认 ' + r.sal.toLocaleString() + '）">✎</span>' : "") + "</td>" +
         '<td style="color:#8fd694">' + esc(r.bon) + "</td></tr>";
     }).join("");
-    return '<div style="margin:20px 0 6px;font-weight:600">内置官爵表（80 职 · 只读）</div>' +
-      '<div class="muted" style="font-size:12px;margin-bottom:6px">底本：三国志Ⅸ 官爵表。俸禄 / 指挥上限为默认值，全局倍率与「官职微调 ovr」在此基础上生效；指挥上限 ≥ 4 万（🔓）的官职解锁超成长曲线带兵。</div>' +
+    return '<div style="margin:20px 0 6px;font-weight:600">内置官爵表（80 职 · 俸禄双击可改）</div>' +
+      '<div class="muted" style="font-size:12px;margin-bottom:6px">底本：三国志Ⅸ 官爵表。双击「俸禄/月」单元格即可修改该职俸禄——写入「官职微调 ovr」（默认值保留，✎ 标记覆盖项），点上方「保存」后全站生效；全局倍率与 ovr 叠加生效；指挥上限 ≥ 4 万（🔓）的官职解锁超成长曲线带兵。</div>' +
       '<div style="max-height:480px;overflow-y:auto;border:1px solid var(--line,#333)"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
       '<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">id</th>' +
       '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">类型</th>' +
       '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">官爵</th>' +
       '<th style="text-align:center;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">职级</th>' +
       '<th style="text-align:right;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">指挥上限</th>' +
-      '<th style="text-align:right;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">俸禄/月</th>' +
+      '<th style="text-align:right;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">俸禄/月 ✎双击改</th>' +
       '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#444);position:sticky;top:0;background:var(--bg,#1b1e24)">属性加成</th>' +
       "</tr></thead><tbody>" + rows + "</tbody></table></div>";
+  }
+  /* V120：俸禄单元格双击行内编辑 → 写入 nobOvr（id:{sal:N}），保存时随 nobility 配置下发 */
+  function bindNobSalEdit() {
+    $$("#nobTable .nob-sal").forEach(function (td) {
+      td.addEventListener("dblclick", function () {
+        if (td.querySelector("input")) return;
+        var id = td.getAttribute("data-id"), base = +td.getAttribute("data-base") || 0;
+        var o = nobOvrObj();
+        var cur = (o[id] && isFinite(+o[id].sal)) ? +o[id].sal : base;
+        td.innerHTML = '<input type="number" min="0" max="99999999" step="1" value="' + cur + '" style="width:110px;text-align:right;padding:2px 5px;font-family:monospace;font-size:12px">';
+        var inp = td.querySelector("input");
+        if (!inp) return;
+        inp.focus(); inp.select();
+        var done = false;
+        function commit() {
+          if (done) return; done = true;
+          var v = Number(inp.value);
+          if (!isFinite(v) || v < 0) v = base;
+          v = Math.round(v);
+          var ov2 = nobOvrObj();
+          if (v === base) {
+            if (ov2[id] && ov2[id].sal != null) { delete ov2[id].sal; if (!Object.keys(ov2[id]).length) delete ov2[id]; }
+          } else {
+            ov2[id] = Object.assign({}, ov2[id] || {}, { sal: v });
+          }
+          nobOvr = JSON.stringify(ov2);
+          $("#nobUpdated").textContent = "官职 " + id + " 俸禄 → " + v.toLocaleString() + "（已写入 ovr，点「保存」后全站生效）";
+          nobPaint();
+        }
+        inp.addEventListener("blur", commit);
+        inp.addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter") { ev.preventDefault(); inp.blur(); }
+          else if (ev.key === "Escape") { done = true; nobPaint(); }
+        });
+      });
+    });
   }
   function nobNum(v, d, lo, hi) { var x = Number(v); if (v === "" || v == null || !isFinite(x)) x = d; return Math.max(lo, Math.min(hi, x)); }
   function nobLoad() {
@@ -1922,6 +1965,7 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
     });
     var ta = $("#nobOvrIn");
     if (ta) ta.addEventListener("input", function () { nobOvr = this.value; });
+    try { bindNobSalEdit(); } catch (eB) {}
   }
   $("#nobReload").addEventListener("click", nobLoad);
   $("#nobReset").addEventListener("click", function () {

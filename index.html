@@ -13617,6 +13617,8 @@ var BOTS = [
       morKOf: morKOf, supplyAttach: supplyAttach, tickXun: tickXun, xunSettle: xunSettle, xunIdxOf: xunIdxOf, xunRiceCost: xunRiceCost, teamCombatStat: teamCombatStat,   /* V110：士气映射 / 断粮挂载 / 旬结算句柄；V113：整队核算 */
       genMgmtHTML: genMgmtHTML, dispatchGenTo: dispatchGenTo, genStationOf: genStationOf, genInTeamOf: genInTeamOf, cityObjOf: cityObjOf, rosterCountReal: rosterCountReal,   /* V112：武将管理句柄（函数声明提升，IIFE 后段定义） */
       pkOpenCustom: pkOpenCustom, pkRender: pkRender,   /* V117：通用武将选择组件（编队选将同款勾选表格，任意单选/多选场景复用） */
+      wvWounded: wvWounded, wvSurrender: wvSurrender, houseSurrender: houseSurrender, houseReconcile: houseReconcile,   /* V120：君主逃走 / 归降府邸合并迁徙句柄（函数声明提升，IIFE 后段定义） */
+      houseTopCity: houseTopCity, lordRestCities: lordRestCities, batCityLv: batCityLv, siegeVictory: siegeVictory, sgsGet: function () { return SGS; }, sgsSet: function (s) { SGS = s; },   /* V120：府邸关押地 / 余城 / 攻城胜利态注入 */
       zfList: function () { return ZF_LIST; }, zfById: zfById, zfCalc: zfCalc, zfAttach: zfAttach, zfTeam: zfTeam, zfCfg: function () { return ZF_CFG; }, applyZFCfg: applyZFCfg,   /* V104：战法体系调试句柄（ZF 数据在 IIFE 后段初始化，取值走函数） */
     };
   } catch (e) {}
@@ -16118,7 +16120,8 @@ var BOTS = [
       ["s", "👑 特殊 4"]].map(function (t) {
       return '<button class="sgchip' + (tk === t[0] ? " on" : "") + '" data-bat="nob-tab" data-k="' + t[0] + '">' + t[1] + "</button>";
     }).join("");
-    var rows = NOB_LIST.filter(function (r) { return r.ty === tk; }).map(function (r) { return nobRowHTML(u, r); }).join("");
+    /* V120：爵位列表按「指挥兵力」降序（倍率/微调覆盖后的实际值） */
+    var rows = NOB_LIST.filter(function (r) { return r.ty === tk; }).slice().sort(function (a, b) { return nobCapOf(b) - nobCapOf(a); }).map(function (r) { return nobRowHTML(u, r); }).join("");
     return '<div class="sg-note" style="margin:0 0 8px">' + gt("rankHintT") + "　·　" +
       gt("nobSalSumT", { n: fmt(nobSalTotal(u)) }) + "　·　" + gt("nobCapHintT") + "</div>" +
       '<div class="sgchips" style="margin-bottom:8px">' + tabs + "</div>" +
@@ -16623,13 +16626,18 @@ var BOTS = [
         warHouseCntT: "府邸", warHouseUnitT: "座", warSalSumT: "钱 {c} · 粮 {r}",
         warHouseTipT: "「单独列于大殿 · 降将府邸」，俸禄不足则欠俸，忠诚下降。",
         warFailT: "攻 城 不 克", warFoeLeftT: "守军余部", warRetreatT: "撤兵", warFailHintT: "守军未灭，城池未下；我军折损已按伤兵计入本城。",
-        warHouseTabHintT: "君主归降后于其城立府，按月支给俸禄——这是独立的常年开支，单独在此结算与查看。",
+        warHouseTabHintT: "君主归降后立府关押，按月支给俸禄——府邸默认立于我方等级最高的城池，独立常设开支在此结算查看。",
         warStockT: "本城库存", warLastPayT: "上次支俸", warArrearT: "欠俸 {n}",
-        warNoHouseT: "尚无归降府邸", warNoHouseHintT: "攻破敌城后，若允其君主归降，即于该城立府。",
+        warNoHouseT: "尚无归降府邸", warNoHouseHintT: "攻破敌方君主的最后一城，允其归降即立府关押。",
         warHouseAtT: "府在 {n}", warHeldTagT: "在握", warLostTagT: "已失", warPaidT: "已支 {n} 月", warLoyalT: "忠诚",
         warMonthT: "月", warSinceT: "立于 {n}", warExecListT: "抄斩记录", warExecRowT: "满门抄斩于 {n}",
         warHouseRuleT: "俸禄每月自当前城池的钱粮中扣除；钱粮不足则记为欠俸，府中忠诚随之下降。",
-        warHouseTabT: "降将府邸"
+        warHouseTabT: "降将府邸",
+        warFleeT: "君 主 逃 走", warFleeHintT: "{n} 弃「{c}」而走 · 逃入「{t}」据守",
+        warFleeLeftT: "尚余城池", warFleeNoteT: "{n} 座 · 攻破其最后一城方可擒获归降",
+        warMoveT: "府 邸 迁 徙", warMoveHintT: "{n} 的关押府邸已迁徙至「{t}」",
+        warMoveFromT: "原府邸「{c}」", warMergeT: "同名君主 · 府邸已合并",
+        warHouseTopT: "归降府邸默认立于我方等级最高的城池"
       },
       en: {
         warListT: "Cities of the Realm", warHeldT: "{a} / {b} held", warAllT: "All", warMineT: "Mine", warWeakT: "Feasible",
@@ -16658,13 +16666,18 @@ var BOTS = [
         warHouseCntT: "Mansions", warHouseUnitT: "", warSalSumT: "{c} coins · {r} grain",
         warHouseTipT: "Listed separately under the Hall — Surrendered Mansions. Short payment creates arrears and lowers loyalty.",
         warFailT: "S I E G E   R E P U L S E D", warFoeLeftT: "Garrison left", warRetreatT: "Withdrawn", warFailHintT: "The garrison survived; the city holds. Our losses were recorded as wounded in this city.",
-        warHouseTabHintT: "When a lord surrenders, a mansion is founded in his city and a stipend is paid monthly — a separate standing expense, settled and shown here.",
+        warHouseTabHintT: "When a lord surrenders he is held in a mansion with a monthly stipend — mansions default to our highest-level city; a separate standing expense settled here.",
         warStockT: "City stores", warLastPayT: "Last payment", warArrearT: "Arrears {n}",
-        warNoHouseT: "No surrendered mansions yet", warNoHouseHintT: "Take an enemy city and accept its lord's surrender to found one.",
+        warNoHouseT: "No surrendered mansions yet", warNoHouseHintT: "Take an enemy lord's last city and accept his surrender to found one.",
         warHouseAtT: "Mansion at {n}", warHeldTagT: "held", warLostTagT: "lost", warPaidT: "{n} months paid", warLoyalT: "Loyalty",
         warMonthT: "mo", warSinceT: "Founded {n}", warExecListT: "Executions", warExecRowT: "House exterminated at {n}",
         warHouseRuleT: "Stipends are deducted from the current city's coins and grain each month; shortfalls become arrears and erode loyalty.",
-        warHouseTabT: "Surrendered Mansions"
+        warHouseTabT: "Surrendered Mansions",
+        warFleeT: "T H E   L O R D   F L E E S", warFleeHintT: "{n} abandons {c} and holes up in {t}",
+        warFleeLeftT: "Cities left", warFleeNoteT: "{n} remaining · take his last city to capture him",
+        warMoveT: "M A N S I O N   M O V E D", warMoveHintT: "{n}'s mansion has moved to {t}",
+        warMoveFromT: "Former mansion: {c}", warMergeT: "Same-named lord · mansions merged",
+        warHouseTopT: "Surrendered mansions default to our highest-level city"
       },
       ja: {
         warListT: "天下の城", warHeldT: "{a} / {b} 城を領有", warAllT: "全て", warMineT: "自軍", warWeakT: "可攻",
@@ -16693,13 +16706,18 @@ var BOTS = [
         warHouseCntT: "屋敷", warHouseUnitT: "軒", warSalSumT: "銭 {c} · 糧 {r}",
         warHouseTipT: "「大殿 · 降将の屋敷」に別掲。俸禄不足は欠俸となり忠誠が下がる。",
         warFailT: "攻 城 失 敗", warFoeLeftT: "守兵残存", warRetreatT: "撤退", warFailHintT: "守兵は残り、城は落ちなかった。我が損害は傷兵として本城に計上。",
-        warHouseTabHintT: "君主が降ればその城に屋敷を構え、月ごとに俸禄を支給する——独立した常設支出としてここで精算・確認する。",
+        warHouseTabHintT: "君主が降れば屋敷に拘束し月ごとに俸禄を支給——屋敷は我方の最高等級の城に建つ。独立した常設支出としてここで精算・確認する。",
         warStockT: "城内庫", warLastPayT: "前回支給", warArrearT: "欠俸 {n}",
-        warNoHouseT: "降将の屋敷はまだ無い", warNoHouseHintT: "敵城を破り、その君主の降伏を許せば屋敷を構える。",
+        warNoHouseT: "降将の屋敷はまだ無い", warNoHouseHintT: "敵君主の最後の城を落とし、降伏を許せば屋敷が建つ。",
         warHouseAtT: "屋敷は {n}", warHeldTagT: "領有", warLostTagT: "喪失", warPaidT: "{n} か月支給", warLoyalT: "忠誠",
         warMonthT: "月", warSinceT: "{n} 建立", warExecListT: "誅殺の記録", warExecRowT: "{n} にて一族皆殺し",
         warHouseRuleT: "俸禄は毎月、現在の城の銭糧から差し引く。不足は欠俸として記録され、屋敷の忠誠が下がる。",
-        warHouseTabT: "降将の屋敷"
+        warHouseTabT: "降将の屋敷",
+        warFleeT: "君 主 逃 亡", warFleeHintT: "{n} は「{c}」を捨て「{t}」に籠もる",
+        warFleeLeftT: "残る城", warFleeNoteT: "{n} 城 · 最後の城を落とせば捕らえられる",
+        warMoveT: "屋 敷 移 転", warMoveHintT: "{n} の屋敷は「{t}」へ移された",
+        warMoveFromT: "旧屋敷「{c}」", warMergeT: "同名の君主 · 屋敷を統合",
+        warHouseTopT: "降将の屋敷は我方の最高等級の城に建つ"
       }
     };
     Object.keys(ADD).forEach(function (lg) {
@@ -17448,6 +17466,21 @@ var BOTS = [
         "</div></div></div>";
     }
     if (step === 3) {
+      /* V120：君主尚有别城 → 逃走画面（不进入归降抉择） */
+      if (S.fled) {
+        return '<div class="sg-vw"><div class="sg-vw-rays"></div><div class="sg-vw-in">' +
+          '<div class="sg-vw-icon" style="filter:drop-shadow(0 0 16px rgba(227,179,79,.55))">🏳</div>' +
+          '<div class="sg-vw-t3" style="color:#e8c988">' + gt("warFleeT") + "</div>" +
+          '<div class="sg-vw-name" style="animation-delay:.25s">' + esc(S.lord) + "</div>" +
+          '<div class="sg-vw-quote">' + gt("warFleeHintT", { n: esc(S.lord), c: esc(S.cn), t: esc(S.fled.to) }) + "</div>" +
+          '<div class="sg-vw-res">' +
+          '<div class="rl"><span>' + gt("warFleeLeftT") + "</span><b>" + gt("warFleeNoteT", { n: S.fled.left }) + "</b></div>" +
+          '<div class="rl"><span>' + gt("warCityOwnT") + "</span><b>" + esc(S.cn) + "</b></div>" +
+          "</div>" +
+          '<div class="sg-vw-loot">' + gt("warHouseTopT") + "</div>" +
+          '<div class="sg-vw-opts"><button class="sg-opt" data-bat="wv-close"><span class="oi">🗺</span><span><b>' + gt("warBackT") + "</b><small>" + gt("warBackHintT") + "</small></span></button></div>" +
+          "</div></div>";
+      }
       var g = (GENS() || []).filter(function (x) { return x.name === S.lord; })[0];
       var av = g ? siegeAvOf(g.id) : "";
       return '<div class="sg-vw"><div class="sg-vw-in">' +
@@ -17457,7 +17490,7 @@ var BOTS = [
         '<div class="sg-vw-quote">' + gt("warQuoteT", { n: esc(S.lord) }) + "</div>" +
         '<div class="sg-vw-ask">' + gt("warAskT") + "</div>" +
         '<div class="sg-vw-opts">' +
-        '<button class="sg-opt ok" data-bat="wv-surrender" data-k="yes"><span class="oi">🏛</span><span><b>' + gt("warYesT") + "</b><small>" + gt("warYesHintT", { c: esc(S.cn) }) + "</small></span></button>" +
+        '<button class="sg-opt ok" data-bat="wv-surrender" data-k="yes"><span class="oi">🏛</span><span><b>' + gt("warYesT") + "</b><small>" + gt("warYesHintT", { c: esc((function () { var u3 = me(); return u3 ? houseTopCity(u3, S.cn) : S.cn; })()) }) + "</small></span></button>" +
         '<button class="sg-opt no" data-bat="wv-surrender" data-k="no"><span class="oi">⚔</span><span><b>' + gt("warNoT") + "</b><small>" + gt("warNoHintT", { n: esc(S.lord) }) + "</small></span></button>" +
         "</div></div></div>";
     }
@@ -17476,11 +17509,14 @@ var BOTS = [
     var h = S.houseInfo || {};
     var _u = me();
     var need = _u ? houseMonthlyCost(_u) : { n: 0, coin: 0, rice: 0 };
+    var hp = h.h || h, hpCity = hp.city || h.to || S.cn;
     return '<div class="sg-vw"><div class="sg-vw-rays"></div><div class="sg-vw-in">' +
       '<div class="sg-vw-icon">🏛</div>' +
       '<div class="sg-vw-t3">' + gt("warHouseT") + "</div>" +
       '<div class="sg-vw-name" style="animation-delay:.3s">' + esc(S.lord) + gt("warHouseSfxT") + "</div>" +
-      '<div class="sg-vw-foe">' + esc(S.cn) + " · " + gt("warHouseCityT") + "</div>" +
+      '<div class="sg-vw-foe">' + esc(hpCity) + " · " + gt("warHouseCityT") + "</div>" +
+      (h.migrated ? '<div class="sg-vw-quote" style="border-color:#e3b34f;color:#ffe9a8">📨 ' + gt("warMoveHintT", { n: esc(S.lord), t: esc(hpCity) }) + "（" + gt("warMoveFromT", { c: esc(h.from || S.cn) }) + "）</div>" : "") +
+      (h.merged ? '<div class="sg-vw-quote" style="border-color:#e3b34f">🏛 ' + gt("warMergeT") + "</div>" : "") +
       '<div class="sg-vw-res">' +
       '<div class="rl"><span>' + gt("warSalT") + "</span><b>🪙 " + fmt(HOUSE_SAL.coin) + "　🌾 " + fmt(HOUSE_SAL.rice) + "</b></div>" +
       '<div class="rl"><span>' + gt("warSalFromT") + "</span><b>" + gt("warSalFrom2T") + "</b></div>" +
@@ -17517,6 +17553,15 @@ var BOTS = [
     var S = SGS, u = me(); if (!S || !u) return;
     var nc = siegeCapture(u, S, k);
     S.captured = true;
+    /* V120：君主尚有别城 → 弃城而走（逃往等级最高的余城），最后一城才进入归降抉择 */
+    var rest = lordRestCities(u, S.lord).sort(function (a, b) {
+      var w = warState(u);
+      return (w.cities[b].lv || 0) - (w.cities[a].lv || 0);
+    });
+    if (rest.length) {
+      S.fled = { to: rest[0], left: rest.length };
+      warNews(u, S.lord + " 弃「" + S.cn + "」而走 · 逃入「" + rest[0] + "」据守", "warn");
+    }
     S.step = 3;
     save();
     siegeVictory();
@@ -17566,20 +17611,83 @@ var BOTS = [
     }
     return nc;
   }
+  /* ---------- V120：城池等级 / 府邸迁徙工具 ----------
+     batCityLv 我方城等级；houseTopCity 我方等级最高的城（府邸默认关押地）；
+     lordRestCities 该君主尚存的敌城；houseReconcile 同名君主府邸合并 + 失城府邸迁往最高城。 */
+  function batCityLv(u, cn) {
+    var c = (u.bat.cur === cn) ? u.bat.city : u.bat.cities[cn];
+    return c ? (c.lv || 1) : 0;
+  }
+  function houseTopCity(u, fallback) {
+    var best = fallback || "", bl = -1;
+    (u.bat.owned || []).forEach(function (cn) {
+      var l = batCityLv(u, cn);
+      if (l > bl) { bl = l; best = cn; }
+    });
+    return best || fallback || "";
+  }
+  function lordRestCities(u, lord) {
+    var w = warState(u);
+    return Object.keys(w.cities).filter(function (cn) { return w.cities[cn].lord === lord; });
+  }
+  function houseReconcile(u) {
+    var w = warState(u), moved = null;
+    /* 旧档同名君主府邸去重合并：保留首条，城取等级更高者，数值并入 */
+    var seen = {};
+    w.houses = (w.houses || []).filter(function (h) {
+      var prev = seen[h.lord];
+      if (!prev) { seen[h.lord] = h; return true; }
+      if (batCityLv(u, h.city) > batCityLv(u, prev.city)) prev.city = h.city;
+      prev.since = Math.min(prev.since || 0, h.since || 0);
+      prev.paid = Math.max(prev.paid || 0, h.paid || 0);
+      prev.arrears = (prev.arrears || 0) + (h.arrears || 0);
+      prev.loyal = Math.round(((prev.loyal == null ? 78 : prev.loyal) + (h.loyal == null ? 78 : h.loyal)) / 2);
+      return false;
+    });
+    /* 府邸所在城已失守 → 迁往我方等级最高的城池 */
+    (w.houses || []).forEach(function (h) {
+      if ((u.bat.owned || []).indexOf(h.city) >= 0) return;
+      var to = houseTopCity(u, h.city);
+      if (to && to !== h.city) {
+        moved = { lord: h.lord, from: h.city, to: to, t: Date.now() };
+        h.city = to;
+        warNews(u, h.lord + " 府邸迁徙至 " + to, "warn");
+      }
+    });
+    if (moved) w.hmove = moved;
+    return moved;
+  }
   /* ---------- 归降府邸 ---------- */
   function houseSurrender(u, S) {
     var w = warState(u);
     var g = (GENS() || []).filter(function (x) { return x.name === S.lord; })[0];
-    var h = {
-      lord: S.lord, city: S.cn, gid: g ? g.id : "", since: gMonth(u),
-      paid: 0, loyal: 78, arrears: 0,
-      title: (S.wl && S.wl.title) || "", color: (S.wl && S.wl.color) || "#c9a45c"
-    };
-    w.houses.push(h);
-    var nc = (u.bat.cur === S.cn) ? u.bat.city : u.bat.cities[S.cn];
+    /* V120：同名君主合并，府邸默认立于我方等级最高的城池（迁徙时画面提示） */
+    var to = houseTopCity(u, S.cn);
+    var existed = (w.houses || []).filter(function (x) { return x.lord === S.lord; })[0] || null;
+    var h, migrated = false, merged = false, from = "";
+    if (existed) {
+      merged = true;
+      from = existed.city;
+      if (from !== to) { existed.city = to; migrated = true; }
+      existed.gid = existed.gid || (g ? g.id : "");
+      existed.title = existed.title || (S.wl && S.wl.title) || "";
+      existed.color = existed.color || (S.wl && S.wl.color) || "#c9a45c";
+      h = existed;
+    } else {
+      h = {
+        lord: S.lord, city: to, gid: g ? g.id : "", since: gMonth(u),
+        paid: 0, loyal: 78, arrears: 0,
+        title: (S.wl && S.wl.title) || "", color: (S.wl && S.wl.color) || "#c9a45c"
+      };
+      w.houses.push(h);
+      migrated = to !== S.cn;
+      if (migrated) from = S.cn;
+    }
+    var nc = (u.bat.cur === to) ? u.bat.city : u.bat.cities[to];
     if (nc) nc.house = S.lord;
-    warNews(u, "「" + S.cn + "」归降 · " + S.lord + " 府邸立于城中，岁给俸禄", "ok");
-    return h;
+    if (migrated) w.hmove = { lord: S.lord, from: from, to: to, t: Date.now() };
+    warNews(u, migrated ? (S.lord + " 府邸迁徙至 " + to + "（原 " + from + "）") : ("「" + S.cn + "」归降 · " + S.lord + " 府邸立于" + to + "，岁给俸禄"), "ok");
+    return { h: h, migrated: migrated, merged: merged, from: from, to: to };
   }
   function houseExecute(u, S) {
     var w = warState(u);
@@ -17596,6 +17704,10 @@ var BOTS = [
   function housesTabHTML(u) {
     ensureCity(u);
     var w = warState(u), hs = w.houses || [];
+    try { houseReconcile(u); } catch (eH) {}
+    hs = w.houses || [];
+    var mv = w.hmove || null;
+    var mvBanner = mv ? '<div style="border:1px dashed #e3b34f;background:rgba(227,179,79,.09);border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">📨 <b style="color:#ffe9a8">' + esc(mv.lord) + "</b><span>" + gt("warMoveHintT", { n: esc(mv.lord), t: esc(mv.to) }) + '</span><button class="sgbtn sm ghost" data-bat="hmove-clear" style="margin-left:auto">知道了</button></div>' : "";
     var cost = houseMonthlyCost(u), c = ensureCity(u), r = c.res || u.res;
     var lp = w.lastPay;
     var head = '<div class="sg-note" style="margin:2px 0 10px;line-height:1.95">🏛 ' + gt("warHouseTabHintT") + "</div>" +
@@ -17606,12 +17718,12 @@ var BOTS = [
       (lp ? '<div class="sg-palrow" style="margin:0;padding:8px 10px"><small style="color:var(--ink-3);font-size:9.5px">' + gt("warLastPayT") + '</small><div><b style="font-size:12px;color:' + (lp.short ? "#e79a9a" : "#8fd694") + '">' + gt("warSalSumT", { c: fmt(lp.coin), r: fmt(lp.rice) }) + (lp.short ? " · " + gt("warArrearT", { n: fmt(lp.short) }) : "") + "</b></div></div>" : "") +
       "</div>";
     if (!hs.length) {
-      return head + '<div class="sg-palrow" style="text-align:center;padding:22px 12px;opacity:.85">' +
+      return mvBanner + head + '<div class="sg-palrow" style="text-align:center;padding:22px 12px;opacity:.85">' +
         '<div style="font-size:26px;margin-bottom:6px">🏛</div>' +
         '<div style="font-size:12.5px;color:#c8bfa8">' + gt("warNoHouseT") + "</div>" +
         '<div class="sg-note" style="margin-top:6px">' + gt("warNoHouseHintT") + "</div></div>";
     }
-    return head + hs.map(function (h) {
+    return mvBanner + head + hs.map(function (h) {
       var g = h.gid ? gById(h.gid) : null;
       var av = g ? siegeAvOf(g.id) : "";
       var city = h.city;
@@ -21131,6 +21243,8 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       case "wv-close": SGS = null; closeModal(); BATUI.tab = "home"; refreshBattle(); return;
       case "war-filter": BATUI.warFilter = t.getAttribute("data-k") || "all"; refreshBattle(); return;
       case "war-houses": BATUI.palTab = "houses"; palaceOpen(); return;
+      /* V120：府邸迁徙提示横幅关闭 */
+      case "hmove-clear": if (u.war) { u.war.hmove = null; save(); } refreshBattle(); palaceOpen(); return;
       /* V65：编队页切换阵形（同队共享，影响攻防速与相克） */
       case "team-form": {
         var tiF = +t.getAttribute("data-t"), kF = t.getAttribute("data-k");
