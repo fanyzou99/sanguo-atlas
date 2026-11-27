@@ -12497,6 +12497,15 @@ var BOTS = [
       (u.bat.owned || []).forEach(function (nm) { if (u.bat.cur !== nm) _mig113(u.bat.cities[nm]); });
       u.bat.szMig113 = 1;
     }
+    /* V121：V100~V112 时代攻占的城池（如长安/陈留/濮阳/汝南）在旧代码下持久化了 size:3，
+       且 V113 一次性迁移已消耗（或云端旧档合并复活了旧城对象）——再补一次全量迁移 size:3 → 5（默认）。
+       迁移后手动切 3/5/7 仍随意。 */
+    if (!u.bat.szMig121) {
+      var _mig121 = function (cc) { ((cc && cc.teams) || []).forEach(function (t) { if (t && +t.size === 3) t.size = 5; }); };
+      _mig121(c);
+      (u.bat.owned || []).forEach(function (nm) { if (u.bat.cur !== nm) _mig121(u.bat.cities[nm]); });
+      u.bat.szMig121 = 1;
+    }
     if (!c.roster) c.roster = [];
     /* V100：点将台功能删除——旧档 armies 成员士兵全额退回本城预备役后清空（幂等） */
     if (c.armies && c.armies.length) {
@@ -13913,6 +13922,8 @@ var BOTS = [
         teamStatT: "👥 总人数 {t} · ⚡ 总战斗值 {p} · 🛡 防御 {d}",
         teamBarTipT: "配置兵 {a} / 带兵上限 {b} · 战斗值 {p}（特种兵 {e} / 常规 {r}）· 阵型「{f}」攻×{m}%",
         homeCapT: "上限 {c}", homeRelT: "含卸甲归田 {n}", chipRelT: "归田 +{n}",
+        perHouseT: "户均 {n} 人/户", relRoomT: "余量可归田 {n}",
+        popCapNoteT: "上限只约束自然增长，归田迁入不受上限约束；人口越多，户数越多，资源产出加成越高。",
         popNatureT: "自然 {a} / 上限 {b}", popRelT: "卸甲归田 {n}", popRelNoteT: "（归田人口不受上限约束）"
       },
       en: {
@@ -13932,6 +13943,8 @@ var BOTS = [
         teamStatT: "👥 troops {t} · ⚡ power {p} · 🛡 defense {d}",
         teamBarTipT: "troops {a} / cap {b} · power {p} (elite {e} / regular {r}) · formation \"{f}\" atk×{m}%",
         homeCapT: "cap {c}", homeRelT: "incl. settlers {n}", chipRelT: "settlers +{n}",
+        perHouseT: "{n} people/household", relRoomT: "room for settlers {n}",
+        popCapNoteT: "The cap only limits natural growth; settlers are exempt. More population means more households and higher yield bonus.",
         popNatureT: "natural {a} / cap {b}", popRelT: "disbanded-to-fields {n}", popRelNoteT: "(settlers are exempt from the cap)"
       },
       ja: {
@@ -13951,6 +13964,8 @@ var BOTS = [
         teamStatT: "👥 総兵数 {t} · ⚡ 総戦闘値 {p} · 🛡 防御 {d}",
         teamBarTipT: "配置兵 {a} / 帯兵上限 {b} · 戦闘値 {p}（特殊兵 {e} / 通常 {r}）· 陣形「{f}」攻×{m}%",
         homeCapT: "上限 {c}", homeRelT: "帰農 {n} 含む", chipRelT: "帰農 +{n}",
+        perHouseT: "世帯平均 {n} 人", relRoomT: "帰農余裕 {n}",
+        popCapNoteT: "上限は自然増長のみを制限し、帰農移住は制限されない。人口が多いほど世帯が増え、産出ボーナスも上がる。",
         popNatureT: "自然 {a} / 上限 {b}", popRelT: "帰農人口 {n}", popRelNoteT: "（帰農人口は上限の対象外）"
       }
     };
@@ -14911,8 +14926,20 @@ var BOTS = [
     return '<div class="sg-resrow" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-2)">' +
       resPill(u, "rice") + resPill(u, "wood") + resPill(u, "copper") + resPill(u, "iron") +
       resPill(u, "coin", "border-color:#c9a45c66;color:#e8c988") +
-      '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("relHintT")) + '">👥 ' + gt("popT") + " " + fmt(cityPop(u)) + " / " + fmt(cityPopCap(u)) +
-      (cityPop(u) > cityPopCap(u) ? "（" + gt("chipRelT", { n: fmt(cityPop(u) - cityPopCap(u)) }) + "）" : "") + " · " + gt("popBonusT", { n: popBonusPct(u) }) + "</span>" +
+      /* V121：人口/户数浓缩为一行简要信息，hover 显示全量（上限/归田/余量/户均/产出） */
+      (function () {
+        var hhN = households(u), paN = Math.max(0, c.popAdd || 0), popN = cityPop(u), capN = cityPopCap(u);
+        var natN = Math.max(0, popN - paN), roomN = Math.max(0, capN - natN);
+        return '<span class="respill" tabindex="0" style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a">👥 ' + gt("popT") + " " + fmt(popN) + " · 🏠 " + gt("houseT") + " " + fmt(hhN) + " · " + gt("popBonusT", { n: popBonusPct(u) }) +
+          '<div class="reshov"><div class="reshov-lab">👥 ' + esc(gt("popT")) + " · " + esc(c.name || "") + "</div>" +
+          '<div class="reshov-row">' + esc(gt("popT")) + ' <b style="color:#e8c988">' + fmt(popN) + "</b> / " + esc(gt("homeCapT", { c: fmt(capN) })) + "</div>" +
+          (paN > 0 ? '<div class="reshov-row">' + esc(gt("homeRelT", { n: fmt(paN) })) + (popN > capN ? "（" + esc(gt("chipRelT", { n: fmt(popN - capN) })) + "）" : "") + "</div>" : "") +
+          '<div class="reshov-row">' + esc(gt("relRoomT", { n: fmt(roomN) })) + "</div>" +
+          '<div class="reshov-row">🏠 ' + esc(gt("houseT")) + ' <b style="color:#e8c988">' + fmt(hhN) + "</b> · " + esc(gt("perHouseT", { n: Math.max(1, ECON.perHouse || 1) })) + "</div>" +
+          '<div class="reshov-row">' + esc(gt("popBonusT", { n: popBonusPct(u) })) + "</div>" +
+          '<div class="reshov-sep"></div><div class="reshov-row" style="opacity:.6"><small>' + esc(gt("popCapNoteT")) + "</small></div>" +
+          '<div class="reshov-row" style="opacity:.6"><small>' + esc(gt("relHintT")) + "</small></div></div></span>";
+      })() +
       '<span style="border:1px solid #7fd08a66;border-radius:999px;padding:4px 11px;color:#7fd08a" title="' + esc(gt("upNoteT")) + '">⚔ ' + gt("poolT") + " " + fmt(c.pool || 0) + "</span>" +
       /* V84：特种兵独立资源位（hover 显示各营兵种与数量） */
       (function () { var eT = 0, eQ = 0; eliteSlots(c).forEach(function (s) { eT += s.n || 0; eQ += s.q || 0; });
@@ -19384,8 +19411,6 @@ var SG_IMG_ASSAULT = "data:image/webp;base64,UklGRgyUAABXRUJQVlA4IACUAACwIAOdASq
       '<div class="sg-panel-hd"><h3><i>·</i>' + (BATUI.homeMap === "world" ? "🗺 " + gt("wmWorldT") + " · " + esc(cityName) : "🏙 " + gt("mapT") + " · " + esc(cityName)) + "</h3><span class=\"sp\"></span>" +
       '<small style="color:var(--ink-3)">' + gt("underling", { n: cards.length }) + "</small></div>" +
       '<div style="margin:8px 0 4px">' + homeResBar(u) + "</div>" +
-      '<div class="sg-note" style="margin:6px 0 2px">👥 ' + gt("popT") + ' <b style="color:#e8c988">' + fmt(pop) + "</b>　·　🏠 " + gt("houseT") + " <b>" + fmt(houses) + "</b>" +
-      '　<small style="color:var(--ink-3)">' + gt("homeCapT", { c: fmt(capNow) }) + (popTip.length ? " · " + popTip.join(" · ") : "") + "</small></div>" +
       raidBar + mapTog + mapBlock +
       hallUnifiedHTML(u) +
       defLogHTML(u);   /* V61：按需求移除「胡商来市 · 丝路胡商」板块 */
